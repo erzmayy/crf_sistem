@@ -362,7 +362,7 @@ $html = '
             vertical-align: top;
             text-align: center;
             height: 95px;
-            width: 14.2857%;
+            width: 16.6667%;
         }
 
         .process-table .process-table-label {
@@ -713,31 +713,6 @@ $html = '
                     ) . '
                 </div>
             </td>
-
-
-            <!-- 6. PEMOHON IMPLEMENTASI + PIR -->
-            <td>
-                <div class="process-table-title">
-                    Pemohon
-                </div>
-
-                <div class="process-table-role">
-                    Implementasi + PIR
-                </div>
-
-                <div class="process-table-label">
-                    Dikirim ke CMO
-                </div>
-
-                <div class="process-table-date">
-                    ' . (
-                        !empty($implementationPirDate)
-                            ? $implementationPirDate
-                            : '-'
-                    ) . '
-                </div>
-            </td>
-
 
             <!-- 7. CMO PENUTUPAN -->
             <td>

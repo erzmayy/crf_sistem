@@ -4,9 +4,18 @@ require_once __DIR__ . '/../includes/functions.php';
 requireCrfRole(['cmo']);
 
 $pdo = getConnection();
+
 $filter = $_GET['stage'] ?? 'all';
-$where = ["cr.status <> 'Draft'", "cr.workflow_stage IN ('CMO_FILTER','CMO_FINAL')"];
+$search = trim($_GET['q'] ?? '');
+$where = [
+    "cr.status <> 'Draft'",
+    "cr.workflow_stage IN ('CMO_FILTER','CMO_FINAL')"
+];
 $params = [];
+
+/* =========================================================
+ * FILTER TAHAP CMO
+ * ========================================================= */
 
 if ($filter === 'filter') {
     $where[] = "cr.workflow_stage = 'CMO_FILTER'";
@@ -14,13 +23,82 @@ if ($filter === 'filter') {
     $where[] = "cr.workflow_stage = 'CMO_FINAL'";
 }
 
-$sql = "SELECT cr.*
-        FROM change_requests cr
-        WHERE " . implode(' AND ', $where) . "
-        ORDER BY cr.updated_at DESC";
+
+/* =========================================================
+ * PENCARIAN / FILTER
+ * ========================================================= */
+
+if ($search !== '') {
+
+    $where[] = '(
+        cr.request_number LIKE :search_request
+        OR cr.full_name LIKE :search_name
+    )';
+
+    $searchValue = '%' . $search . '%';
+
+    $params['search_request'] = $searchValue;
+    $params['search_name'] = $searchValue;
+}
+
+
+/* =========================================================
+ * PAGINATION
+ * ========================================================= */
+
+$perPage = 10;
+
+$page = max(
+    1,
+    (int) ($_GET['page'] ?? 1)
+);
+
+
+/* =========================================================
+ * HITUNG TOTAL DATA
+ * ========================================================= */
+
+$countSql = "
+    SELECT COUNT(*)
+    FROM change_requests cr
+    WHERE " . implode(' AND ', $where);
+
+$countStmt = $pdo->prepare($countSql);
+$countStmt->execute($params);
+
+$totalRows = (int) $countStmt->fetchColumn();
+
+$totalPages = max(
+    1,
+    (int) ceil($totalRows / $perPage)
+);
+
+if ($page > $totalPages) {
+    $page = $totalPages;
+}
+
+$offset = ($page - 1) * $perPage;
+
+
+/* =========================================================
+ * AMBIL DATA
+ * ========================================================= */
+
+$sql = "
+    SELECT cr.*
+    FROM change_requests cr
+    WHERE " . implode(' AND ', $where) . "
+    ORDER BY cr.updated_at DESC
+    LIMIT {$perPage} OFFSET {$offset}";
+
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $requests = $stmt->fetchAll();
+
+
+/* =========================================================
+ * SUMMARY
+ * ========================================================= */
 
 $countStmt = $pdo->query("SELECT workflow_stage, COUNT(*) total FROM change_requests WHERE workflow_stage IN ('CMO_FILTER','CMO_FINAL') AND status <> 'Draft' GROUP BY workflow_stage");
 $counts = ['CMO_FILTER' => 0, 'CMO_FINAL' => 0];
@@ -65,18 +143,38 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
       </div>
 
-        <div class="table-responsive crf-table-responsive-cards">
+      <form method="GET" class="row g-2 mb-3 dashboard-filter-row">
+        <input type="hidden" name="stage" value="<?= h($filter) ?>">
+
+        <div class="col-md-11">
+          <input
+            type="text"
+            name="q"
+            class="form-control"
+            placeholder="Cari Nomor Register atau nama pengaju..."
+            value="<?= h($search) ?>"
+          >
+        </div>
+
+        <div class="col-md-1">
+          <button type="submit" class="btn btn-crf-primary w-100">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+      </form>
+
+      <div class="table-responsive crf-table-responsive-cards">
         <table class="table crf-table align-middle">
           <thead><tr>
             <th>No</th><th>Nomor Register</th><th>Pengaju</th><th>Tanggal</th><th>Status</th><th>Tahap</th><th>Aksi</th>
           </tr></thead>
           <tbody>
           <?php if (!$requests): ?>
-            <tr><td colspan="7" class="text-center text-muted py-4">Belum ada CRF pada antrean CMO.</td></tr>
+            <tr><td colspan="7" class="text-center text-muted py-4">Belum ada CRF yang cocok dengan pencarian/filter ini.</td></tr>
           <?php else: ?>
             <?php foreach ($requests as $i => $row): ?>
               <tr>
-                <td data-label="No"><?= $i + 1 ?></td>
+                <td data-label="No"><?= $offset + $i + 1 ?></td>
                 <td data-label="Nomor Register"><strong><?= h($row['request_number']) ?></strong></td>
                 <td data-label="Pengaju"><?= h($row['full_name']) ?></td>
                 <td data-label="Tanggal"><?= !empty($row['submission_date']) ? h(date('d-m-Y', strtotime($row['submission_date']))) : '-' ?></td>
@@ -89,6 +187,55 @@ require_once __DIR__ . '/../includes/header.php';
           </tbody>
         </table>
       </div>
+
+      <?php if ($totalPages > 1): ?>
+        <nav aria-label="Pagination CMO" class="mt-3">
+          <ul class="pagination justify-content-end mb-0">
+            <?php
+            $prevParams = $_GET;
+            $prevParams['page'] = max(1, $page - 1);
+
+            $nextParams = $_GET;
+            $nextParams['page'] = min($totalPages, $page + 1);
+            ?>
+
+            <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+              <a
+                class="page-link"
+                href="?<?= h(http_build_query($prevParams)) ?>"
+                aria-label="Previous"
+              >
+                <i class="bi bi-chevron-left"></i>
+              </a>
+            </li>
+
+            <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+              <?php
+              $pageParams = $_GET;
+              $pageParams['page'] = $p;
+              ?>
+              <li class="page-item <?= $p === $page ? 'active' : '' ?>">
+                <a
+                  class="page-link"
+                  href="?<?= h(http_build_query($pageParams)) ?>"
+                >
+                  <?= $p ?>
+                </a>
+              </li>
+            <?php endfor; ?>
+
+            <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+              <a
+                class="page-link"
+                href="?<?= h(http_build_query($nextParams)) ?>"
+                aria-label="Next"
+              >
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      <?php endif; ?>
     </div>
   </div>
 </div>
