@@ -623,23 +623,21 @@ require_once __DIR__ . '/../includes/header.php';
             <!-- IMPLEMENTASI -->
             <div class="mb-4">
 
-                    <div class="crf-detail-label">
-                        Implementasi / Hasil Perubahan
-                    </div>
+                        <div class="crf-detail-value">
 
-                    <div class="crf-detail-value">
+                            <?php if (!empty($crf['implementation'])): ?>
 
-                        <?php if (!empty($crf['implementation'])): ?>
+                                <?= nl2br(h($crf['implementation'])) ?>
 
-                            <?= nl2br(h($crf['implementation'])) ?>
+                            <?php else: ?>
 
-                        <?php else: ?>
+                                <span class="text-muted">
+                                    Belum diisi.
+                                </span>
 
-                            <span class="text-muted">
-                                Belum diisi.
-                            </span>
+                            <?php endif; ?>
 
-                        <?php endif; ?>
+                        </div>
 
                     </div>
 
@@ -649,23 +647,21 @@ require_once __DIR__ . '/../includes/header.php';
             <!-- PIR -->
             <div class="mb-0">
 
-                    <div class="crf-detail-label">
-                        Post Implementation Review
-                    </div>
+                        <div class="crf-detail-value">
 
-                    <div class="crf-detail-value">
+                            <?php if (!empty($crf['post_implementation_review'])): ?>
 
-                        <?php if (!empty($crf['post_implementation_review'])): ?>
+                                <?= nl2br(h($crf['post_implementation_review'])) ?>
 
-                            <?= nl2br(h($crf['post_implementation_review'])) ?>
+                            <?php else: ?>
 
-                        <?php else: ?>
+                                <span class="text-muted">
+                                    Belum diisi.
+                                </span>
 
-                            <span class="text-muted">
-                                Belum diisi.
-                            </span>
+                            <?php endif; ?>
 
-                        <?php endif; ?>
+                        </div>
 
                     </div>
 

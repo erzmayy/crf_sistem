@@ -4,13 +4,31 @@ require_once __DIR__ . '/../includes/functions.php';
 requireCrfRole(['otomasi']);
 
 $pdo = getConnection();
-$stmt = $pdo->query("SELECT cr.* FROM change_requests cr WHERE cr.workflow_stage = 'OTOMASI' AND cr.status <> 'Draft' ORDER BY cr.automation_started_at ASC, cr.created_at ASC");
+
+$stmt = $pdo->query("
+    SELECT cr.*
+    FROM change_requests cr
+    WHERE cr.workflow_stage = 'OTOMASI'
+      AND cr.status <> 'Draft'
+    ORDER BY
+        CASE
+            WHEN cr.pak_joko_approved_at IS NOT NULL THEN 0
+            ELSE 1
+        END,
+        cr.automation_started_at ASC,
+        cr.created_at ASC
+");
+
 $requests = $stmt->fetchAll();
+
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
+
 $pageTitle = 'Otomasi';
+
 require_once __DIR__ . '/../includes/header.php';
 ?>
+
 <div class="crf-page">
   <div class="container">
     <div class="crf-page-header"><h1>Otomasi</h1><p>Menangani permintaan, menentukan Level Urgensi dan SLA, serta mengisi hasil implementasi.</p></div>
@@ -48,6 +66,7 @@ require_once __DIR__ . '/../includes/header.php';
         </table>
       </div>
     </div>
-  </div>
+
 </div>
+
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

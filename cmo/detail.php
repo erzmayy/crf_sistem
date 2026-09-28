@@ -227,7 +227,11 @@ require_once __DIR__ . '/../includes/header.php';
                     <?php if (!empty($crf['implementation'])): ?>
                         <?= nl2br(h($crf['implementation'])) ?>
                     <?php else: ?>
-                        <span class="text-muted">Belum diisi oleh Otomasi.</span>
+
+                        <span class="text-muted">
+                            Belum diisi oleh Otomasi.
+                        </span>
+
                     <?php endif; ?>
                 </div>
 
@@ -237,7 +241,11 @@ require_once __DIR__ . '/../includes/header.php';
                     <?php if (!empty($crf['post_implementation_review'])): ?>
                         <?= nl2br(h($crf['post_implementation_review'])) ?>
                     <?php else: ?>
-                        <span class="text-muted">Belum diisi oleh Otomasi.</span>
+
+                        <span class="text-muted">
+                            Belum diisi oleh Otomasi.
+                        </span>
+
                     <?php endif; ?>
                 </div>
 
@@ -343,10 +351,12 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="crf-section-body">
 
                     <p class="text-muted">
+
                         Otomasi sudah menyelesaikan eksekusi serta mengisi
                         Implementasi / Hasil Perubahan dan Post Implementation Review.
-                        CMO dapat menutup CRF setelah memastikan seluruh proses
-                        sudah lengkap.
+                        CMO dapat menutup CRF setelah memastikan
+                        seluruh proses sudah lengkap.
+
                     </p>
 
                     <form action="../actions/cmo_action.php" method="POST">

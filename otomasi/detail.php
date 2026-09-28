@@ -49,7 +49,7 @@ if (!$crf) {
 }
 
 
-$isExecutionStage = !empty($crf['kadep_operasional_approved_at']);
+$isExecutionStage = !empty($crf['pak_joko_approved_at']);
 
 
 $flash = $_SESSION['flash'] ?? null;
@@ -477,13 +477,13 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="crf-detail-value">
 
                                     <?= !empty(
-                                        $crf['kadep_operasional_approved_at']
+                                        $crf['pak_joko_approved_at']
                                     )
                                         ? h(
                                             date(
                                                 'd-m-Y H:i',
                                                 strtotime(
-                                                    $crf['kadep_operasional_approved_at']
+                                                    $crf['pak_joko_approved_at']
                                                 )
                                             )
                                         )
