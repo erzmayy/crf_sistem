@@ -11,7 +11,7 @@ ALTER TABLE change_requests
         'CMO_FILTER',
         'OTOMASI',
         'PEMOHON_PIR',
-        'PAK_JOKO',
+        'kadep_operasional',
         'CMO_FINAL',
         'SELESAI'
     ) NOT NULL DEFAULT 'PEMOHON' AFTER status,
@@ -21,19 +21,19 @@ ALTER TABLE change_requests
     ADD COLUMN sla_due_at DATETIME NULL AFTER sla_started_at,
     ADD COLUMN automation_started_at DATETIME NULL AFTER sla_due_at,
     ADD COLUMN automation_completed_at DATETIME NULL AFTER automation_started_at,
-    ADD COLUMN pak_joko_approved_by INT UNSIGNED NULL AFTER approval_at,
-    ADD COLUMN pak_joko_approved_at DATETIME NULL AFTER pak_joko_approved_by,
-    ADD COLUMN pak_joko_approval_note TEXT NULL AFTER pak_joko_approved_at;
+    ADD COLUMN kadep_operasional_approved_by INT UNSIGNED NULL AFTER approval_at,
+    ADD COLUMN kadep_operasional_approved_at DATETIME NULL AFTER kadep_operasional_approved_by,
+    ADD COLUMN kadep_operasional_approval_note TEXT NULL AFTER kadep_operasional_approved_at;
 
 ALTER TABLE change_requests
-    ADD CONSTRAINT fk_crf_pak_joko_approved_by
-        FOREIGN KEY (pak_joko_approved_by) REFERENCES users(id)
+    ADD CONSTRAINT fk_crf_kadep_operasional_approved_by
+        FOREIGN KEY (kadep_operasional_approved_by) REFERENCES users(id)
         ON DELETE SET NULL ON UPDATE CASCADE;
 
 CREATE TABLE IF NOT EXISTS crf_user_roles (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED NOT NULL,
-    role ENUM('pemohon','cmo','otomasi','pak_joko','admin') NOT NULL,
+    role ENUM('pemohon','cmo','otomasi','kadep_operasional','admin') NOT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_crf_user_role_user (user_id),
@@ -86,7 +86,7 @@ WHERE LOWER(TRIM(u.dept)) = 'cmo'
   AND NOT EXISTS (SELECT 1 FROM crf_user_roles r WHERE r.user_id = u.id);
 
 INSERT INTO crf_user_roles (user_id, role)
-SELECT u.id, 'pak_joko'
+SELECT u.id, 'kadep_operasional'
 FROM users u
 WHERE (u.userid = '3736' OR LOWER(TRIM(u.nama)) = 'joko sri purwoko')
   AND NOT EXISTS (SELECT 1 FROM crf_user_roles r WHERE r.user_id = u.id);

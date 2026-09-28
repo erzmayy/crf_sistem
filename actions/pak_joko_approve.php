@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 
-requireAdmin();
+requireCrfRole(['pak_joko']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../pak_joko/index.php');
@@ -39,7 +39,7 @@ $stmt->execute(['id' => $id]);
 
 $crf = $stmt->fetch();
 
-if (!$crf || $crf['workflow_stage'] !== 'PAK_JOKO') {
+if (!$crf || $crf['workflow_stage'] !== 'pak_joko') {
     $_SESSION['flash'] = [
         'type' => 'danger',
         'message' => 'CRF tidak tersedia untuk approval.'
@@ -115,7 +115,7 @@ try {
         ];
 
 
-        header('Location: ../otomasi/index.php');
+        header('Location: ../pak_joko/index.php');
         exit;
     }
 
@@ -169,7 +169,7 @@ try {
         ];
 
 
-        header('Location: ../otomasi/index.php');
+        header('Location: ../pak_joko/index.php');
         exit;
     }
 
