@@ -29,6 +29,11 @@ function getCrfRole(): string
 
     requireLogin();
 
+    if (CRF_ROLE_SOURCE === 'resolver') {
+        $user = getCurrentUser();
+        return $cache = resolveCrfRoleFromUser($user);
+    }
+
     try {
         $stmt = getConnection()->prepare(
             'SELECT role

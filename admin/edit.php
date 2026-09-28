@@ -19,14 +19,15 @@ requireAdmin();
 
 $pdo = getConnection();
 $id  = (int) ($_GET['id'] ?? 0);
+$userTable = crfUserTable();
 
 $stmt = $pdo->prepare(
-    'SELECT cr.*, u.nama AS submitter_name
+    "SELECT cr.*, u.nama AS submitter_name
     FROM change_requests cr
-    JOIN users u ON u.id = cr.user_id
+    JOIN {$userTable} u ON u.id = cr.user_id
     WHERE cr.id = :id
-      AND cr.status <> \'Draft\'
-    LIMIT 1'
+      AND cr.status <> 'Draft'
+    LIMIT 1"
 );
 
 $stmt->execute([
