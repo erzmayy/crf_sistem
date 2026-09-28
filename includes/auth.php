@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . '/session.php';
-require_once __DIR__ . '/../config/crf.php';
 
 /**
  * Memastikan user sudah login.
@@ -16,67 +15,9 @@ function requireLogin(): void
 }
 
 /**
- * Apakah user yang sedang login termasuk admin CRF?
- * Ditentukan dari atribut user (dept + divisi) sesuai aturan di
- * config/crf.php. Atribut dibaca dari database di setiap request,
- * jadi perubahan jabatan langsung berlaku.
- *
- * Saat integrasi ke SIAP: ganti nama tabel `users` menjadi `tbl_user`.
- */
-function isAdmin(): bool
-{
-    static $cache = null;
-
-    if ($cache !== null) {
-        return $cache;
-    }
-
-    if (!isset($_SESSION['user_id'])) {
-        return false;
-    }
-
-    $stmt = getConnection()->prepare(
-        'SELECT userid, dept, divisi FROM users WHERE id = :id LIMIT 1'
-    );
-
-    $stmt->execute([
-        'id' => $_SESSION['user_id']
-    ]);
-
-    $user = $stmt->fetch();
-
-    if (!$user) {
-        return $cache = false;
-    }
-
-    $norm = static fn($value) => mb_strtolower(trim((string) $value));
-
-    // Akun yang dikecualikan
-    $excluded = array_map($norm, CRF_ADMIN_EXCLUDE_USERIDS);
-
-    if (in_array($norm($user['userid']), $excluded, true)) {
-        return $cache = false;
-    }
-
-    // Cocokkan dengan aturan dept + divisi
-    foreach (CRF_ADMIN_RULES as $rule) {
-        $divisiList = array_map($norm, $rule['divisi']);
-
-        if (
-            $norm($user['dept']) === $norm($rule['dept'])
-            && in_array($norm($user['divisi']), $divisiList, true)
-        ) {
-            return $cache = true;
-        }
-    }
-
-    return $cache = false;
-}
-
-
-/**
  * Mengambil role workflow CRF dari tabel crf_user_roles.
- * Jika belum ada mapping, fallback ke admin legacy atau pemohon.
+ * Ini satu-satunya sumber kebenaran untuk role user.
+ * Jika user belum punya baris role aktif, dianggap 'pemohon'.
  */
 function getCrfRole(): string
 {
@@ -104,11 +45,21 @@ function getCrfRole(): string
             return $cache = $role;
         }
     } catch (Throwable $e) {
-        // Migration role belum dijalankan; gunakan fallback legacy.
         error_log('getCrfRole fallback: ' . $e->getMessage());
     }
 
-    return $cache = (isAdmin() ? 'admin' : 'pemohon');
+    return $cache = 'pemohon';
+}
+
+/**
+ * Apakah user yang sedang login berperan sebagai admin (superuser)?
+ * Mengacu ke crf_user_roles, sama seperti seluruh pengecekan akses
+ * lainnya. Aturan lama berbasis dept/divisi (config/crf.php) tidak
+ * dipakai lagi.
+ */
+function isAdmin(): bool
+{
+    return getCrfRole() === 'admin';
 }
 
 function isCrfRole(string $role): bool
@@ -116,19 +67,30 @@ function isCrfRole(string $role): bool
     return getCrfRole() === $role;
 }
 
+/**
+ * Membatasi halaman untuk role tertentu.
+ * Role 'admin' adalah superuser: selalu diizinkan, sehingga satu
+ * akun admin bisa dipakai mendemokan seluruh alur (CMO, Otomasi,
+ * Kepala Departemen Operasional).
+ */
 function requireCrfRole($roles): void
 {
     requireLogin();
 
     $roles = is_array($roles) ? $roles : [$roles];
+    $currentRole = getCrfRole();
 
-    if (!in_array(getCrfRole(), $roles, true)) {
+    if ($currentRole === 'admin') {
+        return;
+    }
+
+    if (!in_array($currentRole, $roles, true)) {
         $_SESSION['flash'] = [
             'type' => 'danger',
             'message' => 'Anda tidak memiliki akses ke halaman tersebut.'
         ];
 
-        switch (getCrfRole()) {
+        switch ($currentRole) {
             case 'cmo':
                 header('Location: ../cmo/dashboard.php');
                 break;
@@ -137,9 +99,6 @@ function requireCrfRole($roles): void
                 break;
             case 'pak_joko':
                 header('Location: ../pak_joko/dashboard.php');
-                break;
-            case 'admin':
-                header('Location: ../admin/dashboard.php');
                 break;
             default:
                 header('Location: ../user/pengajuan_saya.php');
@@ -166,27 +125,17 @@ function crfRoleLabel(string $role): string
 }
 
 /**
- * Memastikan user sudah login dan termasuk admin CRF.
+ * Memastikan user sudah login dan berperan sebagai admin.
  */
 function requireAdmin(): void
 {
-    requireLogin();
-
-    if (getCrfRole() !== 'admin') {
-        $_SESSION['flash'] = [
-            'type'    => 'danger',
-            'message' => 'Anda tidak memiliki akses ke halaman tersebut.'
-        ];
-
-        header('Location: ../user/pengajuan_saya.php');
-        exit;
-    }
+    requireCrfRole(['admin']);
 }
 
 /**
  * Apakah user yang login boleh mengakses CRF (dan lampirannya)?
  * - Pemilik CRF: boleh (termasuk saat masih Draft).
- * - Admin CRF: boleh, kecuali CRF berstatus Draft.
+ * - Role admin/cmo/otomasi/pak_joko: boleh, kecuali CRF berstatus Draft.
  */
 function canAccessCrf(PDO $pdo, int $crfId): bool
 {

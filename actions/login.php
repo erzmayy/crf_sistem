@@ -53,12 +53,22 @@ session_regenerate_id(true);
 $_SESSION['user_id'] = (int) $user['id'];
 $_SESSION['active_user'] = $user;
 
-$role = getCrfRole();
-
-if ($role === 'admin') {
-    header('Location: ../admin/dashboard.php');
-} else {
-    header('Location: ../user/dashboard.php');
+switch (getCrfRole()) {
+    case 'admin':
+        header('Location: ../admin/dashboard.php');
+        break;
+    case 'cmo':
+        header('Location: ../cmo/dashboard.php');
+        break;
+    case 'otomasi':
+        header('Location: ../otomasi/dashboard.php');
+        break;
+    case 'pak_joko':
+        header('Location: ../pak_joko/dashboard.php');
+        break;
+    default:
+        header('Location: ../user/pengajuan_saya.php');
+        break;
 }
 
 exit;

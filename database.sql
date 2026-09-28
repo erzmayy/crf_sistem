@@ -7,7 +7,7 @@ CREATE DATABASE IF NOT EXISTS crf_prototype
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
-USE crf_prototype;
+USE crf_system;
 
 -- ---------------------------------------------------------------------
 -- Tabel: users
@@ -107,7 +107,7 @@ CREATE TABLE change_requests (
                                     'CMO_FILTER',
                                     'OTOMASI',
                                     'PEMOHON_PIR',
-                                    'PAK_JOKO',
+                                    'kadep_operasional',
                                     'CMO_FINAL',
                                     'SELESAI'
                                 ) NOT NULL DEFAULT 'PEMOHON',
@@ -122,9 +122,9 @@ CREATE TABLE change_requests (
     tanggapan_tindak_lanjut     TEXT            NULL,
 
     approval_at                 DATETIME        NULL,
-    pak_joko_approved_by        INT UNSIGNED    NULL,
-    pak_joko_approved_at        DATETIME        NULL,
-    pak_joko_approval_note      TEXT            NULL,
+    kadep_operasional_approved_by        INT UNSIGNED    NULL,
+    kadep_operasional_approved_at        DATETIME        NULL,
+    kadep_operasional_approval_note      TEXT            NULL,
     solved_at                   DATETIME        NULL,
     cancelled_at                DATETIME        NULL,
 
@@ -135,8 +135,8 @@ CREATE TABLE change_requests (
     CONSTRAINT fk_crf_user
         FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT fk_crf_pak_joko_approved_by
-        FOREIGN KEY (pak_joko_approved_by) REFERENCES users(id)
+    CONSTRAINT fk_crf_kadep_operasional_approved_by
+        FOREIGN KEY (kadep_operasional_approved_by) REFERENCES users(id)
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
@@ -195,7 +195,7 @@ CREATE TABLE crf_activity_logs (
 CREATE TABLE crf_user_roles (
     id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id             INT UNSIGNED NOT NULL,
-    role                ENUM('pemohon','cmo','otomasi','pak_joko','admin') NOT NULL,
+    role                ENUM('pemohon','cmo','otomasi','kadep_operasional','admin') NOT NULL,
     is_active           TINYINT(1) NOT NULL DEFAULT 1,
     created_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_crf_user_role_user (user_id),
@@ -267,6 +267,6 @@ INSERT INTO crf_user_roles (user_id, role) VALUES
 (2, 'admin'),
 (3, 'cmo'),
 (4, 'otomasi'),
-(5, 'pak_joko');
+(5, 'kadep_operasional');
 
 

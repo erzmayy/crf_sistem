@@ -43,7 +43,6 @@ function generateRequestNumber(PDO $pdo, DateTime $date): string
 {
     $year = $date->format('y');
 
-    // Pastikan baris penghitung untuk tahun ini sudah ada.
     $ensureStmt = $pdo->prepare(
         'INSERT INTO crf_sequence (year, last_number)
          VALUES (:year, 0)
@@ -256,7 +255,7 @@ function workflowStageLabel(string $stage): string
             return 'Otomasi';
         case 'PEMOHON_PIR':
             return 'Pemohon - Isi PIR';
-        case 'PAK_JOKO':
+        case 'kadep_operasional':
             return 'Kepala Departemen Operasional - Approval';
         case 'CMO_FINAL':
             return 'CMO - Finalisasi';
@@ -276,7 +275,7 @@ function workflowStageBadgeClass(string $stage): string
             return 'badge-stage-otomasi';
         case 'PEMOHON_PIR':
             return 'badge-stage-pir';
-        case 'PAK_JOKO':
+        case 'kadep_operasional':
             return 'badge-stage-joko';
         case 'CMO_FINAL':
             return 'badge-stage-cmo-final';

@@ -20,7 +20,7 @@ switch (getCrfRole()) {
         header('Location: pak_joko/dashboard.php');
         break;
     default:
-        header('Location: user/dashboard.php');
+        header('Location: user/pengajuan_saya.php');
         break;
 }
 exit;

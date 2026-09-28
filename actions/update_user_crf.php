@@ -103,7 +103,7 @@ try {
         SET
             implementation = :implementation,
             post_implementation_review = :pir,
-            workflow_stage = 'PAK_JOKO'
+            workflow_stage = 'pak_joko'
         WHERE id = :id
           AND user_id = :user_id
           AND workflow_stage = 'PEMOHON_PIR'
