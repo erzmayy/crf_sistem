@@ -76,7 +76,7 @@ $homePath = $isAdminUser
           <a class="<?= $isOtomasi ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/otomasi/index.php">
             <i class="bi bi-gear-fill"></i><span>Otomasi</span>
           </a>
-        <?php elseif ($crfRole === 'pak_joko'): ?>
+        <?php elseif ($crfRole === 'kadep_operasional'): ?>
           <a class="<?= $isPakJoko ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/pak_joko/index.php">
             <i class="bi bi-check2-square"></i><span>Kepala Departemen Operasional</span>
           </a>

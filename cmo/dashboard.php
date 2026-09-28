@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
-requireAdmin();
+requireCrfRole(['cmo']);
 $pdo = getConnection();
 $counts = ['CMO_FILTER'=>0,'CMO_FINAL'=>0,'SELESAI'=>0];
 $stmt = $pdo->query("SELECT workflow_stage, COUNT(*) total FROM change_requests GROUP BY workflow_stage");

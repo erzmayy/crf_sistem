@@ -1,9 +1,9 @@
 -- =====================================================================
 -- CRF PROTOTYPE - WORKFLOW MIGRATION
--- Jalankan sekali pada database crf_prototype.
+-- Jalankan sekali pada database crf_system.
 -- =====================================================================
 
-USE crf_prototype;
+USE crf_system;
 
 ALTER TABLE change_requests
     ADD COLUMN workflow_stage ENUM(

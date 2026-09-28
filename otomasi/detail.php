@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 
-requireAdmin();
+requireCrfRole(['otomasi']);
 
 $pdo = getConnection();
 
@@ -563,7 +563,7 @@ require_once __DIR__ . '/../includes/header.php';
                         class="btn btn-crf-primary"
                     >
                         <i class="bi bi-check2-circle"></i>
-                        Selesai Eksekusi 
+                        Eksekusi
                     </button>
 
                 </div>

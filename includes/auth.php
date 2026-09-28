@@ -97,7 +97,7 @@ function requireCrfRole($roles): void
             case 'otomasi':
                 header('Location: ../otomasi/dashboard.php');
                 break;
-            case 'pak_joko':
+            case 'kadep_operasional':
                 header('Location: ../pak_joko/dashboard.php');
                 break;
             default:
@@ -115,7 +115,7 @@ function crfRoleLabel(string $role): string
             return 'CMO';
         case 'otomasi':
             return 'Otomasi';
-        case 'pak_joko':
+        case 'kadep_operasional':
             return 'Kepala Departemen Operasional';
         case 'admin':
             return 'Admin';
@@ -135,7 +135,7 @@ function requireAdmin(): void
 /**
  * Apakah user yang login boleh mengakses CRF (dan lampirannya)?
  * - Pemilik CRF: boleh (termasuk saat masih Draft).
- * - Role admin/cmo/otomasi/pak_joko: boleh, kecuali CRF berstatus Draft.
+ * - Role admin/cmo/otomasi/kadep_operasional: boleh, kecuali CRF berstatus Draft.
  */
 function canAccessCrf(PDO $pdo, int $crfId): bool
 {
@@ -167,7 +167,7 @@ function canAccessCrf(PDO $pdo, int $crfId): bool
 
     return in_array(
         getCrfRole(),
-        ['admin', 'cmo', 'otomasi', 'pak_joko'],
+        ['admin', 'cmo', 'otomasi', 'kadep_operasional'],
         true
     );
 }

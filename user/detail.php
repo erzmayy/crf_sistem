@@ -4,8 +4,8 @@
  * ---------------------------------------------------------------
  * Menampilkan detail CRF milik user yang sedang login.
  *
- * Implementasi / Hasil Perubahan dan Post Implementation Review
- * diisi oleh Otomasi sebelum eksekusi diselesaikan. User hanya melihat hasilnya.
+ * Implementasi dan Post Implementation Review diisi oleh Otomasi
+ * dan ditampilkan read-only kepada user.
  * ---------------------------------------------------------------
  */
 
@@ -603,26 +603,25 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
               
                 <!-- IMPLEMENTASI & POST IMPLEMENTATION REVIEW -->
-                <div id="implementation-review" class="mt-4 pt-3 border-top">
+        <div id="implementation-review" class="mt-4 pt-3 border-top">
 
-                    <div class="crf-section-header mb-3">
-                        <span class="crf-section-number">
-                            <i class="bi bi-clipboard-check"></i>
-                        </span>
+            <div class="crf-section-header mb-3">
+                <span class="crf-section-number">
+                    <i class="bi bi-clipboard-check"></i>
+                </span>
 
-                        <h2>Implementasi & Post Implementation Review</h2>
-                    </div>
+                <h2>Implementasi & Post Implementation Review</h2>
+            </div>
 
-                    <div class="alert alert-info mb-4">
-                        Implementasi / Hasil Perubahan dan Post Implementation Review diisi oleh Otomasi setelah eksekusi perubahan selesai.
-                    </div>
 
-                    <!-- IMPLEMENTASI -->
-                    <div class="mb-4">
+            <?php if (($crf['workflow_stage'] ?? '') === 'PEMOHON_PIR'): ?>
+                <div class="alert alert-info">
+                    Isian Implementasi dan Post Implementation Review akan dilengkapi oleh Otomasi.
+                </div>
+            <?php endif; ?>
 
-                        <div class="crf-detail-label">
-                            Implementasi / Hasil Perubahan
-                        </div>
+            <!-- IMPLEMENTASI -->
+            <div class="mb-4">
 
                         <div class="crf-detail-value">
 
@@ -642,12 +641,11 @@ require_once __DIR__ . '/../includes/header.php';
 
                     </div>
 
-                    <!-- POST IMPLEMENTATION REVIEW -->
-                    <div class="mb-0">
+            </div>
 
-                        <div class="crf-detail-label">
-                            Post Implementation Review
-                        </div>
+
+            <!-- PIR -->
+            <div class="mb-0">
 
                         <div class="crf-detail-value">
 
@@ -667,7 +665,12 @@ require_once __DIR__ . '/../includes/header.php';
 
                     </div>
 
-                </div>
+            </div>
+
+        </div>
+
+            </div>
+        </div>
 
         <!-- TIMELINE PROSES PENGAJUAN -->
         <div class="crf-section mt-4">

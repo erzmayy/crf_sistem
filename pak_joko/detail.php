@@ -13,7 +13,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 
-requireCrfRole(['pak_joko']);
+requireCrfRole(['kadep_operasional']);
 
 $pdo = getConnection();
 
@@ -27,7 +27,7 @@ $stmt = $pdo->prepare("
     SELECT cr.*
     FROM change_requests cr
     WHERE cr.id = :id
-      AND cr.workflow_stage = 'PAK_JOKO'
+      AND cr.workflow_stage = 'kadep_operasional'
       AND cr.status <> 'Draft'
     LIMIT 1
 ");
@@ -162,8 +162,8 @@ require_once __DIR__ . '/../includes/header.php';
                 Status: <?= h(statusLabel($crf['status'] ?? '')) ?>
             </span>
 
-            <span class="crf-badge <?= workflowStageBadgeClass($crf['workflow_stage'] ?? 'PAK_JOKO') ?>">
-                Tahap: <?= h(workflowStageLabel($crf['workflow_stage'] ?? 'PAK_JOKO')) ?>
+            <span class="crf-badge <?= workflowStageBadgeClass($crf['workflow_stage'] ?? 'kadep_operasional') ?>">
+                Tahap: <?= h(workflowStageLabel($crf['workflow_stage'] ?? 'kadep_operasional')) ?>
             </span>
 
             <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>">
@@ -231,8 +231,8 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="crf-section-body">
 
                 <p class="text-muted">
-                    Silakan periksa seluruh detail CRF terlebih dahulu
-                    sebelum memberikan approval.
+                    Periksa detail CRF serta Level Urgensi dan SLA sebelum
+                    menyetujui pelaksanaan oleh Otomasi.
                 </p>
 
                 <form action="../actions/pak_joko_approve.php" method="POST">
@@ -254,7 +254,7 @@ require_once __DIR__ . '/../includes/header.php';
                             class="form-control"
                             rows="4"
                             placeholder="Tuliskan catatan approval bila diperlukan..."
-                        ><?= h($crf['pak_joko_approval_note'] ?? '') ?></textarea>
+                        ><?= h($crf['kadep_operasional_approval_note'] ?? '') ?></textarea>
 
                     </div>
 

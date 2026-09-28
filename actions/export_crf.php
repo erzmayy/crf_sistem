@@ -675,10 +675,10 @@ $html = '
 
                 <div class="process-table-date">
                     ' . (
-                        !empty($crf['pak_joko_approved_at'])
+                        !empty($crf['kadep_operasional_approved_at'])
                             ? formatTanggalIndonesia(
                                 new DateTime(
-                                    $crf['pak_joko_approved_at']
+                                    $crf['kadep_operasional_approved_at']
                                 )
                             )
                             : '-'
