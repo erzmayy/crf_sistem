@@ -198,6 +198,47 @@ if (
 }
 
 /* ---------------------------------------------------------------
+ * Ambil tanggal aktivitas workflow untuk kebutuhan export PDF
+ * --------------------------------------------------------------- */
+$activityStmt = $pdo->prepare("
+    SELECT activity, created_at
+    FROM crf_activity_logs
+    WHERE change_request_id = :id
+    ORDER BY created_at ASC, id ASC
+");
+
+$activityStmt->execute(['id' => $id]);
+$activityRows = $activityStmt->fetchAll();
+
+$firstActivityDate = static function (array $rows, array $activities): ?string {
+    foreach ($rows as $row) {
+        if (in_array($row['activity'], $activities, true)) {
+            return $row['created_at'];
+        }
+    }
+
+    return null;
+};
+
+$slaDeterminedAt = $firstActivityDate(
+    $activityRows,
+    ['Otomasi - SLA Ditentukan']
+);
+
+$implementationPirAt = $firstActivityDate(
+    $activityRows,
+    ['Implementasi & PIR Diisi']
+);
+
+$slaDeterminedDate = $slaDeterminedAt
+    ? formatTanggalIndonesia(new DateTime($slaDeterminedAt))
+    : null;
+
+$implementationPirDate = $implementationPirAt
+    ? formatTanggalIndonesia(new DateTime($implementationPirAt))
+    : null;
+
+/* ---------------------------------------------------------------
  * HTML PDF
  * --------------------------------------------------------------- */
 $html = '
@@ -321,6 +362,7 @@ $html = '
             vertical-align: top;
             text-align: center;
             height: 95px;
+            width: 14.2857%;
         }
 
         .process-table .process-table-label {
@@ -548,7 +590,7 @@ $html = '
             <!-- 1. PEMOHON -->
             <td>
                 <div class="process-table-title">
-                    Yang Mengajukan
+                    Pemohon
                 </div>
 
                 <div class="process-table-person">
@@ -556,7 +598,7 @@ $html = '
                 </div>
 
                 <div class="process-table-label">
-                    Tanggal Pengajuan
+                    Mengajukan CRF
                 </div>
 
                 <div class="process-table-date">
@@ -565,18 +607,18 @@ $html = '
             </td>
 
 
-            <!-- 2. CMO -->
+            <!-- 2. CMO FILTERING -->
             <td>
                 <div class="process-table-title">
                     CMO
                 </div>
 
                 <div class="process-table-role">
-                    Dikirim ke Otomasi
+                    Filtering
                 </div>
 
                 <div class="process-table-label">
-                    Tanggal Diteruskan
+                    Diteruskan ke Otomasi
                 </div>
 
                 <div class="process-table-date">
@@ -593,38 +635,34 @@ $html = '
             </td>
 
 
-            <!-- 3. OTOMASI -->
+            <!-- 3. OTOMASI SLA -->
             <td>
                 <div class="process-table-title">
                     Otomasi
                 </div>
 
                 <div class="process-table-role">
-                    Submit / Selesai Ditangani
+                    Menentukan SLA
                 </div>
 
                 <div class="process-table-label">
-                    Tanggal Submit
+                    SLA Ditentukan
                 </div>
 
                 <div class="process-table-date">
                     ' . (
-                        !empty($crf['automation_completed_at'])
-                            ? formatTanggalIndonesia(
-                                new DateTime(
-                                    $crf['automation_completed_at']
-                                )
-                            )
+                        !empty($slaDeterminedDate)
+                            ? $slaDeterminedDate
                             : '-'
                     ) . '
                 </div>
             </td>
 
 
-            <!-- 4. KEPALA DEPARTEMEN OPERASIONAL -->
+            <!-- 4. APPROVAL -->
             <td>
                 <div class="process-table-title">
-                    Kepala Departemen Operasional
+                    Kepala Dept. Operasional
                 </div>
 
                 <div class="process-table-role">
@@ -649,18 +687,70 @@ $html = '
             </td>
 
 
-            <!-- 5. CMO FINALISASI -->
+            <!-- 5. OTOMASI EKSEKUSI -->
+            <td>
+                <div class="process-table-title">
+                    Otomasi
+                </div>
+
+                <div class="process-table-role">
+                    Eksekusi
+                </div>
+
+                <div class="process-table-label">
+                    Eksekusi Selesai
+                </div>
+
+                <div class="process-table-date">
+                    ' . (
+                        !empty($crf['automation_completed_at'])
+                            ? formatTanggalIndonesia(
+                                new DateTime(
+                                    $crf['automation_completed_at']
+                                )
+                            )
+                            : '-'
+                    ) . '
+                </div>
+            </td>
+
+
+            <!-- 6. PEMOHON IMPLEMENTASI + PIR -->
+            <td>
+                <div class="process-table-title">
+                    Pemohon
+                </div>
+
+                <div class="process-table-role">
+                    Implementasi + PIR
+                </div>
+
+                <div class="process-table-label">
+                    Dikirim ke CMO
+                </div>
+
+                <div class="process-table-date">
+                    ' . (
+                        !empty($implementationPirDate)
+                            ? $implementationPirDate
+                            : '-'
+                    ) . '
+                </div>
+            </td>
+
+
+            <!-- 7. CMO PENUTUPAN -->
             <td>
                 <div class="process-table-title">
                     CMO
                 </div>
 
                 <div class="process-table-role">
-                    Finalisasi / Selesai
+                    Penutupan CRF
                 </div>
 
                 <div class="process-table-label">
-                    Tanggal Finalisasi
+                    Tanggal Selesai
                 </div>
 
                 <div class="process-table-date">

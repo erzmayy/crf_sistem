@@ -718,15 +718,6 @@ require_once __DIR__ . '/../includes/header.php';
                                                 Detail
                                             </a>
 
-
-                                            <a
-                                                href="edit.php?id=<?= (int) $row['id'] ?>"
-                                                class="btn btn-sm btn-crf-primary"
-                                            >
-                                                <i class="bi bi-gear"></i>
-                                                Kelola
-                                            </a>
-
                                         </div>
 
                                     </td>

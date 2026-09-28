@@ -57,9 +57,30 @@ try {
     $actor = !empty($user['nama']) ? $user['nama'] : $user['userid'];
 
     if ($action === 'to_automation') {
-        $stmt = $pdo->prepare("UPDATE change_requests SET status = 'Dalam Proses', workflow_stage = 'OTOMASI', automation_started_at = :now WHERE id = :id AND workflow_stage = 'CMO_FILTER'");
-        $stmt->execute(['now' => $now, 'id' => $id]);
-        logCrfActivity($pdo, $id, 'Lolos Filter CMO', 'CRF lolos filter CMO dan diteruskan ke Otomasi.', $actor);
+        $stmt = $pdo->prepare("
+            UPDATE change_requests
+            SET
+                status = 'Dalam Proses',
+                workflow_stage = 'OTOMASI',
+                automation_started_at = NULL,
+                sla_started_at = NULL,
+                sla_due_at = NULL
+            WHERE id = :id
+            AND workflow_stage = 'CMO_FILTER'
+        ");
+
+        $stmt->execute([
+            'id' => $id
+        ]);
+
+        logCrfActivity(
+            $pdo,
+            $id,
+            'Lolos Filter CMO',
+            'CRF lolos filter CMO dan diteruskan ke Otomasi.',
+            $actor
+        );
+
         $message = 'CRF berhasil diteruskan ke Otomasi.';
     } elseif ($action === 'revision') {
         $stmt = $pdo->prepare("UPDATE change_requests SET status = 'Perlu Revisi', workflow_stage = 'PEMOHON', tanggapan_tindak_lanjut = :tanggapan WHERE id = :id AND workflow_stage = 'CMO_FILTER'");

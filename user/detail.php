@@ -4,11 +4,8 @@
  * ---------------------------------------------------------------
  * Menampilkan detail CRF milik user yang sedang login.
  *
- * User dapat mengisi Post Implementation Review (PIR) setelah
- * Otomasi menyelesaikan permintaan. Implementasi diisi oleh Otomasi
- * dan ditampilkan read-only kepada user.
- *
- * Pengisian PIR hanya dapat dilakukan ketika workflow_stage = PEMOHON_PIR.
+ * Implementasi / Hasil Perubahan dan Post Implementation Review
+ * diisi oleh Otomasi sebelum eksekusi diselesaikan. User hanya melihat hasilnya.
  * ---------------------------------------------------------------
  */
 
@@ -606,166 +603,71 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
               
                 <!-- IMPLEMENTASI & POST IMPLEMENTATION REVIEW -->
-        <div id="implementation-review" class="mt-4 pt-3 border-top">
+                <div id="implementation-review" class="mt-4 pt-3 border-top">
 
-            <div class="crf-section-header mb-3">
-                <span class="crf-section-number">
-                    <i class="bi bi-clipboard-check"></i>
-                </span>
+                    <div class="crf-section-header mb-3">
+                        <span class="crf-section-number">
+                            <i class="bi bi-clipboard-check"></i>
+                        </span>
 
-                <h2>Implementasi & Post Implementation Review</h2>
-            </div>
+                        <h2>Implementasi & Post Implementation Review</h2>
+                    </div>
 
-
-            <?php if (($crf['workflow_stage'] ?? '') === 'PEMOHON_PIR'): ?>
-
-                <div class="alert alert-info">
-                    Permintaan sudah selesai ditangani oleh Otomasi.
-                    Silakan lengkapi hasil implementasi dan evaluasi perubahan sebelum diteruskan ke Kepala Departemen Operasional.
-                </div>
-
-
-                <form action="../actions/update_user_crf.php" method="POST">
-
-                    <input
-                        type="hidden"
-                        name="id"
-                        value="<?= (int) $crf['id'] ?>"
-                    >
-
-                    <?= csrfField() ?>
-
+                    <div class="alert alert-info mb-4">
+                        Implementasi / Hasil Perubahan dan Post Implementation Review diisi oleh Otomasi setelah eksekusi perubahan selesai.
+                    </div>
 
                     <!-- IMPLEMENTASI -->
                     <div class="mb-4">
 
-                        <label
-                            for="implementation"
-                            class="form-label fw-semibold"
-                        >
+                        <div class="crf-detail-label">
                             Implementasi / Hasil Perubahan
-                            <span class="text-danger">*</span>
-                        </label>
+                        </div>
 
-                        <small class="d-block text-muted mb-2">
-                            Tuliskan hasil atau perubahan yang sudah diterapkan pada permintaan CRF.
-                        </small>
+                        <div class="crf-detail-value">
 
-                        <textarea
-                            name="implementation"
-                            id="implementation"
-                            class="form-control"
-                            rows="6"
-                            required
-                            placeholder="Tuliskan hasil implementasi atau perubahan yang sudah diterapkan..."
-                        ><?= h($crf['implementation'] ?? '') ?></textarea>
+                            <?php if (!empty($crf['implementation'])): ?>
+
+                                <?= nl2br(h($crf['implementation'])) ?>
+
+                            <?php else: ?>
+
+                                <span class="text-muted">
+                                    Belum diisi.
+                                </span>
+
+                            <?php endif; ?>
+
+                        </div>
 
                     </div>
 
+                    <!-- POST IMPLEMENTATION REVIEW -->
+                    <div class="mb-0">
 
-                    <!-- PIR -->
-                    <div class="mb-4">
-
-                        <label
-                            for="post_implementation_review"
-                            class="form-label fw-semibold"
-                        >
+                        <div class="crf-detail-label">
                             Post Implementation Review
-                            <span class="text-danger">*</span>
-                        </label>
+                        </div>
 
-                        <small class="d-block text-muted mb-2">
-                            Tuliskan hasil evaluasi setelah perubahan diterapkan.
-                        </small>
+                        <div class="crf-detail-value">
 
-                        <textarea
-                            name="post_implementation_review"
-                            id="post_implementation_review"
-                            class="form-control"
-                            rows="6"
-                            required
-                            placeholder="Tuliskan hasil evaluasi perubahan..."
-                        ><?= h($crf['post_implementation_review'] ?? '') ?></textarea>
+                            <?php if (!empty($crf['post_implementation_review'])): ?>
 
-                    </div>
+                                <?= nl2br(h($crf['post_implementation_review'])) ?>
 
+                            <?php else: ?>
 
-                    <div class="d-flex justify-content-end">
+                                <span class="text-muted">
+                                    Belum diisi.
+                                </span>
 
-                        <button
-                            type="submit"
-                            class="btn btn-crf-primary"
-                        >
-                            <i class="bi bi-send"></i>
-                            Kirim ke Kepala Departemen Operasional
-                        </button>
+                            <?php endif; ?>
 
-                    </div>
-
-                </form>
-
-
-            <?php else: ?>
-
-
-                <!-- IMPLEMENTASI -->
-                <div class="mb-4">
-
-                    <div class="crf-detail-label">
-                        Implementasi / Hasil Perubahan
-                    </div>
-
-                    <div class="crf-detail-value">
-
-                        <?php if (!empty($crf['implementation'])): ?>
-
-                            <?= nl2br(h($crf['implementation'])) ?>
-
-                        <?php else: ?>
-
-                            <span class="text-muted">
-                                Belum diisi.
-                            </span>
-
-                        <?php endif; ?>
+                        </div>
 
                     </div>
 
                 </div>
-
-
-                <!-- PIR -->
-                <div class="mb-0">
-
-                    <div class="crf-detail-label">
-                        Post Implementation Review
-                    </div>
-
-                    <div class="crf-detail-value">
-
-                        <?php if (!empty($crf['post_implementation_review'])): ?>
-
-                            <?= nl2br(h($crf['post_implementation_review'])) ?>
-
-                        <?php else: ?>
-
-                            <span class="text-muted">
-                                Belum diisi.
-                            </span>
-
-                        <?php endif; ?>
-
-                    </div>
-
-                </div>
-
-
-            <?php endif; ?>
-
-        </div>
-
-            </div>
-        </div>
 
         <!-- TIMELINE PROSES PENGAJUAN -->
         <div class="crf-section mt-4">
