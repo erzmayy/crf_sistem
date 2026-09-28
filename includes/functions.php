@@ -41,6 +41,16 @@ use Aws\Exception\AwsException;
  */
 function generateRequestNumber(PDO $pdo, DateTime $date): string
 {
+    $year = $date->format('y');
+
+    // Pastikan baris penghitung untuk tahun ini sudah ada.
+    $ensureStmt = $pdo->prepare(
+        'INSERT INTO crf_sequence (year, last_number)
+         VALUES (:year, 0)
+         ON DUPLICATE KEY UPDATE year = year'
+    );
+    $ensureStmt->execute(['year' => $year]);
+
     $stmt = $pdo->prepare(
         'UPDATE crf_sequence
          SET last_number = LAST_INSERT_ID(
@@ -57,14 +67,17 @@ function generateRequestNumber(PDO $pdo, DateTime $date): string
                          )
                      )
                      FROM change_requests
-                     WHERE request_number LIKE "PPU-02.4.%"
+                     WHERE request_number LIKE CONCAT("PPU-02.4.%.", :year1)
                  ), 0)
              ) + 1
          )
-         WHERE id = 1'
+         WHERE year = :year2'
     );
 
-    $stmt->execute();
+    $stmt->execute([
+        'year1' => $year,
+        'year2' => $year,
+    ]);
 
     if ($stmt->rowCount() === 0) {
         throw new RuntimeException(
@@ -76,7 +89,7 @@ function generateRequestNumber(PDO $pdo, DateTime $date): string
 
     if ($sequence > 9999) {
         throw new RuntimeException(
-            'Nomor register sudah mencapai batas maksimum 9999.'
+            'Nomor register tahun ' . $year . ' sudah mencapai batas maksimum 9999.'
         );
     }
 
@@ -84,26 +97,26 @@ function generateRequestNumber(PDO $pdo, DateTime $date): string
         'PPU-02.4.%04d.%s.%s',
         $sequence,
         $date->format('m'),
-        $date->format('y')
+        $year
     );
 }
 
-/**
- * Pratinjau Nomor Register berikutnya, TANPA menaikkan penghitung.
- * Hanya untuk ditampilkan di form; nomor akhir tetap dibuat saat
- * data disimpan.
- */
 function previewRequestNumber(PDO $pdo, DateTime $date): string
 {
-    $last = (int) $pdo
-        ->query('SELECT last_number FROM crf_sequence WHERE id = 1')
-        ->fetchColumn();
+    $year = $date->format('y');
+
+    $stmt = $pdo->prepare(
+        'SELECT last_number FROM crf_sequence WHERE year = :year'
+    );
+    $stmt->execute(['year' => $year]);
+
+    $lastNumber = (int) $stmt->fetchColumn();
 
     return sprintf(
         'PPU-02.4.%04d.%s.%s',
-        $last + 1,
+        $lastNumber + 1,
         $date->format('m'),
-        $date->format('y')
+        $year
     );
 }
 
