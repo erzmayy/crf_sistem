@@ -85,6 +85,9 @@ try {
                 kadep_operasional_approved_by = NULL,
                 kadep_operasional_approved_at = NULL,
                 kadep_operasional_approval_note = :approval_note,
+                sla_started_at = NULL,
+                sla_due_at = NULL,
+                automation_started_at = NULL,
                 workflow_stage = 'OTOMASI',
                 status = 'Dalam Proses'
             WHERE id = :id
@@ -131,11 +134,50 @@ try {
     if ($action === 'approve') {
 
         $stmt = $pdo->prepare("
+            SELECT
+                id,
+                sla_value,
+                sla_unit
+            FROM change_requests
+            WHERE id = :id
+              AND workflow_stage = 'kadep_operasional'
+            FOR UPDATE
+        ");
+
+        $stmt->execute(['id' => $id]);
+        $approvalCrf = $stmt->fetch();
+
+        if (!$approvalCrf) {
+            throw new RuntimeException('CRF sudah tidak tersedia untuk approval.');
+        }
+
+        if (
+            $approvalCrf['sla_value'] === null
+            || $approvalCrf['sla_value'] === ''
+            || !is_numeric($approvalCrf['sla_value'])
+            || (float) $approvalCrf['sla_value'] <= 0
+            || !in_array($approvalCrf['sla_unit'], ['Menit', 'Jam', 'Hari'], true)
+        ) {
+            throw new RuntimeException('SLA belum ditentukan dengan benar.');
+        }
+
+        // SLA baru dimulai setelah Kepala Departemen Operasional menyetujui CRF.
+        $slaStartedAt = $now;
+        $slaDueAt = slaDueAt(
+            $slaStartedAt,
+            $approvalCrf['sla_value'],
+            $approvalCrf['sla_unit']
+        );
+
+        $stmt = $pdo->prepare("
             UPDATE change_requests
             SET
                 kadep_operasional_approved_by = :approved_by,
                 kadep_operasional_approved_at = :approved_at,
                 kadep_operasional_approval_note = :approval_note,
+                sla_started_at = :sla_started_at,
+                sla_due_at = :sla_due_at,
+                automation_started_at = :automation_started_at,
                 workflow_stage = 'OTOMASI',
                 status = 'Dalam Proses'
             WHERE id = :id
@@ -148,6 +190,9 @@ try {
             'approval_note' => $note !== ''
                 ? $note
                 : null,
+            'sla_started_at' => $slaStartedAt,
+            'sla_due_at' => $slaDueAt,
+            'automation_started_at' => $slaStartedAt,
             'id' => $id,
         ]);
 
