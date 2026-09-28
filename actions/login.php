@@ -18,30 +18,9 @@ if ($userid === '' || $password === '') {
 }
 
 $pdo = getConnection();
+$user = findCrfUserByUserid($pdo, $userid);
 
-$stmt = $pdo->prepare(
-    'SELECT
-        id,
-        userid,
-        nama,
-        no_wa,
-        email,
-        password,
-        password_new,
-        dept,
-        divisi
-     FROM users
-     WHERE userid = :userid
-     LIMIT 1'
-);
-
-$stmt->execute([
-    'userid' => $userid
-]);
-
-$user = $stmt->fetch();
-
-if (!$user || !password_verify($password, $user['password'])) {
+if (!$user || !verifyCrfUserPassword($password, $user)) {
     $_SESSION['login_error'] = 'User ID atau password salah.';
     header('Location: ../login.php');
     exit;

@@ -3,8 +3,8 @@
  * includes/session.php
  * ---------------------------------------------------------------
  * Menangani session user yang sudah login.
- * Data user diambil dari tabel users berdasarkan user_id
- * yang tersimpan di session.
+ * Data user bisa diambil dari tabel users lokal atau siap.tbl_user,
+ * tergantung konfigurasi CRF_USER_SOURCE di config/siap.php.
  * ---------------------------------------------------------------
  */
 
@@ -13,9 +13,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../config/database.php';
-
-// ID user yang disimulasikan sedang login (lihat brief butir 5 & 9).
-// const SIMULATED_USER_ID = 1;
+require_once __DIR__ . '/siap_user_provider.php';
 
 /**
  * Mengambil data user aktif dari database.
@@ -30,16 +28,7 @@ function getCurrentUser(): array
 
     if (!isset($_SESSION['active_user'])) {
         $pdo = getConnection();
-
-        $stmt = $pdo->prepare(
-            'SELECT * FROM users WHERE id = :id LIMIT 1'
-        );
-
-        $stmt->execute([
-            'id' => $_SESSION['user_id']
-        ]);
-
-        $user = $stmt->fetch();
+        $user = findCrfUserById($pdo, (int) $_SESSION['user_id']);
 
         if (!$user) {
             $_SESSION = [];
