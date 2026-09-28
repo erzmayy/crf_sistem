@@ -96,8 +96,6 @@ try {
     }
 
     $now = date('Y-m-d H:i:s');
-    $startedAt = $crf['automation_started_at'] ?: $now;
-    $dueAt = slaDueAt($startedAt, $slaValue, $slaUnit);
     $actor = !empty($user['nama']) ? $user['nama'] : $user['userid'];
 
     if ($action === 'save') {
@@ -106,10 +104,7 @@ try {
             SET
                 level = :level,
                 sla_value = :sla_value,
-                sla_unit = :sla_unit,
-                sla_started_at = :sla_started_at,
-                sla_due_at = :sla_due_at,
-                automation_started_at = :automation_started_at
+                sla_unit = :sla_unit
             WHERE id = :id
               AND workflow_stage = 'OTOMASI'
         ");
@@ -117,9 +112,6 @@ try {
             'level' => $level,
             'sla_value' => (float) $slaValue,
             'sla_unit' => $slaUnit,
-            'sla_started_at' => $startedAt,
-            'sla_due_at' => $dueAt,
-            'automation_started_at' => $startedAt,
             'id' => $id,
         ]);
 
@@ -139,9 +131,9 @@ try {
                 level = :level,
                 sla_value = :sla_value,
                 sla_unit = :sla_unit,
-                sla_started_at = :sla_started_at,
-                sla_due_at = :sla_due_at,
-                automation_started_at = :automation_started_at,
+                sla_started_at = NULL,
+                sla_due_at = NULL,
+                automation_started_at = NULL,
                 workflow_stage = 'kadep_operasional',
                 status = 'Dalam Proses'
             WHERE id = :id
@@ -152,9 +144,6 @@ try {
             'level' => $level,
             'sla_value' => (float) $slaValue,
             'sla_unit' => $slaUnit,
-            'sla_started_at' => $startedAt,
-            'sla_due_at' => $dueAt,
-            'automation_started_at' => $startedAt,
             'id' => $id,
         ]);
 
