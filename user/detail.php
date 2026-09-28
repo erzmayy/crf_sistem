@@ -4,11 +4,8 @@
  * ---------------------------------------------------------------
  * Menampilkan detail CRF milik user yang sedang login.
  *
- * User dapat mengisi Post Implementation Review (PIR) setelah
- * Otomasi menyelesaikan permintaan. Implementasi diisi oleh Otomasi
+ * Implementasi dan Post Implementation Review diisi oleh Otomasi
  * dan ditampilkan read-only kepada user.
- *
- * Pengisian PIR hanya dapat dilakukan ketika workflow_stage = PEMOHON_PIR.
  * ---------------------------------------------------------------
  */
 
@@ -618,98 +615,13 @@ require_once __DIR__ . '/../includes/header.php';
 
 
             <?php if (($crf['workflow_stage'] ?? '') === 'PEMOHON_PIR'): ?>
-
                 <div class="alert alert-info">
-                    Permintaan sudah selesai ditangani oleh Otomasi.
-                    Silakan lengkapi hasil implementasi dan evaluasi perubahan sebelum diteruskan ke Kepala Departemen Operasional.
+                    Isian Implementasi dan Post Implementation Review akan dilengkapi oleh Otomasi.
                 </div>
+            <?php endif; ?>
 
-
-                <form action="../actions/update_user_crf.php" method="POST">
-
-                    <input
-                        type="hidden"
-                        name="id"
-                        value="<?= (int) $crf['id'] ?>"
-                    >
-
-                    <?= csrfField() ?>
-
-
-                    <!-- IMPLEMENTASI -->
-                    <div class="mb-4">
-
-                        <label
-                            for="implementation"
-                            class="form-label fw-semibold"
-                        >
-                            Implementasi / Hasil Perubahan
-                            <span class="text-danger">*</span>
-                        </label>
-
-                        <small class="d-block text-muted mb-2">
-                            Tuliskan hasil atau perubahan yang sudah diterapkan pada permintaan CRF.
-                        </small>
-
-                        <textarea
-                            name="implementation"
-                            id="implementation"
-                            class="form-control"
-                            rows="6"
-                            required
-                            placeholder="Tuliskan hasil implementasi atau perubahan yang sudah diterapkan..."
-                        ><?= h($crf['implementation'] ?? '') ?></textarea>
-
-                    </div>
-
-
-                    <!-- PIR -->
-                    <div class="mb-4">
-
-                        <label
-                            for="post_implementation_review"
-                            class="form-label fw-semibold"
-                        >
-                            Post Implementation Review
-                            <span class="text-danger">*</span>
-                        </label>
-
-                        <small class="d-block text-muted mb-2">
-                            Tuliskan hasil evaluasi setelah perubahan diterapkan.
-                        </small>
-
-                        <textarea
-                            name="post_implementation_review"
-                            id="post_implementation_review"
-                            class="form-control"
-                            rows="6"
-                            required
-                            placeholder="Tuliskan hasil evaluasi perubahan..."
-                        ><?= h($crf['post_implementation_review'] ?? '') ?></textarea>
-
-                    </div>
-
-
-                    <div class="d-flex justify-content-end">
-
-                        <button
-                            type="submit"
-                            class="btn btn-crf-primary"
-                        >
-                            <i class="bi bi-send"></i>
-                            Kirim ke Kepala Departemen Operasional
-                        </button>
-
-                    </div>
-
-                </form>
-
-
-            <?php else: ?>
-
-
-                <!-- IMPLEMENTASI -->
-                <div class="mb-4">
+            <!-- IMPLEMENTASI -->
+            <div class="mb-4">
 
                     <div class="crf-detail-label">
                         Implementasi / Hasil Perubahan
@@ -731,11 +643,11 @@ require_once __DIR__ . '/../includes/header.php';
 
                     </div>
 
-                </div>
+            </div>
 
 
-                <!-- PIR -->
-                <div class="mb-0">
+            <!-- PIR -->
+            <div class="mb-0">
 
                     <div class="crf-detail-label">
                         Post Implementation Review
@@ -757,10 +669,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                     </div>
 
-                </div>
-
-
-            <?php endif; ?>
+            </div>
 
         </div>
 

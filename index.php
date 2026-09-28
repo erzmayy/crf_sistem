@@ -16,7 +16,7 @@ switch (getCrfRole()) {
     case 'otomasi':
         header('Location: otomasi/dashboard.php');
         break;
-    case 'pak_joko':
+    case 'kadep_operasional':
         header('Location: pak_joko/dashboard.php');
         break;
     default:

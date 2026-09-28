@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
-requireAdmin();
+requireCrfRole(['otomasi']);
 $pdo=getConnection();
 $total=(int)$pdo->query("SELECT COUNT(*) FROM change_requests WHERE workflow_stage='OTOMASI'")->fetchColumn();
 $flash=$_SESSION['flash']??null; unset($_SESSION['flash']);

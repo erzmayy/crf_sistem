@@ -2,16 +2,16 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 
-requireCrfRole(['pak_joko']);
+requireCrfRole(['kadep_operasional']);
 
 $pdo = getConnection();
 
 $total = (int) $pdo->query(
-    "SELECT COUNT(*) FROM change_requests WHERE workflow_stage = 'PAK_JOKO'"
+    "SELECT COUNT(*) FROM change_requests WHERE workflow_stage = 'kadep_operasional'"
 )->fetchColumn();
 
 $approvedStmt = $pdo->prepare(
-    'SELECT COUNT(*) FROM change_requests WHERE pak_joko_approved_by = :user_id'
+    'SELECT COUNT(*) FROM change_requests WHERE kadep_operasional_approved_by = :user_id'
 );
 $approvedStmt->execute(['user_id' => (int) getCurrentUser()['id']]);
 $approved = (int) $approvedStmt->fetchColumn();

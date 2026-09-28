@@ -2,10 +2,10 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 
-requireCrfRole(['pak_joko']);
+requireCrfRole(['kadep_operasional']);
 
 $pdo = getConnection();
-$stmt = $pdo->query("SELECT cr.* FROM change_requests cr WHERE cr.workflow_stage = 'PAK_JOKO' AND cr.status <> 'Draft' ORDER BY cr.updated_at ASC");
+$stmt = $pdo->query("SELECT cr.* FROM change_requests cr WHERE cr.workflow_stage = 'kadep_operasional' AND cr.status <> 'Draft' ORDER BY cr.updated_at ASC");
 $requests = $stmt->fetchAll();
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
@@ -14,7 +14,7 @@ require_once __DIR__ . '/../includes/header.php';
 ?>
 <div class="crf-page">
   <div class="container">
-    <div class="crf-page-header"><h1>Kepala Departemen Operasional - Approval</h1><p>Daftar CRF yang sudah ditangani Otomasi dan menunggu approval.</p></div>
+    <div class="crf-page-header"><h1>Kepala Departemen Operasional - Approval</h1><p>Daftar CRF dengan Level Urgensi dan SLA yang menunggu persetujuan sebelum eksekusi Otomasi.</p></div>
     <?php if ($flash): ?><div class="alert alert-<?= h($flash['type']) ?> crf-alert"><?= h($flash['message']) ?></div><?php endif; ?>
     <div class="crf-table-card">
       <div class="crf-table-heading"><h2>Menunggu Approval</h2></div>

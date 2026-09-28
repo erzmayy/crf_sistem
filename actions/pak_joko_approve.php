@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 
-requireCrfRole(['pak_joko']);
+requireCrfRole(['kadep_operasional']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../pak_joko/index.php');
@@ -39,7 +39,7 @@ $stmt->execute(['id' => $id]);
 
 $crf = $stmt->fetch();
 
-if (!$crf || $crf['workflow_stage'] !== 'pak_joko') {
+if (!$crf || $crf['workflow_stage'] !== 'kadep_operasional') {
     $_SESSION['flash'] = [
         'type' => 'danger',
         'message' => 'CRF tidak tersedia untuk approval.'
@@ -82,13 +82,13 @@ try {
         $stmt = $pdo->prepare("
             UPDATE change_requests
             SET
-                pak_joko_approved_by = NULL,
-                pak_joko_approved_at = NULL,
-                pak_joko_approval_note = :approval_note,
+                kadep_operasional_approved_by = NULL,
+                kadep_operasional_approved_at = NULL,
+                kadep_operasional_approval_note = :approval_note,
                 workflow_stage = 'OTOMASI',
                 status = 'Dalam Proses'
             WHERE id = :id
-              AND workflow_stage = 'PAK_JOKO'
+              AND workflow_stage = 'kadep_operasional'
         ");
 
         $stmt->execute([
@@ -96,6 +96,9 @@ try {
             'id' => $id,
         ]);
 
+        if ($stmt->rowCount() !== 1) {
+            throw new RuntimeException('CRF sudah tidak tersedia untuk approval.');
+        }
 
         logCrfActivity(
             $pdo,
@@ -130,13 +133,13 @@ try {
         $stmt = $pdo->prepare("
             UPDATE change_requests
             SET
-                pak_joko_approved_by = :approved_by,
-                pak_joko_approved_at = :approved_at,
-                pak_joko_approval_note = :approval_note,
+                kadep_operasional_approved_by = :approved_by,
+                kadep_operasional_approved_at = :approved_at,
+                kadep_operasional_approval_note = :approval_note,
                 workflow_stage = 'OTOMASI',
                 status = 'Dalam Proses'
             WHERE id = :id
-              AND workflow_stage = 'PAK_JOKO'
+              AND workflow_stage = 'kadep_operasional'
         ");
 
         $stmt->execute([
@@ -148,6 +151,9 @@ try {
             'id' => $id,
         ]);
 
+        if ($stmt->rowCount() !== 1) {
+            throw new RuntimeException('CRF sudah tidak tersedia untuk approval.');
+        }
 
         logCrfActivity(
             $pdo,

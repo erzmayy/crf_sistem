@@ -1,17 +1,18 @@
 # CRF Workflow Update
 
-Alur prototype yang diimplementasikan:
+Alur workflow:
 
-Pemohon → CMO (Filter) → Otomasi (Level Urgensi + SLA + Eksekusi) → Pemohon (PIR) → Pak Joko (Approval) → CMO (Finalisasi) → Selesai → Pemohon
+Pemohon → CMO (Filter) → Otomasi (Level Urgensi + SLA) → Kepala Departemen Operasional (Approval) → Otomasi (Eksekusi, Implementasi & PIR) → CMO (Finalisasi) → Selesai → Pemohon
 
 ## Tahap workflow
 - PEMOHON
 - CMO_FILTER
 - OTOMASI
-- PEMOHON_PIR
 - kadep_operasional
 - CMO_FINAL
 - SELESAI
+
+`PEMOHON_PIR` tetap ada di enum database untuk kompatibilitas data lama, tetapi bukan lagi tahap aktif.
 
 ## Role prototype
 - pemohon
@@ -30,9 +31,13 @@ Semua password: `password`
 - ADMIN001 — Admin
 
 ## Database
-Sebelum menjalankan versi kode ini pada database `crf_prototype` lama, jalankan sekali:
+Untuk database `crf_system` lama yang belum memiliki kolom approval Kepala Departemen Operasional, jalankan:
 
-`workflow_migration.sql`
+`kadep_approval_migration.sql`
+
+Migrasi ini aman dijalankan ulang. Untuk instalasi workflow lama yang belum memiliki kolom workflow/SLA atau tabel role, gunakan `workflow_migration.sql`.
+
+Untuk database yang nilai enum `workflow_stage`-nya masih menggunakan `PAK_JOKO`, jalankan `kadep_workflow_stage_migration.sql` agar nilai tersebut diselaraskan dengan `kadep_operasional`.
 
 Migration menambahkan:
 - `workflow_stage`
@@ -43,8 +48,7 @@ Migration menambahkan:
 - mapping role dan akun demo workflow bila belum ada
 
 ## Catatan
-Implementasi dan Post Implementation Review sekarang dipisahkan:
-- Implementasi diisi Otomasi.
-- PIR diisi Pemohon setelah Otomasi selesai.
-- Pak Joko melakukan approval setelah PIR.
-- CMO melakukan finalisasi dan menandai CRF Selesai.
+- Otomasi menetapkan Level Urgensi dan SLA, lalu mengirim CRF ke Kepala Departemen Operasional untuk approval sebelum eksekusi.
+- Setelah approval, Otomasi mengisi Implementasi / Hasil Perubahan dan Post Implementation Review saat menyelesaikan eksekusi.
+- Pemohon hanya melihat Implementasi dan PIR; kedua isian tersebut tidak dapat diedit oleh Pemohon.
+- Setelah eksekusi selesai, CRF diteruskan ke CMO untuk finalisasi dan penandaan selesai.

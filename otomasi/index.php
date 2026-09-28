@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
-requireAdmin();
+requireCrfRole(['otomasi']);
 
 $pdo = getConnection();
 $stmt = $pdo->query("SELECT cr.* FROM change_requests cr WHERE cr.workflow_stage = 'OTOMASI' AND cr.status <> 'Draft' ORDER BY cr.automation_started_at ASC, cr.created_at ASC");
@@ -35,7 +35,10 @@ require_once __DIR__ . '/../includes/header.php';
                 <td data-label="Aksi">
                   <div class="d-flex gap-2">
                     <a href="view_detail.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline"><i class="bi bi-eye"></i> Detail</a>
-                    <a href="detail.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-primary"><i class="bi bi-gear"></i> Proses</a>
+                    <a href="detail.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm <?= !empty($row['kadep_operasional_approved_at']) ? 'btn-danger' : 'btn-crf-primary' ?>">
+                      <i class="bi <?= !empty($row['kadep_operasional_approved_at']) ? 'bi-play-circle' : 'bi-gear' ?>"></i>
+                      <?= !empty($row['kadep_operasional_approved_at']) ? 'Eksekusi' : 'Proses' ?>
+                    </a>
                   </div>
                 </td>
               </tr>
