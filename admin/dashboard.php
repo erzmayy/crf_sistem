@@ -292,6 +292,8 @@ require_once __DIR__ . '/../includes/header.php';
         font-size: 0.72rem;
     }
 
+    
+
     .dashboard-stage-badge {
         display: inline-block;
         max-width: 100%;
@@ -406,7 +408,7 @@ require_once __DIR__ . '/../includes/header.php';
              TABLE
              ===================================================== -->
 
-        <div class="crf-table-card">
+        <div class="crf-table-card" id="crf-table">
 
             <div class="crf-table-heading">
 
@@ -772,11 +774,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <a
                                 class="page-link"
-                                href="?<?= h(
-                                    http_build_query(
-                                        $prevParams
-                                    )
-                                ) ?>"
+                                    href="?<?= h(http_build_query($prevParams)) ?>#crf-table"
                                 aria-label="Previous"
                             >
                                 <i class="bi bi-chevron-left"></i>
