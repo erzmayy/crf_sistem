@@ -492,5 +492,5 @@ try {
 /* ------------------------------------------------------------------
  * 9. Setelah Submit berhasil
  * ------------------------------------------------------------------ */
-header('Location: ../user/pengajuan_saya.php');
+header('Location: ../user/detail.php?id=' . $crfId);
 exit;

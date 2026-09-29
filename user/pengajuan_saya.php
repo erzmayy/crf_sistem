@@ -588,8 +588,8 @@ require_once __DIR__ . '/../includes/header.php';
                                                 class="btn btn-sm btn-warning"
                                             >
                                                 <?= $row['status'] === 'Perlu Revisi'
-                                                    ? 'Edit'
-                                                    : 'Edit'
+                                                    ? 'Perbaiki'
+                                                    : 'Lanjutkan'
                                                 ?>
                                             </a>
 

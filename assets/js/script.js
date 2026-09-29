@@ -196,7 +196,25 @@ if (fileInput && fileList) {
   }
 
   /* -----------------------------------------------------------------
-   * 7. Toggle sidebar mobile (hamburger + overlay)
+   * 7. Konfirmasi sebelum CRF diajukan
+   * ----------------------------------------------------------------- */
+  var btnSubmitCrf = document.getElementById('btnSubmitCrf');
+
+  if (btnSubmitCrf && crfForm) {
+    btnSubmitCrf.addEventListener('click', function (event) {
+      var isResubmission = btnSubmitCrf.dataset.resubmission === '1';
+      var message = isResubmission
+        ? 'Pengajuan akan dikirim ulang setelah diperbaiki. Lanjutkan?'
+        : 'Setelah diajukan, CRF akan masuk ke proses pemeriksaan. Pastikan data sudah benar. Lanjutkan?';
+
+      if (!window.confirm(message)) {
+        event.preventDefault();
+      }
+    });
+  }
+
+  /* -----------------------------------------------------------------
+   * 8. Toggle sidebar mobile (hamburger + overlay)
    * ----------------------------------------------------------------- */
   var appShell = document.querySelector('.crf-app-shell');
   var sidebarToggle = document.querySelector('.crf-sidebar-toggle');
@@ -221,11 +239,8 @@ if (fileInput && fileList) {
     link.addEventListener('click', closeSidebar);
   });
 
-});
-
-
   /* -----------------------------------------------------------------
-   * 8. Cegah double-submit pada form CRF (submit & simpan draft)
+   * 9. Cegah double-submit pada form CRF (submit & simpan draft)
    * ----------------------------------------------------------------- */
   if (crfForm) {
     crfForm.addEventListener('submit', function () {
@@ -243,3 +258,5 @@ if (fileInput && fileList) {
       }
     });
   }
+
+});

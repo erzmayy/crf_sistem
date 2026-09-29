@@ -389,13 +389,15 @@ require_once __DIR__ . '/../includes/header.php';
             type="submit"
             name="action"
             value="submit"
+            id="btnSubmitCrf"
             class="btn btn-crf-primary px-4"
             formaction="../actions/submit_crf.php"
+            data-resubmission="<?= ($draftData['status'] ?? '') === 'Perlu Revisi' ? '1' : '0' ?>"
           >
             <i class="bi bi-send-check"></i>
             <?= ($draftData['status'] ?? '') === 'Perlu Revisi'
-                ? 'Kirim Ulang CRF'
-                : 'Submit CRF'
+                ? 'Perbaiki & Kirim Ulang'
+                : 'Ajukan CRF'
             ?>
           </button>
 

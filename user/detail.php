@@ -148,6 +148,16 @@ require_once __DIR__ . '/../includes/header.php';
                     Pengajuan Saya
                 </a>
 
+                <?php if (($crf['status'] ?? '') === 'Perlu Revisi'): ?>
+                    <a
+                        href="form_crf.php?id=<?= (int) $crf['id'] ?>"
+                        class="btn btn-warning"
+                    >
+                        <i class="bi bi-pencil-square"></i>
+                        Perbaiki Pengajuan
+                    </a>
+                <?php endif; ?>
+
             </div>
 
         </div>
