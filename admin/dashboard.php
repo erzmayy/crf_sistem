@@ -420,7 +420,8 @@ require_once __DIR__ . '/../includes/header.php';
                     href="dashboard.php"
                     class="btn btn-sm btn-crf-outline"
                 >
-                    Lihat Semua
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                        Reset Filter
                 </a>
 
             </div>

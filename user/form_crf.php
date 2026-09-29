@@ -368,36 +368,38 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
 
       <!-- ============================================================ -->
-      <!-- TOMBOL FORM                                                   -->
+      <!-- TOMBOL FORM (sticky)                                          -->
       <!-- ============================================================ -->
-      <div class="d-flex justify-content-end gap-2 mb-4">
+      <div class="crf-sticky-actions">
+        <div class="d-flex justify-content-end gap-2">
 
-        <button
-          type="submit"
-          name="action"
-          value="draft"
-          class="btn btn-crf-outline px-4"
-          formaction="../actions/save_draft.php"
-          formnovalidate
-        >
-          <i class="bi bi-save2"></i>
-          Simpan Draft
-        </button>
+          <button
+            type="submit"
+            name="action"
+            value="draft"
+            class="btn btn-crf-outline px-4"
+            formaction="../actions/save_draft.php"
+            formnovalidate
+          >
+            <i class="bi bi-save2"></i>
+            Simpan Draft
+          </button>
 
-        <button
-          type="submit"
-          name="action"
-          value="submit"
-          class="btn btn-crf-primary px-4"
-          formaction="../actions/submit_crf.php"
-        >
-          <i class="bi bi-send-check"></i>
-          <?= ($draftData['status'] ?? '') === 'Perlu Revisi'
-              ? 'Kirim Ulang CRF'
-              : 'Submit CRF'
-          ?>
-        </button>
+          <button
+            type="submit"
+            name="action"
+            value="submit"
+            class="btn btn-crf-primary px-4"
+            formaction="../actions/submit_crf.php"
+          >
+            <i class="bi bi-send-check"></i>
+            <?= ($draftData['status'] ?? '') === 'Perlu Revisi'
+                ? 'Kirim Ulang CRF'
+                : 'Submit CRF'
+            ?>
+          </button>
 
+        </div>
       </div>
 
     </form>
