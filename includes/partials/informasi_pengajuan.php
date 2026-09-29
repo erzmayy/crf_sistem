@@ -23,44 +23,44 @@ $sectionNumber    = $sectionNumber ?? 1;
 
     <div class="crf-section-body">
 
-        <div class="crf-info-grid row g-4 mb-4">
+        <div class="crf-info-grid row g-3 mb-0">
 
             <div class="col-md-3 crf-info-item">
-                <div class="crf-detail-label">PENGAJU</div>
+                <div class="crf-detail-label"><i class="bi bi-person"></i> Pengaju</div>
                 <div class="crf-detail-value">
                     <span class="crf-info-main"><?= h($crf['full_name'] ?? '-') ?></span>
                 </div>
             </div>
 
             <div class="col-md-3 crf-info-item">
-                <div class="crf-detail-label">EMAIL</div>
+                <div class="crf-detail-label"><i class="bi bi-envelope"></i> Email</div>
                 <div class="crf-detail-value">
                     <span class="crf-info-main"><?= h($crf['email'] ?? '-') ?></span>
                 </div>
             </div>
 
             <div class="col-md-3 crf-info-item">
-                <div class="crf-detail-label">NO. HP/WA</div>
+                <div class="crf-detail-label"><i class="bi bi-telephone"></i> No. HP/WA</div>
                 <div class="crf-detail-value">
                     <span class="crf-info-main"><?= h($crf['phone'] ?? '-') ?></span>
                 </div>
             </div>
 
             <div class="col-md-3 crf-info-item">
-                <div class="crf-detail-label">NOMOR REGISTER</div>
+                <div class="crf-detail-label"><i class="bi bi-hash"></i> Nomor Register</div>
                 <div class="crf-detail-value">
-                    <span class="crf-info-main"><?= h($crf['request_number'] ?? '-') ?></span>
+                    <span class="crf-info-main crf-info-register"><?= h($crf['request_number'] ?? '-') ?></span>
                 </div>
             </div>
 
         </div>
 
-        <hr>
+        <div class="crf-info-divider"></div>
 
-        <div class="crf-info-grid row g-4 mt-1">
+        <div class="crf-info-grid row g-3">
 
             <div class="col-md-3 crf-info-item">
-                <div class="crf-detail-label">HARI/TANGGAL</div>
+                <div class="crf-detail-label"><i class="bi bi-calendar3"></i> Tanggal Pengajuan</div>
                 <div class="crf-detail-value">
                     <?php if (!empty($crf['submission_date'])): ?>
                         <span class="crf-info-date">
@@ -73,7 +73,7 @@ $sectionNumber    = $sectionNumber ?? 1;
             </div>
 
             <div class="col-md-3 crf-info-item">
-                <div class="crf-detail-label">KEPADA</div>
+                <div class="crf-detail-label"><i class="bi bi-building"></i> Kepada</div>
                 <div class="crf-detail-value">
                     <span class="crf-info-main"><?= h($crf['to_department'] ?? '-') ?></span>
                     <?php if (!empty($crf['to_division'])): ?>
@@ -83,7 +83,7 @@ $sectionNumber    = $sectionNumber ?? 1;
             </div>
 
             <div class="col-md-3 crf-info-item">
-                <div class="crf-detail-label">DARI</div>
+                <div class="crf-detail-label"><i class="bi bi-arrow-left-right"></i> Dari</div>
                 <div class="crf-detail-value">
                     <span class="crf-info-main"><?= h($crf['from_department'] ?? '-') ?></span>
                     <?php if (!empty($crf['from_division'])): ?>

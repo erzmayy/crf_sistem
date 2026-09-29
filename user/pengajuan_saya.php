@@ -263,7 +263,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <h1>Pengajuan Saya</h1>
 
                 <p class="text-muted mb-0">
-                    Ringkasan Pengajuan Saya.
+                    Kelola dan pantau seluruh pengajuan CRF Anda.
                 </p>
             </div>
 
@@ -271,7 +271,8 @@ require_once __DIR__ . '/../includes/header.php';
                 href="form_crf.php"
                 class="btn btn-primary"
             >
-                + Buat Pengajuan
+                <i class="bi bi-plus-lg"></i>
+                Buat Pengajuan
             </a>
 
         </div>
@@ -338,11 +339,13 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <?php if (empty($pengajuan)): ?>
 
-                    <div class="text-center py-5">
+                    <div class="crf-empty-state">
+                        <div class="crf-empty-icon">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
 
-                        <p class="text-muted mb-3">
-                            Belum ada pengajuan CRF.
-                        </p>
+                        <h3>Belum ada pengajuan CRF</h3>
+                        <p>Ajukan perubahan baru untuk memulai proses CRF.</p>
 
                         <a
                             href="form_crf.php"
@@ -585,8 +588,8 @@ require_once __DIR__ . '/../includes/header.php';
                                                 class="btn btn-sm btn-warning"
                                             >
                                                 <?= $row['status'] === 'Perlu Revisi'
-                                                    ? 'Edit'
-                                                    : 'Edit'
+                                                    ? 'Perbaiki'
+                                                    : 'Lanjutkan'
                                                 ?>
                                             </a>
 

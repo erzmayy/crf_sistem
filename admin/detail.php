@@ -71,7 +71,7 @@ $pageTitle = 'Detail CRF - ' . $crf['request_number'];
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="crf-page">
+<div class="crf-page crf-detail-page">
   <div class="container">
 
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 crf-page-header">
@@ -102,7 +102,7 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
     <?php endif; ?>
 
-    <div class="d-flex gap-2 mb-4">
+    <div class="crf-status-strip mb-4">
       <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>">
         Level Urgensi: <?= h($crf['level'] ?? 'Belum ditentukan') ?>
       </span>
@@ -152,27 +152,38 @@ require_once __DIR__ . '/../includes/header.php';
     ?>
 
     <!-- Detail Pengajuan -->
-    <div class="crf-section">
+    <div class="crf-section crf-detail-card">
       <div class="crf-section-header">
         <span class="crf-section-number"><i class="bi bi-card-checklist"></i></span>
         <h2>Detail Pengajuan</h2>
       </div>
       <div class="crf-section-body">
 
-        <div class="crf-detail-label">Rincian Permohonan Perubahan</div>
-        <div class="crf-detail-value"><?= h($crf['change_description'] ?? '-') ?></div>
+        <div class="crf-detail-grid">
+          <div class="crf-detail-item crf-detail-item-wide">
+            <div class="crf-detail-label">Rincian Permohonan Perubahan</div>
+            <div class="crf-detail-value"><?= h($crf['change_description'] ?? '-') ?></div>
+          </div>
 
-        <div class="crf-detail-label">Benefit dari Perubahan yang Diharapkan</div>
-        <div class="crf-detail-value"><?= h($crf['benefit'] ?? '-') ?></div>
+          <div class="crf-detail-item">
+            <div class="crf-detail-label">Benefit dari Perubahan yang Diharapkan</div>
+            <div class="crf-detail-value"><?= h($crf['benefit'] ?? '-') ?></div>
+          </div>
 
-        <div class="crf-detail-label">Dampak Jika Tidak Dilakukan Perubahan</div>
-        <div class="crf-detail-value"><?= h($crf['impact'] ?? '-') ?></div>
+          <div class="crf-detail-item">
+            <div class="crf-detail-label">Dampak Jika Tidak Dilakukan Perubahan</div>
+            <div class="crf-detail-value"><?= h($crf['impact'] ?? '-') ?></div>
+          </div>
 
-        <div class="crf-detail-label">Alasan Permohonan Perubahan</div>
-        <div class="crf-detail-value"><?= h($crf['reason'] ?? '-') ?></div>
+          <div class="crf-detail-item crf-detail-item-wide">
+            <div class="crf-detail-label">Alasan Permohonan Perubahan</div>
+            <div class="crf-detail-value"><?= h($crf['reason'] ?? '-') ?></div>
+          </div>
+        </div>
 
-        <div class="crf-detail-label">Bukti dan Informasi Pendukung</div>
-        <div class="crf-detail-value">
+        <div class="crf-detail-item crf-detail-item-wide crf-detail-item-attachments">
+          <div class="crf-detail-label">Bukti dan Informasi Pendukung</div>
+          <div class="crf-detail-value">
           <?php if (!$attachments): ?>
 
             <span class="text-muted">
@@ -226,32 +237,45 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
           <?php endif; ?>
+          </div>
         </div>
 
-        <div class="crf-detail-label">Biaya / Anggaran</div>
-        <div class="crf-detail-value">
-          <?= h(budgetTypeLabel($crf['budget_type'])) ?>
-          <?php if ($crf['budget_amount'] !== null): ?>
-            &mdash; <?= h(formatRupiah($crf['budget_amount'])) ?>
-          <?php endif; ?>
+        <div class="crf-detail-grid crf-detail-grid-secondary">
+          <div class="crf-detail-item">
+            <div class="crf-detail-label">Biaya / Anggaran</div>
+            <div class="crf-detail-value">
+              <?= h(budgetTypeLabel($crf['budget_type'])) ?>
+              <?php if ($crf['budget_amount'] !== null): ?>
+                &mdash; <?= h(formatRupiah($crf['budget_amount'])) ?>
+              <?php endif; ?>
+            </div>
+          </div>
+
+          <div class="crf-detail-item">
+            <div class="crf-detail-label">Kategori Perubahan</div>
+            <div class="crf-detail-value">
+              <?= h($crf['change_category'] ?? '-') ?>
+              <?php if (!empty($crf['change_category_detail'])): ?>
+                &mdash; <?= h($crf['change_category_detail']) ?>
+              <?php endif; ?>
+            </div>
+          </div>
+
+          <div class="crf-detail-item crf-detail-item-wide">
+            <div class="crf-detail-label">Saran Alternatif</div>
+            <div class="crf-detail-value"><?= h($crf['alternative_suggestion'] ?? '-') ?></div>
+          </div>
+
+          <div class="crf-detail-item">
+            <div class="crf-detail-label">Post Implementation Review</div>
+            <div class="crf-detail-value"><?= h($crf['post_implementation_review'] ?? '-') ?></div>
+          </div>
+
+          <div class="crf-detail-item">
+            <div class="crf-detail-label">Implementasi</div>
+            <div class="crf-detail-value"><?= h($crf['implementation'] ?? '-') ?></div>
+          </div>
         </div>
-
-        <div class="crf-detail-label">Kategori Perubahan</div>
-        <div class="crf-detail-value">
-          <?= h($crf['change_category'] ?? '-') ?>
-          <?php if (!empty($crf['change_category_detail'])): ?>
-            &mdash; <?= h($crf['change_category_detail']) ?>
-          <?php endif; ?>
-        </div>
-
-        <div class="crf-detail-label">Saran Alternatif</div>
-        <div class="crf-detail-value"><?= h($crf['alternative_suggestion'] ?? '-') ?></div>
-
-        <div class="crf-detail-label">Post Implementation Review</div>
-        <div class="crf-detail-value"><?= h($crf['post_implementation_review'] ?? '-') ?></div>
-
-        <div class="crf-detail-label">Implementasi</div>
-        <div class="crf-detail-value mb-0"><?= h($crf['implementation'] ?? '-') ?></div>
 
       </div>
     </div>
