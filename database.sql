@@ -3,7 +3,7 @@
 -- PT Persona Prima Utama (PPU)
 -- =====================================================================
 
-CREATE DATABASE IF NOT EXISTS crf_prototype
+CREATE DATABASE IF NOT EXISTS crf_system
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
@@ -145,11 +145,11 @@ CREATE TABLE change_requests (
 -- Penghitung nomor register yang aman untuk pengajuan bersamaan.
 -- ---------------------------------------------------------------------
 CREATE TABLE crf_sequence (
-    id          TINYINT UNSIGNED PRIMARY KEY,
-    last_number SMALLINT UNSIGNED NOT NULL DEFAULT 0
+    year        CHAR(2) NOT NULL PRIMARY KEY,
+    last_number INT UNSIGNED NOT NULL DEFAULT 0
 ) ENGINE=InnoDB;
 
-INSERT INTO crf_sequence (id, last_number) VALUES (1, 0);
+-- INSERT INTO crf_sequence (id, last_number) VALUES (1, 0);
 
 -- ---------------------------------------------------------------------
 -- Tabel: attachments

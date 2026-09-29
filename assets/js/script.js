@@ -69,27 +69,79 @@ document.addEventListener('DOMContentLoaded', function () {
   /* -----------------------------------------------------------------
    * 3. Tampilkan nama file yang dipilih pada input upload
    * ----------------------------------------------------------------- */
-  var fileInput = document.getElementById('attachments');
-  var fileList = document.getElementById('file-list-preview');
+ // SESUDAH
+var fileInput = document.getElementById('attachments');
+var fileList = document.getElementById('file-list-preview');
+var selectedFiles = [];
 
-  if (fileInput && fileList) {
-    fileInput.addEventListener('change', function () {
-      fileList.innerHTML = '';
-      if (fileInput.files.length === 0) { return; }
+var CRF_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB, samakan dgn includes/functions.php
+var CRF_ALLOWED_EXT = ['pdf', 'jpg', 'jpeg', 'png'];
 
-      var ul = document.createElement('ul');
-      ul.className = 'mb-0 ps-3';
+function getFileExt(name) {
+  return name.split('.').pop().toLowerCase();
+}
 
-      Array.prototype.forEach.call(fileInput.files, function (file) {
-        var li = document.createElement('li');
-        var sizeKb = Math.round(file.size / 1024);
-        li.textContent = file.name + ' (' + sizeKb + ' KB)';
-        ul.appendChild(li);
-      });
+function syncInputFromSelectedFiles() {
+  var dt = new DataTransfer();
+  selectedFiles.forEach(function (file) {
+    dt.items.add(file);
+  });
+  fileInput.files = dt.files;
+}
 
-      fileList.appendChild(ul);
+function renderFileList() {
+  fileList.innerHTML = '';
+  if (selectedFiles.length === 0) { return; }
+
+  var ul = document.createElement('ul');
+  ul.className = 'mb-0 ps-3 list-unstyled';
+
+  selectedFiles.forEach(function (file, index) {
+    var li = document.createElement('li');
+    li.className = 'd-flex justify-content-between align-items-center py-1';
+
+    var sizeKb = Math.round(file.size / 1024);
+    var ext = getFileExt(file.name);
+    var isTooBig = file.size > CRF_MAX_FILE_SIZE;
+    var isBadExt = CRF_ALLOWED_EXT.indexOf(ext) === -1;
+    var hasError = isTooBig || isBadExt;
+
+    var label = document.createElement('span');
+    label.className = hasError ? 'text-danger' : '';
+    label.textContent = file.name + ' (' + sizeKb + ' KB)'
+      + (isTooBig ? ' — melebihi 5 MB' : '')
+      + (isBadExt ? ' — format tidak didukung' : '');
+
+    var removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-sm btn-outline-danger py-0 px-2 ms-2';
+    removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+    removeBtn.setAttribute('aria-label', 'Hapus file ' + file.name);
+    removeBtn.addEventListener('click', function () {
+      selectedFiles.splice(index, 1);
+      syncInputFromSelectedFiles();
+      renderFileList();
     });
-  }
+
+    li.appendChild(label);
+    li.appendChild(removeBtn);
+    ul.appendChild(li);
+  });
+
+  fileList.appendChild(ul);
+}
+
+if (fileInput && fileList) {
+  fileInput.addEventListener('change', function () {
+    // Tambahkan file baru ke daftar yang sudah ada (bukan replace),
+    // supaya user bisa menambah lampiran bertahap.
+    Array.prototype.forEach.call(fileInput.files, function (file) {
+      selectedFiles.push(file);
+    });
+    syncInputFromSelectedFiles();
+    renderFileList();
+  });
+}
 
   /* -----------------------------------------------------------------
    * 4. Validasi Bootstrap standar untuk form yang butuh validasi
@@ -172,3 +224,22 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
+  /* -----------------------------------------------------------------
+   * 8. Cegah double-submit pada form CRF (submit & simpan draft)
+   * ----------------------------------------------------------------- */
+  if (crfForm) {
+    crfForm.addEventListener('submit', function () {
+      var clickedButton = document.activeElement;
+      var submitButtons = crfForm.querySelectorAll('button[type="submit"]');
+
+      submitButtons.forEach(function (btn) {
+        btn.disabled = true;
+      });
+
+      if (clickedButton && clickedButton.tagName === 'BUTTON') {
+        var originalHtml = clickedButton.innerHTML;
+        clickedButton.innerHTML =
+          '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memproses...';
+      }
+    });
+  }
