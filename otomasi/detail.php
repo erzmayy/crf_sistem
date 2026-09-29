@@ -48,6 +48,14 @@ if (!$crf) {
     exit;
 }
 
+$attStmt = $pdo->prepare(
+    'SELECT *
+     FROM attachments
+     WHERE change_request_id = :id
+     ORDER BY uploaded_at ASC'
+);
+$attStmt->execute(['id' => $id]);
+$attachments = $attStmt->fetchAll();
 
 $isExecutionStage = !empty($crf['kadep_operasional_approved_at']);
 
@@ -153,55 +161,13 @@ require_once __DIR__ . '/../includes/header.php';
 
 
         <!-- =====================================================
-             1. PERMINTAAN
+             1. DETAIL PENGAJUAN
              ===================================================== -->
 
-        <div class="crf-section mb-4">
-
-            <div class="crf-section-header">
-
-                <span class="crf-section-number">
-                    1
-                </span>
-
-                <h2>
-                    Permintaan
-                </h2>
-
-            </div>
-
-            <div class="crf-section-body">
-
-                <div class="crf-detail-label">
-                    Rincian Permohonan Perubahan
-                </div>
-
-                <div class="crf-detail-value mb-3">
-                    <?= nl2br(
-                        h(
-                            $crf['change_description']
-                            ?? '-'
-                        )
-                    ) ?>
-                </div>
-
-
-                <div class="crf-detail-label">
-                    Alasan / Tujuan
-                </div>
-
-                <div class="crf-detail-value">
-                    <?= nl2br(
-                        h(
-                            $crf['reason']
-                            ?? '-'
-                        )
-                    ) ?>
-                </div>
-
-            </div>
-
-        </div>
+        <?php
+        $sectionNumber = 1;
+        require __DIR__ . '/../includes/partials/detail_permintaan.php';
+        ?>
 
 
         <!-- =====================================================

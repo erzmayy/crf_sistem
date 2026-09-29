@@ -185,33 +185,15 @@ require_once __DIR__ . '/../includes/header.php';
         require __DIR__ . '/../includes/partials/detail_permintaan.php';
         ?>
 
-        <!-- 3. BUKTI DAN INFORMASI PENDUKUNG -->
+        <!-- 3. INFORMASI SLA -->
         <?php
         $sectionNumber = 3;
-        require __DIR__ . '/../includes/partials/detail_lampiran.php';
-        ?>
-
-        <!-- 4. BIAYA / ANGGARAN & KATEGORI -->
-        <?php
-        $sectionNumber = 4;
-        require __DIR__ . '/../includes/partials/biaya_kategori.php';
-        ?>
-
-        <!-- 5. CHANGE REQUEST ACTION -->
-        <?php
-        $sectionNumber = 5;
-        require __DIR__ . '/../includes/partials/change_request_action.php';
-        ?>
-
-        <!-- 6. INFORMASI SLA -->
-        <?php
-        $sectionNumber = 6;
         require __DIR__ . '/../includes/partials/informasi_sla.php';
         ?>
 
-        <!-- 7. TIMELINE -->
+        <!-- 4. TIMELINE -->
         <?php
-        $sectionNumber = 7;
+        $sectionNumber = 4;
         $sectionTitle  = 'Timeline Proses';
         require __DIR__ . '/../includes/partials/timeline.php';
         ?>
