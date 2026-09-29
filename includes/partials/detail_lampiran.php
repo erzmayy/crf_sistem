@@ -16,7 +16,7 @@
 $sectionNumber = $sectionNumber ?? 3;
 $sectionTitle  = $sectionTitle ?? 'Bukti dan Informasi Pendukung';
 ?>
-<div class="crf-section mb-4">
+<div class="crf-section crf-detail-card mb-4">
     <div class="crf-section-header">
         <span class="crf-section-number"><?= h((string) $sectionNumber) ?></span>
         <h2><?= h($sectionTitle) ?></h2>
@@ -24,6 +24,7 @@ $sectionTitle  = $sectionTitle ?? 'Bukti dan Informasi Pendukung';
 
     <div class="crf-section-body">
 
+        <div class="crf-detail-item crf-detail-item-wide crf-detail-item-attachments">
         <?php if (!$attachments): ?>
 
             <span class="text-muted">Tidak ada file yang dilampirkan.</span>
@@ -76,6 +77,7 @@ $sectionTitle  = $sectionTitle ?? 'Bukti dan Informasi Pendukung';
             </div>
 
         <?php endif; ?>
+        </div>
 
     </div>
 </div>

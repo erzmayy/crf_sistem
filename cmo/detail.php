@@ -190,32 +190,13 @@ require_once __DIR__ . '/../includes/header.php';
         require __DIR__ . '/../includes/partials/detail_permintaan.php';
         ?>
 
-        <!-- 3. BUKTI DAN INFORMASI PENDUKUNG -->
-        <?php
-        $sectionNumber = 3;
-        require __DIR__ . '/../includes/partials/detail_lampiran.php';
-        ?>
-
-        <!-- 4. BIAYA / ANGGARAN & KATEGORI -->
-        <?php
-        $sectionNumber = 4;
-        require __DIR__ . '/../includes/partials/biaya_kategori.php';
-        ?>
-
-        <!-- 5. CHANGE REQUEST ACTION -->
-        <?php
-        $sectionNumber = 5;
-        require __DIR__ . '/../includes/partials/change_request_action.php';
-        ?>
-
-
         <!-- =====================================================
-             6. IMPLEMENTASI & PIR (khusus tampilan CMO, read-only)
+             3. IMPLEMENTASI & PIR (khusus tampilan CMO, read-only)
              ===================================================== -->
         <div class="crf-section mb-4">
 
             <div class="crf-section-header">
-                <span class="crf-section-number">6</span>
+                <span class="crf-section-number">3</span>
                 <h2>Implementasi & Post Implementation Review</h2>
             </div>
 
@@ -262,22 +243,22 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
 
 
-        <!-- 7. INFORMASI SLA -->
+        <!-- 4. INFORMASI SLA -->
         <?php
-        $sectionNumber = 7;
+        $sectionNumber = 4;
         require __DIR__ . '/../includes/partials/informasi_sla.php';
         ?>
 
 
         <!-- =====================================================
-             8. REVIEW CMO / FINALISASI (khusus CMO)
+             5. REVIEW CMO / FINALISASI (khusus CMO)
              ===================================================== -->
         <?php if ($crf['workflow_stage'] === 'CMO_FILTER'): ?>
 
             <div class="crf-section mb-4">
 
                 <div class="crf-section-header">
-                    <span class="crf-section-number">8</span>
+                    <span class="crf-section-number">5</span>
                     <h2>Review CMO</h2>
                 </div>
 
@@ -344,7 +325,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="crf-section mb-4">
 
                 <div class="crf-section-header">
-                    <span class="crf-section-number">8</span>
+                    <span class="crf-section-number">5</span>
                     <h2>Finalisasi</h2>
                 </div>
 
@@ -396,9 +377,9 @@ require_once __DIR__ . '/../includes/header.php';
         <?php endif; ?>
 
 
-        <!-- 9. TIMELINE -->
+        <!-- 6. TIMELINE -->
         <?php
-        $sectionNumber = 9;
+        $sectionNumber = 6;
         $sectionTitle  = 'Timeline';
         require __DIR__ . '/../includes/partials/timeline.php';
         ?>

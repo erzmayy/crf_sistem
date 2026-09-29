@@ -11,20 +11,24 @@
 
 $sectionNumber = $sectionNumber ?? 5;
 ?>
-<div class="crf-section mb-4">
+<div class="crf-section crf-detail-card mb-4">
     <div class="crf-section-header">
         <span class="crf-section-number"><?= h((string) $sectionNumber) ?></span>
         <h2>Change Request Action</h2>
     </div>
 
     <div class="crf-section-body">
-        <div class="crf-detail-label">SARAN ALTERNATIF</div>
-        <div class="crf-detail-value">
-            <?php if (!empty($crf['alternative_suggestion'])): ?>
-                <?= nl2br(h($crf['alternative_suggestion'])) ?>
-            <?php else: ?>
-                <span class="text-muted">Belum ada saran alternatif.</span>
-            <?php endif; ?>
+        <div class="crf-detail-grid mb-0">
+            <div class="crf-detail-item crf-detail-item-wide">
+                <div class="crf-detail-label">Saran Alternatif</div>
+                <div class="crf-detail-value">
+                    <?php if (!empty($crf['alternative_suggestion'])): ?>
+                        <?= nl2br(h($crf['alternative_suggestion'])) ?>
+                    <?php else: ?>
+                        <span class="text-muted">Belum ada saran alternatif.</span>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 </div>
