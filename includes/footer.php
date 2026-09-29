@@ -1,5 +1,5 @@
     <footer class="crf-footer">
-      <small>Prototype Change Request Form &middot; PT Persona Prima Utama</small>
+      <small>Change Request Form &middot; PT Persona Prima Utama</small>
     </footer>
   </div>
 </div>
