@@ -394,6 +394,10 @@ textarea.form-control {
 .crf-table-heading h2 { color: #172b4d; font-size: 1rem; font-weight: 700; margin: 0; }
 
 .crf-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  background: var(--crf-white);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -401,6 +405,17 @@ textarea.form-control {
   border-bottom: 2px solid var(--crf-gray-300);
   white-space: nowrap;
 }
+@media (min-width: 769px) {
+  .crf-table-responsive-cards {
+    overflow: visible;
+  }
+
+  .crf-table thead th {
+    top: var(--crf-topbar-height);
+  }
+}
+
+
 
 .crf-table td {
   vertical-align: middle;
@@ -541,6 +556,9 @@ textarea.form-control {
     position: fixed;
     top: 0;
     left: 0;
+  }
+  .crf-table thead th {
+    position: static;
   }
   .crf-sidebar-brand { padding: 0; justify-content: center; }
   .crf-sidebar-brand > span:last-child, .crf-sidebar-section, .crf-sidebar-nav span, .crf-sidebar-footer a { display: none; }
