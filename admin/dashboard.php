@@ -560,11 +560,14 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <tr>
 
-                                <td
-                                    colspan="11"
-                                    class="text-center text-muted py-4"
-                                >
-                                    Belum ada CRF yang cocok dengan pencarian/filter ini.
+                                <td colspan="11" class="crf-empty-cell">
+                                    <div class="crf-empty-state crf-empty-state-compact">
+                                        <div class="crf-empty-icon">
+                                            <i class="bi bi-search"></i>
+                                        </div>
+                                        <h3>CRF tidak ditemukan</h3>
+                                        <p>Belum ada pengajuan yang sesuai dengan pencarian atau filter.</p>
+                                    </div>
                                 </td>
 
                             </tr>

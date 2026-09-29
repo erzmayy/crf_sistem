@@ -174,6 +174,10 @@ function budgetTypeLabel(?string $key): string
 function statusLabel(string $status): string
 {
     switch ($status) {
+        case 'Belum Ditindak Lanjuti':
+            return 'Menunggu Tindakan';
+        case 'Dalam Proses':
+            return 'Sedang Diproses';
         case 'Solve':
             return 'Selesai';
         case 'Cancel':
@@ -248,17 +252,17 @@ function workflowStageLabel(string $stage): string
 {
     switch ($stage) {
         case 'PEMOHON':
-            return 'Pemohon';
+            return 'Menunggu Pemeriksaan';
         case 'CMO_FILTER':
-            return 'CMO - Filter';
+            return 'Pemeriksaan CMO';
         case 'OTOMASI':
-            return 'Otomasi';
+            return 'Proses Otomasi';
         case 'PEMOHON_PIR':
-            return 'PIR - Tahap Lama';
+            return 'Review Hasil Perubahan';
         case 'kadep_operasional':
-            return 'Kepala Departemen Operasional - Approval';
+            return 'Menunggu Persetujuan Kepala Departemen';
         case 'CMO_FINAL':
-            return 'CMO - Finalisasi';
+            return 'Finalisasi CMO';
         case 'SELESAI':
             return 'Selesai';
         default:

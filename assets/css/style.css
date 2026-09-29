@@ -489,7 +489,7 @@ textarea.form-control {
 
 .crf-table td {
   vertical-align: middle;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 
 .crf-table tbody tr:hover {
@@ -500,6 +500,45 @@ textarea.form-control {
 .crf-table-card .text-center.text-muted {
   font-size: 0.95rem;
   padding: 2.5rem 1rem !important;
+}
+
+.crf-empty-state {
+  padding: 3.25rem 1rem;
+  text-align: center;
+}
+
+.crf-empty-state-compact {
+  padding: 2rem 1rem;
+}
+
+.crf-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0.85rem;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: var(--crf-blue-700);
+  font-size: 1.25rem;
+}
+
+.crf-empty-state h3 {
+  margin: 0 0 0.35rem;
+  color: #172b4d;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.crf-empty-state p {
+  margin: 0 0 1rem;
+  color: var(--crf-gray-600);
+  font-size: 0.88rem;
+}
+
+.crf-empty-cell {
+  padding: 0 !important;
 }
 
 /* ---------- Detail view ---------- */
@@ -762,6 +801,10 @@ textarea.form-control {
 /* ---------- Alerts spacing ---------- */
 .crf-alert {
   margin-bottom: 1.5rem;
+  border: 0;
+  border-left: 4px solid currentColor;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
 /* Samakan .card bawaan Bootstrap (dipakai di pengajuan_saya.php) dengan crf-section */
 .card {
