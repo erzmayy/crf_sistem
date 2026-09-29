@@ -52,7 +52,7 @@ body {
   top: 0;
   left: 0;
 
-  background: linear-gradient(180deg,  #F9FAFB 0%, #E5E7EB 80%);
+  background: #F3F4F6;
   color: #C7D2E0;
 
   display: flex;
@@ -516,33 +516,144 @@ textarea.form-control {
   white-space: pre-line;
 }
 
+.crf-status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.crf-status-strip .crf-badge {
+  padding: 0.42rem 0.8rem;
+  font-size: 0.76rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.crf-detail-page .crf-section-header {
+  background: linear-gradient(105deg, #edf6ff 0%, #f8fbff 100%);
+  border-bottom-color: #dce8f3;
+}
+
+.crf-detail-page .crf-section-body {
+  padding: 1.5rem 1.6rem;
+}
+
+.crf-detail-card .crf-section-body {
+  padding-top: 1.65rem;
+}
+
+.crf-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.35rem;
+}
+
+.crf-detail-grid-secondary {
+  margin-top: 1.35rem;
+  margin-bottom: 0;
+  padding-top: 1.35rem;
+  border-top: 1px solid #edf0f4;
+}
+
+.crf-detail-item {
+  min-width: 0;
+  padding: 1rem 1.05rem 0.8rem;
+  border: 1px solid #edf0f4;
+  border-radius: 10px;
+  background: #fbfcfe;
+}
+
+.crf-detail-item-wide {
+  grid-column: 1 / -1;
+}
+
+.crf-detail-item .crf-detail-label {
+  margin-bottom: 0.45rem;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.crf-detail-item .crf-detail-value {
+  margin-bottom: 0;
+  color: #1e293b;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.crf-detail-item-attachments {
+  margin-top: 0.15rem;
+}
+
+.crf-detail-item-attachments .list-group {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.crf-detail-item-attachments .list-group-item {
+  border-color: #e7edf4;
+  background: #fff;
+}
+
+.crf-detail-item-attachments .btn {
+  font-size: 0.78rem;
+}
+
 /* =========================================================
    PERBAIKAN LAYOUT INFORMASI CRF
    ========================================================= */
 
 .crf-info-grid {
-    row-gap: 28px !important;
+    row-gap: 18px !important;
 }
 
 .crf-info-item {
-    min-height: 82px;
+    min-height: 72px;
+    padding: 0.85rem 0.95rem;
+    border: 1px solid #edf0f4;
+    border-radius: 10px;
+    background: #fbfcfe;
 }
 
 .crf-info-item .crf-detail-label {
-    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.45rem;
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: none;
+}
+
+.crf-info-item .crf-detail-label i {
+    color: #3b82f6;
+    font-size: 0.8rem;
 }
 
 .crf-info-item .crf-detail-value {
-    min-height: 26px;
-    line-height: 1.5;
-    color: #172033;
+    min-height: 24px;
+    margin-bottom: 0;
+    line-height: 1.45;
+    color: #1e293b;
+    font-size: 0.9rem;
 }
 
 /* Nilai utama */
 .crf-info-main {
     display: block;
-    font-weight: 500;
+    font-weight: 600;
     line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.crf-info-register {
+    color: var(--crf-blue-700);
+    font-weight: 700;
+    letter-spacing: 0.01em;
 }
 
 /* Nilai tambahan seperti divisi */
@@ -607,7 +718,13 @@ textarea.form-control {
 .crf-info-date {
     display: block;
     line-height: 1.5;
-    white-space: nowrap;
+    white-space: normal;
+}
+
+.crf-info-divider {
+    height: 1px;
+    margin: 1.25rem 0;
+    background: #edf0f4;
 }
 
 /* ---------- Footer ---------- */
@@ -637,6 +754,9 @@ textarea.form-control {
   .crf-breadcrumb span:last-child { display: none; }
   .crf-page { padding: 1.25rem 0.9rem 2rem; }
   .crf-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .crf-detail-page .crf-section-body { padding: 1.2rem; }
+  .crf-detail-grid { grid-template-columns: 1fr; gap: 0.8rem; }
+  .crf-detail-item-wide { grid-column: auto; }
 }
 
 /* ---------- Alerts spacing ---------- */
