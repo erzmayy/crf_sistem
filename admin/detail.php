@@ -146,87 +146,10 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 
     <!-- Informasi Pengajuan -->
-    <div class="crf-detail-section">
-    <div class="crf-section-header">
-        <span class="crf-section-number">1</span>
-        <h2>Informasi Pengajuan</h2>
-    </div>
-
-    <div class="crf-section-body">
-
-        <!-- DATA PENGAJU -->
-        <div class="row g-4 mb-4">
-
-            <div class="col-md-3">
-                <div class="crf-detail-label">PENGAJU</div>
-                <div class="crf-detail-value">
-                    <?= h($crf['full_name']) ?>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="crf-detail-label">EMAIL</div>
-                <div class="crf-detail-value">
-                    <?= h($crf['email'] ?? '-') ?>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="crf-detail-label">NO. HP/WA</div>
-                <div class="crf-detail-value">
-                    <?= h($crf['phone'] ?? '-') ?>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <!-- Kolom kosong agar posisi sejajar dengan baris kedua -->
-            </div>
-
-        </div>
-
-        <hr>
-
-        <!-- INFORMASI CRF -->
-        <div class="row g-4 mt-1">
-
-            <div class="col-md-3">
-                <div class="crf-detail-label">HARI/TANGGAL</div>
-                <div class="crf-detail-value">
-                    <?= h(formatTanggalIndonesia(new DateTime($crf['submission_date']))) ?>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="crf-detail-label">NOMOR REGISTER</div>
-                <div class="crf-detail-value">
-                    <?= h($crf['request_number']) ?>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="crf-detail-label">KEPADA</div>
-                <div class="crf-detail-value">
-                    <?= h($crf['to_department']) ?>
-                    <?php if (!empty($crf['to_division'])): ?>
-                        (<?= h($crf['to_division']) ?>)
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="crf-detail-label">DARI</div>
-                <div class="crf-detail-value">
-                    <?= h($crf['from_department']) ?>
-                    <?php if (!empty($crf['from_division'])): ?>
-                        (<?= h($crf['from_division']) ?>)
-                    <?php endif; ?>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-</div>
+    <?php
+    $sectionNumber = 1;
+    require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
+    ?>
 
     <!-- Detail Pengajuan -->
     <div class="crf-section">
