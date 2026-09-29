@@ -463,7 +463,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                                                         <!-- NOMOR REGISTER -->
-                                    <td data-label="Nomor Register" style="white-space: nowrap;">
+                                    <td data-label="Nomor Register">
                                         <?php if (!empty($row['request_number'])): ?>
                                             <?= h($row['request_number']) ?>
                                         <?php else: ?>
@@ -481,7 +481,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                     <!-- TANGGAL -->
-                                    <td data-label="Tanggal" style="white-space: nowrap;">
+                                    <td data-label="Tanggal">
                                         <?php if (!empty($row['submission_date'])): ?>
                                             <?= date(
                                                 'd-m-Y',
@@ -494,13 +494,13 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                     <!-- LEVEL -->
-                                    <td data-label="Level" style="white-space: nowrap;">
+                                    <td data-label="Level">
                                         <?= h($row['level'] ?? '-') ?>
                                     </td>
 
 
                                     <!-- STATUS -->
-                                    <td data-label="Status" style="white-space: nowrap;">
+                                    <td data-label="Status">
 
                                         <span class="crf-badge <?= statusBadgeClass($row['status']) ?>">
                                             <?= h(statusLabel($row['status'])) ?>
@@ -508,7 +508,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                                     </td>
 
-                                    <td data-label="Tahap" style="white-space: nowrap;">
+                                    <td data-label="Tahap">
                                         <span class="crf-badge <?= workflowStageBadgeClass($row['workflow_stage'] ?? 'PEMOHON') ?>">
                                             <?= h(workflowStageLabel($row['workflow_stage'] ?? 'PEMOHON')) ?>
                                         </span>
@@ -516,13 +516,13 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                     <!-- PERUBAHAN -->
-                                    <td data-label="Perubahan" class="text-truncate" style="min-width: 150px; max-width: 180px;" title="<?= h($row['change_description'] ?? '-') ?>">
+                                    <td data-label="Perubahan" title="<?= h($row['change_description'] ?? '-') ?>">
                                         <?= h(mb_strimwidth($row['change_description'] ?? '-', 0, 60, '...')) ?>
                                     </td>
 
 
                                     <!-- TANGGAPAN -->
-                                    <td data-label="Tanggapan" class="text-truncate" style="min-width: 150px; max-width: 180px;" title="<?= h($row['tanggapan_tindak_lanjut'] ?? '-') ?>">
+                                    <td data-label="Tanggapan" title="<?= h($row['tanggapan_tindak_lanjut'] ?? '-') ?>">
 
                                         <?php if (!empty($row['tanggapan_tindak_lanjut'])): ?>
 
@@ -542,7 +542,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                    <!-- AKSI -->
-                                <td data-label="Aksi" style="white-space: nowrap;">
+                                <td data-label="Aksi">
 
                                     <div class="d-flex gap-2">
 

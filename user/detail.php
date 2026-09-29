@@ -445,7 +445,6 @@ require_once __DIR__ . '/../includes/header.php';
                     Saran Alternatif
                 </div>
 
-                // SESUDAH
                 <div class="crf-detail-value">
 
                     <?= nl2br(h($crf['alternative_suggestion'] ?? '-')) ?>
