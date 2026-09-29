@@ -199,6 +199,105 @@ if (fileInput && fileList) {
    * 7. Konfirmasi sebelum CRF diajukan
    * ----------------------------------------------------------------- */
   var btnSubmitCrf = document.getElementById('btnSubmitCrf');
+  var validationAlert = document.getElementById('validationAlert');
+  var validationList = document.getElementById('validationList');
+
+  function clearInlineErrors() {
+    crfForm.querySelectorAll('.crf-inline-error').forEach(function (error) {
+      error.remove();
+    });
+    crfForm.querySelectorAll('.is-invalid').forEach(function (field) {
+      field.classList.remove('is-invalid');
+      field.removeAttribute('aria-invalid');
+    });
+  }
+
+  function addInlineError(field, message, errors) {
+    if (!field) { return; }
+
+    field.classList.add('is-invalid');
+    field.setAttribute('aria-invalid', 'true');
+
+    var error = document.createElement('div');
+    error.className = 'invalid-feedback crf-inline-error';
+    error.textContent = message;
+    field.insertAdjacentElement('afterend', error);
+    errors.push({ field: field, message: message });
+  }
+
+  function validateCrfForm() {
+    clearInlineErrors();
+    var errors = [];
+
+    [
+      ['full_name', 'Nama lengkap wajib diisi.'],
+      ['phone', 'Nomor handphone/WA wajib diisi.'],
+      ['email', 'Email wajib diisi.'],
+      ['from_department', 'Departemen wajib diisi.'],
+      ['from_division', 'Divisi wajib diisi.'],
+      ['change_description', 'Rincian permohonan perubahan wajib diisi.'],
+      ['benefit', 'Benefit perubahan wajib diisi.'],
+      ['impact', 'Dampak jika tidak dilakukan perubahan wajib diisi.'],
+      ['reason', 'Alasan permohonan perubahan wajib diisi.'],
+      ['alternative_suggestion', 'Saran alternatif wajib diisi.']
+    ].forEach(function (item) {
+      var field = document.getElementById(item[0]);
+      if (field && field.value.trim() === '') {
+        addInlineError(field, item[1], errors);
+      }
+    });
+
+    var email = document.getElementById('email');
+    if (email && email.value.trim() !== ''
+      && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+      addInlineError(email, 'Format email belum valid.', errors);
+    }
+
+    var category = document.getElementById('change_category');
+    if (category && category.value === '') {
+      addInlineError(category, 'Kategori perubahan wajib dipilih.', errors);
+    }
+
+    var categoryDetail = document.getElementById('change_category_detail');
+    if (category && category.value === 'Lainnya'
+      && categoryDetail && categoryDetail.value.trim() === '') {
+      addInlineError(categoryDetail, 'Detail kategori wajib diisi.', errors);
+    }
+
+    var selectedBudget = document.querySelector('input[name="budget_type"]:checked');
+    if (!selectedBudget) {
+      addInlineError(
+        document.querySelector('input[name="budget_type"]'),
+        'Biaya / anggaran wajib dipilih.',
+        errors
+      );
+    } else {
+      var budgetAmount = document.getElementById('budget_amount');
+      if (!budgetAmount || budgetAmount.value.trim() === '') {
+        addInlineError(budgetAmount, 'Nominal biaya / anggaran wajib diisi.', errors);
+      } else if (Number(budgetAmount.value) < 0) {
+        addInlineError(budgetAmount, 'Nominal biaya / anggaran tidak valid.', errors);
+      }
+    }
+
+    if (validationAlert && validationList) {
+      validationList.innerHTML = '';
+      errors.forEach(function (item) {
+        var listItem = document.createElement('li');
+        listItem.textContent = item.message;
+        validationList.appendChild(listItem);
+      });
+      validationAlert.classList.toggle('d-none', errors.length === 0);
+    }
+
+    if (errors.length) {
+      errors[0].field.focus();
+      errors[0].field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return false;
+    }
+
+    return true;
+  }
 
   if (btnSubmitCrf && crfForm) {
     btnSubmitCrf.addEventListener('click', function (event) {
@@ -208,6 +307,15 @@ if (fileInput && fileList) {
         : 'Setelah diajukan, CRF akan masuk ke proses pemeriksaan. Pastikan data sudah benar. Lanjutkan?';
 
       if (!window.confirm(message)) {
+        event.preventDefault();
+      }
+    });
+
+    crfForm.addEventListener('submit', function (event) {
+      var submitter = event.submitter;
+      var isDraftAction = submitter && submitter.value === 'draft';
+
+      if (!event.defaultPrevented && !isDraftAction && !validateCrfForm()) {
         event.preventDefault();
       }
     });

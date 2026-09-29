@@ -133,7 +133,7 @@ try {
          * Pastikan draft benar-benar milik user yang sedang login.
          */
         $checkStmt = $pdo->prepare(
-            'SELECT id, request_number
+            'SELECT id, request_number, status
              FROM change_requests
              WHERE id = :id
                AND user_id = :user_id
@@ -362,12 +362,18 @@ try {
     /*
      * Pesan berhasil.
      */
-        if ($uploadErrors) {
+    $message = ($id > 0 && ($draft['status'] ?? '') === 'Perlu Revisi')
+        ? 'Perubahan revisi berhasil disimpan. Silakan lanjutkan perbaikan lalu kirim ulang.'
+        : ($id > 0
+            ? 'Draft berhasil diperbarui. Anda dapat melanjutkan pengisian kapan saja.'
+            : 'Draft baru berhasil disimpan. Nomor Register akan dibuat setelah CRF diajukan.');
+
+    if ($uploadErrors) {
 
         $_SESSION['flash'] = [
             'type' => 'warning',
             'message' =>
-                'Draft berhasil disimpan, tetapi ada file yang gagal diupload: '
+                $message . ' Namun ada file yang gagal diupload: '
                 . implode(' ', $uploadErrors)
         ];
 
@@ -375,8 +381,7 @@ try {
 
         $_SESSION['flash'] = [
             'type' => 'success',
-            'message' =>
-                'Draft berhasil disimpan. Nomor Register akan dibuat setelah CRF disubmit.'
+            'message' => $message
         ];
     }
 

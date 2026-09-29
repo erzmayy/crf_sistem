@@ -91,10 +91,10 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     <?php endif; ?>
 
-    <!-- <div id="validationAlert" class="alert alert-danger crf-alert d-none" role="alert">
-      <strong>Mohon lengkapi field berikut:</strong>
+    <div id="validationAlert" class="alert alert-danger crf-alert d-none" role="alert" aria-live="polite">
+      <strong>Mohon periksa kembali data berikut:</strong>
       <ul id="validationList" class="mb-0 mt-2"></ul>
-    </div> -->
+    </div>
 
     <form action="../actions/submit_crf.php" method="POST" enctype="multipart/form-data" id="crfForm" novalidate>
 
@@ -377,6 +377,7 @@ require_once __DIR__ . '/../includes/header.php';
             type="submit"
             name="action"
             value="draft"
+            id="btnSaveDraft"
             class="btn btn-crf-outline px-4"
             formaction="../actions/save_draft.php"
             formnovalidate
