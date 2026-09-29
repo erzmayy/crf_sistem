@@ -143,10 +143,10 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
       </div>
 
-      <form method="GET" class="row g-2 mb-3 dashboard-filter-row">
+      <form method="GET" class="row g-2 mb-3 queue-filter-row">
         <input type="hidden" name="stage" value="<?= h($filter) ?>">
 
-        <div class="col-md-11">
+        <div class="col-md-8">
           <input
             type="text"
             name="q"
@@ -156,10 +156,16 @@ require_once __DIR__ . '/../includes/header.php';
           >
         </div>
 
-        <div class="col-md-1">
+        <div class="col-md-2">
           <button type="submit" class="btn btn-crf-primary w-100">
-            <i class="bi bi-search"></i>
+            <i class="bi bi-search"></i> Cari
           </button>
+        </div>
+
+        <div class="col-md-2">
+          <a href="index.php" class="btn btn-crf-outline w-100">
+            Reset
+          </a>
         </div>
       </form>
 
