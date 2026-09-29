@@ -220,15 +220,14 @@ $firstActivityDate = static function (array $rows, array $activities): ?string {
     return null;
 };
 
-$slaDeterminedAt = $firstActivityDate(
-    $activityRows,
-    ['Otomasi - SLA Ditentukan']
-);
+// tambahkan di dekat $slaDeterminedAt
+$cmoFilterAt = $firstActivityDate($activityRows, ['Lolos Filter CMO']);
+$cmoFilterDate = $cmoFilterAt
+    ? formatTanggalIndonesia(new DateTime($cmoFilterAt))
+    : null;
 
-$implementationPirAt = $firstActivityDate(
-    $activityRows,
-    ['Implementasi & PIR Diisi']
-);
+$slaDeterminedAt = $firstActivityDate($activityRows, ['Otomasi - SLA Ditentukan']);
+$implementationPirAt = $firstActivityDate($activityRows, ['Otomasi Selesai']);
 
 $slaDeterminedDate = $slaDeterminedAt
     ? formatTanggalIndonesia(new DateTime($slaDeterminedAt))
@@ -374,6 +373,18 @@ $html = '
             margin-top: 3px;
             font-weight: bold;
             font-size: 10px;
+        }
+
+        .process-table .process-table-title {
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .process-table .process-table-person,
+        .process-table .process-table-role {
+            font-size: 9px;
+            color: #333;
+            margin-top: 2px;
         }
 
         .footer-note {
@@ -622,15 +633,7 @@ $html = '
                 </div>
 
                 <div class="process-table-date">
-                    ' . (
-                        !empty($crf['automation_started_at'])
-                            ? formatTanggalIndonesia(
-                                new DateTime(
-                                    $crf['automation_started_at']
-                                )
-                            )
-                            : '-'
-                    ) . '
+                    ' . ($cmoFilterDate ?? '-') . '
                 </div>
             </td>
 
