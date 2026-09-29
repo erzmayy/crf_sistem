@@ -159,13 +159,16 @@ require_once __DIR__ . '/../includes/header.php';
        ========================================================= */
 
     .dashboard-table-wrap {
-        overflow-x: auto;
+        overflow: auto;
         width: 100%;
+        max-width: 100%;
+        max-height: calc(100vh - var(--crf-topbar-height) - 1rem);
+        overscroll-behavior-x: contain;
     }
 
     .dashboard-table {
         width: 100%;
-        min-width: 1180px;
+        min-width: 1320px;
         table-layout: fixed;
         margin-bottom: 0;
         font-size: 0.86rem;
@@ -178,14 +181,21 @@ require_once __DIR__ . '/../includes/header.php';
     }
 
     .dashboard-table thead th {
-        white-space: nowrap;
+        white-space: normal;
+        overflow-wrap: break-word;
         font-size: 0.72rem;
         text-transform: uppercase;
         letter-spacing: 0.02em;
     }
 
+    .crf-table.dashboard-table thead th {
+        top: 0;
+    }
+
     .dashboard-table tbody td {
         line-height: 1.35;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 
     /* Lebar tiap kolom */
@@ -242,7 +252,7 @@ require_once __DIR__ . '/../includes/header.php';
 
     .dashboard-table th:nth-child(11),
     .dashboard-table td:nth-child(11) {
-        width: 145px;
+        width: 160px;
     }
 
     .dashboard-table .register-cell {
@@ -268,7 +278,7 @@ require_once __DIR__ . '/../includes/header.php';
     }
 
     .dashboard-table .action-cell {
-        white-space: nowrap;
+        white-space: normal;
     }
 
     .dashboard-actions {
@@ -276,11 +286,12 @@ require_once __DIR__ . '/../includes/header.php';
         align-items: center;
         justify-content: flex-start;
         gap: 0.35rem;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
     }
 
     .dashboard-actions .btn {
-        white-space: nowrap;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 
     .dashboard-table .crf-badge {
@@ -288,7 +299,10 @@ require_once __DIR__ . '/../includes/header.php';
         align-items: center;
         justify-content: center;
         max-width: 100%;
-        white-space: nowrap;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        line-height: 1.3;
+        text-align: center;
         font-size: 0.72rem;
     }
 
@@ -515,7 +529,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
             <!-- TABLE -->
-            <div class="table-responsive crf-table-responsive-cards">
+            <div class="table-responsive crf-table-responsive-cards dashboard-table-wrap">
 
                 <table class="table crf-table dashboard-table align-middle">
 
