@@ -445,16 +445,20 @@ require_once __DIR__ . '/../includes/header.php';
                     Saran Alternatif
                 </div>
 
+                // SESUDAH
                 <div class="crf-detail-value">
 
                     <?= nl2br(h($crf['alternative_suggestion'] ?? '-')) ?>
 
                 </div>
-              
-                <!-- IMPLEMENTASI & POST IMPLEMENTATION REVIEW -->
-        <div id="implementation-review" class="mt-4 pt-3 border-top">
 
-            <div class="crf-section-header mb-3">
+            </div>
+        </div>
+
+        <!-- IMPLEMENTASI & POST IMPLEMENTATION REVIEW -->
+        <div id="implementation-review" class="crf-section mb-4">
+
+            <div class="crf-section-header">
                 <span class="crf-section-number">
                     <i class="bi bi-clipboard-check"></i>
                 </span>
@@ -462,63 +466,36 @@ require_once __DIR__ . '/../includes/header.php';
                 <h2>Implementasi & Post Implementation Review</h2>
             </div>
 
+            <div class="crf-section-body">
 
-            <?php if (($crf['workflow_stage'] ?? '') === 'PEMOHON_PIR'): ?>
-                <div class="alert alert-info">
-                    Isian Implementasi dan Post Implementation Review akan dilengkapi oleh Otomasi.
+                <?php if (($crf['workflow_stage'] ?? '') === 'PEMOHON_PIR'): ?>
+                    <div class="alert alert-info">
+                        Isian Implementasi dan Post Implementation Review akan dilengkapi oleh Otomasi.
+                    </div>
+                <?php endif; ?>
+
+                <!-- IMPLEMENTASI -->
+                <div class="crf-detail-label">Implementasi / Hasil Perubahan</div>
+                <div class="crf-detail-value mb-4">
+                    <?php if (!empty($crf['implementation'])): ?>
+                        <?= nl2br(h($crf['implementation'])) ?>
+                    <?php else: ?>
+                        <span class="text-muted">Belum diisi.</span>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
 
-            <!-- IMPLEMENTASI -->
-            <div class="mb-4">
-
-                        <div class="crf-detail-value">
-
-                            <?php if (!empty($crf['implementation'])): ?>
-
-                                <?= nl2br(h($crf['implementation'])) ?>
-
-                            <?php else: ?>
-
-                                <span class="text-muted">
-                                    Belum diisi.
-                                </span>
-
-                            <?php endif; ?>
-
-                        </div>
-
-                    </div>
+                <!-- PIR -->
+                <div class="crf-detail-label">Post Implementation Review</div>
+                <div class="crf-detail-value mb-0">
+                    <?php if (!empty($crf['post_implementation_review'])): ?>
+                        <?= nl2br(h($crf['post_implementation_review'])) ?>
+                    <?php else: ?>
+                        <span class="text-muted">Belum diisi.</span>
+                    <?php endif; ?>
+                </div>
 
             </div>
 
-
-            <!-- PIR -->
-            <div class="mb-0">
-
-                        <div class="crf-detail-value">
-
-                            <?php if (!empty($crf['post_implementation_review'])): ?>
-
-                                <?= nl2br(h($crf['post_implementation_review'])) ?>
-
-                            <?php else: ?>
-
-                                <span class="text-muted">
-                                    Belum diisi.
-                                </span>
-
-                            <?php endif; ?>
-
-                        </div>
-
-                    </div>
-
-            </div>
-
-        </div>
-
-            </div>
         </div>
 
         <!-- TIMELINE PROSES PENGAJUAN -->

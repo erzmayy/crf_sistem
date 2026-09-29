@@ -776,7 +776,7 @@ $fileName = 'CRF-' . preg_replace(
 ) . '.pdf';
 
 $dompdf->stream($fileName, [
-    'Attachment' => true
+    'Attachment' => false
 ]);
 
 exit;
