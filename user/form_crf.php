@@ -61,6 +61,29 @@ $previewRequestNo = !empty($draftData['request_number'])
 $toDepartment = 'Departemen Operasional';
 $toDivision   = 'Divisi Otomasi';
 
+// Gunakan nomor profil; bila kosong, pertahankan nomor draft atau nomor
+// terakhir yang pernah disimpan pada pengajuan milik akun ini.
+$phone = trim((string) ($user['no_wa'] ?? ''));
+if ($phone === '') {
+    $phone = trim((string) ($draftData['phone'] ?? ''));
+}
+if ($phone === '') {
+    $phone = trim((string) ($_SESSION['old_crf']['phone'] ?? ''));
+}
+if ($phone === '') {
+    $stmt = $pdo->prepare("
+        SELECT phone
+        FROM change_requests
+        WHERE user_id = :user_id
+          AND phone IS NOT NULL
+          AND TRIM(phone) <> ''
+        ORDER BY id DESC
+        LIMIT 1
+    ");
+    $stmt->execute(['user_id' => $user['id']]);
+    $phone = trim((string) ($stmt->fetchColumn() ?: ''));
+}
+
 // Ambil pesan flash (sukses/gagal) dari proses submit.
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
@@ -72,7 +95,7 @@ $old = array_merge(
     $_SESSION['old_crf'] ?? [],
     [
         'full_name' => $user['nama'] ?? '',
-        'phone' => $user['no_wa'] ?? '',
+        'phone' => $phone,
         'email' => $user['email'] ?? '',
         'from_department' => $user['dept'] ?? '',
         'from_division' => $user['divisi'] ?? '',
@@ -158,7 +181,7 @@ require_once __DIR__ . '/../includes/header.php';
                 readonly
                 required
               >
-              <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
+              <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun atau data pengajuan sebelumnya</div>
             </div>
 
             <div class="col-md-4">
@@ -304,17 +327,19 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-section-body">
           <p class="crf-hint">Silakan sampaikan apakah untuk perubahan ini sudah dianggarkan atau perlu diusulkan.<span class="text-danger">*</span></p>
 
-          <div class="form-check mb-2 crf-budget-option">
-            <input class="form-check-input" type="radio" name="budget_type" id="budget_rkap" value="rkap"<?= ($old['budget_type'] ?? '') === 'rkap' ? 'checked' : '' ?>>
-            <label class="form-check-label" for="budget_rkap">RKAP tahun berjalan</label>
-          </div>
-          <div class="form-check mb-2 crf-budget-option">
-            <input class="form-check-input" type="radio" name="budget_type" id="budget_boq" value="boq_pks"<?= ($old['budget_type'] ?? '') === 'boq_pks' ? 'checked' : '' ?>>
-            <label class="form-check-label" for="budget_boq">Tercantum dalam BoQ PKS</label>
-          </div>
-          <div class="form-check mb-3 crf-budget-option">
-            <input class="form-check-input" type="radio" name="budget_type" id="budget_baru" value="anggaran_baru" <?= ($old['budget_type'] ?? '') === 'anggaran_baru' ? 'checked' : '' ?>>
-            <label class="form-check-label" for="budget_baru">Akan diajukan anggaran baru</label>
+          <div id="budgetOptions" class="crf-budget-options" role="radiogroup" aria-label="Pilihan biaya atau anggaran">
+            <div class="form-check mb-2 crf-budget-option">
+              <input class="form-check-input" type="radio" name="budget_type" id="budget_rkap" value="rkap"<?= ($old['budget_type'] ?? '') === 'rkap' ? 'checked' : '' ?>>
+              <label class="form-check-label" for="budget_rkap">RKAP tahun berjalan</label>
+            </div>
+            <div class="form-check mb-2 crf-budget-option">
+              <input class="form-check-input" type="radio" name="budget_type" id="budget_boq" value="boq_pks"<?= ($old['budget_type'] ?? '') === 'boq_pks' ? 'checked' : '' ?>>
+              <label class="form-check-label" for="budget_boq">Tercantum dalam BoQ PKS</label>
+            </div>
+            <div class="form-check mb-3 crf-budget-option">
+              <input class="form-check-input" type="radio" name="budget_type" id="budget_baru" value="anggaran_baru" <?= ($old['budget_type'] ?? '') === 'anggaran_baru' ? 'checked' : '' ?>>
+              <label class="form-check-label" for="budget_baru">Akan diajukan anggaran baru</label>
+            </div>
           </div>
 
           <label for="budget_amount" class="crf-field-label">Nominal</label>
