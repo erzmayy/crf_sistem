@@ -148,11 +148,10 @@ require_once __DIR__ . '/../includes/header.php';
        ========================================================= */
 
     .dashboard-table-wrap {
-        overflow: auto;
+        overflow: visible;
         width: 100%;
         max-width: 100%;
-        max-height: 70vh;
-        overscroll-behavior-x: contain;
+        max-height: none;
     }
 
     .dashboard-table {
@@ -176,9 +175,9 @@ require_once __DIR__ . '/../includes/header.php';
         text-transform: uppercase;
         letter-spacing: 0.02em;
         position: sticky;
-        top: 0;
-        z-index: 5;
-        background: #f8fafc;
+        top: var(--crf-topbar-height);
+        z-index: 70;
+        background: var(--crf-helpdesk-blue);
     }
 
     .crf-table.dashboard-table thead th {
@@ -323,8 +322,9 @@ require_once __DIR__ . '/../includes/header.php';
     }
 
     .dashboard-table td:nth-child(9) .crf-badge {
-        white-space: nowrap;
-        overflow-wrap: normal;
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 
 
@@ -433,10 +433,15 @@ require_once __DIR__ . '/../includes/header.php';
         }
 
         .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .urgency-cell .crf-badge,
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .status-cell .crf-badge,
         .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .stage-cell .dashboard-stage-badge {
             max-width: 100%;
             white-space: nowrap;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .status-cell .crf-badge {
+            max-width: 100%;
+            white-space: normal;
+            overflow-wrap: anywhere;
         }
 
         .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .dashboard-actions {

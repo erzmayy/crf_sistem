@@ -39,18 +39,6 @@ $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
     </label>
 
     <label class="crf-list-filter-field">
-        <span>Departemen</span>
-        <select name="department" class="form-select" aria-label="Filter departemen">
-            <option value="">Semua Departemen</option>
-            <?php foreach (($listFilters['departments'] ?? []) as $departmentOption): ?>
-                <option value="<?= h($departmentOption) ?>" <?= ($listFilters['department'] ?? '') === $departmentOption ? 'selected' : '' ?>>
-                    <?= h($departmentOption) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </label>
-
-    <label class="crf-list-filter-field">
         <span>Level Urgensi</span>
         <select name="level" class="form-select" aria-label="Filter level urgensi">
             <option value="">Semua Level</option>
@@ -75,16 +63,6 @@ $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
             </select>
         </label>
     <?php endif; ?>
-
-    <label class="crf-list-filter-field">
-        <span>Tanggal Dari</span>
-        <input type="date" name="date_from" class="form-control" value="<?= h($listFilters['date_from'] ?? '') ?>" aria-label="Tanggal pengajuan dari">
-    </label>
-
-    <label class="crf-list-filter-field">
-        <span>Tanggal Sampai</span>
-        <input type="date" name="date_to" class="form-control" value="<?= h($listFilters['date_to'] ?? '') ?>" aria-label="Tanggal pengajuan sampai">
-    </label>
 
     <div class="crf-list-filter-actions">
         <button type="submit" class="btn btn-crf-primary" aria-label="Terapkan filter">

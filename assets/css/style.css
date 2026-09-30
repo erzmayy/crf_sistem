@@ -8,7 +8,7 @@
   --crf-blue-700: #2563eb;
   --crf-helpdesk-blue: #EDF7FD;
   --crf-helpdesk-blue-text: #1f568f;
-  --crf-blue-100: #EAF4FB;   /* biru sangat muda */
+  --crf-blue-100: #EDF7FD;
   --crf-gray-900: #333333;   /* teks utama */
   --crf-gray-600: #666666;   /* teks sekunder */
   --crf-gray-300: #D9D9D9;   /* border */
@@ -173,6 +173,51 @@ body {
 
 .crf-page-header {
   margin-bottom: 1.75rem;
+}
+
+.crf-page-header.crf-page-banner,
+.crf-detail-page .crf-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.9rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background: var(--crf-helpdesk-blue);
+  box-shadow: 0 6px 18px rgba(31, 86, 143, 0.1);
+}
+
+.crf-page-eyebrow {
+  display: block;
+  flex: 0 0 100%;
+  margin-bottom: -0.55rem;
+  color: var(--crf-helpdesk-blue-text);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.crf-detail-page .crf-page-header::before {
+  content: "PORTAL CRF · DETAIL PENGAJUAN";
+  display: block;
+  flex: 0 0 100%;
+  margin-bottom: -0.55rem;
+  color: var(--crf-helpdesk-blue-text);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.crf-page-header.crf-page-banner h1,
+.crf-detail-page .crf-page-header h1 {
+  color: var(--crf-helpdesk-blue-text);
+}
+
+.crf-page-header.crf-page-banner p,
+.crf-detail-page .crf-page-header p {
+  color: #365a78;
 }
 
 .crf-page-header h1 {
@@ -397,7 +442,7 @@ textarea.form-control {
 
 .crf-list-filters {
   display: grid;
-  grid-template-columns: minmax(180px, 1.7fr) repeat(3, minmax(110px, 1fr)) repeat(2, minmax(125px, 1fr)) auto;
+  grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(125px, 1fr)) auto;
   align-items: end;
   gap: 0.5rem;
   margin-bottom: 0.9rem;
@@ -424,8 +469,12 @@ textarea.form-control {
 
 .crf-list-filter-actions {
   display: flex;
-  align-items: end;
+  align-items: center;
+  justify-self: end;
   gap: 0.35rem;
+  min-width: 0;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .crf-list-filters .form-control,
@@ -438,18 +487,8 @@ textarea.form-control {
   font-size: 0.78rem;
 }
 
-.crf-list-date {
-  display: grid;
-  gap: 0.25rem;
-  min-width: 0;
-}
-
-.crf-list-date > span {
-  color: #456184;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+.crf-list-filter-actions > .btn {
+  flex: 0 0 auto;
 }
 
 .crf-list-pagination {
@@ -508,43 +547,10 @@ textarea.form-control {
 }
 
 .crf-list-filters-with-category {
-  grid-template-columns: minmax(180px, 1.7fr) repeat(4, minmax(110px, 1fr)) repeat(2, minmax(125px, 1fr)) auto;
-}
-
-@media (max-width: 1100px) {
-  .crf-list-filters,
-  .crf-list-filters-with-category {
-    grid-template-columns: repeat(4, minmax(120px, 1fr));
-    align-items: end;
-  }
-
-  .crf-list-search {
-    grid-column: span 2;
-  }
-
-  .crf-list-filter-actions {
-    align-self: end;
-  }
+  grid-template-columns: minmax(200px, 2fr) repeat(3, minmax(110px, 1fr)) auto;
 }
 
 @media (max-width: 640px) {
-  .crf-list-filters,
-  .crf-list-filters-with-category {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .crf-list-search {
-    grid-column: 1 / -1;
-  }
-
-  .crf-list-filter-actions {
-    grid-column: 1 / -1;
-  }
-
-  .crf-list-filter-actions > .btn {
-    flex: 1 1 0;
-  }
-
   .crf-list-pagination {
     align-items: flex-start;
     flex-direction: column;
@@ -557,6 +563,41 @@ textarea.form-control {
 
 .crf-list-table-card {
   padding: 0.8rem 0.9rem 0.65rem;
+  container-name: crf-filter-card;
+  container-type: inline-size;
+}
+
+@container crf-filter-card (max-width: 760px) {
+  .crf-list-filters-with-category {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  .crf-list-filters-with-category .crf-list-search {
+    grid-column: span 2;
+  }
+
+  .crf-list-filters-with-category .crf-list-filter-actions {
+    grid-column: 4;
+    align-self: end;
+    justify-self: end;
+  }
+}
+
+@container crf-filter-card (max-width: 640px) {
+  .crf-list-filters,
+  .crf-list-filters-with-category {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .crf-list-filters .crf-list-search {
+    grid-column: 1 / -1;
+  }
+
+  .crf-list-filters .crf-list-filter-actions {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
 }
 
 .crf-list-table-card .crf-table-heading {
@@ -566,7 +607,7 @@ textarea.form-control {
 .crf-list-table-card .crf-table thead th {
   padding-top: 0.55rem;
   padding-bottom: 0.55rem;
-  background: #f8fafc;
+  background: var(--crf-helpdesk-blue);
   font-size: 0.68rem;
 }
 
@@ -579,7 +620,7 @@ textarea.form-control {
   position: sticky;
   top: 0;
   z-index: 70;
-  background: var(--crf-white);
+  background: var(--crf-helpdesk-blue);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -604,9 +645,8 @@ textarea.form-control {
     display: block;
     width: 100%;
     max-width: 100%;
-    max-height: 70vh;
-    overflow-x: auto;
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   .crf-table.pengajuan-table {
@@ -618,10 +658,10 @@ textarea.form-control {
 
   .crf-table.pengajuan-table thead th {
     position: sticky;
-    top: 0;
-    z-index: 5;
+    top: var(--crf-topbar-height);
+    z-index: 70;
     padding: 0.42rem 0.4rem;
-    background: #f8fafc;
+    background: var(--crf-helpdesk-blue);
   }
 
   .crf-table.pengajuan-table tbody td {
@@ -792,7 +832,7 @@ textarea.form-control {
 
 .crf-detail-page .crf-section-header,
 .crf-detail-card .crf-section-header {
-  background: linear-gradient(105deg, #edf6ff 0%, #f8fbff 100%);
+  background: var(--crf-helpdesk-blue);
   border-bottom-color: #dce8f3;
 }
 
@@ -852,7 +892,7 @@ textarea.form-control {
 
 .crf-detail-timeline .crf-section-header {
   padding: 0.75rem 0.9rem;
-  background: #f6f8fa;
+  background: var(--crf-helpdesk-blue);
   border-bottom-color: #dce2e8;
 }
 
@@ -1420,7 +1460,9 @@ textarea.form-control {
 }
 
 .dashboard-table td:nth-child(9) .crf-badge {
+    max-width: 100%;
     white-space: normal;
+    overflow-wrap: anywhere;
     line-height: 1.3;
     text-align: center;
 }
@@ -2120,8 +2162,8 @@ textarea.form-control {
 }
 
 .pengajuan-table-wrap {
-  max-height: 66vh;
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
   border: 1px solid #dbe5f2;
   border-radius: 8px;
 }
@@ -2135,8 +2177,8 @@ textarea.form-control {
 
 .crf-table.pengajuan-table thead th {
   position: sticky;
-  top: 0;
-  z-index: 5;
+  top: var(--crf-topbar-height);
+  z-index: 70;
   padding: 0.58rem 0.55rem !important;
   border: 0;
   background: var(--crf-helpdesk-blue) !important;
@@ -2611,7 +2653,7 @@ textarea.form-control {
 
 .crf-helpdesk-page .crf-table-card,
 .pengajuan-list-card {
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid #d7e8ec;
   border-radius: 12px;
   box-shadow: 0 3px 12px rgba(22, 55, 66, 0.06);
@@ -2629,11 +2671,10 @@ textarea.form-control {
 }
 
 .crf-helpdesk-table-wrap {
-  max-height: 66vh;
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
   border: 1px solid #d7e8ec;
   border-radius: 8px;
-  overscroll-behavior: contain;
 }
 
 .crf-helpdesk-table {
@@ -2646,8 +2687,8 @@ textarea.form-control {
 
 .crf-helpdesk-table thead th {
   position: sticky;
-  top: 0;
-  z-index: 5;
+  top: var(--crf-topbar-height);
+  z-index: 70;
   padding: 0.58rem 0.5rem !important;
   border: 0;
   background: var(--crf-helpdesk-blue) !important;
@@ -2838,6 +2879,22 @@ textarea.form-control {
   font-size: 0.63rem;
   line-height: 1.15;
   white-space: nowrap;
+}
+
+.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-badge,
+.crf-helpdesk-table tbody td[data-label="Status"] .crf-badge,
+.crf-helpdesk-table tbody td[data-label^="Tahap"] .crf-badge {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-badge {
+  width: fit-content;
+  max-width: 100%;
+  justify-content: center;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .crf-helpdesk-table tbody td:last-child .d-flex,

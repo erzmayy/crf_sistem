@@ -77,9 +77,12 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="crf-page">
   <div class="container">
 
-    <div class="crf-page-header">
-      <h1>Change Request Form (CRF)</h1>
-      <p>Silakan lengkapi form di bawah untuk mengajukan permohonan perubahan.</p>
+    <div class="crf-page-header crf-page-banner">
+      <span class="crf-page-eyebrow">PORTAL CRF · PENGAJUAN</span>
+      <div>
+        <h1>Change Request Form (CRF)</h1>
+        <p>Silakan lengkapi form di bawah untuk mengajukan permohonan perubahan.</p>
+      </div>
     </div>
 
     <?php if ($flash): ?>
