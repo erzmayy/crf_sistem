@@ -29,7 +29,22 @@ $stmt = $pdo->prepare("
     SELECT cr.*
     FROM change_requests cr
     WHERE cr.id = :id
-      AND cr.workflow_stage IN ('CMO_FILTER', 'CMO_FINAL')
+      AND (
+          cr.workflow_stage IN ('CMO_FILTER', 'CMO_FINAL')
+          OR EXISTS (
+              SELECT 1
+              FROM crf_activity_logs activity_log
+              WHERE activity_log.change_request_id = cr.id
+                AND (
+                    activity_log.activity = 'Lolos Filter CMO'
+                    OR (
+                        activity_log.activity = 'Perlu Revisi'
+                        AND activity_log.description = 'CRF dikembalikan ke Pemohon untuk revisi.'
+                    )
+                    OR activity_log.activity IN ('Cancel', 'Solve')
+                )
+          )
+      )
     LIMIT 1
 ");
 

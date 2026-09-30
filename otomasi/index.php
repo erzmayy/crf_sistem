@@ -8,19 +8,31 @@ $pdo = getConnection();
 $queue = $_GET['queue'] ?? 'all';
 $search = trim($_GET['q'] ?? '');
 
-if (!in_array($queue, ['all', 'sla', 'execution'], true)) {
+if (!in_array($queue, ['all', 'sla', 'execution', 'history'], true)) {
     $queue = 'all';
 }
 
-$where = [
-    "cr.workflow_stage = 'OTOMASI'",
-    "cr.status <> 'Draft'"
-];
+$where = ["cr.status <> 'Draft'"];
 $params = [];
 
 /* =========================================================
  * FILTER ANTREAN
  * ========================================================= */
+
+if ($queue === 'history') {
+    $where[] = "EXISTS (
+        SELECT 1
+        FROM crf_activity_logs activity_log
+        WHERE activity_log.change_request_id = cr.id
+          AND activity_log.activity IN (
+              'Proses Otomasi Diperbarui',
+              'Otomasi - SLA Ditentukan',
+              'Otomasi Selesai'
+          )
+    )";
+} else {
+    $where[] = "cr.workflow_stage = 'OTOMASI'";
+}
 
 if ($queue === 'sla') {
     $where[] = 'cr.kadep_operasional_approved_at IS NULL';
@@ -74,13 +86,14 @@ $sql = "
     SELECT cr.*
     FROM change_requests cr
     WHERE " . implode(' AND ', $where) . "
-    ORDER BY
-        CASE
+    ORDER BY " . ($queue === 'history'
+        ? 'cr.updated_at DESC'
+        : "CASE
             WHEN cr.kadep_operasional_approved_at IS NOT NULL THEN 0
             ELSE 1
         END,
         cr.automation_started_at ASC,
-        cr.created_at ASC
+        cr.created_at ASC") . "
     LIMIT {$perPage} OFFSET {$offset}
 ";
 
@@ -167,7 +180,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-table-card">
 
             <div class="crf-table-heading">
-                <h2>Antrean Otomasi</h2>
+                <h2><?= $queue === 'history' ? 'Riwayat Otomasi' : 'Antrean Otomasi' ?></h2>
 
                 <!-- FILTER ANTREAN -->
                 <div class="btn-group">
@@ -200,11 +213,21 @@ require_once __DIR__ . '/../includes/header.php';
                     >
                         Eksekusi
                     </a>
+                    <a
+                        href="?<?= h(http_build_query(array_filter([
+                            'q' => $search,
+                            'queue' => 'history'
+                        ], static fn($value) => $value !== ''))) ?>"
+                        class="btn btn-sm <?= $queue === 'history' ? 'btn-crf-primary' : 'btn-crf-outline' ?>"
+                    >
+                        Riwayat
+                    </a>
                 </div>
             </div>
 
             <!-- SEARCH -->
             <form method="GET" class="row g-2 mb-3 queue-filter-row">
+                <input type="hidden" name="queue" value="<?= h($queue) ?>">
                 <div class="col-md-8">
                     <input
                         type="text"
@@ -222,7 +245,7 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
 
                 <div class="col-md-2">
-                    <a href="index.php" class="btn btn-crf-outline w-100">
+                    <a href="?queue=<?= h($queue) ?>" class="btn btn-crf-outline w-100">
                         Reset
                     </a>
                 </div>
@@ -237,7 +260,12 @@ require_once __DIR__ . '/../includes/header.php';
                             <th>Pengaju</th>
                             <th>Level</th>
                             <th>SLA</th>
-                            <th>Mulai</th>
+                            <?php if ($queue === 'history'): ?>
+                                <th>Status</th>
+                                <th>Tahap Saat Ini</th>
+                            <?php else: ?>
+                                <th>Mulai</th>
+                            <?php endif; ?>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -245,8 +273,10 @@ require_once __DIR__ . '/../includes/header.php';
                     <tbody>
                     <?php if (!$requests): ?>
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
-                                Tidak ada CRF pada antrean Otomasi sesuai filter yang dipilih.
+                            <td colspan="<?= $queue === 'history' ? 8 : 7 ?>" class="text-center text-muted py-4">
+                                <?= $queue === 'history'
+                                    ? 'Belum ada CRF yang pernah diproses oleh Otomasi.'
+                                    : 'Tidak ada CRF pada antrean Otomasi sesuai filter yang dipilih.' ?>
                             </td>
                         </tr>
                     <?php else: ?>
@@ -274,11 +304,24 @@ require_once __DIR__ . '/../includes/header.php';
                                         : '-' ?>
                                 </td>
 
-                                <td data-label="Mulai">
-                                    <?= !empty($row['automation_started_at'])
-                                        ? h(date('d-m-Y H:i', strtotime($row['automation_started_at'])))
-                                        : '-' ?>
-                                </td>
+                                <?php if ($queue === 'history'): ?>
+                                    <td data-label="Status">
+                                        <span class="crf-badge <?= statusBadgeClass($row['status']) ?>">
+                                            <?= h(statusLabel($row['status'])) ?>
+                                        </span>
+                                    </td>
+                                    <td data-label="Tahap Saat Ini">
+                                        <span class="crf-badge <?= workflowStageBadgeClass($row['workflow_stage']) ?>">
+                                            <?= h(workflowStageLabel($row['workflow_stage'])) ?>
+                                        </span>
+                                    </td>
+                                <?php else: ?>
+                                    <td data-label="Mulai">
+                                        <?= !empty($row['automation_started_at'])
+                                            ? h(date('d-m-Y H:i', strtotime($row['automation_started_at'])))
+                                            : '-' ?>
+                                    </td>
+                                <?php endif; ?>
 
                                 <td data-label="Aksi">
                                     <div class="d-flex gap-2">
@@ -289,13 +332,15 @@ require_once __DIR__ . '/../includes/header.php';
                                             <i class="bi bi-eye"></i> Detail
                                         </a>
 
-                                        <a
-                                            href="detail.php?id=<?= (int) $row['id'] ?>"
-                                            class="btn btn-sm <?= !empty($row['kadep_operasional_approved_at']) ? 'btn-danger' : 'btn-crf-primary' ?>"
-                                        >
-                                            <i class="bi <?= !empty($row['kadep_operasional_approved_at']) ? 'bi-play-circle' : 'bi-gear' ?>"></i>
-                                            <?= !empty($row['kadep_operasional_approved_at']) ? 'Eksekusi' : 'Proses' ?>
-                                        </a>
+                                        <?php if ($queue !== 'history'): ?>
+                                            <a
+                                                href="detail.php?id=<?= (int) $row['id'] ?>"
+                                                class="btn btn-sm <?= !empty($row['kadep_operasional_approved_at']) ? 'btn-danger' : 'btn-crf-primary' ?>"
+                                            >
+                                                <i class="bi <?= !empty($row['kadep_operasional_approved_at']) ? 'bi-play-circle' : 'bi-gear' ?>"></i>
+                                                <?= !empty($row['kadep_operasional_approved_at']) ? 'Eksekusi' : 'Proses' ?>
+                                            </a>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

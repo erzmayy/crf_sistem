@@ -27,8 +27,22 @@ $stmt = $pdo->prepare("
     SELECT cr.*
     FROM change_requests cr
     WHERE cr.id = :id
-      AND cr.workflow_stage = 'kadep_operasional'
       AND cr.status <> 'Draft'
+      AND (
+          cr.workflow_stage = 'kadep_operasional'
+          OR EXISTS (
+              SELECT 1
+              FROM crf_activity_logs activity_log
+              WHERE activity_log.change_request_id = cr.id
+                AND (
+                    activity_log.activity = 'Approval Kepala Departemen Operasional'
+                    OR (
+                        activity_log.activity = 'Perlu Revisi'
+                        AND activity_log.description LIKE 'Kepala Departemen Operasional mengembalikan CRF ke Otomasi%'
+                    )
+                )
+          )
+      )
     LIMIT 1
 ");
 
@@ -203,6 +217,7 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- =====================================================
              4. APPROVAL KEPALA DEPARTEMEN OPERASIONAL (khusus)
              ===================================================== -->
+        <?php if ($crf['workflow_stage'] === 'kadep_operasional'): ?>
         <div class="crf-section mb-4">
 
             <div class="crf-section-header">
@@ -250,6 +265,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
         </div>
+        <?php endif; ?>
 
 
         <!-- 5. TIMELINE (tanpa nomor -> ikon jam, seperti versi lama) -->
