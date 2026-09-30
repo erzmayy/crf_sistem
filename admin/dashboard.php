@@ -13,17 +13,13 @@ requireAdmin();
 
 $pdo = getConnection();
 
-$search         = trim($_GET['q'] ?? '');
+$search         = $_GET['q'] ?? '';
 $statusFilter   = $_GET['status'] ?? '';
-$categoryFilter = $_GET['category'] ?? '';
-
-$allowedStatuses = [
-    'Belum Ditindak Lanjuti',
-    'Perlu Revisi',
-    'Dalam Proses',
-    'Solve',
-    'Cancel'
-];
+$categoryFilter = is_string($_GET['category'] ?? null) ? $_GET['category'] : '';
+$departmentFilter = $_GET['department'] ?? '';
+$levelFilter = $_GET['level'] ?? '';
+$dateFrom = $_GET['date_from'] ?? '';
+$dateTo = $_GET['date_to'] ?? '';
 
 $allowedCategories = [
     'Aplikasi',
@@ -41,25 +37,20 @@ $params = [];
  * PENCARIAN / FILTER
  * ========================================================= */
 
-if ($search !== '') {
-
-    $where[] = '(
-        cr.request_number LIKE :search_request
-        OR cr.full_name LIKE :search_name
-    )';
-
-    $searchValue = '%' . $search . '%';
-
-    $params['search_request'] = $searchValue;
-    $params['search_name'] = $searchValue;
-}
-
-if (in_array($statusFilter, $allowedStatuses, true)) {
-
-    $where[] = 'cr.status = :status';
-
-    $params['status'] = $statusFilter;
-}
+$listFilters = applyCrfRequestFilters($pdo, $where, $params, [
+    'search' => $search,
+    'status' => $statusFilter,
+    'department' => $departmentFilter,
+    'level' => $levelFilter,
+    'date_from' => $dateFrom,
+    'date_to' => $dateTo,
+]);
+$search = $listFilters['search'];
+$statusFilter = $listFilters['status'];
+$departmentFilter = $listFilters['department'];
+$levelFilter = $listFilters['level'];
+$dateFrom = $listFilters['date_from'];
+$dateTo = $listFilters['date_to'];
 
 if (in_array($categoryFilter, $allowedCategories, true)) {
 
@@ -67,13 +58,11 @@ if (in_array($categoryFilter, $allowedCategories, true)) {
 
     $params['category'] = $categoryFilter;
 }
-
-
 /* =========================================================
  * PAGINATION
  * ========================================================= */
 
-$perPage = 10;
+$perPage = getCrfPageSize($_GET['per_page'] ?? 6);
 
 $page = max(
     1,
@@ -162,13 +151,13 @@ require_once __DIR__ . '/../includes/header.php';
         overflow: auto;
         width: 100%;
         max-width: 100%;
-        max-height: calc(100vh - var(--crf-topbar-height) - 1rem);
+        max-height: 70vh;
         overscroll-behavior-x: contain;
     }
 
     .dashboard-table {
         width: 100%;
-        min-width: 1320px;
+        min-width: 1028px;
         table-layout: fixed;
         margin-bottom: 0;
         font-size: 0.86rem;
@@ -177,7 +166,7 @@ require_once __DIR__ . '/../includes/header.php';
     .dashboard-table th,
     .dashboard-table td {
         vertical-align: middle;
-        padding: 0.65rem 0.5rem;
+        padding: 0.38rem 0.45rem;
     }
 
     .dashboard-table thead th {
@@ -186,6 +175,10 @@ require_once __DIR__ . '/../includes/header.php';
         font-size: 0.72rem;
         text-transform: uppercase;
         letter-spacing: 0.02em;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: #f8fafc;
     }
 
     .crf-table.dashboard-table thead th {
@@ -193,7 +186,7 @@ require_once __DIR__ . '/../includes/header.php';
     }
 
     .dashboard-table tbody td {
-        line-height: 1.35;
+        line-height: 1.2;
         white-space: normal;
         overflow-wrap: anywhere;
     }
@@ -201,63 +194,75 @@ require_once __DIR__ . '/../includes/header.php';
     /* Lebar tiap kolom */
     .dashboard-table th:nth-child(1),
     .dashboard-table td:nth-child(1) {
-        width: 42px;
+        width: 34px;
         text-align: center;
     }
 
     .dashboard-table th:nth-child(2),
     .dashboard-table td:nth-child(2) {
-        width: 145px;
+        width: 118px;
     }
 
     .dashboard-table th:nth-child(3),
     .dashboard-table td:nth-child(3) {
-        width: 92px;
+        width: 110px;
     }
 
     .dashboard-table th:nth-child(4),
     .dashboard-table td:nth-child(4) {
-        width: 95px;
+        width: 94px;
     }
 
     .dashboard-table th:nth-child(5),
     .dashboard-table td:nth-child(5) {
-        width: 105px;
+        width: 88px;
     }
 
     .dashboard-table th:nth-child(6),
     .dashboard-table td:nth-child(6) {
-        width: 82px;
+        width: 92px;
     }
 
     .dashboard-table th:nth-child(7),
     .dashboard-table td:nth-child(7) {
-        width: 95px;
+        width: 1px;
     }
 
     .dashboard-table th:nth-child(8),
     .dashboard-table td:nth-child(8) {
-        width: 110px;
+        width: 125px;
     }
 
     .dashboard-table th:nth-child(9),
     .dashboard-table td:nth-child(9) {
-        width: 125px;
+        width: 155px;
     }
 
     .dashboard-table th:nth-child(10),
     .dashboard-table td:nth-child(10) {
-        width: 110px;
+        width: 130px;
     }
 
     .dashboard-table th:nth-child(11),
     .dashboard-table td:nth-child(11) {
-        width: 160px;
+        width: 82px;
     }
 
     .dashboard-table .register-cell {
         white-space: nowrap;
         font-weight: 600;
+    }
+
+    .dashboard-table th:nth-child(7),
+    .dashboard-table td:nth-child(7) {
+        display: none;
+    }
+
+    .dashboard-table .title-cell {
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .dashboard-table .date-cell {
@@ -278,7 +283,7 @@ require_once __DIR__ . '/../includes/header.php';
     }
 
     .dashboard-table .action-cell {
-        white-space: normal;
+        white-space: nowrap;
     }
 
     .dashboard-actions {
@@ -286,54 +291,195 @@ require_once __DIR__ . '/../includes/header.php';
         align-items: center;
         justify-content: flex-start;
         gap: 0.35rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
     }
 
     .dashboard-actions .btn {
-        white-space: normal;
-        overflow-wrap: anywhere;
+        flex: 0 0 auto;
+        white-space: nowrap;
+        overflow-wrap: normal;
     }
 
     .dashboard-table .crf-badge {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        max-width: 100%;
-        white-space: normal;
-        overflow-wrap: anywhere;
-        line-height: 1.3;
+        max-width: none;
+        white-space: nowrap;
+        overflow-wrap: normal;
+        line-height: 1.2;
         text-align: center;
         font-size: 0.72rem;
     }
 
-    
+    .dashboard-table .urgency-cell,
+    .dashboard-table .urgency-cell .crf-badge {
+        white-space: nowrap;
+        overflow-wrap: normal;
+    }
+
+    .dashboard-table .urgency-cell .crf-badge {
+        max-width: none;
+    }
+
+    .dashboard-table td:nth-child(9) .crf-badge {
+        white-space: nowrap;
+        overflow-wrap: normal;
+    }
+
 
     .dashboard-stage-badge {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
         max-width: 100%;
-        padding: 0.28rem 0.5rem;
+        padding: 0.22rem 0.3rem;
         border-radius: 999px;
         background: #eef2ff;
         color: #334155;
-        font-size: 0.72rem;
+        font-size: 0.68rem;
         line-height: 1.2;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
+    @media (max-width: 768px) {
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap {
+            overflow: visible;
+            max-height: none;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table {
+            display: block;
+            width: 100%;
+            min-width: 0;
+            table-layout: auto;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table thead {
+            display: none;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table tbody {
+            display: block;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table tr {
+            display: block;
+            margin: 0 0 0.65rem;
+            padding: 0.45rem 0.7rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table th,
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            width: 100%;
+            min-width: 0;
+            max-width: none;
+            padding: 0.38rem 0;
+            border: 0;
+            border-bottom: 1px solid #f1f5f9;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            text-align: right;
+            line-height: 1.25;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td::before {
+            display: block;
+            flex: 0 0 38%;
+            content: attr(data-label);
+            color: #64748b;
+            font-size: 0.66rem;
+            font-weight: 700;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td:last-child {
+            border-bottom: 0;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td:last-child::before {
+            display: block;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td.crf-empty-cell {
+            display: block;
+            text-align: center;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td.crf-empty-cell::before {
+            display: none;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td:nth-child(7) {
+            display: none;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .title-cell,
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .name-cell,
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .department-cell {
+            overflow: visible;
+            text-overflow: clip;
+            white-space: normal;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .urgency-cell .crf-badge,
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .status-cell .crf-badge,
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .stage-cell .dashboard-stage-badge {
+            max-width: 100%;
+            white-space: nowrap;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .dashboard-actions {
+            justify-content: flex-end;
+            flex-wrap: nowrap !important;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .dashboard-actions .btn {
+            width: auto;
+        }
+    }
+
     /* Filter bar */
-    .dashboard-filter-row {
-        align-items: center;
+    .dashboard-summary-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0.55rem;
+        margin-bottom: 0.9rem;
     }
 
-    .dashboard-filter-row .form-control,
-    .dashboard-filter-row .form-select {
-        min-height: 38px;
+    .dashboard-summary-grid .crf-stat-card {
+        min-height: 58px;
+        padding: 0.65rem 0.8rem;
     }
 
-    .dashboard-filter-row .btn {
-        min-height: 38px;
+    .dashboard-summary-grid .crf-stat-card span {
+        margin-bottom: 0.25rem;
+        font-size: 0.66rem;
+    }
+
+    .dashboard-summary-grid .crf-stat-card strong {
+        font-size: 1.15rem;
+    }
+
+    @media (max-width: 900px) {
+        .dashboard-summary-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 480px) {
+        .dashboard-summary-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
     }
 </style>
 
@@ -359,7 +505,7 @@ require_once __DIR__ . '/../includes/header.php';
              SUMMARY
              ===================================================== -->
 
-        <div class="crf-stat-grid">
+        <div class="crf-stat-grid dashboard-summary-grid">
 
             <div class="crf-stat-card">
                 <span>Total Pengajuan</span>
@@ -422,110 +568,27 @@ require_once __DIR__ . '/../includes/header.php';
              TABLE
              ===================================================== -->
 
-        <div class="crf-table-card" id="crf-table">
+        <div class="crf-table-card crf-list-table-card" id="crf-table">
 
             <div class="crf-table-heading">
 
                 <h2>
-                    Pengajuan Terbaru
+                    Daftar Pengajuan Change Request
                 </h2>
-
-                <a
-                    href="dashboard.php"
-                    class="btn btn-sm btn-crf-outline"
-                >
-                    <i class="bi bi-arrow-counterclockwise"></i>
-                        Reset Filter
-                </a>
 
             </div>
 
 
             <!-- FILTER -->
-            <form
-                method="GET"
-                class="row g-2 mb-3 dashboard-filter-row"
-            >
-
-                <div class="col-md-5">
-
-                    <input
-                        type="text"
-                        name="q"
-                        class="form-control"
-                        placeholder="Cari Nomor Register atau nama pengaju..."
-                        value="<?= h($search) ?>"
-                    >
-
-                </div>
-
-
-                <div class="col-md-3">
-
-                    <select
-                        name="status"
-                        class="form-select"
-                    >
-
-                        <option value="">
-                            Semua Status
-                        </option>
-
-                        <?php foreach ($allowedStatuses as $s): ?>
-
-                            <option
-                                value="<?= h($s) ?>"
-                                <?= $statusFilter === $s ? 'selected' : '' ?>
-                            >
-                                <?= h(statusLabel($s)) ?>
-                            </option>
-
-                        <?php endforeach; ?>
-
-                    </select>
-
-                </div>
-
-
-                <div class="col-md-3">
-
-                    <select
-                        name="category"
-                        class="form-select"
-                    >
-
-                        <option value="">
-                            Semua Kategori
-                        </option>
-
-                        <?php foreach ($allowedCategories as $c): ?>
-
-                            <option
-                                value="<?= h($c) ?>"
-                                <?= $categoryFilter === $c ? 'selected' : '' ?>
-                            >
-                                <?= h($c) ?>
-                            </option>
-
-                        <?php endforeach; ?>
-
-                    </select>
-
-                </div>
-
-
-                <div class="col-md-1">
-
-                    <button
-                        type="submit"
-                        class="btn btn-crf-primary w-100"
-                    >
-                        <i class="bi bi-search"></i>
-                    </button>
-
-                </div>
-
-            </form>
+            <?php
+            $listContextName = '';
+            $listContextValue = '';
+            $listCategories = $allowedCategories;
+            $listCategoryValue = $categoryFilter;
+            $listResetUrl = 'dashboard.php';
+            require __DIR__ . '/../includes/partials/crf_list_filters.php';
+            unset($listContextName, $listContextValue, $listCategories, $listCategoryValue, $listResetUrl);
+            ?>
 
 
             <!-- TABLE -->
@@ -539,10 +602,10 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <th>No</th>
                             <th>Nomor Register</th>
-                            <th>Tanggal</th>
-                            <th>Pengaju</th>
+                            <th>Judul Change Request</th>
+                            <th>Nama Pemohon</th>
                             <th>Departemen</th>
-                            <th>Divisi</th>
+                            <th>Tgl Pengajuan</th>
                             <th>Kategori</th>
                             <th>Level Urgensi</th>
                             <th>Status</th>
@@ -593,32 +656,9 @@ require_once __DIR__ . '/../includes/header.php';
                                     </td>
 
 
-                                    <!-- TANGGAL -->
-                                    <td data-label="Tanggal" class="date-cell">
-
-                                        <?php if (
-                                            !empty(
-                                                $row['submission_date']
-                                            )
-                                        ): ?>
-
-                                            <?= h(
-                                                date(
-                                                    'd-m-Y',
-                                                    strtotime(
-                                                        $row['submission_date']
-                                                    )
-                                                )
-                                            ) ?>
-
-                                        <?php else: ?>
-
-                                            <span class="text-muted">
-                                                -
-                                            </span>
-
-                                        <?php endif; ?>
-
+                                    <!-- JUDUL CHANGE REQUEST -->
+                                    <td data-label="Judul Change Request" class="title-cell" title="<?= h($row['change_description'] ?? '-') ?>">
+                                        <?= h($row['change_description'] ?? '-') ?>
                                     </td>
 
 
@@ -647,15 +687,11 @@ require_once __DIR__ . '/../includes/header.php';
                                     </td>
 
 
-                                    <!-- DIVISI -->
-                                    <td data-label="Divisi"
-                                        class="division-cell"
-                                        title="<?= h($row['from_division'] ?? '-') ?>"
-                                    >
-                                        <?= h(
-                                            $row['from_division']
-                                            ?? '-'
-                                        ) ?>
+                                    <!-- TANGGAL PENGAJUAN -->
+                                    <td data-label="Tgl Pengajuan" class="date-cell">
+                                        <?= !empty($row['submission_date'])
+                                            ? h(date('Y-m-d', strtotime($row['submission_date'])))
+                                            : '-' ?>
                                     </td>
 
 
@@ -672,14 +708,15 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                     <!-- LEVEL -->
-                                    <td data-label="Level">
+                                    <td data-label="Level Urgensi" class="urgency-cell">
 
                                         <span
                                             class="crf-badge <?= levelBadgeClass($row['level']) ?>"
                                         >
                                             <?= h(
-                                                $row['level']
-                                                ?? 'Belum ditentukan'
+                                                ($row['level'] ?? null) === 'Normal'
+                                                    ? 'Sedang'
+                                                    : ($row['level'] ?? 'Belum ditentukan')
                                             ) ?>
                                         </span>
 
@@ -703,7 +740,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                     <!-- TAHAP -->
-                                    <td data-label=" Tahap" class="stage-cell">
+                                    <td data-label="Tahap" class="stage-cell">
 
                                         <span
                                             class="dashboard-stage-badge"
@@ -759,106 +796,11 @@ require_once __DIR__ . '/../includes/header.php';
                  PAGINATION
                  ================================================= -->
 
-            <?php if ($totalPages > 1): ?>
-
-                <nav
-                    aria-label="Pagination dashboard"
-                    class="mt-3"
-                >
-
-                    <ul class="pagination justify-content-end mb-0">
-
-                        <?php
-
-                        $prevParams = $_GET;
-                        $prevParams['page'] = max(
-                            1,
-                            $page - 1
-                        );
-
-                        $nextParams = $_GET;
-                        $nextParams['page'] = min(
-                            $totalPages,
-                            $page + 1
-                        );
-
-                        ?>
-
-
-                        <!-- PREVIOUS -->
-                        <li
-                            class="page-item <?= $page <= 1 ? 'disabled' : '' ?>"
-                        >
-
-                            <a
-                                class="page-link"
-                                    href="?<?= h(http_build_query($prevParams)) ?>#crf-table"
-                                aria-label="Previous"
-                            >
-                                <i class="bi bi-chevron-left"></i>
-                            </a>
-
-                        </li>
-
-
-                        <!-- NOMOR HALAMAN -->
-                        <?php for (
-                            $p = 1;
-                            $p <= $totalPages;
-                            $p++
-                        ): ?>
-
-                            <?php
-
-                            $pageParams = $_GET;
-                            $pageParams['page'] = $p;
-
-                            ?>
-
-                            <li
-                                class="page-item <?= $p === $page ? 'active' : '' ?>"
-                            >
-
-                                <a
-                                    class="page-link"
-                                    href="?<?= h(
-                                        http_build_query(
-                                            $pageParams
-                                        )
-                                    ) ?>"
-                                >
-                                    <?= $p ?>
-                                </a>
-
-                            </li>
-
-                        <?php endfor; ?>
-
-
-                        <!-- NEXT -->
-                        <li
-                            class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>"
-                        >
-
-                            <a
-                                class="page-link"
-                                href="?<?= h(
-                                    http_build_query(
-                                        $nextParams
-                                    )
-                                ) ?>"
-                                aria-label="Next"
-                            >
-                                <i class="bi bi-chevron-right"></i>
-                            </a>
-
-                        </li>
-
-                    </ul>
-
-                </nav>
-
-            <?php endif; ?>
+            <?php
+            $paginationLabel = 'Navigasi halaman dashboard';
+            require __DIR__ . '/../includes/partials/crf_list_pagination.php';
+            unset($paginationLabel);
+            ?>
 
         </div>
 

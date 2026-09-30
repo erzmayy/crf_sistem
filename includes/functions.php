@@ -350,6 +350,101 @@ function logCrfActivity(PDO $pdo, int $crfId, string $activity, string $descript
     ]);
 }
 
+function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $filters): array
+{
+    $filterString = static function ($value): string {
+        return is_scalar($value) ? trim((string) $value) : '';
+    };
+    $search = $filterString($filters['search'] ?? '');
+    $status = $filterString($filters['status'] ?? '');
+    $department = $filterString($filters['department'] ?? '');
+    $level = $filterString($filters['level'] ?? '');
+    $dateFrom = $filterString($filters['date_from'] ?? '');
+    $dateTo = $filterString($filters['date_to'] ?? '');
+    $allowedStatuses = ['Belum Ditindak Lanjuti', 'Perlu Revisi', 'Dalam Proses', 'Solve', 'Cancel'];
+    $allowedLevels = ['Tinggi', 'Normal', 'Rendah'];
+
+    if ($search !== '') {
+        $where[] = '(
+            cr.request_number LIKE :list_search_request
+            OR cr.full_name LIKE :list_search_name
+            OR cr.change_description LIKE :list_search_description
+        )';
+        $searchValue = '%' . $search . '%';
+        $params['list_search_request'] = $searchValue;
+        $params['list_search_name'] = $searchValue;
+        $params['list_search_description'] = $searchValue;
+    }
+
+    if (in_array($status, $allowedStatuses, true)) {
+        $where[] = 'cr.status = :list_status';
+        $params['list_status'] = $status;
+    } else {
+        $status = '';
+    }
+
+    if ($department !== '') {
+        $where[] = 'cr.from_department = :list_department';
+        $params['list_department'] = $department;
+    }
+
+    if (in_array($level, $allowedLevels, true)) {
+        $where[] = 'cr.level = :list_level';
+        $params['list_level'] = $level;
+    } else {
+        $level = '';
+    }
+
+    $normalizeDate = static function (string $date): string {
+        if ($date === '') {
+            return '';
+        }
+        $parsedDate = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+        return $parsedDate && $parsedDate->format('Y-m-d') === $date ? $date : '';
+    };
+    $dateFrom = $normalizeDate($dateFrom);
+    $dateTo = $normalizeDate($dateTo);
+
+    if ($dateFrom !== '') {
+        $where[] = 'cr.submission_date >= :list_date_from';
+        $params['list_date_from'] = $dateFrom;
+    }
+    if ($dateTo !== '') {
+        $where[] = 'cr.submission_date <= :list_date_to';
+        $params['list_date_to'] = $dateTo;
+    }
+
+    $departmentStmt = $pdo->query("
+        SELECT DISTINCT from_department
+        FROM change_requests
+        WHERE status <> 'Draft'
+          AND from_department IS NOT NULL
+          AND from_department <> ''
+        ORDER BY from_department
+    ");
+
+    return [
+        'search' => $search,
+        'status' => $status,
+        'department' => $department,
+        'level' => $level,
+        'date_from' => $dateFrom,
+        'date_to' => $dateTo,
+        'departments' => $departmentStmt->fetchAll(PDO::FETCH_COLUMN),
+    ];
+}
+
+function getCrfPageSize($requestedPageSize): int
+{
+    $allowedPageSizes = [6, 10, 20, 50];
+    if (!is_scalar($requestedPageSize)) {
+        return 6;
+    }
+
+    $pageSize = filter_var($requestedPageSize, FILTER_VALIDATE_INT);
+    return in_array($pageSize, $allowedPageSizes, true) ? $pageSize : 6;
+}
+
 function levelBadgeClass(?string $level): string
 {
     switch ($level) {

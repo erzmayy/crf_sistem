@@ -131,7 +131,7 @@ if ($categoryFilter !== '') {
  * Pagination
  * ========================================================= */
 
-$perPage = 10;
+$perPage = getCrfPageSize($_GET['per_page'] ?? 6);
 
 $page = max(
     1,
@@ -359,6 +359,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php else: ?>
 
                     <form method="GET" class="mb-4">
+                        <input type="hidden" name="per_page" value="<?= (int) $perPage ?>">
 
                         <div class="row g-2">
 
@@ -627,72 +628,11 @@ require_once __DIR__ . '/../includes/header.php';
 
                     </div>
 
-                    <?php if ($totalPages > 1): ?>
-
-                        <nav aria-label="Pagination pengajuan" class="mt-3">
-
-                            <ul class="pagination justify-content-end mb-0">
-
-                                <?php
-                                $prevParams = $_GET;
-                                $prevParams['page'] = max(1, $page - 1);
-
-                                $nextParams = $_GET;
-                                $nextParams['page'] = min($totalPages, $page + 1);
-                                ?>
-
-                                <!-- Previous -->
-                                <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-
-                                    <a
-                                        class="page-link"
-                                        href="?<?= h(http_build_query($prevParams)) ?>"
-                                        aria-label="Previous"
-                                    >
-                                        <i class="bi bi-chevron-left"></i>
-                                    </a>
-
-                                </li>
-
-
-                                <!-- Nomor halaman -->
-                                <?php for ($p = 1; $p <= $totalPages; $p++): ?>
-
-                                    <?php
-                                    $pageParams = $_GET;
-                                    $pageParams['page'] = $p;
-                                    ?>
-
-                                    <li class="page-item <?= $p === $page ? 'active' : '' ?>">
-
-                                        <a
-                                            class="page-link"
-                                            href="?<?= h(http_build_query($pageParams)) ?>"
-                                        >
-                                            <?= $p ?>
-                                        </a>
-
-                                    </li>
-
-                                <?php endfor; ?>
-
-
-                                <!-- Next -->
-                                <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-
-                                    <a
-                                        class="page-link"
-                                        href="?<?= h(http_build_query($nextParams)) ?>"
-                                        aria-label="Next"
-                                    >
-                                        <i class="bi bi-chevron-right"></i>
-                                    </a>
-
-                                </ul>
-
-                        </nav>
-
-                    <?php endif; ?> 
+                    <?php
+                    $paginationLabel = 'Navigasi halaman pengajuan saya';
+                    require __DIR__ . '/../includes/partials/crf_list_pagination.php';
+                    unset($paginationLabel);
+                    ?>
 
                 <?php endif; ?>
 

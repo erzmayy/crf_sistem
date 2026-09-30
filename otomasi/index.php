@@ -6,7 +6,7 @@ requireCrfRole(['otomasi']);
 $pdo = getConnection();
 
 $queue = $_GET['queue'] ?? 'all';
-$search = trim($_GET['q'] ?? '');
+$search = $_GET['q'] ?? '';
 
 if (!in_array($queue, ['all', 'sla', 'execution', 'history'], true)) {
     $queue = 'all';
@@ -40,26 +40,21 @@ if ($queue === 'sla') {
     $where[] = 'cr.kadep_operasional_approved_at IS NOT NULL';
 }
 
-/* =========================================================
- * PENCARIAN
- * ========================================================= */
-
-if ($search !== '') {
-    $where[] = '(
-        cr.request_number LIKE :search_request
-        OR cr.full_name LIKE :search_name
-    )';
-
-    $searchValue = '%' . $search . '%';
-    $params['search_request'] = $searchValue;
-    $params['search_name'] = $searchValue;
-}
+$listFilters = applyCrfRequestFilters($pdo, $where, $params, [
+    'search' => $search,
+    'status' => $_GET['status'] ?? '',
+    'department' => $_GET['department'] ?? '',
+    'level' => $_GET['level'] ?? '',
+    'date_from' => $_GET['date_from'] ?? '',
+    'date_to' => $_GET['date_to'] ?? '',
+]);
+$search = $listFilters['search'];
 
 /* =========================================================
  * PAGINATION
  * ========================================================= */
 
-$perPage = 10;
+$perPage = getCrfPageSize($_GET['per_page'] ?? 6);
 $page = max(1, (int) ($_GET['page'] ?? 1));
 
 $countSql = "
@@ -177,7 +172,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <div class="crf-table-card">
+        <div class="crf-table-card crf-list-table-card">
 
             <div class="crf-table-heading">
                 <h2><?= $queue === 'history' ? 'Riwayat Otomasi' : 'Antrean Otomasi' ?></h2>
@@ -226,30 +221,13 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
             <!-- SEARCH -->
-            <form method="GET" class="row g-2 mb-3 queue-filter-row">
-                <input type="hidden" name="queue" value="<?= h($queue) ?>">
-                <div class="col-md-8">
-                    <input
-                        type="text"
-                        name="q"
-                        class="form-control"
-                        placeholder="Cari Nomor Register atau nama pengaju..."
-                        value="<?= h($search) ?>"
-                    >
-                </div>
-
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-crf-primary w-100">
-                        <i class="bi bi-search"></i> Cari
-                    </button>
-                </div>
-
-                <div class="col-md-2">
-                    <a href="?queue=<?= h($queue) ?>" class="btn btn-crf-outline w-100">
-                        Reset
-                    </a>
-                </div>
-            </form>
+            <?php
+            $listContextName = 'queue';
+            $listContextValue = $queue;
+            $listResetUrl = 'index.php';
+            require __DIR__ . '/../includes/partials/crf_list_filters.php';
+            unset($listContextName, $listContextValue, $listResetUrl);
+            ?>
 
             <div class="table-responsive crf-table-responsive-cards">
                 <table class="table crf-table align-middle">
@@ -258,11 +236,11 @@ require_once __DIR__ . '/../includes/header.php';
                             <th>No</th>
                             <th>Nomor Register</th>
                             <th>Pengaju</th>
-                            <th>Level</th>
+                            <th>Level Urgensi</th>
                             <th>SLA</th>
+                            <th>Tahap Saat Ini</th>
                             <?php if ($queue === 'history'): ?>
                                 <th>Status</th>
-                                <th>Tahap Saat Ini</th>
                             <?php else: ?>
                                 <th>Mulai</th>
                             <?php endif; ?>
@@ -273,7 +251,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <tbody>
                     <?php if (!$requests): ?>
                         <tr>
-                            <td colspan="<?= $queue === 'history' ? 8 : 7 ?>" class="text-center text-muted py-4">
+                            <td colspan="8" class="text-center text-muted py-4">
                                 <?= $queue === 'history'
                                     ? 'Belum ada CRF yang pernah diproses oleh Otomasi.'
                                     : 'Tidak ada CRF pada antrean Otomasi sesuai filter yang dipilih.' ?>
@@ -292,9 +270,9 @@ require_once __DIR__ . '/../includes/header.php';
                                     <?= h($row['full_name']) ?>
                                 </td>
 
-                                <td data-label="Level">
+                                <td data-label="Level Urgensi">
                                     <span class="crf-badge <?= levelBadgeClass($row['level']) ?>">
-                                        <?= h($row['level'] ?? 'Belum ditentukan') ?>
+                                        <?= h(($row['level'] ?? null) === 'Normal' ? 'Sedang' : ($row['level'] ?? 'Belum ditentukan')) ?>
                                     </span>
                                 </td>
 
@@ -304,15 +282,16 @@ require_once __DIR__ . '/../includes/header.php';
                                         : '-' ?>
                                 </td>
 
+                                <td data-label="Tahap Saat Ini">
+                                    <span class="crf-badge <?= workflowStageBadgeClass($row['workflow_stage']) ?>">
+                                        <?= h(workflowStageLabel($row['workflow_stage'])) ?>
+                                    </span>
+                                </td>
+
                                 <?php if ($queue === 'history'): ?>
                                     <td data-label="Status">
                                         <span class="crf-badge <?= statusBadgeClass($row['status']) ?>">
                                             <?= h(statusLabel($row['status'])) ?>
-                                        </span>
-                                    </td>
-                                    <td data-label="Tahap Saat Ini">
-                                        <span class="crf-badge <?= workflowStageBadgeClass($row['workflow_stage']) ?>">
-                                            <?= h(workflowStageLabel($row['workflow_stage'])) ?>
                                         </span>
                                     </td>
                                 <?php else: ?>
@@ -353,55 +332,11 @@ require_once __DIR__ . '/../includes/header.php';
             <!-- =================================================
                  PAGINATION
                  ================================================= -->
-            <?php if ($totalPages > 1): ?>
-                <nav aria-label="Pagination Otomasi" class="mt-3">
-                    <ul class="pagination justify-content-end mb-0">
-                        <?php
-                        $prevParams = $_GET;
-                        $prevParams['page'] = max(1, $page - 1);
-
-                        $nextParams = $_GET;
-                        $nextParams['page'] = min($totalPages, $page + 1);
-                        ?>
-
-                        <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-                            <a
-                                class="page-link"
-                                href="?<?= h(http_build_query($prevParams)) ?>"
-                                aria-label="Previous"
-                            >
-                                <i class="bi bi-chevron-left"></i>
-                            </a>
-                        </li>
-
-                        <?php for ($p = 1; $p <= $totalPages; $p++): ?>
-                            <?php
-                            $pageParams = $_GET;
-                            $pageParams['page'] = $p;
-                            ?>
-
-                            <li class="page-item <?= $p === $page ? 'active' : '' ?>">
-                                <a
-                                    class="page-link"
-                                    href="?<?= h(http_build_query($pageParams)) ?>"
-                                >
-                                    <?= $p ?>
-                                </a>
-                            </li>
-                        <?php endfor; ?>
-
-                        <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-                            <a
-                                class="page-link"
-                                href="?<?= h(http_build_query($nextParams)) ?>"
-                                aria-label="Next"
-                            >
-                                <i class="bi bi-chevron-right"></i>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            <?php endif; ?>
+            <?php
+            $paginationLabel = 'Navigasi halaman Otomasi';
+            require __DIR__ . '/../includes/partials/crf_list_pagination.php';
+            unset($paginationLabel);
+            ?>
 
         </div>
     </div>
