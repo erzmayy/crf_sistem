@@ -7,15 +7,35 @@ $pdo = getConnection();
 
 $filter = $_GET['stage'] ?? 'all';
 $search = trim($_GET['q'] ?? '');
-$where = [
-    "cr.status <> 'Draft'",
-    "cr.workflow_stage IN ('CMO_FILTER','CMO_FINAL')"
-];
+$allowedFilters = ['all', 'filter', 'final', 'history'];
+if (!in_array($filter, $allowedFilters, true)) {
+    $filter = 'all';
+}
+
+$where = ["cr.status <> 'Draft'"];
 $params = [];
 
 /* =========================================================
  * FILTER TAHAP CMO
  * ========================================================= */
+
+if ($filter === 'history') {
+    $where[] = "EXISTS (
+        SELECT 1
+        FROM crf_activity_logs activity_log
+        WHERE activity_log.change_request_id = cr.id
+          AND (
+              activity_log.activity = 'Lolos Filter CMO'
+              OR (
+                  activity_log.activity = 'Perlu Revisi'
+                  AND activity_log.description = 'CRF dikembalikan ke Pemohon untuk revisi.'
+              )
+              OR activity_log.activity IN ('Cancel', 'Solve')
+          )
+    )";
+} else {
+    $where[] = "cr.workflow_stage IN ('CMO_FILTER','CMO_FINAL')";
+}
 
 if ($filter === 'filter') {
     $where[] = "cr.workflow_stage = 'CMO_FILTER'";
@@ -135,11 +155,12 @@ require_once __DIR__ . '/../includes/header.php';
 
     <div class="crf-table-card">
       <div class="crf-table-heading">
-        <h2>Daftar CRF CMO</h2>
+        <h2><?= $filter === 'history' ? 'Riwayat CRF CMO' : 'Daftar CRF CMO' ?></h2>
         <div class="btn-group">
           <a href="?stage=all" class="btn btn-sm <?= $filter === 'all' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Semua</a>
           <a href="?stage=filter" class="btn btn-sm <?= $filter === 'filter' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Filter</a>
           <a href="?stage=final" class="btn btn-sm <?= $filter === 'final' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Finalisasi</a>
+          <a href="?stage=history" class="btn btn-sm <?= $filter === 'history' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Riwayat</a>
         </div>
       </div>
 

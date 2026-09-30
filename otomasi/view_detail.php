@@ -28,7 +28,19 @@ $stmt = $pdo->prepare("
     SELECT cr.*
     FROM change_requests cr
     WHERE cr.id = :id
-      AND cr.workflow_stage = 'OTOMASI'
+      AND (
+          cr.workflow_stage = 'OTOMASI'
+          OR EXISTS (
+              SELECT 1
+              FROM crf_activity_logs activity_log
+              WHERE activity_log.change_request_id = cr.id
+                AND activity_log.activity IN (
+                    'Proses Otomasi Diperbarui',
+                    'Otomasi - SLA Ditentukan',
+                    'Otomasi Selesai'
+                )
+          )
+      )
     LIMIT 1
 ");
 
