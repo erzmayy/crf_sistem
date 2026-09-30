@@ -111,6 +111,9 @@ require_once __DIR__ . '/../includes/header.php';
       </span>
     </div>
 
+    <div class="crf-detail-layout">
+      <main class="crf-detail-main">
+
     <?php if ($crf['status'] === 'Solve' && $crf['solved_at']): ?>
       <div class="crf-readonly-note mb-3">
         <i class="bi bi-check-circle"></i>
@@ -147,227 +150,39 @@ require_once __DIR__ . '/../includes/header.php';
 
     <!-- Informasi Pengajuan -->
     <?php
-    $sectionNumber = 1;
     require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
     ?>
 
     <!-- Detail Pengajuan -->
-    <div class="crf-section crf-detail-card">
+    <?php
+    require __DIR__ . '/../includes/partials/detail_permintaan.php';
+    ?>
+
+    <div class="crf-section crf-detail-card mb-4">
       <div class="crf-section-header">
-        <span class="crf-section-number"><i class="bi bi-card-checklist"></i></span>
-        <h2>Detail Pengajuan</h2>
+        <span class="crf-section-number"><i class="bi bi-clipboard-check"></i></span>
+        <h2>Implementasi &amp; Post Implementation Review</h2>
       </div>
       <div class="crf-section-body">
-
-        <div class="crf-detail-grid">
-          <div class="crf-detail-item crf-detail-item-wide">
-            <div class="crf-detail-label">Rincian Permohonan Perubahan</div>
-            <div class="crf-detail-value"><?= h($crf['change_description'] ?? '-') ?></div>
+        <div class="crf-info-rows">
+          <div class="crf-info-row crf-request-row-long">
+            <span class="crf-info-label">Implementasi / Hasil Perubahan</span>
+            <div class="crf-info-value"><?= nl2br(h($crf['implementation'] ?? '-')) ?></div>
           </div>
-
-          <div class="crf-detail-item">
-            <div class="crf-detail-label">Benefit dari Perubahan yang Diharapkan</div>
-            <div class="crf-detail-value"><?= h($crf['benefit'] ?? '-') ?></div>
-          </div>
-
-          <div class="crf-detail-item">
-            <div class="crf-detail-label">Dampak Jika Tidak Dilakukan Perubahan</div>
-            <div class="crf-detail-value"><?= h($crf['impact'] ?? '-') ?></div>
-          </div>
-
-          <div class="crf-detail-item crf-detail-item-wide">
-            <div class="crf-detail-label">Alasan Permohonan Perubahan</div>
-            <div class="crf-detail-value"><?= h($crf['reason'] ?? '-') ?></div>
+          <div class="crf-info-row crf-request-row-long">
+            <span class="crf-info-label">Post Implementation Review</span>
+            <div class="crf-info-value"><?= nl2br(h($crf['post_implementation_review'] ?? '-')) ?></div>
           </div>
         </div>
-
-        <div class="crf-detail-item crf-detail-item-wide crf-detail-item-attachments">
-          <div class="crf-detail-label">Bukti dan Informasi Pendukung</div>
-          <div class="crf-detail-value">
-          <?php if (!$attachments): ?>
-
-            <span class="text-muted">
-              Tidak ada file yang diupload.
-            </span>
-
-          <?php else: ?>
-
-            <div class="list-group">
-              <?php foreach ($attachments as $file): ?>
-
-                <div class="list-group-item d-flex justify-content-between align-items-center gap-3 py-2 px-3">
-
-                  <div class="d-flex align-items-center gap-2 flex-grow-1 min-width-0">
-                    <i class="bi bi-paperclip text-primary"></i>
-
-                    <div class="text-truncate">
-                      <div class="fw-medium text-truncate">
-                        <?= h($file['original_name']) ?>
-                      </div>
-
-                      <small class="text-muted">
-                        <?= round($file['file_size'] / 1024) ?> KB
-                      </small>
-                    </div>
-                  </div>
-
-                  <div class="d-flex gap-1 flex-shrink-0">
-                    <a
-                      href="<?= h($file['file_path']) ?>"
-                      target="_blank"
-                      rel="noopener"
-                      class="btn btn-sm btn-crf-outline py-1 px-2"
-                    >
-                      <i class="bi bi-eye"></i>
-                      Lihat
-                    </a>
-
-                    <a
-                      href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>"
-                      class="btn btn-sm btn-crf-primary py-1 px-2"
-                    >
-                      <i class="bi bi-download"></i>
-                      Download
-                    </a>
-                  </div>
-
-                </div>
-
-              <?php endforeach; ?>
-            </div>
-
-          <?php endif; ?>
-          </div>
-        </div>
-
-        <div class="crf-detail-grid crf-detail-grid-secondary">
-          <div class="crf-detail-item">
-            <div class="crf-detail-label">Biaya / Anggaran</div>
-            <div class="crf-detail-value">
-              <?= h(budgetTypeLabel($crf['budget_type'])) ?>
-              <?php if ($crf['budget_amount'] !== null): ?>
-                &mdash; <?= h(formatRupiah($crf['budget_amount'])) ?>
-              <?php endif; ?>
-            </div>
-          </div>
-
-          <div class="crf-detail-item">
-            <div class="crf-detail-label">Kategori Perubahan</div>
-            <div class="crf-detail-value">
-              <?= h($crf['change_category'] ?? '-') ?>
-              <?php if (!empty($crf['change_category_detail'])): ?>
-                &mdash; <?= h($crf['change_category_detail']) ?>
-              <?php endif; ?>
-            </div>
-          </div>
-
-          <div class="crf-detail-item crf-detail-item-wide">
-            <div class="crf-detail-label">Saran Alternatif</div>
-            <div class="crf-detail-value"><?= h($crf['alternative_suggestion'] ?? '-') ?></div>
-          </div>
-
-          <div class="crf-detail-item">
-            <div class="crf-detail-label">Post Implementation Review</div>
-            <div class="crf-detail-value"><?= h($crf['post_implementation_review'] ?? '-') ?></div>
-          </div>
-
-          <div class="crf-detail-item">
-            <div class="crf-detail-label">Implementasi</div>
-            <div class="crf-detail-value"><?= h($crf['implementation'] ?? '-') ?></div>
-          </div>
-        </div>
-
       </div>
     </div>
 
-    <!-- TIMELINE PROSES PENGAJUAN -->
-    <div class="crf-section mt-4">
+      </main>
+      <aside class="crf-detail-sidebar">
+        <?php require __DIR__ . '/../includes/partials/timeline.php'; ?>
 
-        <div class="crf-section-header">
-
-            <span class="crf-section-number">
-                <i class="bi bi-clock-history"></i>
-            </span>
-
-            <h2>Timeline Proses Pengajuan</h2>
-
-        </div>
-
-        <div class="crf-section-body">
-
-            <?php if (!$timeline): ?>
-
-                <div class="text-muted">
-                    Belum ada riwayat proses pengajuan.
-                </div>
-
-            <?php else: ?>
-
-                <div class="crf-timeline">
-
-                    <?php foreach ($timeline as $item): ?>
-
-                        <div class="crf-timeline-item">
-
-                            <div class="crf-timeline-dot"></div>
-
-                            <div class="crf-timeline-content">
-
-                                <div class="crf-timeline-top">
-
-                                    <strong>
-                                        <?= h(
-                                            $item['activity'] === 'Solve'
-                                                ? 'Selesai'
-                                                : (
-                                                    $item['activity'] === 'Cancel'
-                                                        ? 'Dibatalkan'
-                                                        : $item['activity']
-                                                )
-                                        ) ?>
-                                    </strong>
-
-                                    <span class="crf-timeline-date">
-                                        <?= h(
-                                            date(
-                                                'd-m-Y H:i',
-                                                strtotime($item['created_at'])
-                                            )
-                                        ) ?>
-                                    </span>
-
-                                </div>
-
-                                <?php if (!empty($item['description'])): ?>
-
-                                    <div class="crf-timeline-description">
-                                        <?= nl2br(h($item['description'])) ?>
-                                    </div>
-
-                                <?php endif; ?>
-
-                                <?php if (!empty($item['actor'])): ?>
-
-                                    <div class="crf-timeline-actor">
-                                        Oleh: <?= h($item['actor']) ?>
-                                    </div>
-
-                                <?php endif; ?>
-
-                            </div>
-
-                        </div>
-
-                    <?php endforeach; ?>
-
-                </div>
-
-            <?php endif; ?>
-
-        </div>
-
-    </div>
-
+    </aside>
+  </div>
   </div>
 </div>
 

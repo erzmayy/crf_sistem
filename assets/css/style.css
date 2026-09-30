@@ -578,8 +578,117 @@ textarea.form-control {
   padding: 1.5rem 1.6rem;
 }
 
+.crf-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(280px, 0.95fr);
+  align-items: start;
+  gap: 0.9rem;
+}
+
+.crf-detail-page {
+  padding-top: 1.15rem;
+  padding-bottom: 1.5rem;
+}
+
+.crf-detail-page .crf-page-header {
+  margin-bottom: 1rem;
+}
+
+.crf-detail-page .crf-section {
+  margin-bottom: 0.7rem;
+}
+
+.crf-detail-page .crf-section-body {
+  padding: 0.85rem 1rem;
+}
+
+.crf-detail-page .crf-status-strip {
+  margin-bottom: 0.85rem !important;
+  gap: 0.4rem;
+}
+
+.crf-detail-page .crf-badge {
+  padding: 0.32rem 0.65rem;
+  font-size: 0.72rem;
+}
+
+.crf-detail-main,
+.crf-detail-sidebar {
+  min-width: 0;
+}
+
+.crf-detail-sidebar {
+  position: static;
+  align-self: start;
+}
+
+.crf-detail-sidebar > .crf-detail-timeline {
+  width: 100%;
+  margin: 0 !important;
+  align-self: start;
+}
+
+.crf-detail-timeline .crf-section-header {
+  padding: 0.75rem 0.9rem;
+  background: #f6f8fa;
+  border-bottom-color: #dce2e8;
+}
+
+.crf-detail-timeline .crf-section-body {
+  padding: 0.9rem;
+}
+
 .crf-detail-card .crf-section-body {
-  padding-top: 1.65rem;
+  padding: 0.9rem 1rem;
+}
+
+.crf-detail-card .crf-section-header {
+  padding: 0.8rem 1rem;
+}
+
+.crf-detail-main > .crf-detail-card {
+  margin-bottom: 0.65rem !important;
+}
+
+.crf-detail-card .crf-info-row {
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+}
+
+.crf-detail-card .crf-info-label {
+  font-size: 0.79rem;
+  line-height: 1.4;
+}
+
+.crf-detail-card .crf-info-value {
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.crf-detail-card .crf-info-sub {
+  margin-top: 2px;
+  font-size: 0.84rem;
+}
+
+.crf-detail-card .alert {
+  margin-bottom: 0.7rem;
+  padding: 0.65rem 0.85rem;
+}
+
+.crf-detail-card .crf-sla-item {
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+.crf-detail-card .crf-sla-item .crf-detail-label {
+  margin-bottom: 0.2rem;
+  font-size: 0.72rem;
+}
+
+.crf-detail-card .crf-sla-item .crf-detail-value {
+  margin-bottom: 0;
+  font-size: 0.86rem;
+  line-height: 1.4;
 }
 
 .crf-detail-grid {
@@ -705,6 +814,88 @@ textarea.form-control {
     line-height: 1.4;
 }
 
+.crf-info-rows {
+  width: 100%;
+}
+
+.crf-info-row {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.38fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.crf-info-row:first-child {
+  padding-top: 0;
+}
+
+.crf-info-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.crf-info-label {
+  color: #64748b;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.crf-info-value {
+  min-width: 0;
+  color: #1e293b;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.crf-request-row-long {
+  align-items: start;
+}
+
+.crf-request-row-long .crf-info-label {
+  padding-top: 0.1rem;
+}
+
+.crf-info-status {
+  display: inline-flex;
+}
+
+.crf-attachment-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.crf-attachment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #e7edf4;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.crf-attachment-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.crf-attachment-name > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crf-attachment-name small {
+  flex-shrink: 0;
+}
+
 /* Status */
 .crf-info-status {
     display: inline-flex;
@@ -795,8 +986,16 @@ textarea.form-control {
   .crf-page { padding: 1.25rem 0.9rem 2rem; }
   .crf-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .crf-detail-page .crf-section-body { padding: 1.2rem; }
+  .crf-detail-page .crf-detail-card .crf-section-body { padding: 0.85rem 0.9rem; }
   .crf-detail-grid { grid-template-columns: 1fr; gap: 0.8rem; }
   .crf-detail-item-wide { grid-column: auto; }
+  .crf-detail-layout { grid-template-columns: 1fr; }
+  .crf-detail-sidebar { position: static; }
+  .crf-detail-card .crf-sla-grid > .crf-sla-item { width: 50%; }
+  .crf-info-row { grid-template-columns: minmax(0, 1fr); gap: 0.25rem; }
+  .crf-detail-card .crf-info-row,
+  .crf-detail-card .crf-info-row:first-child { padding: 0.5rem 0; }
+  .crf-attachment-row { align-items: flex-start; flex-direction: column; gap: 0.65rem; }
 }
 
 /* ---------- Alerts spacing ---------- */
@@ -881,92 +1080,114 @@ textarea.form-control {
    ========================================================= */
 
 .crf-timeline {
-    position: relative;
-    margin-top: 8px;
-    padding-left: 34px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
-/* Garis vertikal */
-.crf-timeline::before {
-    content: "";
-    position: absolute;
-    top: 8px;
-    bottom: 8px;
-    left: 8px;
-    width: 2px;
-    background: #d6dce5;
-}
-
-/* Setiap item timeline */
 .crf-timeline-item {
     position: relative;
-    padding-bottom: 24px;
-    min-height: 48px;
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    column-gap: 0.55rem;
+    padding-bottom: 0.7rem;
 }
 
-/* Hilangkan padding pada item terakhir */
 .crf-timeline-item:last-child {
     padding-bottom: 0;
 }
 
-/* Titik timeline */
-.crf-timeline-dot {
+.crf-timeline-item:not(:last-child)::after {
     position: absolute;
-    left: -34px;
-    top: 2px;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #0d6efd;
-    border: 3px solid #ffffff;
-    box-shadow: 0 0 0 2px #0d6efd;
-    z-index: 2;
+    top: 16px;
+    bottom: -1px;
+    left: 7px;
+    width: 2px;
+    background: #cbd5e1;
+    content: "";
 }
 
-/* Isi timeline */
-.crf-timeline-content {
+.crf-timeline-item.is-complete:not(:last-child)::after {
+    background: #16c784;
+}
+
+.crf-timeline-item.is-attention:not(:last-child)::after,
+.crf-timeline-item.is-cancelled:not(:last-child)::after {
+    background: #f4b740;
+}
+
+.crf-timeline-dot {
     position: relative;
-    padding-left: 0;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin: 1px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    background: #fff;
+    color: #fff;
+    font-size: 0.62rem;
 }
 
-/* Baris judul + tanggal */
-.crf-timeline-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    flex-wrap: wrap;
+.crf-timeline-item.is-complete .crf-timeline-dot {
+    border-color: #16c784;
+    background: #16c784;
 }
 
-/* Nama aktivitas */
-.crf-timeline-top strong {
+.crf-timeline-item.is-attention .crf-timeline-dot,
+.crf-timeline-item.is-cancelled .crf-timeline-dot {
+    border-color: #f4b740;
+    background: #f4b740;
+}
+
+.crf-timeline-item.is-pending .crf-timeline-dot {
+    border-color: #cbd5e1;
+    background: #fff;
+}
+
+.crf-timeline-content {
+    min-width: 0;
+    padding-top: 0;
+}
+
+.crf-timeline-title {
     display: block;
     color: #172b4d;
-    font-size: 15px;
+    font-size: 0.78rem;
     font-weight: 600;
+    line-height: 1.4;
 }
 
-/* Tanggal */
 .crf-timeline-date {
-    color: #6c757d;
-    font-size: 13px;
-    white-space: nowrap;
+    display: block;
+    margin-top: 0.1rem;
+    color: #1673c9;
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1.4;
 }
 
-/* Deskripsi */
 .crf-timeline-description {
-    margin-top: 5px;
-    color: #343a40;
-    font-size: 14px;
-    line-height: 1.6;
+    margin-top: 0.12rem;
+    color: #748294;
+    font-size: 0.68rem;
+    line-height: 1.4;
     overflow-wrap: anywhere;
 }
 
-/* Actor */
 .crf-timeline-actor {
-    margin-top: 4px;
-    color: #6c757d;
-    font-size: 13px;
+    margin-top: 0.08rem;
+    color: #8894a2;
+    font-size: 0.64rem;
+    line-height: 1.4;
+}
+
+.crf-timeline-item.is-pending .crf-timeline-title,
+.crf-timeline-item.is-pending .crf-timeline-date {
+    color: #8b98a5;
 }
 
 .badge-status-revisi {
@@ -1183,9 +1404,6 @@ textarea.form-control {
     }
 }
 
-  .crf-timeline { padding-left: 26px; }
-  .crf-timeline-dot { left: -26px; width: 14px; height: 14px; }
-  .crf-timeline-top strong { font-size: 14px; }
 }
 
 /* ---------- Layar sangat sempit (<= 400px) ---------- */

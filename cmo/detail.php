@@ -127,7 +127,7 @@ $pageTitle = 'CMO - Detail CRF';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="crf-page" id="cmo-detail-page">
+<div class="crf-page crf-detail-page" id="cmo-detail-page">
 
     <div class="container">
 
@@ -167,7 +167,7 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- =====================================================
              STATUS
              ===================================================== -->
-        <div class="d-flex gap-2 mb-4 flex-wrap">
+        <div class="crf-status-strip mb-4">
 
             <span class="crf-badge <?= statusBadgeClass($crf['status']) ?>">
                 Status: <?= h(statusLabel($crf['status'])) ?>
@@ -191,58 +191,53 @@ require_once __DIR__ . '/../includes/header.php';
 
         </div>
 
+        <div class="crf-detail-layout">
+          <main class="crf-detail-main">
 
         <!-- 1. INFORMASI PENGAJUAN -->
         <?php
-        $sectionNumber    = 1;
         $showStatusInGrid = true;
         require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
         ?>
 
         <!-- 2. DETAIL PERMINTAAN -->
         <?php
-        $sectionNumber = 2;
         require __DIR__ . '/../includes/partials/detail_permintaan.php';
         ?>
 
         <!-- =====================================================
              3. IMPLEMENTASI & PIR (khusus tampilan CMO, read-only)
              ===================================================== -->
-        <div class="crf-section mb-4">
+        <div class="crf-section crf-detail-card mb-4">
 
             <div class="crf-section-header">
-                <span class="crf-section-number">3</span>
+                <span class="crf-section-number"><i class="bi bi-clipboard-check"></i></span>
                 <h2>Implementasi & Post Implementation Review</h2>
             </div>
 
             <div class="crf-section-body">
 
-                <div class="crf-detail-label">IMPLEMENTASI / HASIL PERUBAHAN</div>
-
-                <div class="crf-detail-value mb-4">
-                    <?php if (!empty($crf['implementation'])): ?>
-                        <?= nl2br(h($crf['implementation'])) ?>
-                    <?php else: ?>
-
-                        <span class="text-muted">
-                            Belum diisi oleh Otomasi.
-                        </span>
-
-                    <?php endif; ?>
-                </div>
-
-                <div class="crf-detail-label">POST IMPLEMENTATION REVIEW</div>
-
-                <div class="crf-detail-value mb-4">
-                    <?php if (!empty($crf['post_implementation_review'])): ?>
-                        <?= nl2br(h($crf['post_implementation_review'])) ?>
-                    <?php else: ?>
-
-                        <span class="text-muted">
-                            Belum diisi oleh Otomasi.
-                        </span>
-
-                    <?php endif; ?>
+                <div class="crf-info-rows">
+                    <div class="crf-info-row crf-request-row-long">
+                        <span class="crf-info-label">Implementasi / Hasil Perubahan</span>
+                        <div class="crf-info-value">
+                            <?php if (!empty($crf['implementation'])): ?>
+                                <?= nl2br(h($crf['implementation'])) ?>
+                            <?php else: ?>
+                                <span class="text-muted">Belum diisi oleh Otomasi.</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="crf-info-row crf-request-row-long">
+                        <span class="crf-info-label">Post Implementation Review</span>
+                        <div class="crf-info-value">
+                            <?php if (!empty($crf['post_implementation_review'])): ?>
+                                <?= nl2br(h($crf['post_implementation_review'])) ?>
+                            <?php else: ?>
+                                <span class="text-muted">Belum diisi oleh Otomasi.</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </div>
 
                 <?php if (!empty($crf['kadep_operasional_approved_at'])): ?>
@@ -260,7 +255,6 @@ require_once __DIR__ . '/../includes/header.php';
 
         <!-- 4. INFORMASI SLA -->
         <?php
-        $sectionNumber = 4;
         require __DIR__ . '/../includes/partials/informasi_sla.php';
         ?>
 
@@ -270,10 +264,10 @@ require_once __DIR__ . '/../includes/header.php';
              ===================================================== -->
         <?php if ($crf['workflow_stage'] === 'CMO_FILTER'): ?>
 
-            <div class="crf-section mb-4">
+            <div class="crf-section crf-detail-card mb-4">
 
                 <div class="crf-section-header">
-                    <span class="crf-section-number">5</span>
+                    <span class="crf-section-number"><i class="bi bi-chat-square-text"></i></span>
                     <h2>Review CMO</h2>
                 </div>
 
@@ -337,10 +331,10 @@ require_once __DIR__ . '/../includes/header.php';
 
         <?php elseif ($crf['workflow_stage'] === 'CMO_FINAL'): ?>
 
-            <div class="crf-section mb-4">
+            <div class="crf-section crf-detail-card mb-4">
 
                 <div class="crf-section-header">
-                    <span class="crf-section-number">5</span>
+                    <span class="crf-section-number"><i class="bi bi-check2-circle"></i></span>
                     <h2>Finalisasi</h2>
                 </div>
 
@@ -391,14 +385,12 @@ require_once __DIR__ . '/../includes/header.php';
 
         <?php endif; ?>
 
+          </main>
+          <aside class="crf-detail-sidebar">
+        <?php require __DIR__ . '/../includes/partials/timeline.php'; ?>
 
-        <!-- 6. TIMELINE -->
-        <?php
-        $sectionNumber = 6;
-        $sectionTitle  = 'Timeline';
-        require __DIR__ . '/../includes/partials/timeline.php';
-        ?>
-
+          </aside>
+        </div>
 
     </div>
 
