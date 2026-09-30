@@ -6,7 +6,8 @@
 :root {
   --crf-blue-900: #1f2a3d;
   --crf-blue-700: #2563eb;
-  --crf-helpdesk-blue: #1f568f;
+  --crf-helpdesk-blue: #EDF7FD;
+  --crf-helpdesk-blue-text: #1f568f;
   --crf-blue-100: #EAF4FB;   /* biru sangat muda */
   --crf-gray-900: #333333;   /* teks utama */
   --crf-gray-600: #666666;   /* teks sekunder */
@@ -1937,7 +1938,7 @@ textarea.form-control {
 .pengajuan-page-eyebrow {
   display: block;
   margin-bottom: 0.15rem;
-  color: #dbeafe;
+  color: var(--crf-helpdesk-blue-text);
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -1945,13 +1946,13 @@ textarea.form-control {
 
 .pengajuan-page-banner .crf-page-header h1 {
   margin: 0;
-  color: #fff;
+  color: var(--crf-helpdesk-blue-text);
   font-size: 1.2rem;
 }
 
 .pengajuan-page-banner .crf-page-header p {
   margin-top: 0.2rem;
-  color: #dbeafe !important;
+  color: #365a78 !important;
   font-size: 0.74rem;
 }
 
@@ -2139,7 +2140,7 @@ textarea.form-control {
   padding: 0.58rem 0.55rem !important;
   border: 0;
   background: var(--crf-helpdesk-blue) !important;
-  color: #fff !important;
+  color: var(--crf-helpdesk-blue-text) !important;
   font-size: 0.64rem !important;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -2539,8 +2540,8 @@ textarea.form-control {
   padding: 1rem 1.25rem;
   border-radius: 12px;
   background: var(--crf-helpdesk-blue);
-  color: #fff;
-  box-shadow: 0 6px 18px rgba(31, 86, 143, 0.16);
+  color: var(--crf-helpdesk-blue-text);
+  box-shadow: 0 6px 18px rgba(31, 86, 143, 0.1);
 }
 
 .crf-helpdesk-banner > div {
@@ -2550,7 +2551,7 @@ textarea.form-control {
 .crf-helpdesk-eyebrow {
   display: block;
   margin-bottom: 0.22rem;
-  color: #dbeafe;
+  color: var(--crf-helpdesk-blue-text);
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -2558,14 +2559,14 @@ textarea.form-control {
 
 .crf-helpdesk-banner h1 {
   margin: 0;
-  color: #fff;
+  color: var(--crf-helpdesk-blue-text);
   font-size: 1.3rem;
   font-weight: 700;
 }
 
 .crf-helpdesk-banner p {
   margin: 0.22rem 0 0;
-  color: #e5efff;
+  color: #365a78;
   font-size: 0.74rem;
 }
 
@@ -2650,7 +2651,7 @@ textarea.form-control {
   padding: 0.58rem 0.5rem !important;
   border: 0;
   background: var(--crf-helpdesk-blue) !important;
-  color: #fff !important;
+  color: var(--crf-helpdesk-blue-text) !important;
   font-size: 0.63rem !important;
   font-weight: 700;
   letter-spacing: 0.035em;
