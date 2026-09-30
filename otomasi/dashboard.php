@@ -7,7 +7,7 @@ $total=(int)$pdo->query("SELECT COUNT(*) FROM change_requests WHERE workflow_sta
 $flash=$_SESSION['flash']??null; unset($_SESSION['flash']);
 $pageTitle='Dashboard Otomasi'; require_once __DIR__ . '/../includes/header.php';
 ?>
-<div class="crf-page"><div class="container">
+<div class="crf-page crf-dashboard-page"><div class="container">
 <div class="crf-page-header"><h1>Dashboard Otomasi</h1><p>Ringkasan CRF yang sedang ditangani oleh Otomasi.</p></div>
 <?php if($flash): ?><div class="alert alert-<?= h($flash['type']) ?> crf-alert"><?= h($flash['message']) ?></div><?php endif; ?>
 <div class="crf-stat-grid"><a class="crf-stat-card text-decoration-none" href="index.php"><span>Menunggu Penanganan</span><strong><?= $total ?></strong></a></div>

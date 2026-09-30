@@ -3551,3 +3551,193 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
     font-size: 0.7rem;
   }
 }
+
+/* Dashboard, queue, detail, and login refinements. */
+.crf-dashboard-page > .container {
+  max-width: 1180px;
+}
+
+.crf-dashboard-page .crf-page-header {
+  margin-bottom: 1.35rem;
+  padding: 1.25rem 1.45rem;
+}
+
+.crf-dashboard-page .crf-page-header h1 {
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+}
+
+.crf-dashboard-page .crf-stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.35rem;
+}
+
+.crf-dashboard-page .crf-stat-card {
+  position: relative;
+  min-height: 104px;
+  padding: 1rem 1.05rem;
+  border-color: #e2e8ef;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(16, 36, 60, 0.045);
+}
+
+.crf-dashboard-page .crf-stat-card span {
+  margin-bottom: 0.7rem;
+  color: #66758a;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.crf-dashboard-page .crf-stat-card strong {
+  font-size: 1.65rem;
+  letter-spacing: -0.035em;
+}
+
+.crf-dashboard-page > .container > .mt-4,
+.crf-dashboard-page > .container > .d-flex {
+  margin-top: 0 !important;
+  padding-top: 1rem;
+  border-top: 1px solid #e5eaf0;
+}
+
+.crf-helpdesk-page .crf-table-card,
+.pengajuan-list-card {
+  border-color: #e3e9ef;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(16, 36, 60, 0.045);
+}
+
+.crf-helpdesk-page .crf-table-heading,
+.pengajuan-list-heading {
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.crf-helpdesk-page .crf-table-heading h2,
+.pengajuan-list-heading h2 {
+  color: #1f2a3d;
+  font-size: 1rem;
+}
+
+.crf-helpdesk-page .crf-list-filters {
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  border-color: #e5eaf0;
+  border-radius: 11px;
+  background: #f9fbfd;
+}
+
+.crf-helpdesk-page .crf-list-filter-field > span {
+  color: #596b82;
+  font-size: 0.67rem;
+}
+
+.crf-helpdesk-page .crf-helpdesk-table-wrap {
+  border-color: #e5eaf0;
+  border-radius: 10px;
+}
+
+.crf-helpdesk-page .crf-helpdesk-table tbody tr {
+  transition: background-color 0.16s ease;
+}
+
+.crf-detail-page > .container {
+  max-width: 1280px;
+}
+
+.crf-admin-edit-page > .container {
+  max-width: 1180px;
+}
+
+.crf-admin-edit-page .row.g-3.mb-4 > [class*="col-"] {
+  padding: 0.95rem 1rem;
+  border: 1px solid #e3e9ef;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(16, 36, 60, 0.04);
+}
+
+.crf-admin-edit-page .crf-detail-label {
+  margin-bottom: 0.4rem;
+  color: #718096;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+}
+
+.crf-admin-edit-page .crf-detail-value {
+  margin-bottom: 0;
+  color: #26374d;
+  line-height: 1.55;
+}
+
+.crf-detail-page .crf-page-header {
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.crf-detail-page .crf-page-header h1 {
+  font-size: 1.35rem;
+}
+
+.crf-detail-page .crf-detail-layout {
+  grid-template-columns: minmax(0, 1.8fr) minmax(270px, 0.85fr);
+  gap: 1rem;
+}
+
+.crf-detail-page .crf-detail-main > .crf-section,
+.crf-detail-page .crf-detail-sidebar > .crf-section {
+  border-color: #e3e9ef;
+  border-radius: 13px;
+  box-shadow: 0 3px 12px rgba(16, 36, 60, 0.04);
+}
+
+.crf-detail-page .crf-section-header {
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+}
+
+.crf-detail-page .crf-section-number {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 9px;
+  font-size: 0.78rem;
+}
+
+.crf-detail-page .crf-section-header h2 {
+  font-size: 0.94rem;
+}
+
+.crf-detail-page .crf-status-strip {
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #e4eaf0;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.crf-page:not(.crf-detail-page):not(.crf-form-page):not(.crf-dashboard-page) > .container > .crf-page-header {
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .crf-dashboard-page .crf-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .crf-dashboard-page .crf-stat-card {
+    min-height: 90px;
+    padding: 0.8rem;
+  }
+
+  .crf-detail-page .crf-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .crf-detail-page .crf-page-header {
+    align-items: flex-start !important;
+  }
+}
