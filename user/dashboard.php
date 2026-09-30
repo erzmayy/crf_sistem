@@ -10,7 +10,7 @@ $summary=$stmt->fetch() ?: [];
 $flash=$_SESSION['flash']??null; unset($_SESSION['flash']);
 $pageTitle='Dashboard'; require_once __DIR__ . '/../includes/header.php';
 ?>
-<div class="crf-page"><div class="container">
+<div class="crf-page crf-dashboard-page"><div class="container">
 <div class="crf-page-header"><h1>Dashboard</h1><p>Ringkasan pengajuan Change Request Anda.</p></div>
 <?php if($flash): ?><div class="alert alert-<?= h($flash['type']) ?> crf-alert"><?= h($flash['message']) ?></div><?php endif; ?>
 <div class="crf-stat-grid">

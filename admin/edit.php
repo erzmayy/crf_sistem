@@ -67,7 +67,7 @@ $pageTitle = 'Kelola CRF - ' . $crf['request_number'];
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="crf-page">
+<div class="crf-page crf-admin-edit-page">
 
   <div class="container">
 
