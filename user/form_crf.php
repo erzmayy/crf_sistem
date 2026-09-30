@@ -4,8 +4,8 @@
  * ---------------------------------------------------------------
  * Halaman Form CRF untuk user yang sudah login.
  * Data user aktif diambil melalui getCurrentUser().
- * Field Nama Lengkap, No. Handphone/WA, dan Email tetap diisi
- * secara manual pada setiap pengajuan sebagai data pengajuan CRF.
+ * Informasi nama, kontak, departemen, dan divisi terisi otomatis dari
+ * akun aktif. Data Draft atau input sebelumnya tetap dipertahankan.
  * Field otomatis seperti Hari/Tanggal, Kepada, dan Nomor Register
  * diisi oleh sistem.
  * ---------------------------------------------------------------
@@ -17,7 +17,7 @@ require_once __DIR__ . '/../includes/functions.php';
 requireLogin();
 
 $pdo  = getConnection();
-$user = getCurrentUser();
+$user = getCurrentUser(true);
 
 // Cek apakah sedang membuka Draft
 $draftId = (int) ($_GET['id'] ?? 0);
@@ -67,7 +67,17 @@ unset($_SESSION['flash']);
 
 // Data form: gunakan data Draft jika sedang membuka Draft,
 // atau gunakan data lama dari session jika ada error submit.
-$old = $_SESSION['old_crf'] ?? ($draftData ?? []);
+$old = array_merge(
+    $draftData ?? [],
+    $_SESSION['old_crf'] ?? [],
+    [
+        'full_name' => $user['nama'] ?? '',
+        'phone' => $user['no_wa'] ?? '',
+        'email' => $user['email'] ?? '',
+        'from_department' => $user['dept'] ?? '',
+        'from_division' => $user['divisi'] ?? '',
+    ]
+);
 unset($_SESSION['old_crf']);
 
 $pageTitle = 'Form CRF';
@@ -129,8 +139,10 @@ require_once __DIR__ . '/../includes/header.php';
                 name="full_name"
                 placeholder="Masukkan nama lengkap"
                 value="<?= h($old['full_name'] ?? '') ?>"
+                readonly
                 required
               >
+              <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
             </div>
 
             <div class="col-md-4">
@@ -143,8 +155,10 @@ require_once __DIR__ . '/../includes/header.php';
                 name="phone"
                 placeholder="Masukkan nomor handphone/WA"
                 value="<?= h($old['phone'] ?? '') ?>"
+                readonly
                 required
               >
+              <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
             </div>
 
             <div class="col-md-4">
@@ -157,8 +171,10 @@ require_once __DIR__ . '/../includes/header.php';
                 name="email"
                 placeholder="Masukkan alamat email"
                 value="<?= h($old['email'] ?? '') ?>"
+                readonly
                 required
               >
+              <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
             </div>
             
             <div class="col-md-6">
@@ -194,8 +210,10 @@ require_once __DIR__ . '/../includes/header.php';
                     name="from_department"
                     placeholder="Masukkan nama departemen"
                     value="<?= h($old['from_department'] ?? '') ?>"
+                    readonly
                     required
                   >
+                  <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
                 </div>
 
                 <div class="col-12">
@@ -208,8 +226,10 @@ require_once __DIR__ . '/../includes/header.php';
                     name="from_division"
                     placeholder="Masukkan nama divisi"
                     value="<?= h($old['from_division'] ?? '') ?>"
+                    readonly
                     required
                   >
+                  <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
                 </div>
               </div>
             </div>

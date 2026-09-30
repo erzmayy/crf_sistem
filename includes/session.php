@@ -18,15 +18,16 @@ require_once __DIR__ . '/siap_user_provider.php';
 /**
  * Mengambil data user aktif dari database.
  * Menyimpan hasilnya ke $_SESSION supaya tidak query berulang-ulang.
+ * Gunakan $refresh untuk mengambil ulang data terbaru dari database.
  */
-function getCurrentUser(): array
+function getCurrentUser(bool $refresh = false): array
 {
     if (!isset($_SESSION['user_id'])) {
         header('Location: ../login.php');
         exit;
     }
 
-    if (!isset($_SESSION['active_user'])) {
+    if ($refresh || !isset($_SESSION['active_user'])) {
         $pdo = getConnection();
         $user = findCrfUserById($pdo, (int) $_SESSION['user_id']);
 
