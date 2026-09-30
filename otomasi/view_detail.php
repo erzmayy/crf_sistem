@@ -114,7 +114,7 @@ $pageTitle = 'Otomasi - Detail CRF';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="crf-page">
+<div class="crf-page crf-detail-page">
 
     <div class="container">
 
@@ -159,7 +159,7 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- =====================================================
              STATUS
              ===================================================== -->
-        <div class="d-flex gap-2 mb-4 flex-wrap">
+        <div class="crf-status-strip mb-4">
 
             <span class="crf-badge <?= statusBadgeClass($crf['status']) ?>">
                 Status: <?= h(statusLabel($crf['status'] ?? '')) ?>
@@ -183,33 +183,31 @@ require_once __DIR__ . '/../includes/header.php';
 
         </div>
 
+        <div class="crf-detail-layout">
+          <main class="crf-detail-main">
 
         <!-- 1. INFORMASI PENGAJUAN -->
         <?php
-        $sectionNumber    = 1;
         $showStatusInGrid = true;
         require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
         ?>
 
         <!-- 2. DETAIL PERMINTAAN -->
         <?php
-        $sectionNumber = 2;
         require __DIR__ . '/../includes/partials/detail_permintaan.php';
         ?>
 
         <!-- 3. INFORMASI SLA -->
         <?php
-        $sectionNumber = 3;
         require __DIR__ . '/../includes/partials/informasi_sla.php';
         ?>
 
-        <!-- 4. TIMELINE -->
-        <?php
-        $sectionNumber = 4;
-        $sectionTitle  = 'Timeline Proses';
-        require __DIR__ . '/../includes/partials/timeline.php';
-        ?>
+          </main>
+          <aside class="crf-detail-sidebar">
+        <?php require __DIR__ . '/../includes/partials/timeline.php'; ?>
 
+          </aside>
+        </div>
 
     </div>
 

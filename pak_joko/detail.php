@@ -130,7 +130,7 @@ $pageTitle = 'Kepala Departemen Operasional - Review CRF';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="crf-page">
+<div class="crf-page crf-detail-page">
 
     <div class="container">
 
@@ -170,7 +170,7 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- =====================================================
              STATUS
              ===================================================== -->
-        <div class="d-flex gap-2 mb-4 flex-wrap">
+        <div class="crf-status-strip mb-4">
 
             <span class="crf-badge <?= statusBadgeClass($crf['status']) ?>">
                 Status: <?= h(statusLabel($crf['status'] ?? '')) ?>
@@ -194,22 +194,21 @@ require_once __DIR__ . '/../includes/header.php';
 
         </div>
 
+        <div class="crf-detail-layout">
+          <main class="crf-detail-main">
 
         <!-- 1. INFORMASI PENGAJUAN -->
         <?php
-        $sectionNumber = 1;
         require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
         ?>
 
         <!-- 2. DETAIL PERMINTAAN -->
         <?php
-        $sectionNumber = 2;
         require __DIR__ . '/../includes/partials/detail_permintaan.php';
         ?>
 
         <!-- 3. INFORMASI SLA -->
         <?php
-        $sectionNumber = 3;
         require __DIR__ . '/../includes/partials/informasi_sla.php';
         ?>
 
@@ -221,7 +220,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-section mb-4">
 
             <div class="crf-section-header">
-                <span class="crf-section-number">4</span>
+                <span class="crf-section-number"><i class="bi bi-person-check"></i></span>
                 <h2>Approval Kepala Departemen Operasional</h2>
             </div>
 
@@ -267,13 +266,12 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
         <?php endif; ?>
 
+          </main>
+          <aside class="crf-detail-sidebar">
+        <?php require __DIR__ . '/../includes/partials/timeline.php'; ?>
 
-        <!-- 5. TIMELINE (tanpa nomor -> ikon jam, seperti versi lama) -->
-        <?php
-        $sectionTitle = 'Timeline Proses';
-        require __DIR__ . '/../includes/partials/timeline.php';
-        ?>
-
+          </aside>
+        </div>
 
     </div>
 

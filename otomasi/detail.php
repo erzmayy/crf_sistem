@@ -57,6 +57,15 @@ $attStmt = $pdo->prepare(
 $attStmt->execute(['id' => $id]);
 $attachments = $attStmt->fetchAll();
 
+$timelineStmt = $pdo->prepare("
+    SELECT activity, description, actor, created_at
+    FROM crf_activity_logs
+    WHERE change_request_id = :id
+    ORDER BY created_at ASC, id ASC
+");
+$timelineStmt->execute(['id' => $id]);
+$timeline = $timelineStmt->fetchAll();
+
 $isExecutionStage = !empty($crf['kadep_operasional_approved_at']);
 
 
@@ -70,7 +79,7 @@ $pageTitle = $isExecutionStage
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="crf-page">
+<div class="crf-page crf-detail-page">
 
     <div class="container">
 
@@ -159,13 +168,20 @@ require_once __DIR__ . '/../includes/header.php';
 
         </div>
 
+        <div class="crf-detail-layout">
+          <main class="crf-detail-main">
+
+        <!-- INFORMASI PENGAJUAN -->
+        <?php
+        $showStatusInGrid = true;
+        require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
+        ?>
 
         <!-- =====================================================
-             1. DETAIL PENGAJUAN
+             2. DETAIL PENGAJUAN
              ===================================================== -->
 
         <?php
-        $sectionNumber = 1;
         require __DIR__ . '/../includes/partials/detail_permintaan.php';
         ?>
 
@@ -199,7 +215,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="crf-section-header">
 
                         <span class="crf-section-number">
-                            2
+                            <i class="bi bi-sliders"></i>
                         </span>
 
                         <h2>
@@ -357,7 +373,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="crf-section-header">
 
                         <span class="crf-section-number">
-                            2
+                            <i class="bi bi-play-circle"></i>
                         </span>
 
                         <h2>
@@ -569,6 +585,12 @@ require_once __DIR__ . '/../includes/header.php';
             <?php endif; ?>
 
         </form>
+
+          </main>
+          <aside class="crf-detail-sidebar">
+            <?php require __DIR__ . '/../includes/partials/timeline.php'; ?>
+          </aside>
+        </div>
 
     </div>
 

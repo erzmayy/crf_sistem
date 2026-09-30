@@ -1,0 +1,100 @@
+<?php
+/**
+ * Shared search and filter bar for CRF lists.
+ *
+ * Required variables: $listFilters, $listContextName, $listContextValue.
+ * Optional: $listResetUrl.
+ */
+
+$listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
+?>
+<form method="GET" class="crf-list-filters <?= !empty($listCategories) ? 'crf-list-filters-with-category' : '' ?>">
+    <?php if (!empty($listContextName)): ?>
+        <input type="hidden" name="<?= h($listContextName) ?>" value="<?= h($listContextValue ?? '') ?>">
+    <?php endif; ?>
+    <input type="hidden" name="per_page" value="<?= (int) ($perPage ?? 6) ?>">
+
+    <label class="crf-list-filter-field crf-list-search">
+        <span>Cari Pengajuan</span>
+        <input
+            type="search"
+            name="q"
+            class="form-control"
+            placeholder="Nama, nomor register, atau isi..."
+            value="<?= h($listFilters['search'] ?? '') ?>"
+            aria-label="Cari berdasarkan nama, nomor CRF, atau judul"
+        >
+    </label>
+
+    <label class="crf-list-filter-field">
+        <span>Status</span>
+        <select name="status" class="form-select" aria-label="Filter status">
+            <option value="">Semua Status</option>
+            <?php foreach (['Belum Ditindak Lanjuti', 'Perlu Revisi', 'Dalam Proses', 'Solve', 'Cancel'] as $statusOption): ?>
+                <option value="<?= h($statusOption) ?>" <?= ($listFilters['status'] ?? '') === $statusOption ? 'selected' : '' ?>>
+                    <?= h(statusLabel($statusOption)) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </label>
+
+    <label class="crf-list-filter-field">
+        <span>Departemen</span>
+        <select name="department" class="form-select" aria-label="Filter departemen">
+            <option value="">Semua Departemen</option>
+            <?php foreach (($listFilters['departments'] ?? []) as $departmentOption): ?>
+                <option value="<?= h($departmentOption) ?>" <?= ($listFilters['department'] ?? '') === $departmentOption ? 'selected' : '' ?>>
+                    <?= h($departmentOption) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </label>
+
+    <label class="crf-list-filter-field">
+        <span>Level Urgensi</span>
+        <select name="level" class="form-select" aria-label="Filter level urgensi">
+            <option value="">Semua Level</option>
+            <?php foreach (['Tinggi', 'Normal', 'Rendah'] as $levelOption): ?>
+                <option value="<?= h($levelOption) ?>" <?= ($listFilters['level'] ?? '') === $levelOption ? 'selected' : '' ?>>
+                    <?= h($levelOption === 'Normal' ? 'Sedang' : $levelOption) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </label>
+
+    <?php if (!empty($listCategories)): ?>
+        <label class="crf-list-filter-field">
+            <span>Kategori</span>
+            <select name="category" class="form-select" aria-label="Filter kategori">
+                <option value="">Semua Kategori</option>
+                <?php foreach ($listCategories as $categoryOption): ?>
+                    <option value="<?= h($categoryOption) ?>" <?= ($listCategoryValue ?? '') === $categoryOption ? 'selected' : '' ?>>
+                        <?= h($categoryOption) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+    <?php endif; ?>
+
+    <label class="crf-list-filter-field">
+        <span>Tanggal Dari</span>
+        <input type="date" name="date_from" class="form-control" value="<?= h($listFilters['date_from'] ?? '') ?>" aria-label="Tanggal pengajuan dari">
+    </label>
+
+    <label class="crf-list-filter-field">
+        <span>Tanggal Sampai</span>
+        <input type="date" name="date_to" class="form-control" value="<?= h($listFilters['date_to'] ?? '') ?>" aria-label="Tanggal pengajuan sampai">
+    </label>
+
+    <div class="crf-list-filter-actions">
+        <button type="submit" class="btn btn-crf-primary" aria-label="Terapkan filter">
+            <i class="bi bi-search"></i>
+            <span>Terapkan</span>
+        </button>
+        <a href="<?= h($listResetUrl) ?><?= !empty($listContextName) ? '?' . h(http_build_query([$listContextName => $listContextValue])) : '' ?>" class="btn btn-crf-outline">
+            Reset
+        </a>
+    </div>
+</form>
+<?php
+unset($listResetUrl);

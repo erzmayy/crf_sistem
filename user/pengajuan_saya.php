@@ -131,7 +131,7 @@ if ($categoryFilter !== '') {
  * Pagination
  * ========================================================= */
 
-$perPage = 10;
+$perPage = getCrfPageSize($_GET['per_page'] ?? 6);
 
 $page = max(
     1,
@@ -181,6 +181,7 @@ $sql = "
         request_number,
         full_name,
         submission_date,
+        change_category,
         level,
         status,
         workflow_stage,
@@ -211,42 +212,8 @@ $pageTitle = 'Pengajuan Saya';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="crf-page pt-4">
+<div class="crf-page crf-helpdesk-page pt-4">
     <div class="container">
-<!-- <style>
-    /* =========================================================
-       PENGAJUAN SAYA - LEBAR KOLOM TETAP
-       ========================================================= */
-    .pengajuan-table-wrap {
-        overflow-x: auto;
-        width: 100%;
-    }
-
-    .pengajuan-table {
-        width: 100%;
-        min-width: 1360px;
-        table-layout: fixed;
-    }
-
-    .pengajuan-table th:nth-child(1),  .pengajuan-table td:nth-child(1)  { width: 40px; }
-    .pengajuan-table th:nth-child(2),  .pengajuan-table td:nth-child(2)  { width: 150px; }
-    .pengajuan-table th:nth-child(3),  .pengajuan-table td:nth-child(3)  { width: 150px; }
-    .pengajuan-table th:nth-child(4),  .pengajuan-table td:nth-child(4)  { width: 110px; }
-    .pengajuan-table th:nth-child(5),  .pengajuan-table td:nth-child(5)  { width: 90px; }
-    .pengajuan-table th:nth-child(6),  .pengajuan-table td:nth-child(6)  { width: 110px; }
-    .pengajuan-table th:nth-child(7),  .pengajuan-table td:nth-child(7)  { width: 130px; }
-    .pengajuan-table th:nth-child(8),  .pengajuan-table td:nth-child(8)  { width: 220px; overflow-wrap: break-word; }
-    .pengajuan-table th:nth-child(9),  .pengajuan-table td:nth-child(9)  { width: 220px; overflow-wrap: break-word; }
-    .pengajuan-table th:nth-child(10), .pengajuan-table td:nth-child(10) { width: 260px; }
-
-    /* Potong teks jadi 1 baris + "..." untuk kolom yang isinya identitas/nama */
-    .pengajuan-cell-truncate {
-        display: block;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-</style> -->
         <?php if ($flash): ?>
         <div
             class="alert alert-<?= h($flash['type']) ?> crf-alert"
@@ -257,19 +224,20 @@ require_once __DIR__ . '/../includes/header.php';
     <?php endif; ?>
 
         <!-- HEADER HALAMAN -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="pengajuan-page-banner">
 
             <div class="crf-page-header">
+                <span class="pengajuan-page-eyebrow">PORTAL CRF</span>
                 <h1>Pengajuan Saya</h1>
 
                 <p class="text-muted mb-0">
-                    Kelola dan pantau seluruh pengajuan CRF Anda.
+                    Pantau status, urgensi, dan tindak lanjut pengajuan perubahan Anda.
                 </p>
             </div>
 
             <a
                 href="form_crf.php"
-                class="btn btn-primary"
+                class="btn btn-light pengajuan-create-button"
             >
                 <i class="bi bi-plus-lg"></i>
                 Buat Pengajuan
@@ -281,50 +249,38 @@ require_once __DIR__ . '/../includes/header.php';
             RINGKASAN PENGAJUAN SAYA
             ========================================================= -->
 
-        <div class="mb-4">
+        <div class="mb-3">
 
             <div class="crf-stat-grid crf-user-stat-grid">
 
-                <div class="crf-stat-card">
-                    <span>Total Pengajuan</span>
-                    <strong>
-                        <?= (int) ($summary['total'] ?? 0) ?>
-                    </strong>
+                <div class="crf-stat-card pengajuan-stat-card pengajuan-stat-total">
+                    <span><i class="bi bi-inboxes-fill"></i> Total Pengajuan</span>
+                    <strong><?= (int) ($summary['total'] ?? 0) ?></strong>
                 </div>
 
-                <div class="crf-stat-card">
-                    <span>Belum Ditindak Lanjuti</span>
-                    <strong>
-                        <?= (int) ($summary['pending'] ?? 0) ?>
-                    </strong>
+                <div class="crf-stat-card pengajuan-stat-card pengajuan-stat-pending">
+                    <span><i class="bi bi-hourglass-split"></i> Belum Ditindak Lanjuti</span>
+                    <strong><?= (int) ($summary['pending'] ?? 0) ?></strong>
                 </div>
 
-                <div class="crf-stat-card">
-                    <span>Perlu Revisi</span>
-                    <strong>
-                        <?= (int) ($summary['revision'] ?? 0) ?>
-                    </strong>
+                <div class="crf-stat-card pengajuan-stat-card pengajuan-stat-revision">
+                    <span><i class="bi bi-pencil-square"></i> Perlu Revisi</span>
+                    <strong><?= (int) ($summary['revision'] ?? 0) ?></strong>
                 </div>
 
-                <div class="crf-stat-card">
-                    <span>Dalam Proses</span>
-                    <strong>
-                        <?= (int) ($summary['processing'] ?? 0) ?>
-                    </strong>
+                <div class="crf-stat-card pengajuan-stat-card pengajuan-stat-processing">
+                    <span><i class="bi bi-arrow-repeat"></i> Dalam Proses</span>
+                    <strong><?= (int) ($summary['processing'] ?? 0) ?></strong>
                 </div>
 
-                <div class="crf-stat-card">
-                    <span>Selesai</span>
-                    <strong>
-                        <?= (int) ($summary['solved'] ?? 0) ?>
-                    </strong>
+                <div class="crf-stat-card pengajuan-stat-card pengajuan-stat-solved">
+                    <span><i class="bi bi-check-circle-fill"></i> Selesai</span>
+                    <strong><?= (int) ($summary['solved'] ?? 0) ?></strong>
                 </div>
 
-                <div class="crf-stat-card">
-                    <span>Dibatalkan</span>
-                    <strong>
-                        <?= (int) ($summary['cancelled'] ?? 0) ?>
-                    </strong>
+                <div class="crf-stat-card pengajuan-stat-card pengajuan-stat-cancelled">
+                    <span><i class="bi bi-slash-circle-fill"></i> Dibatalkan</span>
+                    <strong><?= (int) ($summary['cancelled'] ?? 0) ?></strong>
                 </div>
 
             </div>
@@ -333,7 +289,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
         <!-- TABEL PENGAJUAN -->
-        <div class="card">
+        <div class="card pengajuan-list-card">
 
             <div class="card-body">
 
@@ -358,22 +314,37 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <?php else: ?>
 
-                    <form method="GET" class="mb-4">
+                    <div class="pengajuan-list-heading">
+                        <div>
+                            <h2>Daftar Pengajuan CRF</h2>
+                            <p>Pantau perkembangan setiap permintaan perubahan.</p>
+                        </div>
+                        <span class="pengajuan-result-pill">
+                            <i class="bi bi-list-check"></i>
+                            <?= number_format($totalRows, 0, ',', '.') ?> pengajuan
+                        </span>
+                    </div>
+
+                    <form method="GET" class="mb-4 pengajuan-filters">
+                        <input type="hidden" name="per_page" value="<?= (int) $perPage ?>">
 
                         <div class="row g-2">
 
                             <div class="col-md-5">
+                                <label class="pengajuan-filter-label" for="pengajuan-search">Cari pengajuan</label>
                                 <input
                                     type="text"
+                                    id="pengajuan-search"
                                     name="search"
                                     class="form-control"
-                                    placeholder="Cari Nomor Register atau Nama Pengaju..."
+                                    placeholder="Nomor register atau keterangan..."
                                     value="<?= h($search) ?>"
                                 >
                             </div>
 
                             <div class="col-md-3">
-                                <select name="status" class="form-select">
+                                <label class="pengajuan-filter-label" for="pengajuan-status">Status</label>
+                                <select id="pengajuan-status" name="status" class="form-select">
                                     <option value="">Semua Status</option>
 
                                     <?php foreach ($allowedStatuses as $statusOption): ?>
@@ -388,7 +359,8 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
 
                             <div class="col-md-3">
-                                <select name="category" class="form-select">
+                                <label class="pengajuan-filter-label" for="pengajuan-category">Kategori</label>
+                                <select id="pengajuan-category" name="category" class="form-select">
                                     <option value="">Semua Kategori</option>
 
                                     <?php foreach ($allowedCategories as $categoryOption): ?>
@@ -405,10 +377,12 @@ require_once __DIR__ . '/../includes/header.php';
                             <div class="col-md-1">
                                 <button
                                     type="submit"
-                                    class="btn btn-primary w-100"
+                                    class="btn btn-primary w-100 pengajuan-filter-submit"
                                     title="Cari"
+                                    aria-label="Terapkan filter"
                                 >
                                     <i class="bi bi-search"></i>
+                                    <span>Lihat</span>
                                 </button>
                             </div>
 
@@ -420,12 +394,12 @@ require_once __DIR__ . '/../includes/header.php';
                             || $categoryFilter !== ''
                         ): ?>
 
-                            <div class="mt-2">
+                            <div class="pengajuan-filter-reset">
                                 <a
                                     href="pengajuan_saya.php"
                                     class="small text-decoration-none"
                                 >
-                                    Reset pencarian & filter
+                                    <i class="bi bi-arrow-counterclockwise"></i> Reset filter aktif
                                 </a>
                             </div>
 
@@ -433,21 +407,18 @@ require_once __DIR__ . '/../includes/header.php';
 
                     </form>
 
-                    <div class="table-responsive crf-table-responsive-cards pengajuan-table-wrap">
+                    <div class="table-responsive crf-table-responsive-cards pengajuan-table-wrap crf-helpdesk-table-wrap">
 
-                    <table class="table crf-table pengajuan-table align-middle">
+                    <table class="table crf-table pengajuan-table crf-helpdesk-table crf-helpdesk-table--user align-middle">
                             <thead>
 
                                 <tr>
                                     <th>No</th>
-                                    <th>Nomor Register</th>
-                                    <th>Pengaju</th>
-                                    <th>Tanggal Pengajuan</th>
+                                    <th>Keterangan Pengajuan</th>
+                                    <th>Isi Pengajuan</th>
                                     <th>Level Urgensi</th>
                                     <th>Status</th>
                                     <th>Tahap</th>
-                                    <th>Perubahan yang Diminta</th>
-                                    <th>Tanggapan / Tindak Lanjut</th>
                                     <th>Aksi</th>
                                 </tr>
 
@@ -465,89 +436,83 @@ require_once __DIR__ . '/../includes/header.php';
                                     </td>
 
 
-                                                                        <!-- NOMOR REGISTER -->
-                                    <td data-label="Nomor Register">
-                                        <?php if (!empty($row['request_number'])): ?>
-                                            <?= h($row['request_number']) ?>
-                                        <?php else: ?>
-                                            <span class="text-muted">-</span>
-                                        <?php endif; ?>
+                                    <!-- KETERANGAN PENGAJUAN -->
+                                    <td data-label="Keterangan Pengajuan">
+                                        <div class="pengajuan-cell-meta">
+                                            <span class="pengajuan-cell-caption">Nomor Register</span>
+                                            <strong class="pengajuan-cell-register">
+                                                <?php if (!empty($row['request_number'])): ?>
+                                                    <?= h($row['request_number']) ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted">Belum tersedia</span>
+                                                <?php endif; ?>
+                                            </strong>
+                                        </div>
+                                        <div class="pengajuan-date-card">
+                                            <span><i class="bi bi-calendar3"></i> Tanggal Pengajuan</span>
+                                            <strong>
+                                                <?php if (!empty($row['submission_date'])): ?>
+                                                    <?= date(
+                                                        'd F Y',
+                                                        strtotime($row['submission_date'])
+                                                    ) ?>
+                                                <?php else: ?>
+                                                    -
+                                                <?php endif; ?>
+                                            </strong>
+                                        </div>
                                     </td>
 
-
-                                    <!-- NAMA PENGAJU -->
-                                    <td data-label="Pengaju">
-                                        <span class="pengajuan-cell-truncate" title="<?= h($row['full_name']) ?>">
-                                            <?= h($row['full_name']) ?>
-                                        </span>
+                                    <!-- ISI PENGAJUAN -->
+                                    <td data-label="Isi Pengajuan">
+                                        <div class="pengajuan-request-content">
+                                            <span class="pengajuan-category-chip">
+                                                <i class="bi bi-tag-fill"></i>
+                                                <?= h($row['change_category'] ?: 'Kategori belum dipilih') ?>
+                                            </span>
+                                            <p
+                                                class="pengajuan-request-description"
+                                                title="<?= h($row['change_description'] ?? '-') ?>"
+                                            >
+                                                <?= h(mb_strimwidth($row['change_description'] ?? '-', 0, 180, '...')) ?>
+                                            </p>
+                                        </div>
                                     </td>
-
-
-                                    <!-- TANGGAL -->
-                                    <td data-label="Tanggal">
-                                        <?php if (!empty($row['submission_date'])): ?>
-                                            <?= date(
-                                                'd-m-Y',
-                                                strtotime($row['submission_date'])
-                                            ) ?>
-                                        <?php else: ?>
-                                            <span class="text-muted">-</span>
-                                        <?php endif; ?>
-                                    </td>
-
 
                                     <!-- LEVEL -->
-                                    <td data-label="Level">
-                                        <?= h($row['level'] ?? '-') ?>
+                                    <td data-label="Level Urgensi">
+                                        <span
+                                            class="crf-badge <?= levelBadgeClass($row['level'] ?? null) ?>"
+                                            title="<?= h(($row['level'] ?? null) === 'Normal' ? 'Sedang' : ($row['level'] ?? '-')) ?>"
+                                        >
+                                            <?= h(($row['level'] ?? null) === 'Normal' ? 'Sedang' : ($row['level'] ?? '-')) ?>
+                                        </span>
                                     </td>
-
 
                                     <!-- STATUS -->
                                     <td data-label="Status">
-
-                                        <span class="crf-badge <?= statusBadgeClass($row['status']) ?>">
+                                        <span
+                                            class="crf-badge <?= statusBadgeClass($row['status']) ?>"
+                                            title="<?= h(statusLabel($row['status'])) ?>"
+                                        >
                                             <?= h(statusLabel($row['status'])) ?>
                                         </span>
-
                                     </td>
 
+                                    <!-- TAHAP -->
                                     <td data-label="Tahap">
-                                        <span class="crf-badge <?= workflowStageBadgeClass($row['workflow_stage'] ?? 'PEMOHON') ?>">
+                                        <span
+                                            class="crf-badge <?= workflowStageBadgeClass($row['workflow_stage'] ?? 'PEMOHON') ?>"
+                                            title="<?= h(workflowStageLabel($row['workflow_stage'] ?? 'PEMOHON')) ?>"
+                                        >
                                             <?= h(workflowStageLabel($row['workflow_stage'] ?? 'PEMOHON')) ?>
                                         </span>
                                     </td>
 
-
-                                    <!-- PERUBAHAN -->
-                                    <td data-label="Perubahan" title="<?= h($row['change_description'] ?? '-') ?>">
-                                        <?= h(mb_strimwidth($row['change_description'] ?? '-', 0, 60, '...')) ?>
-                                    </td>
-
-
-                                    <!-- TANGGAPAN -->
-                                    <td data-label="Tanggapan" title="<?= h($row['tanggapan_tindak_lanjut'] ?? '-') ?>">
-
-                                        <?php if (!empty($row['tanggapan_tindak_lanjut'])): ?>
-
-                                            <?= nl2br(
-                                                h($row['tanggapan_tindak_lanjut'])
-                                            ) ?>
-
-                                        <?php else: ?>
-
-                                            <span class="text-muted">
-                                                Belum ada tanggapan.
-                                            </span>
-
-                                        <?php endif; ?>
-
-                                    </td>
-
-
                                    <!-- AKSI -->
                                 <td data-label="Aksi">
 
-                                    <div class="d-flex gap-2">
+                                    <div class="d-flex gap-2 pengajuan-actions">
 
                                         <!-- DETAIL -->
                                         <a
@@ -595,7 +560,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                                         <?php endif; ?>
 
-                                                                                <!-- HAPUS DRAFT -->
+                                        <!-- HAPUS DRAFT -->
                                         <?php if ($row['status'] === 'Draft'): ?>
 
                                             <form
@@ -627,72 +592,11 @@ require_once __DIR__ . '/../includes/header.php';
 
                     </div>
 
-                    <?php if ($totalPages > 1): ?>
-
-                        <nav aria-label="Pagination pengajuan" class="mt-3">
-
-                            <ul class="pagination justify-content-end mb-0">
-
-                                <?php
-                                $prevParams = $_GET;
-                                $prevParams['page'] = max(1, $page - 1);
-
-                                $nextParams = $_GET;
-                                $nextParams['page'] = min($totalPages, $page + 1);
-                                ?>
-
-                                <!-- Previous -->
-                                <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-
-                                    <a
-                                        class="page-link"
-                                        href="?<?= h(http_build_query($prevParams)) ?>"
-                                        aria-label="Previous"
-                                    >
-                                        <i class="bi bi-chevron-left"></i>
-                                    </a>
-
-                                </li>
-
-
-                                <!-- Nomor halaman -->
-                                <?php for ($p = 1; $p <= $totalPages; $p++): ?>
-
-                                    <?php
-                                    $pageParams = $_GET;
-                                    $pageParams['page'] = $p;
-                                    ?>
-
-                                    <li class="page-item <?= $p === $page ? 'active' : '' ?>">
-
-                                        <a
-                                            class="page-link"
-                                            href="?<?= h(http_build_query($pageParams)) ?>"
-                                        >
-                                            <?= $p ?>
-                                        </a>
-
-                                    </li>
-
-                                <?php endfor; ?>
-
-
-                                <!-- Next -->
-                                <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-
-                                    <a
-                                        class="page-link"
-                                        href="?<?= h(http_build_query($nextParams)) ?>"
-                                        aria-label="Next"
-                                    >
-                                        <i class="bi bi-chevron-right"></i>
-                                    </a>
-
-                                </ul>
-
-                        </nav>
-
-                    <?php endif; ?> 
+                    <?php
+                    $paginationLabel = 'Navigasi halaman pengajuan saya';
+                    require __DIR__ . '/../includes/partials/crf_list_pagination.php';
+                    unset($paginationLabel);
+                    ?>
 
                 <?php endif; ?>
 

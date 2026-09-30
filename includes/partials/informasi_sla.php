@@ -4,25 +4,20 @@
  *
  * Variabel yang HARUS sudah ada di scope pemanggil:
  *   array $crf
- *
- * Variabel OPSIONAL:
- *   int $sectionNumber   (default 6)
  */
-
-$sectionNumber = $sectionNumber ?? 6;
 
 $slaValueDisplay = (!empty($crf['sla_value']) && !empty($crf['sla_unit']))
     ? rtrim(rtrim(number_format((float) $crf['sla_value'], 2, '.', ''), '0'), '.') . ' ' . $crf['sla_unit']
     : null;
 ?>
-<div class="crf-section mb-4">
+<div class="crf-section crf-detail-card mb-4">
     <div class="crf-section-header">
-        <span class="crf-section-number"><?= h((string) $sectionNumber) ?></span>
+        <span class="crf-section-number"><i class="bi bi-hourglass-split"></i></span>
         <h2>Informasi SLA</h2>
     </div>
 
     <div class="crf-section-body">
-        <div class="crf-sla-grid row g-4">
+        <div class="crf-sla-grid row g-2">
 
             <div class="col-md-3 crf-sla-item">
                 <div class="crf-detail-label">LEVEL URGENSI</div>
@@ -72,4 +67,4 @@ $slaValueDisplay = (!empty($crf['sla_value']) && !empty($crf['sla_unit']))
     </div>
 </div>
 <?php
-unset($sectionNumber, $slaValueDisplay);
+unset($slaValueDisplay);
