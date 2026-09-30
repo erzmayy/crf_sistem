@@ -178,29 +178,80 @@ if (fileInput && fileList) {
     statusSelect.dataset.previous = statusSelect.value;
   }
 
-    /* -----------------------------------------------------------------
-   * 6. Simpan Draft
-   * ----------------------------------------------------------------- */
-  var btnSaveDraft = document.getElementById('btnSaveDraft');
   var crfForm = document.getElementById('crfForm');
-
-  if (btnSaveDraft && crfForm) {
-    btnSaveDraft.addEventListener('click', function () {
-
-      // Arahkan form ke proses save draft
-      crfForm.action = '../actions/save_draft.php';
-
-      // Kirim form tanpa menjalankan validasi browser / JS
-      crfForm.submit();
-    });
-  }
 
   /* -----------------------------------------------------------------
    * 7. Konfirmasi sebelum CRF diajukan
    * ----------------------------------------------------------------- */
   var btnSubmitCrf = document.getElementById('btnSubmitCrf');
+  var btnSaveDraft = document.getElementById('btnSaveDraft');
   var validationAlert = document.getElementById('validationAlert');
   var validationList = document.getElementById('validationList');
+  var requireCompleteForm = false;
+
+  function setSubmitButtonsDisabled(disabled) {
+    var actions = crfForm ? crfForm.querySelector('.crf-sticky-actions') : null;
+    if (actions) {
+      actions.classList.toggle('crf-form-ready', requireCompleteForm && !disabled);
+    }
+
+    [btnSaveDraft, btnSubmitCrf].forEach(function (button) {
+      if (button) {
+        button.disabled = disabled;
+      }
+    });
+  }
+
+  function isCrfFormComplete() {
+    var requiredFieldIds = [
+      'full_name',
+      'phone',
+      'email',
+      'from_department',
+      'from_division',
+      'change_description',
+      'benefit',
+      'impact',
+      'reason',
+      'alternative_suggestion'
+    ];
+    var isComplete = requiredFieldIds.every(function (id) {
+      var field = document.getElementById(id);
+      return field && field.value.trim() !== '';
+    });
+
+    var email = document.getElementById('email');
+    if (isComplete && email
+      && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+      isComplete = false;
+    }
+
+    var category = document.getElementById('change_category');
+    if (isComplete && category && category.value === '') {
+      isComplete = false;
+    }
+
+    var categoryDetail = document.getElementById('change_category_detail');
+    if (isComplete && category && category.value === 'Lainnya'
+      && categoryDetail && categoryDetail.value.trim() === '') {
+      isComplete = false;
+    }
+
+    var selectedBudget = document.querySelector('input[name="budget_type"]:checked');
+    if (isComplete && !selectedBudget) {
+      isComplete = false;
+    }
+
+    if (isComplete && selectedBudget) {
+      var budgetAmount = document.getElementById('budget_amount');
+      if (!budgetAmount || budgetAmount.value.trim() === ''
+        || Number(budgetAmount.value) < 0) {
+        isComplete = false;
+      }
+    }
+
+    return isComplete;
+  }
 
   function clearInlineErrors() {
     crfForm.querySelectorAll('.crf-inline-error').forEach(function (error) {
@@ -266,11 +317,16 @@ if (fileInput && fileList) {
 
     var selectedBudget = document.querySelector('input[name="budget_type"]:checked');
     if (!selectedBudget) {
-      addInlineError(
-        document.querySelector('input[name="budget_type"]'),
-        'Biaya / anggaran wajib dipilih.',
-        errors
-      );
+      var budgetOptions = document.getElementById('budgetOptions');
+      var firstBudgetOption = document.querySelector('input[name="budget_type"]');
+      if (budgetOptions && firstBudgetOption) {
+        firstBudgetOption.setAttribute('aria-invalid', 'true');
+        var budgetError = document.createElement('div');
+        budgetError.className = 'invalid-feedback crf-inline-error';
+        budgetError.textContent = 'Biaya / anggaran wajib dipilih.';
+        budgetOptions.insertAdjacentElement('afterend', budgetError);
+        errors.push({ field: firstBudgetOption, message: budgetError.textContent });
+      }
     } else {
       var budgetAmount = document.getElementById('budget_amount');
       if (!budgetAmount || budgetAmount.value.trim() === '') {
@@ -317,8 +373,29 @@ if (fileInput && fileList) {
 
       if (!event.defaultPrevented && !isDraftAction && !validateCrfForm()) {
         event.preventDefault();
+        requireCompleteForm = true;
+        setSubmitButtonsDisabled(true);
       }
     });
+
+    crfForm.addEventListener('input', updateSubmitButtons);
+    crfForm.addEventListener('change', updateSubmitButtons);
+  }
+
+  function updateSubmitButtons() {
+    if (!requireCompleteForm || !crfForm) {
+      return;
+    }
+
+    var isComplete = isCrfFormComplete();
+    setSubmitButtonsDisabled(!isComplete);
+
+    if (isComplete) {
+      clearInlineErrors();
+      if (validationAlert) {
+        validationAlert.classList.add('d-none');
+      }
+    }
   }
 
   /* -----------------------------------------------------------------
@@ -351,8 +428,12 @@ if (fileInput && fileList) {
    * 9. Cegah double-submit pada form CRF (submit & simpan draft)
    * ----------------------------------------------------------------- */
   if (crfForm) {
-    crfForm.addEventListener('submit', function () {
-      var clickedButton = document.activeElement;
+    crfForm.addEventListener('submit', function (event) {
+      if (event.defaultPrevented) {
+        return;
+      }
+
+      var clickedButton = event.submitter || document.activeElement;
       var submitButtons = crfForm.querySelectorAll('button[type="submit"]');
 
       submitButtons.forEach(function (btn) {
@@ -360,7 +441,6 @@ if (fileInput && fileList) {
       });
 
       if (clickedButton && clickedButton.tagName === 'BUTTON') {
-        var originalHtml = clickedButton.innerHTML;
         clickedButton.innerHTML =
           '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memproses...';
       }
