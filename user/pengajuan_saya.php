@@ -180,6 +180,7 @@ $sql = "
         id,
         request_number,
         full_name,
+        from_department,
         submission_date,
         change_category,
         level,
@@ -293,7 +294,12 @@ require_once __DIR__ . '/../includes/header.php';
 
             <div class="card-body">
 
-                <?php if (empty($pengajuan)): ?>
+                <?php if (
+                    empty($pengajuan)
+                    && $search === ''
+                    && $statusFilter === ''
+                    && $categoryFilter === ''
+                ): ?>
 
                     <div class="crf-empty-state">
                         <div class="crf-empty-icon">
@@ -426,6 +432,19 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <tbody>
 
+                            <?php if (empty($pengajuan)): ?>
+                                <tr>
+                                    <td data-label="Pengajuan" colspan="7" class="crf-empty-cell">
+                                        <div class="crf-empty-state crf-empty-state-compact">
+                                            <div class="crf-empty-icon">
+                                                <i class="bi bi-search"></i>
+                                            </div>
+                                            <h3>CRF tidak ditemukan</h3>
+                                            <p>Belum ada pengajuan yang sesuai dengan pencarian atau filter.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php else: ?>
                             <?php foreach ($pengajuan as $index => $row): ?>
 
                                 <tr>
@@ -438,44 +457,25 @@ require_once __DIR__ . '/../includes/header.php';
 
                                     <!-- KETERANGAN PENGAJUAN -->
                                     <td data-label="Keterangan Pengajuan">
-                                        <div class="pengajuan-cell-meta">
-                                            <span class="pengajuan-cell-caption">Nomor Register</span>
-                                            <strong class="pengajuan-cell-register">
-                                                <?php if (!empty($row['request_number'])): ?>
-                                                    <?= h($row['request_number']) ?>
-                                                <?php else: ?>
-                                                    <span class="text-muted">Belum tersedia</span>
-                                                <?php endif; ?>
-                                            </strong>
-                                        </div>
-                                        <div class="pengajuan-date-card">
-                                            <span><i class="bi bi-calendar3"></i> Tanggal Pengajuan</span>
-                                            <strong>
-                                                <?php if (!empty($row['submission_date'])): ?>
-                                                    <?= date(
-                                                        'd F Y',
-                                                        strtotime($row['submission_date'])
-                                                    ) ?>
-                                                <?php else: ?>
-                                                    -
-                                                <?php endif; ?>
-                                            </strong>
+                                        <div class="crf-request-meta">
+                                            <strong><?= h($row['full_name'] ?? '-') ?></strong>
+                                            <span class="crf-request-caption"><?= h($row['from_department'] ?? '-') ?></span>
+                                            <span class="crf-request-caption">Nomor Register</span>
+                                            <span class="crf-request-register"><?= h($row['request_number'] ?? '-') ?></span>
+                                            <div class="crf-request-date-card">
+                                                <span class="crf-request-caption">Tanggal Pengajuan</span>
+                                                <span><?= !empty($row['submission_date'])
+                                                    ? h(date('d-m-Y', strtotime($row['submission_date'])))
+                                                    : '-' ?></span>
+                                            </div>
                                         </div>
                                     </td>
 
                                     <!-- ISI PENGAJUAN -->
                                     <td data-label="Isi Pengajuan">
-                                        <div class="pengajuan-request-content">
-                                            <span class="pengajuan-category-chip">
-                                                <i class="bi bi-tag-fill"></i>
-                                                <?= h($row['change_category'] ?: 'Kategori belum dipilih') ?>
-                                            </span>
-                                            <p
-                                                class="pengajuan-request-description"
-                                                title="<?= h($row['change_description'] ?? '-') ?>"
-                                            >
-                                                <?= h(mb_strimwidth($row['change_description'] ?? '-', 0, 180, '...')) ?>
-                                            </p>
+                                        <div class="crf-request-content">
+                                            <span class="crf-request-category-chip"><?= h($row['change_category'] ?: 'Kategori belum dipilih') ?></span>
+                                            <div class="crf-request-description"><?= h($row['change_description'] ?? '-') ?></div>
                                         </div>
                                     </td>
 
@@ -585,6 +585,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 </tr>
 
                             <?php endforeach; ?>
+                            <?php endif; ?>
 
                             </tbody>
 
