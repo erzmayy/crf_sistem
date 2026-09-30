@@ -74,7 +74,7 @@ $pageTitle = 'Form CRF';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="crf-page">
+<div class="crf-page crf-form-page">
   <div class="container">
 
     <div class="crf-page-header crf-page-banner">
@@ -284,21 +284,21 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-section-body">
           <p class="crf-hint">Silakan sampaikan apakah untuk perubahan ini sudah dianggarkan atau perlu diusulkan.<span class="text-danger">*</span></p>
 
-          <div class="form-check mb-2">
+          <div class="form-check mb-2 crf-budget-option">
             <input class="form-check-input" type="radio" name="budget_type" id="budget_rkap" value="rkap"<?= ($old['budget_type'] ?? '') === 'rkap' ? 'checked' : '' ?>>
             <label class="form-check-label" for="budget_rkap">RKAP tahun berjalan</label>
           </div>
-          <div class="form-check mb-2">
+          <div class="form-check mb-2 crf-budget-option">
             <input class="form-check-input" type="radio" name="budget_type" id="budget_boq" value="boq_pks"<?= ($old['budget_type'] ?? '') === 'boq_pks' ? 'checked' : '' ?>>
             <label class="form-check-label" for="budget_boq">Tercantum dalam BoQ PKS</label>
           </div>
-          <div class="form-check mb-3">
+          <div class="form-check mb-3 crf-budget-option">
             <input class="form-check-input" type="radio" name="budget_type" id="budget_baru" value="anggaran_baru" <?= ($old['budget_type'] ?? '') === 'anggaran_baru' ? 'checked' : '' ?>>
             <label class="form-check-label" for="budget_baru">Akan diajukan anggaran baru</label>
           </div>
 
           <label for="budget_amount" class="crf-field-label">Nominal</label>
-          <div class="input-group" style="max-width: 320px;">
+          <div class="input-group crf-budget-amount">
             <span class="input-group-text">Rp</span>
             <input type="number" min="0" step="1000" class="form-control"
                    id="budget_amount" name="budget_amount" placeholder="0" value="<?= h($old['budget_amount'] ?? '') ?>" disabled>

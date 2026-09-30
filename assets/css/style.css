@@ -21,9 +21,9 @@
 
   --crf-radius: 10px;
   --crf-font: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --crf-sidebar-width: 207px;
+  --crf-sidebar-width: 224px;
   --crf-sidebar-width-collapsed: 58px;
-  --crf-topbar-height: 58px;
+  --crf-topbar-height: 64px;
 }
 
 * { box-sizing: border-box; }
@@ -49,27 +49,41 @@ body {
 .crf-sidebar {
   width: var(--crf-sidebar-width);
   height: 100vh;
-
   position: fixed;
   top: 0;
   left: 0;
-
   background: #F3F4F6;
   color: #C7D2E0;
-
   display: flex;
   flex-direction: column;
-
   overflow-y: auto;
-
   z-index: 1050;
-  transition: transform 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 .crf-sidebar-brand {
-  height: var(--crf-topbar-height); background: #1c8fdb; display: flex; align-items: center; gap: 0.55rem; padding: 0 1.2rem;
-  color: #1F2937; text-decoration: none; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.08);
+  min-height: var(--crf-topbar-height);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0 1.1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  background: #1c8fdb;
+  color: #1F2937;
+  text-decoration: none;
+  font-weight: 700;
 }
-.crf-sidebar-mark { color: #fff; font-size: 1rem; }
+.crf-sidebar-brand:hover { color: #1F2937; }
+.crf-sidebar-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 9px;
+  color: #fff;
+  font-size: 0.95rem;
+}
 .ppu-logo {
     width: 24px;
     height: 24px;
@@ -79,21 +93,64 @@ body {
 .ppu-brand-text {
     color: #ffffff;
 }
-.crf-sidebar-section { padding: 1.15rem 1.05rem 0.45rem; font-size: 0.72rem; color: #718096; }
-.crf-sidebar-nav a {
-  display: flex; gap: 0.65rem; align-items: center; padding: 0.58rem 1.05rem;
-  color: #16181a; text-decoration: none; font-size: 0.79rem; border-radius: 8px;
+.crf-sidebar-section {
+  padding: 1.2rem 1.05rem 0.5rem;
+  color: #718096;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
-.crf-sidebar-nav a:hover{ color: #fff; background: rgba(79, 46, 156, 0.06); }
+.crf-sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 40px;
+  margin: 0.12rem 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 9px;
+  color: #16181a;
+  text-decoration: none;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+.crf-sidebar-nav a i {
+  width: 18px;
+  flex: 0 0 18px;
+  color: inherit;
+  font-size: 0.95rem;
+  text-align: center;
+}
+.crf-sidebar-nav a:hover {
+  color: #16181a;
+  background: rgba(28, 143, 219, 0.08);
+}
 .crf-sidebar-nav a.active {
   color: #240808;
   background: rgba(59, 130, 246, 0.18);
-  border-right: none;
-  box-shadow: inset 3px 0 0 0 #3B82F6;
+  box-shadow: inset 2px 0 0 0 #3B82F6;
+  font-weight: 600;
 }
-.crf-sidebar-footer { margin-top: auto; padding: 1rem 1.05rem; border-top: 1px solid rgba(255,255,255,0.08); }
-.crf-sidebar-footer a { color: #F87171; text-decoration: none; font-size: 0.78rem; }
-.crf-sidebar-footer a:hover { color: #FCA5A5; }
+.crf-sidebar-footer {
+  margin-top: auto;
+  padding: 0.85rem 0.6rem;
+  border-top: 1px solid rgba(22, 24, 26, 0.08);
+}
+.crf-sidebar-footer a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 40px;
+  padding: 0.55rem 0.7rem;
+  border-radius: 9px;
+  color: #F87171;
+  text-decoration: none;
+  font-size: 0.78rem;
+}
+.crf-sidebar-footer a:hover {
+  background: rgba(248, 113, 113, 0.08);
+  color: #FCA5A5;
+}
 
 .crf-content-shell {
   min-width: 0;
@@ -104,7 +161,7 @@ body {
   transition: margin-left 0.25s ease, width 0.25s ease;
 }
 .crf-topbar {
-  height: var(--crf-topbar-height);
+  min-height: var(--crf-topbar-height);
   position: sticky;
   top: 0;
   background: #1c8fdb;
@@ -112,9 +169,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 0 1.35rem;
+  padding: 0 1.5rem;
   z-index: 900;
   gap: 0.75rem;
+  box-shadow: 0 1px 8px rgba(16, 24, 40, 0.08);
 }
 
 /* Tombol hamburger: disembunyikan di desktop, muncul di mobile (lihat media query) */
@@ -146,7 +204,7 @@ body {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.7rem;
   text-align: right;
   font-size: 0.74rem;
   min-width: 0;
@@ -158,7 +216,18 @@ body {
   white-space: nowrap;
 }
 .crf-user small { display: block; color: #c5cfde; font-size: 0.63rem; }
-.crf-avatar { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: #53627d; font-size: 0.72rem; }
+.crf-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 11px;
+  background: #53627d;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
 .crf-content-shell > .crf-footer { margin-top: auto; }
 .crf-navbar { display: none; }
 .crf-brand, .crf-brand-mark, .crf-brand-text { display: none; }
@@ -172,7 +241,13 @@ body {
 .crf-page > .container { max-width: none; padding: 0; }
 
 .crf-page-header {
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.15rem;
+  padding: 1.1rem 1.3rem;
+  border: 1px solid #e5ebf1;
+  border-left: 3px solid #69acd2;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(20, 45, 70, 0.04);
 }
 
 .crf-page-header.crf-page-banner,
@@ -182,18 +257,14 @@ body {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.75rem 1rem;
-  margin-bottom: 0.9rem;
-  padding: 1rem 1.25rem;
-  border-radius: 12px;
-  background: var(--crf-helpdesk-blue);
-  box-shadow: 0 6px 18px rgba(31, 86, 143, 0.1);
+  margin-bottom: 1.15rem;
 }
 
 .crf-page-eyebrow {
   display: block;
   flex: 0 0 100%;
-  margin-bottom: -0.55rem;
-  color: var(--crf-helpdesk-blue-text);
+  margin-bottom: -0.45rem;
+  color: #3977a5;
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -203,8 +274,8 @@ body {
   content: "PORTAL CRF · DETAIL PENGAJUAN";
   display: block;
   flex: 0 0 100%;
-  margin-bottom: -0.55rem;
-  color: var(--crf-helpdesk-blue-text);
+  margin-bottom: -0.45rem;
+  color: #3977a5;
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -212,12 +283,12 @@ body {
 
 .crf-page-header.crf-page-banner h1,
 .crf-detail-page .crf-page-header h1 {
-  color: var(--crf-helpdesk-blue-text);
+  color: #1e3048;
 }
 
 .crf-page-header.crf-page-banner p,
 .crf-detail-page .crf-page-header p {
-  color: #365a78;
+  color: #64748b;
 }
 
 .crf-page-header h1 {
@@ -1670,9 +1741,12 @@ textarea.form-control {
 
   .crf-sidebar-brand > span:last-child,
   .crf-sidebar-section,
-  .crf-sidebar-nav span,
-  .crf-sidebar-footer a span {
+  .crf-sidebar-nav span {
     display: inline;
+  }
+
+  .crf-sidebar-footer a {
+    display: flex;
   }
 
   /* Konten selalu selebar layar; sidebar melayang di atasnya, bukan mendorong */
@@ -1966,21 +2040,27 @@ textarea.form-control {
   justify-content: space-between;
   gap: 1rem;
   margin: 0 0 0.9rem;
-  padding: 1rem 1.2rem;
+  padding: 1.1rem 1.3rem;
+  border: 1px solid #e5ebf1;
+  border-left: 3px solid #69acd2;
   border-radius: 12px;
-  background: var(--crf-helpdesk-blue);
-  color: #fff;
-  box-shadow: 0 6px 18px rgba(22, 70, 145, 0.16);
+  background: #fff;
+  color: #1e3048;
+  box-shadow: 0 3px 12px rgba(20, 45, 70, 0.04);
 }
 
 .pengajuan-page-banner .crf-page-header {
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .pengajuan-page-eyebrow {
   display: block;
   margin-bottom: 0.15rem;
-  color: var(--crf-helpdesk-blue-text);
+  color: #3977a5;
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -1988,23 +2068,30 @@ textarea.form-control {
 
 .pengajuan-page-banner .crf-page-header h1 {
   margin: 0;
-  color: var(--crf-helpdesk-blue-text);
+  color: #1e3048;
   font-size: 1.2rem;
 }
 
 .pengajuan-page-banner .crf-page-header p {
   margin-top: 0.2rem;
-  color: #365a78 !important;
+  color: #64748b !important;
   font-size: 0.74rem;
 }
 
 .pengajuan-create-button {
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid #286f9f;
   border-radius: 8px;
-  color: #12596a;
+  background: #286f9f;
+  color: #fff;
   font-size: 0.78rem;
   font-weight: 700;
+}
+
+.pengajuan-create-button:hover {
+  border-color: #1f567d;
+  background: #1f567d;
+  color: #fff;
 }
 
 .crf-stat-grid.crf-user-stat-grid {
@@ -2577,13 +2664,15 @@ textarea.form-control {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 104px;
-  margin: 0 0 0.9rem;
-  padding: 1rem 1.25rem;
+  min-height: 0;
+  margin: 0 0 1.1rem;
+  padding: 1.1rem 1.3rem;
+  border: 1px solid #e5ebf1;
+  border-left: 3px solid #69acd2;
   border-radius: 12px;
-  background: var(--crf-helpdesk-blue);
-  color: var(--crf-helpdesk-blue-text);
-  box-shadow: 0 6px 18px rgba(31, 86, 143, 0.1);
+  background: #fff;
+  color: #1e3048;
+  box-shadow: 0 3px 12px rgba(20, 45, 70, 0.04);
 }
 
 .crf-helpdesk-banner > div {
@@ -2593,22 +2682,22 @@ textarea.form-control {
 .crf-helpdesk-eyebrow {
   display: block;
   margin-bottom: 0.22rem;
-  color: var(--crf-helpdesk-blue-text);
-  font-size: 0.62rem;
+  color: #3977a5;
+  font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.12em;
 }
 
 .crf-helpdesk-banner h1 {
   margin: 0;
-  color: var(--crf-helpdesk-blue-text);
-  font-size: 1.3rem;
+  color: #1e3048;
+  font-size: 1.25rem;
   font-weight: 700;
 }
 
 .crf-helpdesk-banner p {
   margin: 0.22rem 0 0;
-  color: #365a78;
+  color: #64748b;
   font-size: 0.74rem;
 }
 
@@ -3093,5 +3182,372 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
 
   .crf-helpdesk-banner p {
     font-size: 0.68rem;
+  }
+}
+
+/* ---------- Form CRF: clean, focused layout ---------- */
+.crf-page.crf-form-page {
+  padding-top: 1.35rem;
+}
+
+.crf-page.crf-form-page > .container {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.crf-page.crf-form-page .crf-page-banner {
+  margin-bottom: 1.4rem;
+  padding: 1.1rem 1.3rem;
+  border: 1px solid #e5ebf1;
+  border-left: 3px solid #69acd2;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(20, 45, 70, 0.04);
+}
+
+.crf-page.crf-form-page .crf-page-eyebrow {
+  margin-bottom: -0.45rem;
+  color: #3977a5;
+  font-size: 0.68rem;
+}
+
+.crf-page.crf-form-page .crf-page-header h1 {
+  color: #172b45;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  letter-spacing: -0.035em;
+}
+
+.crf-page.crf-form-page .crf-page-header p {
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+#crfForm .crf-section {
+  margin-bottom: 1.1rem;
+  border-color: #e5eaf0;
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(15, 35, 60, 0.035);
+}
+
+#crfForm .crf-section-header {
+  gap: 0.8rem;
+  padding: 1rem 1.35rem;
+  border-bottom-color: #edf1f5;
+  background: #fff;
+}
+
+#crfForm .crf-section-number {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 10px;
+  background: #eaf4fc;
+  color: #2475ad;
+  font-size: 0.78rem;
+}
+
+#crfForm .crf-section-header h2 {
+  color: #1e3048;
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+}
+
+#crfForm .crf-section-body {
+  padding: 1.35rem;
+}
+
+#crfForm .crf-field-label,
+#crfForm .form-label {
+  display: inline-block;
+  margin-bottom: 0.4rem;
+  color: #34445a;
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+#crfForm .crf-hint {
+  margin-bottom: 0.65rem;
+  color: #748196;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+#crfForm .form-control,
+#crfForm .form-select,
+#crfForm .input-group-text {
+  min-height: 44px;
+  border-color: #dce3eb;
+  border-radius: 9px;
+  font-size: 0.88rem;
+}
+
+#crfForm .form-control,
+#crfForm .form-select {
+  color: #26374d;
+  background-color: #fff;
+}
+
+#crfForm .form-control::placeholder {
+  color: #a0aaba;
+}
+
+#crfForm .form-control:focus,
+#crfForm .form-select:focus {
+  border-color: #70acd4;
+  box-shadow: 0 0 0 3px rgba(54, 139, 195, 0.12);
+}
+
+#crfForm .form-control:read-only,
+#crfForm .form-select:disabled {
+  border-color: #e7ebf0;
+  background-color: #f7f9fb;
+  color: #66758a;
+}
+
+#crfForm textarea.form-control {
+  min-height: 126px;
+  padding: 0.75rem 0.85rem;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+#crfForm .crf-readonly-note {
+  margin-top: 0.35rem;
+  color: #8a96a7;
+  font-size: 0.72rem;
+}
+
+#crfForm input[type="file"].form-control {
+  height: auto;
+  min-height: 54px;
+  padding: 0.5rem;
+  border-style: dashed;
+  background: #fbfdff;
+}
+
+#crfForm input[type="file"]::file-selector-button {
+  min-height: 36px;
+  margin: 0 0.75rem 0 0;
+  padding: 0.4rem 0.75rem;
+  border: 0;
+  border-radius: 7px;
+  background: #eaf4fc;
+  color: #286d9e;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#crfForm .crf-budget-option {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 48px;
+  margin: 0 0 0.55rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #e3e9f0;
+  border-radius: 10px;
+  background: #fff;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+#crfForm .crf-budget-option:hover {
+  border-color: #b8d4e8;
+  background: #f9fcff;
+}
+
+#crfForm .crf-budget-option:has(.form-check-input:checked) {
+  border-color: #78afd4;
+  background: #f1f8fd;
+}
+
+#crfForm .crf-budget-option .form-check-input {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+#crfForm .crf-budget-option .form-check-label {
+  width: 100%;
+  color: #425168;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+#crfForm .crf-budget-amount {
+  max-width: 320px;
+}
+
+#crfForm .crf-budget-amount .input-group-text {
+  display: flex;
+  align-items: center;
+  padding: 0 0.85rem;
+  border-radius: 9px 0 0 9px;
+  background: #f7f9fb;
+  color: #67768b;
+  font-weight: 600;
+}
+
+#crfForm .crf-budget-amount .form-control {
+  border-radius: 0 9px 9px 0;
+}
+
+#crfForm .crf-sticky-actions {
+  margin: 1.35rem 0 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e4eaf0;
+  border-radius: 13px 13px 0 0;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -6px 20px rgba(20, 40, 65, 0.055);
+  backdrop-filter: blur(10px);
+}
+
+@media (max-width: 768px) {
+  .crf-page.crf-form-page {
+    padding-top: 0.9rem;
+  }
+
+  .crf-page.crf-form-page .crf-page-banner {
+    padding: 0.95rem 1rem;
+    border-radius: 13px;
+  }
+
+  #crfForm .crf-section {
+    margin-bottom: 0.85rem;
+    border-radius: 12px;
+  }
+
+  #crfForm .crf-section-body {
+    padding: 1rem;
+  }
+
+  #crfForm .crf-section-header {
+    padding: 0.85rem 1rem;
+  }
+
+  #crfForm .crf-budget-amount {
+    max-width: 100%;
+  }
+
+  #crfForm .crf-sticky-actions {
+    margin-right: 0;
+    margin-left: 0;
+    padding: 0.75rem;
+  }
+}
+
+/* Clearer application navigation while retaining the existing color palette. */
+.crf-app-shell .crf-sidebar {
+  border-right: 0;
+  box-shadow: none;
+  scrollbar-width: thin;
+}
+
+.crf-app-shell .crf-sidebar-brand {
+  min-height: var(--crf-topbar-height);
+  padding: 0 1.15rem;
+  gap: 0.75rem;
+}
+
+.crf-app-shell .crf-sidebar-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 1rem;
+}
+
+.crf-app-shell .ppu-brand-text {
+  font-size: 1rem;
+  letter-spacing: 0.025em;
+}
+
+.crf-app-shell .crf-sidebar-section {
+  padding: 1.35rem 1rem 0.55rem;
+}
+
+.crf-app-shell .crf-sidebar-nav a {
+  min-height: 43px;
+  margin: 0.18rem 0.65rem;
+  padding: 0.62rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+}
+
+.crf-app-shell .crf-sidebar-nav a i {
+  font-size: 1rem;
+}
+
+.crf-app-shell .crf-sidebar-nav a.active {
+  box-shadow: inset 3px 0 0 #3B82F6;
+}
+
+.crf-app-shell .crf-sidebar-footer {
+  padding: 0.8rem 0.65rem 1rem;
+}
+
+.crf-app-shell .crf-sidebar-footer a {
+  min-height: 43px;
+  padding: 0.62rem 0.75rem;
+  border-radius: 10px;
+}
+
+.crf-app-shell .crf-topbar {
+  min-height: var(--crf-topbar-height);
+  padding: 0 1.6rem;
+  box-shadow: 0 3px 12px rgba(31, 42, 61, 0.1);
+}
+
+.crf-app-shell .crf-user {
+  gap: 0.65rem;
+  padding: 0.3rem 0.35rem 0.3rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.crf-app-shell .crf-user strong {
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.crf-app-shell .crf-avatar {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  background: #53627d;
+}
+
+@media (max-width: 768px) {
+  .crf-app-shell .crf-sidebar {
+    width: min(280px, 86vw);
+  }
+
+  .crf-app-shell .crf-topbar {
+    min-height: 58px;
+    padding: 0 0.9rem;
+  }
+
+  .crf-app-shell .crf-sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    margin-right: auto;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .crf-app-shell .crf-user {
+    gap: 0.45rem;
+    padding: 0.22rem 0.25rem 0.22rem 0.65rem;
+  }
+
+  .crf-app-shell .crf-user strong {
+    max-width: min(38vw, 150px);
+    font-size: 0.7rem;
   }
 }
