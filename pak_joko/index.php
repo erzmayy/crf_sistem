@@ -114,12 +114,15 @@ require_once __DIR__ . '/../includes/header.php';
     }
 </style>
 
-<div class="crf-page">
+<div class="crf-page crf-helpdesk-page">
     <div class="container">
 
-        <div class="crf-page-header">
-            <h1>Kepala Departemen Operasional - Approval</h1>
-            <p>Daftar CRF dengan Level Urgensi dan SLA yang menunggu persetujuan sebelum eksekusi Otomasi.</p>
+        <div class="crf-helpdesk-banner">
+            <div>
+                <span class="crf-helpdesk-eyebrow">PORTAL CRF · PERSETUJUAN PERUBAHAN</span>
+                <h1>Dashboard Kepala Departemen Operasional</h1>
+                <p>Daftar CRF dengan Level Urgensi dan SLA yang menunggu persetujuan sebelum eksekusi Otomasi.</p>
+            </div>
         </div>
 
         <?php if ($flash): ?>
@@ -131,9 +134,9 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- =====================================================
              SUMMARY CARD
              ===================================================== -->
-        <div class="crf-stat-grid mb-4">
+        <div class="crf-stat-grid crf-helpdesk-summary mb-4">
             <div class="crf-stat-card">
-                <span>Menunggu Approval</span>
+                <span><i class="bi bi-clipboard-check-fill"></i> Menunggu Approval</span>
                 <strong><?= $waitingApproval ?></strong>
             </div>
         </div>
@@ -167,13 +170,13 @@ require_once __DIR__ . '/../includes/header.php';
             unset($listContextName, $listContextValue, $listResetUrl);
             ?>
 
-            <div class="table-responsive crf-table-responsive-cards">
-                <table class="table crf-table align-middle">
+            <div class="table-responsive crf-table-responsive-cards crf-helpdesk-table-wrap">
+                <table class="table crf-table crf-helpdesk-table crf-helpdesk-table--department align-middle">
                     <thead>
                         <tr>
                             <th>No</th>
-                            <th>Nomor Register</th>
-                            <th>Pengaju</th>
+                            <th>Keterangan Pengajuan</th>
+                            <th>Isi Pengajuan</th>
                             <th>Level Urgensi</th>
                             <th>SLA</th>
                             <th>Tahap Saat Ini</th>
@@ -187,7 +190,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <tbody>
                     <?php if (!$requests): ?>
                         <tr>
-                            <td colspan="<?= $view === 'history' ? 8 : 7 ?>" class="text-center text-muted py-4">
+                            <td data-label="Pengajuan" colspan="<?= $view === 'history' ? 8 : 7 ?>" class="text-center text-muted py-4">
                                 <?= $view === 'history'
                                     ? 'Belum ada CRF yang pernah diproses oleh Kepala Departemen Operasional.'
                                     : ($search !== ''
@@ -200,12 +203,23 @@ require_once __DIR__ . '/../includes/header.php';
                             <tr>
                                 <td data-label="No"><?= $offset + $i + 1 ?></td>
 
-                                <td data-label="Nomor Register">
-                                    <strong><?= h($row['request_number']) ?></strong>
+                                <td data-label="Keterangan Pengajuan">
+                                    <div class="crf-request-meta">
+                                        <strong><?= h($row['full_name'] ?? '-') ?></strong>
+                                        <span class="crf-request-caption">Nomor Register</span>
+                                        <span class="crf-request-register"><?= h($row['request_number'] ?? '-') ?></span>
+                                        <div class="crf-request-date-card">
+                                            <span class="crf-request-caption">Tanggal Pengajuan</span>
+                                            <span><?= !empty($row['submission_date']) ? h(date('d-m-Y', strtotime($row['submission_date']))) : '-' ?></span>
+                                        </div>
+                                    </div>
                                 </td>
 
-                                <td data-label="Pengaju">
-                                    <?= h($row['full_name']) ?>
+                                <td data-label="Isi Pengajuan">
+                                    <div class="crf-request-content">
+                                        <span class="crf-request-category-chip"><?= h($row['change_category'] ?? 'Lainnya') ?></span>
+                                        <div class="crf-request-description"><?= h($row['change_description'] ?? '-') ?></div>
+                                    </div>
                                 </td>
 
                                 <td data-label="Level Urgensi">

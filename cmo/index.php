@@ -124,24 +124,27 @@ unset($_SESSION['flash']);
 $pageTitle = 'CMO';
 require_once __DIR__ . '/../includes/header.php';
 ?>
-<div class="crf-page">
+<div class="crf-page crf-helpdesk-page">
   <div class="container">
-    <div class="crf-page-header">
-      <h1>CMO</h1>
-      <p>Kelola CRF pada tahap filter dan finalisasi.</p>
+    <div class="crf-helpdesk-banner">
+      <div>
+        <span class="crf-helpdesk-eyebrow">PORTAL CRF · REVIEW PERUBAHAN</span>
+        <h1>Dashboard CMO</h1>
+        <p>Kelola CRF pada tahap filter dan finalisasi.</p>
+      </div>
     </div>
 
     <?php if ($flash): ?>
       <div class="alert alert-<?= h($flash['type']) ?> crf-alert"><?= h($flash['message']) ?></div>
     <?php endif; ?>
 
-    <div class="crf-stat-grid mb-4">
+    <div class="crf-stat-grid crf-helpdesk-summary mb-4">
       <a class="crf-stat-card text-decoration-none" href="?stage=filter">
-        <span>Menunggu Filter</span>
+        <span><i class="bi bi-funnel-fill"></i> Menunggu Filter</span>
         <strong><?= $counts['CMO_FILTER'] ?></strong>
       </a>
       <a class="crf-stat-card text-decoration-none" href="?stage=final">
-        <span>Menunggu Finalisasi</span>
+        <span><i class="bi bi-check2-square"></i> Menunggu Finalisasi</span>
         <strong><?= $counts['CMO_FINAL'] ?></strong>
       </a>
     </div>
@@ -165,21 +168,35 @@ require_once __DIR__ . '/../includes/header.php';
       unset($listContextName, $listContextValue, $listResetUrl);
       ?>
 
-      <div class="table-responsive crf-table-responsive-cards">
-        <table class="table crf-table align-middle">
+      <div class="table-responsive crf-table-responsive-cards crf-helpdesk-table-wrap">
+        <table class="table crf-table crf-helpdesk-table crf-helpdesk-table--cmo align-middle">
           <thead><tr>
-            <th>No</th><th>Nomor Register</th><th>Pengaju</th><th>Tanggal</th><th>Level Urgensi</th><th>Status</th><th>Tahap</th><th>Aksi</th>
+            <th>No</th><th>Keterangan Pengajuan</th><th>Isi Pengajuan</th><th>Level Urgensi</th><th>Status</th><th>Tahap</th><th>Aksi</th>
           </tr></thead>
           <tbody>
           <?php if (!$requests): ?>
-            <tr><td colspan="8" class="text-center text-muted py-4">Belum ada CRF yang cocok dengan pencarian/filter ini.</td></tr>
+            <tr><td data-label="Pengajuan" colspan="7" class="text-center text-muted py-4">Belum ada CRF yang cocok dengan pencarian/filter ini.</td></tr>
           <?php else: ?>
             <?php foreach ($requests as $i => $row): ?>
               <tr>
                 <td data-label="No"><?= $offset + $i + 1 ?></td>
-                <td data-label="Nomor Register"><strong><?= h($row['request_number']) ?></strong></td>
-                <td data-label="Pengaju"><?= h($row['full_name']) ?></td>
-                <td data-label="Tanggal"><?= !empty($row['submission_date']) ? h(date('d-m-Y', strtotime($row['submission_date']))) : '-' ?></td>
+                <td data-label="Keterangan Pengajuan">
+                  <div class="crf-request-meta">
+                    <strong><?= h($row['full_name'] ?? '-') ?></strong>
+                    <span class="crf-request-caption">Nomor Register</span>
+                    <span class="crf-request-register"><?= h($row['request_number'] ?? '-') ?></span>
+                    <div class="crf-request-date-card">
+                      <span class="crf-request-caption">Tanggal Pengajuan</span>
+                      <span><?= !empty($row['submission_date']) ? h(date('d-m-Y', strtotime($row['submission_date']))) : '-' ?></span>
+                    </div>
+                  </div>
+                </td>
+                <td data-label="Isi Pengajuan">
+                  <div class="crf-request-content">
+                    <span class="crf-request-category-chip"><?= h($row['change_category'] ?? 'Lainnya') ?></span>
+                    <div class="crf-request-description"><?= h($row['change_description'] ?? '-') ?></div>
+                  </div>
+                </td>
                 <td data-label="Level Urgensi"><span class="crf-badge <?= levelBadgeClass($row['level']) ?>"><?= h(($row['level'] ?? null) === 'Normal' ? 'Sedang' : ($row['level'] ?? 'Belum ditentukan')) ?></span></td>
                 <td data-label="Status"><span class="crf-badge <?= statusBadgeClass($row['status']) ?>"><?= h(statusLabel($row['status'])) ?></span></td>
                 <td data-label="Tahap"><span class="crf-badge <?= workflowStageBadgeClass($row['workflow_stage']) ?>"><?= h(workflowStageLabel($row['workflow_stage'])) ?></span></td>

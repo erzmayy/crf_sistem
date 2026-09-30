@@ -484,20 +484,16 @@ require_once __DIR__ . '/../includes/header.php';
 </style>
 
 
-<div class="crf-page">
+<div class="crf-page crf-helpdesk-page">
 
     <div class="container">
 
-        <div class="crf-page-header">
-
-            <h1>
-                Dashboard Change Request Form
-            </h1>
-
-            <p>
-                Ringkasan seluruh pengajuan Change Request.
-            </p>
-
+        <div class="crf-helpdesk-banner">
+            <div>
+                <span class="crf-helpdesk-eyebrow">PORTAL CRF · ADMINISTRASI</span>
+                <h1>Dashboard Change Request Form</h1>
+                <p>Ringkasan seluruh pengajuan Change Request.</p>
+            </div>
         </div>
 
 
@@ -505,45 +501,45 @@ require_once __DIR__ . '/../includes/header.php';
              SUMMARY
              ===================================================== -->
 
-        <div class="crf-stat-grid dashboard-summary-grid">
+        <div class="crf-stat-grid crf-helpdesk-summary dashboard-summary-grid">
 
             <div class="crf-stat-card">
-                <span>Total Pengajuan</span>
+                <span><i class="bi bi-inboxes-fill"></i> Total Pengajuan</span>
                 <strong>
                     <?= (int) ($summary['total'] ?? 0) ?>
                 </strong>
             </div>
 
             <div class="crf-stat-card">
-                <span>Belum Ditindak Lanjuti</span>
+                <span><i class="bi bi-hourglass-split"></i> Belum Ditindak Lanjuti</span>
                 <strong>
                     <?= (int) ($summary['pending'] ?? 0) ?>
                 </strong>
             </div>
 
             <div class="crf-stat-card">
-                <span>Perlu Revisi</span>
+                <span><i class="bi bi-pencil-square"></i> Perlu Revisi</span>
                 <strong>
                     <?= (int) ($summary['revision'] ?? 0) ?>
                 </strong>
             </div>
 
             <div class="crf-stat-card">
-                <span>Dalam Proses</span>
+                <span><i class="bi bi-arrow-repeat"></i> Dalam Proses</span>
                 <strong>
                     <?= (int) ($summary['processing'] ?? 0) ?>
                 </strong>
             </div>
 
             <div class="crf-stat-card">
-                <span>Selesai</span>
+                <span><i class="bi bi-check-circle-fill"></i> Selesai</span>
                 <strong>
                     <?= (int) ($summary['solved'] ?? 0) ?>
                 </strong>
             </div>
 
             <div class="crf-stat-card">
-                <span>Dibatalkan</span>
+                <span><i class="bi bi-slash-circle-fill"></i> Dibatalkan</span>
                 <strong>
                     <?= (int) ($summary['cancelled'] ?? 0) ?>
                 </strong>
@@ -592,21 +588,17 @@ require_once __DIR__ . '/../includes/header.php';
 
 
             <!-- TABLE -->
-            <div class="table-responsive crf-table-responsive-cards dashboard-table-wrap">
+            <div class="table-responsive crf-table-responsive-cards crf-helpdesk-table-wrap">
 
-                <table class="table crf-table dashboard-table align-middle">
+                <table class="table crf-table crf-helpdesk-table crf-helpdesk-table--admin align-middle">
 
                     <thead>
 
                         <tr>
 
                             <th>No</th>
-                            <th>Nomor Register</th>
-                            <th>Judul Change Request</th>
-                            <th>Nama Pemohon</th>
-                            <th>Departemen</th>
-                            <th>Tgl Pengajuan</th>
-                            <th>Kategori</th>
+                            <th>Keterangan Pengajuan</th>
+                            <th>Isi Pengajuan</th>
                             <th>Level Urgensi</th>
                             <th>Status</th>
                             <th>Tahap</th>
@@ -623,7 +615,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <tr>
 
-                                <td colspan="11" class="crf-empty-cell">
+                                <td data-label="Pengajuan" colspan="7" class="crf-empty-cell">
                                     <div class="crf-empty-state crf-empty-state-compact">
                                         <div class="crf-empty-icon">
                                             <i class="bi bi-search"></i>
@@ -641,74 +633,35 @@ require_once __DIR__ . '/../includes/header.php';
 
                                 <tr>
 
-                                    <!-- NO -->
                                     <td data-label="No">
                                         <?= $offset + $i + 1 ?>
                                     </td>
 
-
-                                    <!-- NOMOR REGISTER -->
-                                    <td data-label="Nomor Register" class="register-cell">
-                                        <?= h(
-                                            $row['request_number']
-                                            ?? '-'
-                                        ) ?>
+                                    <td data-label="Keterangan Pengajuan">
+                                        <div class="crf-request-meta">
+                                            <strong><?= h($row['full_name'] ?? '-') ?></strong>
+                                            <span class="crf-request-caption"><?= h($row['from_department'] ?? '-') ?></span>
+                                            <span class="crf-request-caption">Nomor Register</span>
+                                            <span class="crf-request-register"><?= h($row['request_number'] ?? '-') ?></span>
+                                            <div class="crf-request-date-card">
+                                                <span class="crf-request-caption">Tanggal Pengajuan</span>
+                                                <span><?= !empty($row['submission_date'])
+                                                    ? h(date('d-m-Y', strtotime($row['submission_date'])))
+                                                    : '-' ?></span>
+                                            </div>
+                                        </div>
                                     </td>
 
-
-                                    <!-- JUDUL CHANGE REQUEST -->
-                                    <td data-label="Judul Change Request" class="title-cell" title="<?= h($row['change_description'] ?? '-') ?>">
-                                        <?= h($row['change_description'] ?? '-') ?>
-                                    </td>
-
-
-                                    <!-- PENGAJU -->
-                                    <td
-                                        data-label="Pengaju"
-                                        class="name-cell"
-                                        title="<?= h($row['full_name'] ?? '-') ?>"
-                                    >
-                                        <?= h(
-                                            $row['full_name']
-                                            ?? '-'
-                                        ) ?>
-                                    </td>
-
-
-                                    <!-- DEPARTEMEN -->
-                                    <td data-label="Departemen"
-                                        class="department-cell"
-                                        title="<?= h($row['from_department'] ?? '-') ?>"
-                                    >
-                                        <?= h(
-                                            $row['from_department']
-                                            ?? '-'
-                                        ) ?>
-                                    </td>
-
-
-                                    <!-- TANGGAL PENGAJUAN -->
-                                    <td data-label="Tgl Pengajuan" class="date-cell">
-                                        <?= !empty($row['submission_date'])
-                                            ? h(date('Y-m-d', strtotime($row['submission_date'])))
-                                            : '-' ?>
-                                    </td>
-
-
-                                    <!-- KATEGORI -->
-                                    <td data-label="Kategori"
-                                        class="category-cell"
-                                        title="<?= h($row['change_category'] ?? '-') ?>"
-                                    >
-                                        <?= h(
-                                            $row['change_category']
-                                            ?? '-'
-                                        ) ?>
+                                    <td data-label="Isi Pengajuan">
+                                        <div class="crf-request-content">
+                                            <span class="crf-request-category-chip"><?= h($row['change_category'] ?? 'Lainnya') ?></span>
+                                            <div class="crf-request-description"><?= h($row['change_description'] ?? '-') ?></div>
+                                        </div>
                                     </td>
 
 
                                     <!-- LEVEL -->
-                                    <td data-label="Level Urgensi" class="urgency-cell">
+                                    <td data-label="Level Urgensi">
 
                                         <span
                                             class="crf-badge <?= levelBadgeClass($row['level']) ?>"
@@ -724,7 +677,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                     <!-- STATUS -->
-                                    <td data-label="Status" class="status-cell">
+                                    <td data-label="Status">
 
                                         <span
                                             class="crf-badge <?= statusBadgeClass($row['status']) ?>"
@@ -740,10 +693,10 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                     <!-- TAHAP -->
-                                    <td data-label="Tahap" class="stage-cell">
+                                    <td data-label="Tahap">
 
                                         <span
-                                            class="dashboard-stage-badge"
+                                            class="crf-badge <?= workflowStageBadgeClass($row['workflow_stage'] ?? '') ?>"
                                             title="<?= h(
                                                 workflowStageLabel(
                                                     $row['workflow_stage']
@@ -763,7 +716,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                     <!-- AKSI -->
-                                    <td data-label="Aksi" class="action-cell">
+                                    <td data-label="Aksi">
 
                                         <div class="dashboard-actions">
 
