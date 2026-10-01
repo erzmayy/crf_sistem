@@ -218,6 +218,22 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="crf-section-body">
 
                 <div class="crf-info-rows">
+                    <div class="crf-info-row">
+                        <span class="crf-info-label">Tanggal Implementasi</span>
+                        <div class="crf-info-value">
+                            <?= !empty($crf['implementation_date'])
+                                ? h(date('d-m-Y', strtotime($crf['implementation_date'])))
+                                : '<span class="text-muted">Belum diisi oleh Otomasi.</span>' ?>
+                        </div>
+                    </div>
+                    <div class="crf-info-row">
+                        <span class="crf-info-label">Tanggal PIR</span>
+                        <div class="crf-info-value">
+                            <?= !empty($crf['pir_date'])
+                                ? h(date('d-m-Y', strtotime($crf['pir_date'])))
+                                : '<span class="text-muted">Belum diisi oleh Otomasi.</span>' ?>
+                        </div>
+                    </div>
                     <div class="crf-info-row crf-request-row-long">
                         <span class="crf-info-label">Implementasi / Hasil Perubahan</span>
                         <div class="crf-info-value">

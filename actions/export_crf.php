@@ -566,6 +566,34 @@ $html = '
 
         <tr>
             <td class="form-label">
+                Tanggal PIR
+            </td>
+
+            <td class="form-content">
+                ' . (
+                    !empty($crf['pir_date'])
+                        ? formatTanggalIndonesia(new DateTime($crf['pir_date']))
+                        : '-'
+                ) . '
+            </td>
+        </tr>
+
+        <tr>
+            <td class="form-label">
+                Tanggal Implementasi
+            </td>
+
+            <td class="form-content">
+                ' . (
+                    !empty($crf['implementation_date'])
+                        ? formatTanggalIndonesia(new DateTime($crf['implementation_date']))
+                        : '-'
+                ) . '
+            </td>
+        </tr>
+
+        <tr>
+            <td class="form-label">
                 Implementasi
             </td>
 

@@ -401,9 +401,32 @@ require_once __DIR__ . '/../includes/header.php';
                             <i class="bi bi-info-circle"></i>
 
                             Sebelum menyelesaikan eksekusi, Otomasi wajib mengisi
-                            <strong>Implementasi / Hasil Perubahan</strong> dan
+                            <strong>Tanggal Implementasi</strong>,
+                            <strong>Implementasi / Hasil Perubahan</strong>, dan
+                            <strong>Tanggal PIR</strong> serta
                             <strong>Post Implementation Review</strong>.
                             Setelah itu CRF diteruskan ke CMO untuk penutupan.
+
+                        </div>
+
+                        <div class="mb-4">
+
+                            <label
+                                for="implementation_date"
+                                class="form-label fw-semibold"
+                            >
+                                Tanggal Implementasi
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input
+                                type="date"
+                                id="implementation_date"
+                                name="implementation_date"
+                                class="form-control"
+                                value="<?= h($crf['implementation_date'] ?? '') ?>"
+                                required
+                            >
 
                         </div>
 
@@ -425,6 +448,27 @@ require_once __DIR__ . '/../includes/header.php';
                                 required
                                 placeholder="Tuliskan hasil atau perubahan yang sudah diterapkan..."
                             ><?= h($crf['implementation'] ?? '') ?></textarea>
+
+                        </div>
+
+                        <div class="mb-4">
+
+                            <label
+                                for="pir_date"
+                                class="form-label fw-semibold"
+                            >
+                                Tanggal PIR
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input
+                                type="date"
+                                id="pir_date"
+                                name="pir_date"
+                                class="form-control"
+                                value="<?= h($crf['pir_date'] ?? '') ?>"
+                                required
+                            >
 
                         </div>
 

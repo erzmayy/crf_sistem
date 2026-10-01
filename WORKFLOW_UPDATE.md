@@ -39,6 +39,8 @@ Migrasi ini aman dijalankan ulang. Untuk instalasi workflow lama yang belum memi
 
 Untuk database yang nilai enum `workflow_stage`-nya masih menggunakan `PAK_JOKO`, jalankan `kadep_workflow_stage_migration.sql` agar nilai tersebut diselaraskan dengan `kadep_operasional`.
 
+Untuk database yang sudah berjalan, jalankan `implementation_date_migration.sql` sebelum menggunakan form implementasi Otomasi agar kolom Tanggal Implementasi dan Tanggal PIR tersedia.
+
 Migration menambahkan:
 - `workflow_stage`
 - data SLA
