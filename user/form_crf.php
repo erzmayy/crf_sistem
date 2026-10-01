@@ -114,7 +114,7 @@ require_once __DIR__ . '/../includes/header.php';
       <span class="crf-page-eyebrow">PORTAL CRF · PENGAJUAN</span>
       <div>
         <h1>Change Request Form (CRF)</h1>
-        <p>Silakan lengkapi form di bawah untuk mengajukan permohonan perubahan.</p>
+        <p>Silakan lengkapi form di bawah sesuai tipe pengajuan Anda.</p>
       </div>
     </div>
 
@@ -151,6 +151,19 @@ require_once __DIR__ . '/../includes/header.php';
           <h2>Informasi Pengajuan</h2>
         </div>
         <div class="crf-section-body">
+          <div class="mb-3">
+            <label for="request_type" class="crf-field-label">Tipe Pengajuan<span class="text-danger">*</span></label>
+            <select class="form-select" id="request_type" name="request_type" required>
+              <option value="">Pilih tipe pengajuan</option>
+              <?php foreach (crfRequestTypeOptions() as $requestType): ?>
+                <option
+                  value="<?= h($requestType) ?>"
+                  <?= ($old['request_type'] ?? '') === $requestType ? 'selected' : '' ?>
+                ><?= h($requestType) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
           <div class="row g-3">
             <div class="col-md-4">
               <label for="full_name" class="crf-field-label">Nama Lengkap<span class="text-danger">*</span>
@@ -283,9 +296,25 @@ require_once __DIR__ . '/../includes/header.php';
           </div>
 
           <div class="mb-3">
-            <label for="impact" class="crf-field-label">Dampak Jika Tidak Dilakukan Perubahan<span class="text-danger">*</span></label>
-            <p class="crf-hint">Silakan tulis dampak jika tidak dilakukan perubahan.</p>
-            <textarea class="form-control" id="impact" name="impact" required><?= h($old['impact'] ?? '') ?></textarea>
+            <label for="impact_category" class="crf-field-label">Dampak Jika Tidak Dilakukan Perubahan<span class="text-danger">*</span></label>
+            <select class="form-select" id="impact_category" name="impact_category" required>
+              <option value="">Pilih dampak</option>
+              <?php foreach (crfImpactOptions() as $impactKey => $impactLabel): ?>
+                <option
+                  value="<?= h($impactKey) ?>"
+                  <?= ($old['impact_category'] ?? '') === $impactKey ? 'selected' : '' ?>
+                ><?= h($impactLabel) ?></option>
+              <?php endforeach; ?>
+            </select>
+            <label for="impact" class="form-label mt-3">Penjelasan Dampak yang Dipilih<span class="text-danger">*</span></label>
+            <textarea
+              class="form-control"
+              id="impact"
+              name="impact"
+              rows="4"
+              placeholder="Jelaskan kondisi dan dampak yang dialami sesuai pilihan di atas..."
+              required
+            ><?= h($old['impact'] ?? '') ?></textarea>
           </div>
 
           <div class="mb-0">

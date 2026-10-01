@@ -150,7 +150,7 @@ if (!$attachments) {
  * --------------------------------------------------------------- */
 $levelDisplay = !empty($crf['level'])
     ? $crf['level']
-    : 'Belum ditentukan';
+    : (crfUrgencyForImpact($crf['impact_category'] ?? null) ?? 'Belum ditentukan');
 
 $workflowStageDisplay = !empty($crf['workflow_stage'])
     ? workflowStageLabel($crf['workflow_stage'])
@@ -473,6 +473,15 @@ $html = '
 
         <tr>
             <td class="form-label">
+                Tipe Pengajuan
+            </td>
+            <td class="form-content">
+                ' . pdfValue($crf['request_type'] ?? '') . '
+            </td>
+        </tr>
+
+        <tr>
+            <td class="form-label">
                 Rincian Permohonan Perubahan
             </td>
             <td class="form-content large-content">
@@ -486,6 +495,15 @@ $html = '
             </td>
             <td class="form-content large-content">
                 ' . pdfValue($crf['benefit']) . '
+            </td>
+        </tr>
+
+        <tr>
+            <td class="form-label">
+                Kategori Dampak
+            </td>
+            <td class="form-content">
+                ' . pdfValue(crfImpactLabel($crf['impact_category'] ?? null)) . '
             </td>
         </tr>
 
@@ -561,6 +579,34 @@ $html = '
 
             <td class="form-content large-content">
                 ' . pdfValue($crf['post_implementation_review']) . '
+            </td>
+        </tr>
+
+        <tr>
+            <td class="form-label">
+                Tanggal PIR
+            </td>
+
+            <td class="form-content">
+                ' . (
+                    !empty($crf['pir_date'])
+                        ? formatTanggalIndonesia(new DateTime($crf['pir_date']))
+                        : '-'
+                ) . '
+            </td>
+        </tr>
+
+        <tr>
+            <td class="form-label">
+                Tanggal Implementasi
+            </td>
+
+            <td class="form-content">
+                ' . (
+                    !empty($crf['implementation_date'])
+                        ? formatTanggalIndonesia(new DateTime($crf['implementation_date']))
+                        : '-'
+                ) . '
             </td>
         </tr>
 

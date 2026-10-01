@@ -79,6 +79,8 @@ CREATE TABLE change_requests (
     change_description          TEXT            NULL,
     benefit                     TEXT            NULL,
     impact                      TEXT            NULL,
+    request_type                VARCHAR(50)     NULL,
+    impact_category             VARCHAR(50)     NULL,
     reason                      TEXT            NULL,
 
     budget_type                 ENUM('rkap','boq_pks','anggaran_baru') NULL,
@@ -91,6 +93,8 @@ CREATE TABLE change_requests (
 
     post_implementation_review  TEXT            NULL,
     implementation              TEXT            NULL,
+    implementation_date         DATE            NULL,
+    pir_date                    DATE            NULL,
 
     level                       ENUM('Tinggi','Normal','Rendah') NULL DEFAULT NULL,
     status                      ENUM(
@@ -268,5 +272,3 @@ INSERT INTO crf_user_roles (user_id, role) VALUES
 (3, 'cmo'),
 (4, 'otomasi'),
 (5, 'kadep_operasional');
-
-

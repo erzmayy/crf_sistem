@@ -11,6 +11,9 @@
  */
 
 $sectionTitle = $sectionTitle ?? 'Detail Pengajuan';
+$urgencyLevel = !empty($crf['level'])
+    ? $crf['level']
+    : crfUrgencyForImpact($crf['impact_category'] ?? null);
 ?>
 <div class="crf-section crf-detail-card mb-4">
     <div class="crf-section-header">
@@ -20,6 +23,10 @@ $sectionTitle = $sectionTitle ?? 'Detail Pengajuan';
 
     <div class="crf-section-body">
         <div class="crf-info-rows">
+            <div class="crf-info-row">
+                <span class="crf-info-label">Tipe Pengajuan</span>
+                <div class="crf-info-value"><?= h($crf['request_type'] ?? '-') ?></div>
+            </div>
             <div class="crf-info-row crf-request-row-long">
                 <span class="crf-info-label">Rincian Permohonan Perubahan</span>
                 <div class="crf-info-value"><?= nl2br(h($crf['change_description'] ?? '-')) ?></div>
@@ -29,7 +36,25 @@ $sectionTitle = $sectionTitle ?? 'Detail Pengajuan';
                 <div class="crf-info-value"><?= nl2br(h($crf['benefit'] ?? '-')) ?></div>
             </div>
             <div class="crf-info-row crf-request-row-long">
-                <span class="crf-info-label">Dampak Jika Tidak Dilakukan Perubahan</span>
+                <span class="crf-info-label">Dampak Terpilih</span>
+                <div class="crf-info-value">
+                    <?= h(crfImpactLabel($crf['impact_category'] ?? null) ?: '-') ?>
+                </div>
+            </div>
+            <div class="crf-info-row crf-urgency-detail-row">
+                <span class="crf-info-label">Level Urgensi</span>
+                <div class="crf-info-value crf-urgency-detail-value">
+                    <?php if ($urgencyLevel !== null): ?>
+                        <span class="crf-badge crf-urgency-detail-badge <?= h(levelBadgeClass($urgencyLevel)) ?>">
+                            <?= h($urgencyLevel) ?>
+                        </span>
+                    <?php else: ?>
+                        <span class="text-muted">Belum ditentukan.</span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="crf-info-row crf-request-row-long">
+                <span class="crf-info-label">Penjelasan Dampak yang Dipilih</span>
                 <div class="crf-info-value"><?= nl2br(h($crf['impact'] ?? '-')) ?></div>
             </div>
             <div class="crf-info-row crf-request-row-long">
@@ -95,3 +120,4 @@ $sectionTitle = $sectionTitle ?? 'Detail Pengajuan';
 </div>
 <?php
 unset($sectionTitle);
+unset($urgencyLevel);

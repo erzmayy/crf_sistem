@@ -39,6 +39,8 @@ Migrasi ini aman dijalankan ulang. Untuk instalasi workflow lama yang belum memi
 
 Untuk database yang nilai enum `workflow_stage`-nya masih menggunakan `PAK_JOKO`, jalankan `kadep_workflow_stage_migration.sql` agar nilai tersebut diselaraskan dengan `kadep_operasional`.
 
+Untuk database yang sudah berjalan, jalankan `implementation_date_migration.sql` sebelum menggunakan form terbaru. Migrasi ini menyediakan kolom Tanggal Implementasi, Tanggal PIR, Tipe Pengajuan, dan kategori Dampak.
+
 Migration menambahkan:
 - `workflow_stage`
 - data SLA
@@ -48,7 +50,7 @@ Migration menambahkan:
 - mapping role dan akun demo workflow bila belum ada
 
 ## Catatan
-- Otomasi menetapkan Level Urgensi dan SLA, lalu mengirim CRF ke Kepala Departemen Operasional untuk approval sebelum eksekusi.
+- Level Urgensi ditentukan otomatis dari Dampak saat Pemohon mengajukan CRF. Otomasi menetapkan SLA tanpa mengubah Level Urgensi, lalu mengirim CRF ke Kepala Departemen Operasional untuk approval sebelum eksekusi.
 - Setelah approval, Otomasi mengisi Implementasi / Hasil Perubahan dan Post Implementation Review saat menyelesaikan eksekusi.
 - Pemohon hanya melihat Implementasi dan PIR; kedua isian tersebut tidak dapat diedit oleh Pemohon.
 - Setelah eksekusi selesai, CRF diteruskan ke CMO untuk finalisasi dan penandaan selesai.

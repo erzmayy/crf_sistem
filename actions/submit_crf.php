@@ -42,6 +42,8 @@ $email    = trim($_POST['email'] ?? '');
 $changeDescription = trim($_POST['change_description'] ?? '');
 $benefit            = trim($_POST['benefit'] ?? '');
 $impact             = trim($_POST['impact'] ?? '');
+$requestType        = trim($_POST['request_type'] ?? '');
+$impactCategory     = trim($_POST['impact_category'] ?? '');
 $reason             = trim($_POST['reason'] ?? '');
 
 $fromDepartment = trim($_POST['from_department'] ?? '');
@@ -73,6 +75,9 @@ $allowedBudgetTypes = [
 ];
 
 $errors = [];
+$allowedRequestTypes = crfRequestTypeOptions();
+$allowedImpactCategories = array_keys(crfImpactOptions());
+$level = crfUrgencyForImpact($impactCategory);
 
 /* Informasi pengajuan */
 if ($fullName === '') {
@@ -87,6 +92,14 @@ if ($email === '') {
     $errors[] = 'Email wajib diisi.';
 } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $errors[] = 'Format email tidak valid.';
+}
+
+if (!in_array($requestType, $allowedRequestTypes, true)) {
+    $errors[] = 'Tipe Pengajuan wajib dipilih.';
+}
+
+if (!in_array($impactCategory, $allowedImpactCategories, true)) {
+    $errors[] = 'Dampak wajib dipilih.';
 }
 
 /* Change Request Description */
@@ -268,6 +281,9 @@ try {
                 change_description = :change_description,
                 benefit = :benefit,
                 impact = :impact,
+                request_type = :request_type,
+                impact_category = :impact_category,
+                level = :level,
                 reason = :reason,
                 budget_type = :budget_type,
                 budget_amount = :budget_amount,
@@ -294,6 +310,9 @@ try {
             'change_description'     => $changeDescription,
             'benefit'                => $benefit,
             'impact'                 => $impact,
+            'request_type'           => $requestType,
+            'impact_category'        => $impactCategory,
+            'level'                  => $level,
             'reason'                 => $reason,
             'budget_type'            => $budgetTypeRaw,
             'budget_amount'          => $budgetAmount,
@@ -330,6 +349,8 @@ try {
                 change_description,
                 benefit,
                 impact,
+                request_type,
+                impact_category,
                 reason,
                 budget_type,
                 budget_amount,
@@ -353,13 +374,15 @@ try {
                 :change_description,
                 :benefit,
                 :impact,
+                :request_type,
+                :impact_category,
                 :reason,
                 :budget_type,
                 :budget_amount,
                 :change_category,
                 :change_category_detail,
                 :alternative_suggestion,
-                NULL,
+                :level,
                 'CMO_FILTER',
                 'Belum Ditindak Lanjuti'
             )
@@ -379,6 +402,9 @@ try {
             'change_description'     => $changeDescription,
             'benefit'                => $benefit,
             'impact'                 => $impact,
+            'request_type'           => $requestType,
+            'impact_category'        => $impactCategory,
+            'level'                  => $level,
             'reason'                 => $reason,
             'budget_type'            => $budgetTypeRaw,
             'budget_amount'          => $budgetAmount,
