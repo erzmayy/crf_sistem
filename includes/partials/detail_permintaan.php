@@ -11,9 +11,14 @@
  */
 
 $sectionTitle = $sectionTitle ?? 'Detail Pengajuan';
-$urgencyLevel = !empty($crf['level'])
-    ? $crf['level']
-    : crfUrgencyForImpact($crf['impact_category'] ?? null);
+$systemUrgencyLevel = crfUrgencyForImpact($crf['impact_category'] ?? null)
+    ?: ($crf['level'] ?? null);
+$urgencyLevel = !empty($crf['final_urgency_level'])
+    ? $crf['final_urgency_level']
+    : $systemUrgencyLevel;
+$urgencyLabel = !empty($crf['final_urgency_level'])
+    ? 'Level Urgensi Final'
+    : 'Level Urgensi';
 ?>
 <div class="crf-section crf-detail-card mb-4">
     <div class="crf-section-header">
@@ -42,7 +47,7 @@ $urgencyLevel = !empty($crf['level'])
                 </div>
             </div>
             <div class="crf-info-row crf-urgency-detail-row">
-                <span class="crf-info-label">Level Urgensi</span>
+                <span class="crf-info-label"><?= h($urgencyLabel) ?></span>
                 <div class="crf-info-value crf-urgency-detail-value">
                     <?php if ($urgencyLevel !== null): ?>
                         <span class="crf-badge crf-urgency-detail-badge <?= h(levelBadgeClass($urgencyLevel)) ?>">
@@ -121,3 +126,4 @@ $urgencyLevel = !empty($crf['level'])
 <?php
 unset($sectionTitle);
 unset($urgencyLevel);
+unset($systemUrgencyLevel, $urgencyLabel);

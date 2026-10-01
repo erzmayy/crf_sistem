@@ -3,6 +3,7 @@
  * Shared header/layout for CRF.
  */
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/forum.php';
 
 if (!isset($pageTitle)) {
     $pageTitle = 'CRF';
@@ -19,9 +20,13 @@ $isPengajuanSaya = $currentPath === 'pengajuan_saya.php';
 $isCmo = str_contains(str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? ''), '/cmo/');
 $isOtomasi = str_contains(str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? ''), '/otomasi/');
 $isPakJoko = str_contains(str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? ''), '/pak_joko/');
+$isForum = str_contains(str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? ''), '/forum/');
+$forumUnreadTotal = in_array($crfRole, forumRoles(), true)
+    ? forumUnreadTotal(getConnection(), (int) ($currentUser['id'] ?? 0))
+    : 0;
 
 $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
-$appBasePath = preg_replace('#/(?:admin|user|cmo|otomasi|pak_joko)/[^/]+$#', '', $scriptPath) ?: '';
+$appBasePath = preg_replace('#/(?:admin|user|cmo|otomasi|pak_joko|forum)/[^/]+$#', '', $scriptPath) ?: '';
 $appBasePath = rtrim($appBasePath, '/');
 
 $homePath = $isAdminUser
@@ -87,6 +92,16 @@ $homePath = $isAdminUser
         </a>
         <a class="<?= $isPengajuanSaya ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/user/pengajuan_saya.php">
           <i class="bi bi-file-earmark-check"></i><span>Pengajuan Saya</span>
+        </a>
+      <?php endif; ?>
+      <?php if (in_array($crfRole, forumRoles(), true)): ?>
+        <a class="<?= $isForum ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/forum/index.php">
+          <i class="bi bi-chat-square-text"></i><span>Forum</span>
+          <?php if ($forumUnreadTotal > 0): ?>
+            <span class="crf-nav-unread" aria-label="<?= $forumUnreadTotal ?> komentar baru">
+              <?= $forumUnreadTotal > 99 ? '99+' : $forumUnreadTotal ?>
+            </span>
+          <?php endif; ?>
         </a>
       <?php endif; ?>
     </nav>

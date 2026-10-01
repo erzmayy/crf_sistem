@@ -97,6 +97,7 @@ CREATE TABLE change_requests (
     pir_date                    DATE            NULL,
 
     level                       ENUM('Tinggi','Normal','Rendah') NULL DEFAULT NULL,
+    final_urgency_level         ENUM('Tinggi','Normal','Rendah') NULL DEFAULT NULL,
     status                      ENUM(
                                     'Draft',
                                     'Belum Ditindak Lanjuti',
@@ -205,6 +206,43 @@ CREATE TABLE crf_user_roles (
     UNIQUE KEY uq_crf_user_role_user (user_id),
     CONSTRAINT fk_crf_user_roles_user
         FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- Tabel: forum_comments dan forum_read_states
+-- Komentar diskusi CRF dan posisi baca terakhir per user.
+-- ---------------------------------------------------------------------
+CREATE TABLE forum_comments (
+    id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    change_request_id       INT UNSIGNED NOT NULL,
+    user_id                 INT UNSIGNED NOT NULL,
+    user_name               VARCHAR(150) NOT NULL,
+    user_role               VARCHAR(50) NOT NULL,
+    comment                 TEXT NOT NULL,
+    reply_to_comment_id     INT UNSIGNED NULL,
+    created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    KEY idx_forum_comments_crf_created (change_request_id, created_at, id),
+    KEY idx_forum_comments_user (user_id),
+    CONSTRAINT fk_forum_comments_crf
+        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_forum_comments_reply
+        FOREIGN KEY (reply_to_comment_id) REFERENCES forum_comments(id)
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE forum_read_states (
+    user_id                     INT UNSIGNED NOT NULL,
+    change_request_id           INT UNSIGNED NOT NULL,
+    last_read_comment_id        INT UNSIGNED NOT NULL DEFAULT 0,
+    updated_at                  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                            ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (user_id, change_request_id),
+    CONSTRAINT fk_forum_read_states_crf
+        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 

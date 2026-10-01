@@ -9,10 +9,12 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/admin_crf_report.php';
+require_once __DIR__ . '/../includes/forum.php';
 
 requireAdmin();
 
 $pdo = getConnection();
+$forumUnread = forumUnreadTotal($pdo, (int) getCurrentUser()['id']);
 
 $search         = $_GET['q'] ?? '';
 $statusFilter   = $_GET['status'] ?? '';
@@ -823,6 +825,11 @@ require_once __DIR__ . '/../includes/header.php';
                     <?= (int) ($summary['cancelled'] ?? 0) ?>
                 </strong>
             </div>
+
+            <a class="crf-stat-card crf-forum-stat text-decoration-none" href="../forum/index.php">
+                <span><i class="bi bi-chat-square-text"></i> Komentar Baru di Forum</span>
+                <strong><?= $forumUnread ?></strong>
+            </a>
 
         </div>
 

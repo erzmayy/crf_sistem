@@ -46,6 +46,7 @@ try {
             kadep_operasional_approved_at,
             level,
             impact_category,
+            final_urgency_level,
             sla_value,
             sla_unit
         FROM change_requests
@@ -69,7 +70,7 @@ try {
         ?: crfUrgencyForImpact($crf['impact_category'] ?? null)
         ?: $submittedLevel;
     $isExecutionStage = !empty($crf['kadep_operasional_approved_at']);
-    if ($isExecutionStage) {
+    if ($isExecutionStage || !empty($crf['final_urgency_level'])) {
         $slaValue = (string) ($crf['sla_value'] ?? '');
         $slaUnit = $crf['sla_unit'] ?? '';
     }

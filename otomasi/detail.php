@@ -124,19 +124,17 @@ require_once __DIR__ . '/../includes/header.php';
 
 
         <div class="d-flex gap-2 flex-wrap mb-4">
+            <?php $resolvedUrgencyLevel = crfUrgencyForImpact($crf['impact_category'] ?? null) ?: ($crf['level'] ?? null); ?>
 
             <span class="crf-badge <?= workflowStageBadgeClass($crf['workflow_stage']) ?>">
                 Tahap:
                 <?= h(workflowStageLabel($crf['workflow_stage'])) ?>
             </span>
 
-            <?php if (!empty($crf['level'])): ?>
-
-                <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>">
-                    Level:
-                    <?= h($crf['level']) ?>
+            <?php if ($resolvedUrgencyLevel !== null): ?>
+                <span class="crf-badge <?= levelBadgeClass($resolvedUrgencyLevel) ?>">
+                    Level Urgensi Sistem: <?= h($resolvedUrgencyLevel) ?>
                 </span>
-
             <?php endif; ?>
 
             <?php if (!empty($crf['sla_value']) && !empty($crf['sla_unit'])): ?>
@@ -238,7 +236,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <div class="col-md-4">
 
                                 <label class="form-label fw-semibold">
-                                    Level Urgensi
+                                    Level Urgensi Sistem
                                     <span class="text-danger">*</span>
                                 </label>
 
@@ -246,11 +244,6 @@ require_once __DIR__ . '/../includes/header.php';
                                     !empty($crf['level'])
                                     || crfUrgencyForImpact($crf['impact_category'] ?? null) !== null
                                 ): ?>
-                                    <?php
-                                    $resolvedUrgencyLevel = !empty($crf['level'])
-                                        ? $crf['level']
-                                        : crfUrgencyForImpact($crf['impact_category'] ?? null);
-                                    ?>
                                     <div class="otomasi-urgency-field-value">
                                         <span class="crf-badge otomasi-urgency-badge <?= h(levelBadgeClass($resolvedUrgencyLevel)) ?>">
                                             <?= h($resolvedUrgencyLevel) ?>
@@ -273,7 +266,6 @@ require_once __DIR__ . '/../includes/header.php';
 
                             </div>
 
-
                             <div class="col-md-4">
 
                                 <label class="form-label fw-semibold">
@@ -287,11 +279,17 @@ require_once __DIR__ . '/../includes/header.php';
                                     step="0.01"
                                     name="sla_value"
                                     class="form-control"
+                                    <?= !empty($crf['final_urgency_level']) ? 'readonly' : '' ?>
                                     value="<?= h(
                                         $crf['sla_value'] ?? ''
                                     ) ?>"
                                     required
                                 >
+                                <?php if (!empty($crf['final_urgency_level'])): ?>
+                                    <div class="crf-readonly-note mt-2">
+                                        SLA final sudah disepakati di Forum dan hanya dapat diperbarui oleh Admin atau CMO.
+                                    </div>
+                                <?php endif; ?>
 
                             </div>
 
@@ -306,6 +304,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <select
                                     name="sla_unit"
                                     class="form-select"
+                                    <?= !empty($crf['final_urgency_level']) ? 'disabled' : '' ?>
                                     required
                                 >
 

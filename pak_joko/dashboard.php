@@ -1,10 +1,12 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/forum.php';
 
 requireCrfRole(['kadep_operasional']);
 
 $pdo = getConnection();
+$forumUnread = forumUnreadTotal($pdo, (int) getCurrentUser()['id']);
 
 $total = (int) $pdo->query(
     "SELECT COUNT(*) FROM change_requests WHERE workflow_stage = 'kadep_operasional'"
@@ -28,6 +30,7 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="crf-stat-grid">
 <a class="crf-stat-card text-decoration-none" href="index.php"><span>Menunggu Approval</span><strong><?= $total ?></strong></a>
 <div class="crf-stat-card"><span>Sudah Di-approve</span><strong><?= $approved ?></strong></div>
+<a class="crf-stat-card text-decoration-none crf-forum-stat" href="../forum/index.php"><span>Komentar Baru di Forum</span><strong><?= $forumUnread ?></strong></a>
 </div>
 <div class="mt-4"><a href="index.php" class="btn btn-crf-primary"><i class="bi bi-check2-square"></i> Buka Antrean Approval</a></div>
 </div></div>
