@@ -193,17 +193,6 @@ require_once __DIR__ . '/../includes/header.php';
 
         </div>
 
-        <?php if (!empty($crf['sla_value']) && !empty($crf['sla_unit'])): ?>
-            <div class="crf-readonly-note mb-3">
-                <i class="bi bi-hourglass-split"></i>
-                SLA: <?= h(rtrim(rtrim(number_format((float) $crf['sla_value'], 2, '.', ''), '0'), '.')) ?> <?= h($crf['sla_unit']) ?>
-                <?php if (!empty($crf['sla_due_at'])): ?>
-                    · Batas waktu: <?= h(date('d-m-Y H:i', strtotime($crf['sla_due_at']))) ?>
-                <?php endif; ?>
-            </div>
-        <?php endif; ?>
-
-
         <!-- INFO SOLVE -->
         <?php if ($crf['status'] === 'Solve' && $crf['solved_at']): ?>
 
@@ -282,6 +271,9 @@ require_once __DIR__ . '/../includes/header.php';
         <?php
         require __DIR__ . '/../includes/partials/detail_permintaan.php';
         ?>
+
+        <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
+
 
         <!-- IMPLEMENTASI & POST IMPLEMENTATION REVIEW -->
         <div id="implementation-review" class="crf-section crf-detail-card mb-4">

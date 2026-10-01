@@ -245,7 +245,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <?php if ($queue === 'history'): ?>
                                 <th>Status</th>
                             <?php else: ?>
-                                <th>Mulai</th>
+                                <th>Status SLA</th>
                             <?php endif; ?>
                             <th>Aksi</th>
                         </tr>
@@ -309,10 +309,25 @@ require_once __DIR__ . '/../includes/header.php';
                                         </span>
                                     </td>
                                 <?php else: ?>
-                                    <td data-label="Mulai">
-                                        <?= !empty($row['automation_started_at'])
-                                            ? h(date('d-m-Y H:i', strtotime($row['automation_started_at'])))
-                                            : '-' ?>
+                                    <?php $rowSlaStatus = getCrfSlaStatus($row); ?>
+                                    <td data-label="Status SLA">
+                                        <div
+                                            class="automation-sla-status"
+                                            <?= $rowSlaStatus['live'] && !empty($row['sla_due_at'])
+                                                ? 'data-sla-countdown="true" data-sla-due-at="' . (int) strtotime($row['sla_due_at']) . '"'
+                                                : '' ?>
+                                        >
+                                            <span class="badge text-bg-<?= h($rowSlaStatus['class']) ?>" data-sla-status-label>
+                                                <?= $rowSlaStatus['label'] === 'Melewati SLA'
+                                                    ? 'SLA Terlewati'
+                                                    : h($rowSlaStatus['label']) ?>
+                                            </span>
+                                            <small class="automation-sla-status-detail" data-sla-status-detail>
+                                                <?= $rowSlaStatus['label'] === 'Melewati SLA'
+                                                    ? 'Sudah melewati SLA selama ' . h(str_replace('Terlambat ', '', rtrim($rowSlaStatus['detail'], '.'))) . '.'
+                                                    : h($rowSlaStatus['detail']) ?>
+                                            </small>
+                                        </div>
                                     </td>
                                 <?php endif; ?>
 

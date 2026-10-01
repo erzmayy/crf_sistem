@@ -393,121 +393,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
 
 
-                        <div class="otomasi-exec-summary">
-
-                            <div class="otomasi-exec-summary-head">
-                                <div>
-                                    <div class="otomasi-exec-summary-title">Informasi Proses &amp; SLA</div>
-                                    <div class="otomasi-exec-summary-subtitle">
-                                        Waktu mulai dan batas SLA dihitung setelah approval Kepala Departemen Operasional.
-                                    </div>
-                                </div>
-
-                                <span class="otomasi-exec-summary-badge">
-                                    <i class="bi bi-shield-check"></i> Disetujui
-                                </span>
-                            </div>
-
-                            <div class="otomasi-exec-grid">
-
-                                <div class="otomasi-exec-item">
-                                    <div class="otomasi-exec-item-icon">
-                                        <i class="bi bi-lightning-charge"></i>
-                                    </div>
-                                    <div class="crf-detail-label">LEVEL URGENSI</div>
-                                    <div class="otomasi-exec-item-value">
-                                        <?= h(
-                                            $crf['level']
-                                            ?? 'Belum ditentukan'
-                                        ) ?>
-                                    </div>
-                                </div>
-
-                                <div class="otomasi-exec-item otomasi-exec-item--primary">
-                                    <div class="otomasi-exec-item-icon">
-                                        <i class="bi bi-clock-history"></i>
-                                    </div>
-                                    <div class="crf-detail-label">SLA</div>
-                                    <div class="otomasi-exec-item-value">
-                                        <?php if (
-                                            !empty($crf['sla_value'])
-                                            && !empty($crf['sla_unit'])
-                                        ): ?>
-                                            <?= h(
-                                                rtrim(
-                                                    rtrim(
-                                                        number_format(
-                                                            (float) $crf['sla_value'],
-                                                            2,
-                                                            '.',
-                                                            ''
-                                                        ),
-                                                        '0'
-                                                    ),
-                                                    '.'
-                                                )
-                                            ) ?>
-                                            <span><?= h($crf['sla_unit']) ?></span>
-                                        <?php else: ?>
-                                            -
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-
-                                <div class="otomasi-exec-item">
-                                    <div class="otomasi-exec-item-icon">
-                                        <i class="bi bi-person-check"></i>
-                                    </div>
-                                    <div class="crf-detail-label">APPROVAL KEPALA DEPARTEMEN</div>
-                                    <div class="otomasi-exec-item-value otomasi-exec-item-value--small">
-                                        <?= !empty($crf['kadep_operasional_approved_at'])
-                                            ? h(
-                                                date(
-                                                    'd-m-Y H:i',
-                                                    strtotime($crf['kadep_operasional_approved_at'])
-                                                )
-                                            )
-                                            : '-' ?>
-                                    </div>
-                                </div>
-
-                                <div class="otomasi-exec-item otomasi-exec-item--soft">
-                                    <div class="otomasi-exec-item-icon">
-                                        <i class="bi bi-play-circle"></i>
-                                    </div>
-                                    <div class="crf-detail-label">MULAI SLA</div>
-                                    <div class="otomasi-exec-item-value otomasi-exec-item-value--small">
-                                        <?= !empty($crf['sla_started_at'])
-                                            ? h(
-                                                date(
-                                                    'd-m-Y H:i',
-                                                    strtotime($crf['sla_started_at'])
-                                                )
-                                            )
-                                            : '-' ?>
-                                    </div>
-                                </div>
-
-                                <div class="otomasi-exec-item otomasi-exec-item--soft">
-                                    <div class="otomasi-exec-item-icon">
-                                        <i class="bi bi-flag"></i>
-                                    </div>
-                                    <div class="crf-detail-label">BATAS SLA</div>
-                                    <div class="otomasi-exec-item-value otomasi-exec-item-value--small">
-                                        <?= !empty($crf['sla_due_at'])
-                                            ? h(
-                                                date(
-                                                    'd-m-Y H:i',
-                                                    strtotime($crf['sla_due_at'])
-                                                )
-                                            )
-                                            : '-' ?>
-                                    </div>
-                                </div>
-
-                            </div>
-
-                        </div>
+                        <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
 
 
                         <div class="crf-readonly-note mb-4">
@@ -577,7 +463,7 @@ require_once __DIR__ . '/../includes/header.php';
                         class="btn btn-crf-primary"
                     >
                         <i class="bi bi-check2-circle"></i>
-                        Eksekusi
+                        Selesaikan
                     </button>
 
                 </div>

@@ -8,6 +8,7 @@
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/admin_crf_report.php';
 
 requireAdmin();
 
@@ -131,6 +132,48 @@ $summaryStmt = $pdo->query(
 );
 
 $summary = $summaryStmt->fetch() ?: [];
+if (
+    (array_key_exists('report_date_from', $_GET) && !is_string($_GET['report_date_from']))
+    || (array_key_exists('report_date_to', $_GET) && !is_string($_GET['report_date_to']))
+) {
+    http_response_code(400);
+    exit('Rentang tanggal tidak valid.');
+}
+$reportDateFromInput = is_string($_GET['report_date_from'] ?? null)
+    ? $_GET['report_date_from']
+    : null;
+$reportDateToInput = is_string($_GET['report_date_to'] ?? null)
+    ? $_GET['report_date_to']
+    : null;
+try {
+    $reportDateRange = normalizeAdminCrfReportDateRange(
+        $reportDateFromInput,
+        $reportDateToInput
+    );
+} catch (InvalidArgumentException $exception) {
+    http_response_code(400);
+    exit(h($exception->getMessage()));
+}
+$report = getAdminCrfReport($pdo, $reportDateRange['from'], $reportDateRange['to']);
+$reportExportQuery = http_build_query([
+    'report_date_from' => $reportDateRange['from'],
+    'report_date_to' => $reportDateRange['to'],
+]);
+$maxMonthlyCount = max(array_column($report['months'], 'count')) ?: 1;
+$donutStops = [];
+$donutOffset = 0;
+foreach ($report['statuses'] as $reportStatus) {
+    if ($reportStatus['percentage'] <= 0) {
+        continue;
+    }
+
+    $donutEnd = $donutOffset + ($reportStatus['percentage'] * 3.6);
+    $donutStops[] = $reportStatus['color'] . ' ' . $donutOffset . 'deg ' . $donutEnd . 'deg';
+    $donutOffset = $donutEnd;
+}
+$statusDonutStyle = $donutStops
+    ? 'background: conic-gradient(' . implode(', ', $donutStops) . ');'
+    : 'background: #e2e8f0;';
 
 
 $flash = $_SESSION['flash'] ?? null;
@@ -475,15 +518,246 @@ require_once __DIR__ . '/../includes/header.php';
         font-size: 1.15rem;
     }
 
+    .admin-report {
+        margin: 0 0 1rem;
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .admin-report-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.9rem;
+    }
+
+    .admin-report-heading h2 {
+        margin: 0;
+        color: #334155;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .admin-report-heading p {
+        margin: 0.15rem 0 0;
+        color: #64748b;
+        font-size: 0.78rem;
+    }
+
+    .admin-report-date-filter {
+        display: flex;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        margin-bottom: 0.85rem;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #f8fafc;
+    }
+
+    .admin-report-date-filter label {
+        display: grid;
+        gap: 0.25rem;
+        color: #475569;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    .admin-report-date-filter input {
+        min-height: 34px;
+        padding: 0.35rem 0.5rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        color: #334155;
+        font: inherit;
+    }
+
+    .admin-report-date-filter .btn {
+        min-height: 34px;
+    }
+
+    .admin-report-exports {
+        display: flex;
+        gap: 0.45rem;
+        flex: 0 0 auto;
+    }
+
+    .admin-report-exports .btn {
+        white-space: nowrap;
+    }
+
+    .admin-report-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(245px, 1fr);
+        gap: 0.8rem;
+    }
+
+    .admin-report-card {
+        min-width: 0;
+        padding: 0.85rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+    }
+
+    .admin-report-card h3 {
+        margin: 0 0 0.8rem;
+        color: #334155;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    .admin-report-chart {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(32px, 1fr));
+        gap: 0.4rem;
+        min-height: 150px;
+        align-items: end;
+    }
+
+    .admin-report-month {
+        display: flex;
+        min-width: 0;
+        height: 100%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.2rem;
+        color: #64748b;
+        font-size: 0.68rem;
+    }
+
+    .admin-report-month-count {
+        color: #475569;
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+
+    .admin-report-bar-track {
+        display: flex;
+        width: min(100%, 22px);
+        height: 105px;
+        align-items: flex-end;
+        overflow: hidden;
+        border-radius: 4px 4px 0 0;
+        background: #f1f5f9;
+    }
+
+    .admin-report-bar {
+        display: block;
+        width: 100%;
+        min-height: 2px;
+        border-radius: 4px 4px 0 0;
+        background: #2563eb;
+    }
+
+    .admin-report-bar.is-empty {
+        display: none;
+    }
+
+    .admin-report-distribution {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        min-height: 150px;
+    }
+
+    .admin-report-donut {
+        display: grid;
+        width: 112px;
+        height: 112px;
+        flex: 0 0 112px;
+        place-items: center;
+        border-radius: 50%;
+    }
+
+    .admin-report-donut-hole {
+        display: grid;
+        width: 72px;
+        height: 72px;
+        align-content: center;
+        border-radius: 50%;
+        background: #fff;
+        text-align: center;
+    }
+
+    .admin-report-donut-hole strong {
+        color: #334155;
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+
+    .admin-report-donut-hole span {
+        color: #64748b;
+        font-size: 0.62rem;
+    }
+
+    .admin-report-legend {
+        display: grid;
+        gap: 0.4rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .admin-report-legend li {
+        display: grid;
+        grid-template-columns: 9px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.4rem;
+        color: #475569;
+        font-size: 0.68rem;
+    }
+
+    .admin-report-legend-swatch {
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+    }
+
+    .admin-report-legend strong {
+        color: #334155;
+        white-space: nowrap;
+    }
+
     @media (max-width: 900px) {
         .dashboard-summary-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .admin-report-grid {
+            grid-template-columns: 1fr;
         }
     }
 
     @media (max-width: 480px) {
         .dashboard-summary-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-report {
+            padding: 0.75rem;
+        }
+
+        .admin-report-heading {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .admin-report-exports {
+            width: 100%;
+        }
+
+        .admin-report-exports .btn {
+            flex: 1 1 50%;
+        }
+
+        .admin-report-distribution {
+            flex-wrap: wrap;
         }
     }
 </style>
@@ -552,6 +826,89 @@ require_once __DIR__ . '/../includes/header.php';
 
         </div>
 
+        <section class="admin-report" aria-labelledby="admin-report-title">
+            <div class="admin-report-heading">
+                <div>
+                    <h2 id="admin-report-title">Laporan &amp; Statistik Change Request</h2>
+                    <p>Analisis pengajuan CRF <?= h(date('d-m-Y', strtotime($report['date_from']))) ?> sampai <?= h(date('d-m-Y', strtotime($report['date_to']))) ?>.</p>
+                </div>
+                <div class="admin-report-exports">
+                    <a class="btn btn-sm btn-outline-danger" href="../actions/export_admin_report.php?format=pdf&amp;<?= h($reportExportQuery) ?>">
+                        <i class="bi bi-file-earmark-pdf"></i> Ekspor PDF
+                    </a>
+                    <a class="btn btn-sm btn-outline-success" href="../actions/export_admin_report.php?format=xlsx&amp;<?= h($reportExportQuery) ?>">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Ekspor Excel (.xlsx)
+                    </a>
+                </div>
+            </div>
+
+            <form class="admin-report-date-filter" method="get" action="dashboard.php">
+                <?php foreach ([
+                    'q' => $search,
+                    'status' => $statusFilter,
+                    'category' => $categoryFilter,
+                    'department' => $departmentFilter,
+                    'level' => $levelFilter,
+                    'date_from' => $dateFrom,
+                    'date_to' => $dateTo,
+                    'per_page' => $perPage,
+                    'page' => $page,
+                ] as $filterName => $filterValue): ?>
+                    <input type="hidden" name="<?= h($filterName) ?>" value="<?= h((string) $filterValue) ?>">
+                <?php endforeach; ?>
+                <label>
+                    Tanggal Awal
+                    <input type="date" name="report_date_from" value="<?= h($report['date_from']) ?>" required>
+                </label>
+                <label>
+                    Tanggal Akhir
+                    <input type="date" name="report_date_to" value="<?= h($report['date_to']) ?>" required>
+                </label>
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="bi bi-funnel"></i> Terapkan
+                </button>
+                <a class="btn btn-sm btn-outline-secondary" href="dashboard.php">Reset</a>
+            </form>
+
+            <div class="admin-report-grid">
+                <section class="admin-report-card" aria-labelledby="monthly-trend-title">
+                    <h3 id="monthly-trend-title">Tren CRF per Bulan</h3>
+                    <div class="admin-report-chart" role="img" aria-label="Grafik jumlah CRF per bulan pada rentang tanggal yang dipilih">
+                        <?php foreach ($report['months'] as $month): ?>
+                            <?php $barHeight = $month['count'] > 0 ? max(4, ($month['count'] / $maxMonthlyCount) * 100) : 0; ?>
+                            <div class="admin-report-month" title="<?= h($month['label'] . ': ' . $month['count'] . ' CRF') ?>">
+                                <span class="admin-report-month-count"><?= (int) $month['count'] ?></span>
+                                <span class="admin-report-bar-track">
+                                    <span class="admin-report-bar <?= $month['count'] === 0 ? 'is-empty' : '' ?>" style="height: <?= h((string) $barHeight) ?>%;"></span>
+                                </span>
+                                <span><?= h($month['label']) ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+
+                <section class="admin-report-card" aria-labelledby="status-distribution-title">
+                    <h3 id="status-distribution-title">Status Distribusi CRF</h3>
+                    <div class="admin-report-distribution">
+                        <div class="admin-report-donut" style="<?= h($statusDonutStyle) ?>" role="img" aria-label="Distribusi status dari <?= (int) $report['total'] ?> CRF">
+                            <div class="admin-report-donut-hole">
+                                <strong><?= (int) $report['total'] ?></strong>
+                                <span>Total CRF</span>
+                            </div>
+                        </div>
+                        <ul class="admin-report-legend">
+                            <?php foreach ($report['statuses'] as $reportStatus): ?>
+                                <li>
+                                    <span class="admin-report-legend-swatch" style="background: <?= h($reportStatus['color']) ?>;"></span>
+                                    <span><?= h($reportStatus['label']) ?></span>
+                                    <strong><?= (int) $reportStatus['count'] ?> (<?= number_format($reportStatus['percentage'], 1, ',', '.') ?>%)</strong>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+        </section>
 
         <?php if ($flash): ?>
 

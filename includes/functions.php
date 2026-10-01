@@ -326,6 +326,139 @@ function slaDueAt(?string $startedAt, $value, ?string $unit): ?string
     }
 }
 
+function formatSlaDuration(int $seconds): string
+{
+    $minutes = max(0, intdiv($seconds, 60));
+    $days = intdiv($minutes, 1440);
+    $hours = intdiv($minutes % 1440, 60);
+    $remainingMinutes = $minutes % 60;
+    $parts = [];
+
+    if ($days > 0) {
+        $parts[] = $days . ' Hari';
+    }
+    if ($hours > 0) {
+        $parts[] = $hours . ' Jam';
+    }
+    if ($remainingMinutes > 0 || !$parts) {
+        $parts[] = $remainingMinutes . ' Menit';
+    }
+
+    return implode(' ', $parts);
+}
+
+function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
+{
+    $now = $now ?? new DateTimeImmutable('now');
+    $startedAt = !empty($crf['sla_started_at'])
+        ? new DateTimeImmutable($crf['sla_started_at'])
+        : null;
+    $dueAt = !empty($crf['sla_due_at'])
+        ? new DateTimeImmutable($crf['sla_due_at'])
+        : null;
+    $completedAt = !empty($crf['automation_completed_at'])
+        ? new DateTimeImmutable($crf['automation_completed_at'])
+        : null;
+    $isCancelled = ($crf['status'] ?? '') === 'Cancel';
+
+    if ($isCancelled) {
+        return [
+            'label' => 'Tidak berlaku',
+            'detail' => 'CRF dibatalkan.',
+            'class' => 'secondary',
+            'alert' => null,
+            'elapsed' => null,
+            'remaining' => null,
+            'overdue' => null,
+            'live' => false,
+        ];
+    }
+
+    if ($completedAt !== null && $startedAt !== null && $dueAt !== null) {
+        $elapsed = max(0, $completedAt->getTimestamp() - $startedAt->getTimestamp());
+        if ($completedAt <= $dueAt) {
+            $remaining = $dueAt->getTimestamp() - $completedAt->getTimestamp();
+            return [
+                'label' => 'Selesai sebelum SLA',
+                'detail' => 'Lebih cepat ' . formatSlaDuration($remaining) . '.',
+                'class' => 'success',
+                'alert' => null,
+                'elapsed' => formatSlaDuration($elapsed),
+                'remaining' => null,
+                'overdue' => null,
+                'live' => false,
+            ];
+        }
+
+        $overdue = $completedAt->getTimestamp() - $dueAt->getTimestamp();
+        return [
+            'label' => 'Terlambat',
+            'detail' => 'Melewati batas SLA ' . formatSlaDuration($overdue) . '.',
+            'class' => 'danger',
+            'alert' => null,
+            'elapsed' => formatSlaDuration($elapsed),
+            'remaining' => null,
+            'overdue' => null,
+            'live' => false,
+        ];
+    }
+
+    if ($completedAt !== null) {
+        return [
+            'label' => 'Selesai',
+            'detail' => 'Data waktu mulai atau batas SLA tidak tersedia.',
+            'class' => 'secondary',
+            'alert' => null,
+            'elapsed' => $startedAt !== null
+                ? formatSlaDuration(max(0, $completedAt->getTimestamp() - $startedAt->getTimestamp()))
+                : null,
+            'remaining' => null,
+            'overdue' => null,
+            'live' => false,
+        ];
+    }
+
+    if ($startedAt === null || $dueAt === null) {
+        return [
+            'label' => 'SLA belum dimulai',
+            'detail' => 'SLA dimulai setelah approval Kepala Departemen Operasional.',
+            'class' => 'secondary',
+            'alert' => null,
+            'elapsed' => null,
+            'remaining' => null,
+            'overdue' => null,
+            'live' => false,
+        ];
+    }
+
+    $remaining = $dueAt->getTimestamp() - $now->getTimestamp();
+    if ($remaining >= 0) {
+        $isApproaching = $remaining <= 3600;
+        return [
+            'label' => 'Masih dalam SLA',
+            'detail' => 'Sisa waktu ' . formatSlaDuration($remaining) . '.',
+            'class' => $isApproaching ? 'warning' : 'success',
+            'alert' => $isApproaching ? 'approaching' : null,
+            'elapsed' => null,
+            'remaining' => $remaining,
+            'overdue' => null,
+            'live' => true,
+        ];
+    }
+
+    $overdue = abs($remaining);
+    return [
+        'label' => 'Melewati SLA',
+        'detail' => 'Terlambat ' . formatSlaDuration($overdue) . '.',
+        'class' => 'danger',
+        'alert' => 'overdue',
+        'elapsed' => null,
+        'remaining' => null,
+        'overdue' => $overdue,
+        'live' => true,
+    ];
+}
+
 function logCrfActivity(PDO $pdo, int $crfId, string $activity, string $description, string $actor): void
 {
     $stmt = $pdo->prepare("
