@@ -998,6 +998,28 @@ textarea.form-control {
   line-height: 1.45;
 }
 
+.crf-detail-card .crf-urgency-detail-row {
+  align-items: center;
+}
+
+.crf-detail-card .crf-urgency-detail-value {
+  display: flex;
+  align-items: center;
+  min-height: 2rem;
+}
+
+.crf-detail-card .crf-urgency-detail-badge {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  min-height: 1.75rem;
+  margin: 0;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.72rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .crf-detail-card .crf-info-sub {
   margin-top: 2px;
   font-size: 0.84rem;
@@ -1372,6 +1394,20 @@ textarea.form-control {
   font-size: 0.72rem;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.otomasi-urgency-field-value {
+  display: flex;
+  align-items: center;
+  min-height: calc(1.5em + 0.75rem + 2px);
+}
+
+.otomasi-urgency-badge {
+  min-height: 32px;
+  padding: 0.42rem 0.8rem;
+  font-size: 0.8rem;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
 }
 
 .otomasi-exec-grid {

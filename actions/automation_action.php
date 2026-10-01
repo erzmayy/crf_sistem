@@ -15,7 +15,7 @@ $pdo = getConnection();
 $user = getCurrentUser();
 $id = (int) ($_POST['id'] ?? 0);
 $action = $_POST['action'] ?? 'save';
-$level = $_POST['level'] ?? '';
+$submittedLevel = $_POST['level'] ?? '';
 $slaValue = trim($_POST['sla_value'] ?? '');
 $slaUnit = $_POST['sla_unit'] ?? '';
 $implementation = trim($_POST['implementation'] ?? '');
@@ -45,6 +45,7 @@ try {
             automation_started_at,
             kadep_operasional_approved_at,
             level,
+            impact_category,
             sla_value,
             sla_unit
         FROM change_requests
@@ -64,9 +65,11 @@ try {
         exit;
     }
 
+    $level = $crf['level']
+        ?: crfUrgencyForImpact($crf['impact_category'] ?? null)
+        ?: $submittedLevel;
     $isExecutionStage = !empty($crf['kadep_operasional_approved_at']);
     if ($isExecutionStage) {
-        $level = $crf['level'] ?? '';
         $slaValue = (string) ($crf['sla_value'] ?? '');
         $slaUnit = $crf['sla_unit'] ?? '';
     }

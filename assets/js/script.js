@@ -300,8 +300,10 @@ if (fileInput && fileList) {
       'email',
       'from_department',
       'from_division',
+      'request_type',
       'change_description',
       'benefit',
+      'impact_category',
       'impact',
       'reason',
       'alternative_suggestion'
@@ -377,9 +379,11 @@ if (fileInput && fileList) {
       ['email', 'Email wajib diisi.'],
       ['from_department', 'Departemen wajib diisi.'],
       ['from_division', 'Divisi wajib diisi.'],
+      ['request_type', 'Tipe pengajuan wajib dipilih.'],
       ['change_description', 'Rincian permohonan perubahan wajib diisi.'],
       ['benefit', 'Benefit perubahan wajib diisi.'],
-      ['impact', 'Dampak jika tidak dilakukan perubahan wajib diisi.'],
+      ['impact_category', 'Dampak jika tidak dilakukan perubahan wajib dipilih.'],
+      ['impact', 'Penjelasan dampak wajib diisi.'],
       ['reason', 'Alasan permohonan perubahan wajib diisi.'],
       ['alternative_suggestion', 'Saran alternatif wajib diisi.']
     ].forEach(function (item) {

@@ -595,6 +595,81 @@ function levelBadgeClass(?string $level): string
     }
 }
 
+function crfRequestTypeOptions(): array
+{
+    return [
+        'Problem',
+        'Permohonan Perubahan',
+        'Permohonan Tambahan',
+    ];
+}
+
+function crfImpactGroups(): array
+{
+    return [
+        'Tinggi' => [
+            'high_system_stopped' => 'Fungsi Aplikasi SIAP berhenti total.',
+            'high_no_alternative' => 'Tidak ada solusi alternatif.',
+            'high_liquidity_legal_risk' => 'Dapat menimbulkan risiko likuiditas dan hukum.',
+        ],
+        'Normal' => [
+            'normal_operations_disrupted' => 'Operasional terganggu berat.',
+            'normal_partial_access' => 'Aplikasi masih bisa diakses sebagian.',
+            'normal_temporary_workaround' => 'Ada solusi alternatif sementara yang merepotkan.',
+            'normal_operational_risk' => 'Dapat menimbulkan risiko operasional.',
+        ],
+        'Rendah' => [
+            'low_new_issue_or_feature' => 'Masalah atau permintaan fitur baru.',
+            'low_no_efficiency_impact' => 'Tidak mempengaruhi efisiensi kerja.',
+            'low_no_daily_interruption' => 'Tidak menghentikan operasional harian.',
+            'low_no_risk' => 'Tidak menimbulkan risiko.',
+        ],
+    ];
+}
+
+function crfImpactOptions(): array
+{
+    return array_merge(...array_values(crfImpactGroups()));
+}
+
+function crfUrgencyForImpact(?string $impact): ?string
+{
+    $urgencyByImpact = [
+        'high_system_stopped' => 'Tinggi',
+        'high_no_alternative' => 'Tinggi',
+        'high_liquidity_legal_risk' => 'Tinggi',
+        'normal_operations_disrupted' => 'Normal',
+        'normal_partial_access' => 'Normal',
+        'normal_temporary_workaround' => 'Normal',
+        'normal_operational_risk' => 'Normal',
+        'low_new_issue_or_feature' => 'Rendah',
+        'low_no_efficiency_impact' => 'Rendah',
+        'low_no_daily_interruption' => 'Rendah',
+        'low_no_risk' => 'Rendah',
+        'high' => 'Tinggi',
+        'normal' => 'Normal',
+        'low' => 'Rendah',
+    ];
+
+    return $urgencyByImpact[$impact ?? ''] ?? null;
+}
+
+function crfImpactLabel(?string $impact): string
+{
+    $options = crfImpactOptions();
+    if (isset($options[$impact ?? ''])) {
+        return $options[$impact];
+    }
+
+    $legacyOptions = [
+        'high' => 'Fungsi Aplikasi SIAP berhenti total, tanpa ada solusi alternatif, dan dapat menimbulkan risiko likuiditas dan hukum.',
+        'normal' => 'Operasional terganggu berat, aplikasi masih bisa diakses sebagian atau ada solusi alternatif sementara yang merepotkan, serta dapat menimbulkan risiko operasional.',
+        'low' => 'Masalah atau permintaan fitur baru, tidak mempengaruhi efisiensi kerja, tidak menghentikan operasional harian, dan tidak menimbulkan risiko.',
+    ];
+
+    return $legacyOptions[$impact ?? ''] ?? '';
+}
+
 /**
  * Konfigurasi upload file (lihat brief butir 12).
  */

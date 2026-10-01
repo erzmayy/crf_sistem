@@ -47,6 +47,8 @@ $fromDivision   = trim($_POST['from_division'] ?? '');
 $changeDescription = trim($_POST['change_description'] ?? '');
 $benefit           = trim($_POST['benefit'] ?? '');
 $impact            = trim($_POST['impact'] ?? '');
+$requestType       = trim($_POST['request_type'] ?? '');
+$impactCategory    = trim($_POST['impact_category'] ?? '');
 $reason            = trim($_POST['reason'] ?? '');
 
 $budgetType = $_POST['budget_type'] ?? null;
@@ -90,6 +92,8 @@ $allowedCategories = [
     'Security',
     'Lainnya'
 ];
+$allowedRequestTypes = crfRequestTypeOptions();
+$allowedImpactCategories = array_keys(crfImpactOptions());
 
 if (
     $budgetType !== null
@@ -108,6 +112,16 @@ if (
 ) {
     $changeCategory = '';
 }
+
+if (!in_array($requestType, $allowedRequestTypes, true)) {
+    $requestType = '';
+}
+
+if (!in_array($impactCategory, $allowedImpactCategories, true)) {
+    $impactCategory = '';
+}
+
+$level = crfUrgencyForImpact($impactCategory);
 
 
 /*
@@ -182,6 +196,9 @@ try {
                 change_description = :change_description,
                 benefit = :benefit,
                 impact = :impact,
+                request_type = :request_type,
+                impact_category = :impact_category,
+                level = :level,
                 reason = :reason,
                 budget_type = :budget_type,
                 budget_amount = :budget_amount,
@@ -205,6 +222,9 @@ try {
             'change_description' => $changeDescription,
             'benefit' => $benefit,
             'impact' => $impact,
+            'request_type' => $requestType !== '' ? $requestType : null,
+            'impact_category' => $impactCategory !== '' ? $impactCategory : null,
+            'level' => $level,
             'reason' => $reason,
             'budget_type' => $budgetType !== '' ? $budgetType : null,
             'budget_amount' => $budgetAmount,
@@ -248,6 +268,8 @@ try {
                 change_description,
                 benefit,
                 impact,
+                request_type,
+                impact_category,
                 reason,
                 budget_type,
                 budget_amount,
@@ -273,6 +295,8 @@ try {
                 :change_description,
                 :benefit,
                 :impact,
+                :request_type,
+                :impact_category,
                 :reason,
                 :budget_type,
                 :budget_amount,
@@ -281,7 +305,7 @@ try {
                 :alternative_suggestion,
                 NULL,
                 NULL,
-                NULL,
+                :level,
                 'PEMOHON',
                 'Draft'
             )
@@ -301,6 +325,9 @@ try {
                 'change_description' => $changeDescription,
                 'benefit' => $benefit,
                 'impact' => $impact,
+                'request_type' => $requestType !== '' ? $requestType : null,
+                'impact_category' => $impactCategory !== '' ? $impactCategory : null,
+                'level' => $level,
                 'reason' => $reason,
                 'budget_type' => $budgetType !== '' ? $budgetType : null,
                 'budget_amount' => $budgetAmount,

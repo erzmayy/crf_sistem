@@ -79,6 +79,8 @@ CREATE TABLE change_requests (
     change_description          TEXT            NULL,
     benefit                     TEXT            NULL,
     impact                      TEXT            NULL,
+    request_type                VARCHAR(50)     NULL,
+    impact_category             VARCHAR(50)     NULL,
     reason                      TEXT            NULL,
 
     budget_type                 ENUM('rkap','boq_pks','anggaran_baru') NULL,
@@ -270,4 +272,3 @@ INSERT INTO crf_user_roles (user_id, role) VALUES
 (3, 'cmo'),
 (4, 'otomasi'),
 (5, 'kadep_operasional');
-
