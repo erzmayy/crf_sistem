@@ -2792,11 +2792,11 @@ textarea.form-control {
 }
 
 .crf-helpdesk-table tbody td {
-  padding: 0.62rem 0.5rem !important;
+  padding: 0.72rem 0.6rem !important;
   border-color: #e6edf6;
   color: #34465f;
-  font-size: 0.7rem !important;
-  line-height: 1.35;
+  font-size: 0.75rem !important;
+  line-height: 1.45;
   vertical-align: top;
   overflow-wrap: anywhere;
 }
@@ -3076,7 +3076,7 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
     padding: 0.32rem 0 !important;
     border: 0;
     border-bottom: 1px solid #eef2f7;
-    font-size: 0.68rem !important;
+    font-size: 0.73rem !important;
     text-align: left;
   }
 
@@ -3093,7 +3093,7 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td::before {
     content: attr(data-label);
     color: #6b7d95;
-    font-size: 0.56rem;
+    font-size: 0.61rem;
     font-weight: 700;
     letter-spacing: 0.035em;
     text-transform: uppercase;
@@ -3593,7 +3593,7 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
 }
 
 .crf-dashboard-page .crf-stat-grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
   gap: 0.85rem;
   margin-bottom: 1.35rem;
 }
@@ -3618,6 +3618,14 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   font-size: 1.65rem;
   letter-spacing: -0.035em;
 }
+
+.crf-dashboard-page .crf-stat-grid .pengajuan-stat-total { border-left-color: var(--crf-blue-700); }
+.crf-dashboard-page .crf-stat-grid .pengajuan-stat-draft { border-left-color: #94a3b8; }
+.crf-dashboard-page .crf-stat-grid .pengajuan-stat-pending { border-left-color: #dc2626; }
+.crf-dashboard-page .crf-stat-grid .pengajuan-stat-revision { border-left-color: #7c3aed; }
+.crf-dashboard-page .crf-stat-grid .pengajuan-stat-processing { border-left-color: #2563eb; }
+.crf-dashboard-page .crf-stat-grid .pengajuan-stat-solved { border-left-color: #15803d; }
+.crf-dashboard-page .crf-stat-grid .pengajuan-stat-cancelled { border-left-color: #64748b; }
 
 .crf-dashboard-page > .container > .mt-4,
 .crf-dashboard-page > .container > .d-flex {
