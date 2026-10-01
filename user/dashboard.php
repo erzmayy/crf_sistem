@@ -14,12 +14,13 @@ $pageTitle='Dashboard'; require_once __DIR__ . '/../includes/header.php';
 <div class="crf-page-header"><h1>Dashboard</h1><p>Ringkasan pengajuan Change Request Anda.</p></div>
 <?php if($flash): ?><div class="alert alert-<?= h($flash['type']) ?> crf-alert"><?= h($flash['message']) ?></div><?php endif; ?>
 <div class="crf-stat-grid">
-<div class="crf-stat-card"><span>Total Pengajuan</span><strong><?= (int)($summary['total']??0) ?></strong></div>
-<div class="crf-stat-card"><span>Draft</span><strong><?= (int)($summary['draft']??0) ?></strong></div>
-<div class="crf-stat-card"><span>Perlu Revisi</span><strong><?= (int)($summary['revision']??0) ?></strong></div>
-<div class="crf-stat-card"><span>Dalam Proses</span><strong><?= (int)($summary['processing']??0) ?></strong></div>
-<div class="crf-stat-card"><span>Selesai</span><strong><?= (int)($summary['solved']??0) ?></strong></div>
-<div class="crf-stat-card"><span>Dibatalkan</span><strong><?= (int)($summary['cancelled']??0) ?></strong></div>
+<div class="crf-stat-card pengajuan-stat-total"><span>Total Pengajuan</span><strong><?= (int)($summary['total']??0) ?></strong></div>
+<div class="crf-stat-card pengajuan-stat-draft"><span>Draft</span><strong><?= (int)($summary['draft']??0) ?></strong></div>
+<div class="crf-stat-card pengajuan-stat-pending"><span>Belum Ditindak Lanjuti</span><strong><?= (int)($summary['pending']??0) ?></strong></div>
+<div class="crf-stat-card pengajuan-stat-revision"><span>Perlu Revisi</span><strong><?= (int)($summary['revision']??0) ?></strong></div>
+<div class="crf-stat-card pengajuan-stat-processing"><span>Dalam Proses</span><strong><?= (int)($summary['processing']??0) ?></strong></div>
+<div class="crf-stat-card pengajuan-stat-solved"><span>Selesai</span><strong><?= (int)($summary['solved']??0) ?></strong></div>
+<div class="crf-stat-card pengajuan-stat-cancelled"><span>Dibatalkan</span><strong><?= (int)($summary['cancelled']??0) ?></strong></div>
 </div>
 <div class="mt-4 d-flex gap-2"><a href="form_crf.php" class="btn btn-crf-primary"><i class="bi bi-plus-circle"></i> Buat Pengajuan</a><a href="pengajuan_saya.php" class="btn btn-crf-outline"><i class="bi bi-list-check"></i> Pengajuan Saya</a></div>
 </div></div>

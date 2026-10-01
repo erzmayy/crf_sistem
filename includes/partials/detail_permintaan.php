@@ -19,7 +19,7 @@ $sectionTitle = $sectionTitle ?? 'Detail Pengajuan';
     </div>
 
     <div class="crf-section-body">
-        <div class="crf-info-rows crf-request-rows">
+        <div class="crf-info-rows">
             <div class="crf-info-row crf-request-row-long">
                 <span class="crf-info-label">Rincian Permohonan Perubahan</span>
                 <div class="crf-info-value"><?= nl2br(h($crf['change_description'] ?? '-')) ?></div>
