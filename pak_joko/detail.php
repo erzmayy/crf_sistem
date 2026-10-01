@@ -241,7 +241,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                         <label for="approval_note" class="form-label fw-semibold">
                             Catatan Approval
-                            <span class="text-muted">(opsional)</span>
+                            <span class="text-danger">*</span>
                         </label>
 
                         <textarea
@@ -249,7 +249,8 @@ require_once __DIR__ . '/../includes/header.php';
                             id="approval_note"
                             class="form-control"
                             rows="4"
-                            placeholder="Tuliskan catatan approval bila diperlukan..."
+                            required
+                            placeholder="Tuliskan catatan approval..."
                         ><?= h($crf['kadep_operasional_approval_note'] ?? '') ?></textarea>
 
                     </div>

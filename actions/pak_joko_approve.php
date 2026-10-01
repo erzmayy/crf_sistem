@@ -50,11 +50,11 @@ if (!$crf || $crf['workflow_stage'] !== 'kadep_operasional') {
 }
 
 
-if ($action === 'revision' && $note === '') {
+if ($note === '') {
 
     $_SESSION['flash'] = [
         'type' => 'danger',
-        'message' => 'Catatan revisi wajib diisi.'
+        'message' => 'Catatan approval wajib diisi.'
     ];
 
     header('Location: ../pak_joko/detail.php?id=' . $id);
