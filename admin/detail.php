@@ -158,6 +158,8 @@ require_once __DIR__ . '/../includes/header.php';
     require __DIR__ . '/../includes/partials/detail_permintaan.php';
     ?>
 
+    <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
+
     <div class="crf-section crf-detail-card mb-4">
       <div class="crf-section-header">
         <span class="crf-section-number"><i class="bi bi-clipboard-check"></i></span>

@@ -104,7 +104,9 @@ try {
             SET
                 level = :level,
                 sla_value = :sla_value,
-                sla_unit = :sla_unit
+                sla_unit = :sla_unit,
+                sla_started_at = NULL,
+                sla_due_at = NULL
             WHERE id = :id
               AND workflow_stage = 'OTOMASI'
         ");

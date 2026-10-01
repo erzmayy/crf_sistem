@@ -1272,6 +1272,43 @@ textarea.form-control {
     font-weight: 400;
 }
 
+.crf-sla-status-detail {
+    display: inline-block;
+    margin-left: 0.4rem;
+    color: #475569;
+}
+
+.crf-sla-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 1rem 0 0;
+}
+
+.crf-sla-alert.d-none {
+    display: none !important;
+}
+
+.automation-sla-status {
+    display: grid;
+    justify-items: start;
+    gap: 0.5rem;
+    min-width: 130px;
+    padding: 0.1rem 0.15rem;
+}
+
+.automation-sla-status .badge {
+    padding: 0.38rem 0.65rem;
+    white-space: nowrap;
+}
+
+.automation-sla-status-detail {
+    max-width: 175px;
+    color: #64748b;
+    font-size: 0.7rem;
+    line-height: 1.5;
+}
+
 /* Supaya nilai SLA tidak terpecah ke bawah */
 .crf-sla-value,
 .crf-sla-value * {
@@ -2856,6 +2893,46 @@ textarea.form-control {
 .crf-helpdesk-table--department th:nth-child(3),
 .crf-helpdesk-table--department td:nth-child(3) {
   width: 24%;
+}
+
+.crf-helpdesk-table--automation th:nth-child(1),
+.crf-helpdesk-table--automation td:nth-child(1) {
+  width: 4%;
+}
+
+.crf-helpdesk-table--automation th:nth-child(2),
+.crf-helpdesk-table--automation td:nth-child(2) {
+  width: 16%;
+}
+
+.crf-helpdesk-table--automation th:nth-child(3),
+.crf-helpdesk-table--automation td:nth-child(3) {
+  width: 20%;
+}
+
+.crf-helpdesk-table--automation th:nth-child(4),
+.crf-helpdesk-table--automation td:nth-child(4) {
+  width: 9%;
+}
+
+.crf-helpdesk-table--automation th:nth-child(5),
+.crf-helpdesk-table--automation td:nth-child(5) {
+  width: 7%;
+}
+
+.crf-helpdesk-table--automation th:nth-child(6),
+.crf-helpdesk-table--automation td:nth-child(6) {
+  width: 12%;
+}
+
+.crf-helpdesk-table--automation th:nth-child(7),
+.crf-helpdesk-table--automation td:nth-child(7) {
+  width: 17%;
+}
+
+.crf-helpdesk-table--automation th:nth-child(8),
+.crf-helpdesk-table--automation td:nth-child(8) {
+  width: 15%;
 }
 
 .crf-helpdesk-table tbody td:first-child,

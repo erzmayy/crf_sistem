@@ -6,6 +6,97 @@
 
 document.addEventListener('DOMContentLoaded', function () {
 
+  function formatSlaDuration(totalSeconds) {
+    var totalMinutes = Math.max(0, Math.floor(totalSeconds / 60));
+    var days = Math.floor(totalMinutes / 1440);
+    var hours = Math.floor((totalMinutes % 1440) / 60);
+    var minutes = totalMinutes % 60;
+    var parts = [];
+
+    if (days > 0) { parts.push(days + ' Hari'); }
+    if (hours > 0) { parts.push(hours + ' Jam'); }
+    if (minutes > 0 || parts.length === 0) { parts.push(minutes + ' Menit'); }
+    return parts.join(' ');
+  }
+
+  function updateLiveSlaStatus() {
+    document.querySelectorAll('[data-sla-live="true"]').forEach(function (slaGrid) {
+      var dueAt = Number(slaGrid.getAttribute('data-sla-due-at'));
+      var remaining = dueAt - Math.floor(Date.now() / 1000);
+      var statusBadge = slaGrid.querySelector('[data-sla-status-label]');
+      var statusDetail = slaGrid.querySelector('[data-sla-status-detail]');
+      var alertBox = slaGrid.parentElement.querySelector('[data-sla-alert]');
+      var alertIcon = alertBox ? alertBox.querySelector('[data-sla-alert-icon]') : null;
+      var alertMessage = alertBox ? alertBox.querySelector('[data-sla-alert-message]') : null;
+      var state = '';
+
+      if (!Number.isFinite(dueAt) || !statusBadge || !statusDetail) { return; }
+
+      if (remaining >= 0) {
+        var approaching = remaining <= 3600;
+        statusBadge.textContent = 'Masih dalam SLA';
+        statusDetail.textContent = 'Sisa waktu ' + formatSlaDuration(remaining) + '.';
+        statusBadge.className = 'badge text-bg-' + (approaching ? 'warning' : 'success');
+        state = approaching ? 'approaching' : '';
+      } else {
+        statusBadge.textContent = 'Melewati SLA';
+        statusDetail.textContent = 'Terlambat ' + formatSlaDuration(Math.abs(remaining)) + '.';
+        statusBadge.className = 'badge text-bg-danger';
+        state = 'overdue';
+      }
+
+      if (!alertBox) { return; }
+      alertBox.classList.remove('alert-warning', 'alert-danger');
+      if (!state) {
+        alertBox.classList.add('d-none');
+        alertBox.setAttribute('data-sla-alert-state', '');
+        return;
+      }
+
+      alertBox.classList.remove('d-none');
+      alertBox.classList.add(state === 'overdue' ? 'alert-danger' : 'alert-warning');
+      alertBox.setAttribute('data-sla-alert-state', state);
+      if (alertIcon) {
+        alertIcon.className = 'bi bi-' + (state === 'overdue' ? 'exclamation-triangle-fill' : 'clock-fill');
+      }
+      if (alertMessage) {
+        alertMessage.textContent = state === 'overdue'
+          ? 'Peringatan: batas SLA telah terlewati.'
+          : 'Perhatian: batas waktu SLA tinggal 1 jam atau kurang.';
+      }
+    });
+
+    document.querySelectorAll('[data-sla-countdown="true"]').forEach(function (slaCell) {
+      var dueAt = Number(slaCell.getAttribute('data-sla-due-at'));
+      var remaining = dueAt - Math.floor(Date.now() / 1000);
+      var statusBadge = slaCell.querySelector('[data-sla-status-label]');
+      var statusDetail = slaCell.querySelector('[data-sla-status-detail]');
+
+      if (!Number.isFinite(dueAt) || !statusBadge || !statusDetail) { return; }
+
+      if (remaining >= 0) {
+        var approaching = remaining <= 3600;
+        statusBadge.textContent = 'Masih dalam SLA';
+        statusBadge.className = 'badge text-bg-' + (approaching ? 'warning' : 'success');
+        statusDetail.textContent = 'Sisa waktu ' + formatSlaDuration(remaining) + '.';
+        return;
+      }
+
+      statusBadge.textContent = 'SLA Terlewati';
+      statusBadge.className = 'badge text-bg-danger';
+      statusDetail.textContent = 'Sudah melewati SLA selama '
+        + formatSlaDuration(Math.abs(remaining)) + '.';
+    });
+  }
+
+  updateLiveSlaStatus();
+  if (
+    document.querySelector('[data-sla-live="true"]')
+    || document.querySelector('[data-sla-countdown="true"]')
+  ) {
+    window.setInterval(updateLiveSlaStatus, 60000);
+  }
+
   /* -----------------------------------------------------------------
    * 1. Tampilkan field "Detail Kategori" sesuai kategori yang dipilih
    * ----------------------------------------------------------------- */
