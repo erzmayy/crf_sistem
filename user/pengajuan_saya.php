@@ -538,6 +538,20 @@ require_once __DIR__ . '/../includes/header.php';
                                         <?php endif; ?>
 
 
+                                        <!-- ISI POST IMPLEMENTATION REVIEW -->
+                                        <?php if (($row['workflow_stage'] ?? '') === 'PEMOHON_PIR'): ?>
+
+                                            <a
+                                                href="detail.php?id=<?= (int) $row['id'] ?>#implementation-review"
+                                                class="btn btn-sm btn-success"
+                                            >
+                                                <i class="bi bi-pencil-square"></i>
+                                                Isi PIR
+                                            </a>
+
+                                        <?php endif; ?>
+
+
                                         <!-- EDIT / KIRIM ULANG -->
                                         <?php if (
                                             $row['status'] === 'Draft'

@@ -59,23 +59,29 @@ $homePath = $isAdminUser
    */
   $navGroups = [
       [
+          'label' => 'Dashboard',
+          'icon' => 'bi-grid',
+          'items' => [
+              // Satu halaman master Kategori & Handling (tab Helpdesk / CRF).
+              ['label' => 'Kategori & Handling', 'url' => '/admin/master_data.php', 'show' => $isAdminUser, 'active' => $isNav('admin', 'master_data.php')],
+              // Satu dashboard kategori untuk Helpdesk & CRF (tab per jenis).
+              ['label' => 'Dashboard Handling Kategori', 'url' => '/helpdesk/handling.php', 'show' => $isPicUser || in_array($crfRole, ['cmo', 'otomasi', 'kadep_operasional'], true), 'active' => $isNav('helpdesk', 'handling.php') || $isNav('helpdesk', 'kategori.php')],
+          ],
+      ],
+      [
           'label' => 'Help Desk',
           'icon' => 'bi-headset',
           'items' => [
-              ['label' => 'Kategori Help Desk', 'url' => '/admin/master_data.php?tab=helpdesk', 'show' => $isAdminUser, 'active' => $isNav('admin', 'master_data.php') && ($_GET['tab'] ?? 'helpdesk') !== 'crf'],
               ['label' => 'Dashboard Help Desk', 'url' => '/helpdesk/dashboard.php', 'show' => $isPicUser, 'active' => $isNav('helpdesk', 'dashboard.php')],
               ['label' => 'Formulir Help Desk', 'url' => '/helpdesk/form.php', 'show' => true, 'active' => $isNav('helpdesk', 'form.php')],
               ['label' => 'Tiket Saya', 'url' => '/helpdesk/saya.php', 'show' => true, 'active' => $isNav('helpdesk', 'saya.php') || $isNav('helpdesk', 'detail.php')],
-              ['label' => 'Dashboard Handling Help Desk', 'url' => '/helpdesk/handling.php', 'show' => $isPicUser, 'active' => $isNav('helpdesk', 'handling.php') || $isNav('helpdesk', 'kategori.php')],
           ],
       ],
       [
           'label' => 'Change Request (CRF)',
           'icon' => 'bi-file-earmark-diff',
           'items' => [
-              ['label' => 'Kategori & Handling CRF', 'url' => '/admin/master_data.php?tab=crf', 'show' => $isAdminUser, 'active' => $isNav('admin', 'master_data.php') && ($_GET['tab'] ?? '') === 'crf'],
               ['label' => 'Dashboard CRF', 'url' => '/admin/dashboard.php', 'show' => $isAdminUser, 'active' => $isNav('admin', 'dashboard.php') || $isNav('admin', 'detail.php') || $isNav('admin', 'edit.php')],
-              ['label' => 'Dashboard Kategori CRF', 'url' => '/crf/dashboard_kategori.php', 'show' => in_array($crfRole, ['admin', 'cmo', 'otomasi', 'kadep_operasional'], true), 'active' => $isNav('crf', 'dashboard_kategori.php')],
               ['label' => 'Review CMO', 'url' => '/cmo/index.php', 'show' => in_array($crfRole, ['admin', 'cmo'], true), 'active' => $currentFolder === 'cmo'],
               ['label' => 'Handler CRF', 'url' => '/otomasi/index.php', 'show' => in_array($crfRole, ['admin', 'otomasi'], true), 'active' => $currentFolder === 'otomasi'],
               ['label' => 'Approval Kadep Operasional', 'url' => '/pak_joko/index.php', 'show' => in_array($crfRole, ['admin', 'kadep_operasional'], true), 'active' => $currentFolder === 'pak_joko'],

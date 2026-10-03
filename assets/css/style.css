@@ -4645,3 +4645,320 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   .siap-menu-item.is-open > .siap-submenu { display: block; }
   .siap-menu-item.is-open > .siap-menu-link .siap-menu-caret { transform: rotate(90deg); }
 }
+
+/* =====================================================================
+   Detail CRF - tampilan modern (berlaku di semua halaman detail:
+   Admin, CMO, Handler, Kadep, Pemohon). Hanya CSS; markup tetap.
+   ===================================================================== */
+.crf-detail-page {
+  --dt-ink: #0f2742;
+  --dt-muted: #64748b;
+  --dt-line: #e6edf4;
+  --dt-soft: #f6f9fc;
+  --dt-accent: #2563eb;
+  --dt-accent-soft: #e8f0fe;
+  --dt-radius: 16px;
+}
+
+/* Kartu section */
+.crf-detail-page .crf-detail-main .crf-section,
+.crf-detail-page .crf-detail-sidebar > .crf-section {
+  border: 1px solid var(--dt-line);
+  border-radius: var(--dt-radius);
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 39, 66, 0.04), 0 8px 24px rgba(15, 39, 66, 0.05);
+}
+.crf-detail-page .crf-detail-main > .crf-detail-card,
+.crf-detail-page .crf-detail-main .crf-section { margin-bottom: 1rem !important; }
+.crf-detail-page .crf-section-header,
+.crf-detail-page .crf-detail-card .crf-section-header,
+.crf-detail-page .crf-detail-timeline .crf-section-header {
+  padding: 1rem 1.25rem 0.85rem;
+  border-bottom: 1px solid var(--dt-line);
+  background: #fff;
+}
+.crf-detail-page .crf-section-number {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 10px;
+  background: var(--dt-accent-soft);
+  color: var(--dt-accent);
+  font-size: 0.95rem;
+}
+.crf-detail-page .crf-section-header h2 {
+  color: var(--dt-ink);
+  font-size: 1rem;
+  font-weight: 700;
+}
+.crf-detail-page .crf-detail-card .crf-section-body,
+.crf-detail-page .crf-section-body { padding: 1.15rem 1.25rem 1.25rem; }
+
+/* Data: daftar label-nilai (label kiri, nilai kanan), mudah dipindai */
+.crf-detail-page .crf-info-rows {
+  display: flex;
+  flex-direction: column;
+}
+.crf-detail-page .crf-info-row,
+.crf-detail-page .crf-detail-card .crf-info-row,
+.crf-detail-page .crf-info-row:first-child,
+.crf-detail-page .crf-info-row:last-child {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 1.25rem;
+  margin: 0 -0.6rem;
+  padding: 0.7rem 0.6rem;
+  border-bottom: 1px solid #eef2f6;
+  border-radius: 8px;
+}
+.crf-detail-page .crf-info-row:last-child { border-bottom: 0; }
+.crf-detail-page .crf-info-row:hover { background: #f8fafc; }
+.crf-detail-page .crf-info-label,
+.crf-detail-page .crf-detail-card .crf-info-label {
+  padding: 0;
+  color: var(--dt-muted);
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.crf-detail-page .crf-info-value,
+.crf-detail-page .crf-detail-card .crf-info-value {
+  color: var(--dt-ink);
+  font-size: 0.93rem;
+  font-weight: 600;
+  line-height: 1.6;
+  /* pre-line membuat spasi template PHP tampil sebagai baris kosong */
+  white-space: normal;
+}
+/* Kartu sempit (laptop kecil / tablet): label pindah ke atas nilai.
+   Mengikuti lebar kartu, bukan lebar layar. */
+.crf-detail-page .crf-detail-card .crf-section-body { container-type: inline-size; }
+@container (max-width: 600px) {
+  .crf-detail-page .crf-info-row,
+  .crf-detail-page .crf-detail-card .crf-info-row,
+  .crf-detail-page .crf-info-row:first-child,
+  .crf-detail-page .crf-info-row:last-child {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+}
+
+/* Teks panjang: kotak baca dengan aksen kiri */
+.crf-detail-page .crf-request-row-long .crf-info-value {
+  padding: 0.6rem 0.85rem;
+  border-left: 3px solid #c7d7ee;
+  border-radius: 0 8px 8px 0;
+  background: #f6f9fc;
+  font-weight: 400;
+}
+/* Lampiran sudah berbentuk kartu sendiri: tanpa kotak baca */
+.crf-detail-page .crf-request-row-long .crf-info-value:has(.crf-attachment-list) {
+  padding: 0;
+  border-left: 0;
+  background: none;
+}
+.crf-detail-page .crf-info-sub {
+  display: block;
+  color: var(--dt-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+.crf-detail-page .crf-info-register {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-weight: 700;
+}
+.crf-detail-page .crf-urgency-detail-row { align-items: center; }
+.crf-detail-page .crf-urgency-detail-value { min-height: 0; }
+
+/* Lampiran */
+.crf-detail-page .crf-attachment-list {
+  /* minmax(0,1fr): nama file panjang tidak boleh melebarkan kartu */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  min-width: 0;
+}
+.crf-detail-page .crf-attachment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--dt-line);
+  border-radius: 10px;
+  background: #fff;
+}
+/* Selalu mendatar (menimpa aturan lama yang menumpuk di layar kecil) */
+.crf-detail-page .crf-attachment-row,
+.crf-detail-page .crf-detail-card .crf-attachment-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+}
+/* Nama file minimal ~220px; bila tidak muat, tombol turun ke baris bawah */
+.crf-detail-page .crf-attachment-row > .d-flex { margin-left: auto; }
+.crf-detail-page .crf-attachment-name {
+  display: flex;
+  flex: 1 1 220px;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+.crf-detail-page .crf-attachment-name span {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.crf-detail-page .crf-attachment-name small,
+.crf-detail-page .crf-attachment-name i { flex: 0 0 auto; white-space: nowrap; }
+
+/* SLA: setiap item jadi ubin */
+.crf-detail-page .crf-sla-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 0;
+}
+.crf-detail-page .crf-sla-grid > .crf-sla-item,
+.crf-detail-page .crf-detail-card .crf-sla-grid > .crf-sla-item {
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  background: var(--dt-soft);
+}
+.crf-detail-page .crf-sla-grid > .col-md-6 { grid-column: span 2; }
+.crf-detail-page .crf-detail-card .crf-sla-item .crf-detail-label {
+  margin-bottom: 0.3rem;
+  color: var(--dt-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.crf-detail-page .crf-detail-card .crf-sla-item .crf-detail-value {
+  color: var(--dt-ink);
+  font-size: 0.92rem;
+  white-space: normal;
+}
+.crf-detail-page .crf-sla-status-detail { display: block; margin-top: 0.3rem; color: var(--dt-muted); font-size: 0.8rem; }
+.crf-detail-page .crf-sla-result { margin-top: 0.75rem; border-radius: 12px; }
+
+/* Form */
+.crf-detail-page .form-label,
+.crf-detail-page .crf-field-label {
+  margin-bottom: 0.4rem;
+  color: var(--dt-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.crf-detail-page .form-control,
+.crf-detail-page .form-select {
+  min-height: 44px;
+  border: 1px solid #d6e0ea;
+  border-radius: 10px;
+  background-color: #fbfdff;
+  color: var(--dt-ink);
+  font-size: 0.92rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.crf-detail-page textarea.form-control {
+  min-height: 110px;
+  padding: 0.75rem 0.9rem;
+  line-height: 1.55;
+  resize: vertical;
+}
+.crf-detail-page .form-control:hover,
+.crf-detail-page .form-select:hover { border-color: #b9c8d8; }
+.crf-detail-page .form-control:focus,
+.crf-detail-page .form-select:focus {
+  border-color: var(--dt-accent);
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+}
+.crf-detail-page .form-control[readonly],
+.crf-detail-page .form-select:disabled {
+  border-style: dashed;
+  background-color: #f1f5f9;
+  color: var(--dt-muted);
+}
+.crf-detail-page .form-control::placeholder { color: #9aa9b9; }
+.crf-detail-page .crf-readonly-note {
+  color: var(--dt-muted);
+  font-size: 0.78rem;
+}
+
+/* Alert lembut dengan aksen kiri */
+.crf-detail-page .crf-section .alert {
+  padding: 0.8rem 1rem;
+  border: 0;
+  border-left: 4px solid currentColor;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+.crf-detail-page .alert-info { background: #eef6ff; color: #1e4f8a; }
+.crf-detail-page .alert-success { background: #ecfdf3; color: #146c43; }
+.crf-detail-page .alert-warning { background: #fff8e6; color: #8a5a00; }
+.crf-detail-page .alert-danger { background: #fdecec; color: #a12622; }
+
+/* Tombol */
+.crf-detail-page .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 42px;
+  padding: 0.5rem 1.1rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.crf-detail-page .btn-sm { min-height: 34px; padding: 0.3rem 0.75rem; border-radius: 8px; }
+.crf-detail-page .btn-crf-primary {
+  border: 0;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+}
+.crf-detail-page .btn-crf-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+  transform: translateY(-1px);
+}
+
+/* Bar aksi form menempel di bawah layar saat menggulir */
+.crf-detail-page .crf-detail-main form > .d-flex.justify-content-end {
+  position: sticky;
+  bottom: 0.75rem;
+  z-index: 5;
+  margin-top: 0.25rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--dt-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 30px rgba(15, 39, 66, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+/* Timeline menempel di samping pada layar lebar */
+@media (min-width: 992px) {
+  .crf-detail-page .crf-detail-sidebar {
+    position: sticky;
+    top: calc(var(--crf-topbar-height) + 1rem);
+  }
+  .crf-detail-page .crf-detail-sidebar > .crf-detail-timeline {
+    max-height: calc(100vh - var(--crf-topbar-height) - 2rem);
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .crf-detail-page .crf-info-row,
+  .crf-detail-page .crf-detail-card .crf-info-row,
+  .crf-detail-page .crf-info-row:first-child,
+  .crf-detail-page .crf-info-row:last-child { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
+  .crf-detail-page .crf-sla-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

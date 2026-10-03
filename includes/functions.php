@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/categories.php';
+require_once __DIR__ . '/../config/sla.php';
 
 use Aws\S3\S3Client;
 use Aws\Exception\AwsException;
@@ -259,7 +260,7 @@ function workflowStageLabel(string $stage): string
         case 'OTOMASI':
             return 'Proses Otomasi';
         case 'PEMOHON_PIR':
-            return 'Review Hasil Perubahan';
+            return 'Menunggu PIR Pemohon';
         case 'kadep_operasional':
             return 'Menunggu Persetujuan Kepala Departemen';
         case 'CMO_FINAL':
@@ -320,11 +321,68 @@ function slaDueAt(?string $startedAt, $value, ?string $unit): ?string
                 return null;
         }
 
-        $date->modify('+' . $seconds . ' seconds');
-        return $date->format('Y-m-d H:i:s');
+        return slaAddWorkingSeconds($date, $seconds)->format('Y-m-d H:i:s');
     } catch (Throwable $e) {
         return null;
     }
+}
+
+/**
+ * Hari kerja SLA: Senin-Jumat dan bukan tanggal libur (config/sla.php).
+ */
+function slaIsWorkingDay(DateTimeInterface $date): bool
+{
+    return (int) $date->format('N') <= 5
+        && !in_array($date->format('Y-m-d'), CRF_SLA_HOLIDAYS, true);
+}
+
+/**
+ * Tambah durasi SLA yang hanya berjalan di hari kerja.
+ * Contoh: Jumat 16:00 + 1 Hari = Senin 16:00.
+ */
+function slaAddWorkingSeconds(DateTimeInterface $start, int $seconds): DateTimeImmutable
+{
+    $cursor = DateTimeImmutable::createFromInterface($start);
+
+    while (true) {
+        if (!slaIsWorkingDay($cursor)) {
+            $cursor = $cursor->modify('tomorrow');
+            continue;
+        }
+
+        $dayEnd = $cursor->modify('tomorrow');
+        $available = $dayEnd->getTimestamp() - $cursor->getTimestamp();
+
+        if ($seconds <= $available) {
+            return $cursor->modify('+' . $seconds . ' seconds');
+        }
+
+        $seconds -= $available;
+        $cursor = $dayEnd;
+    }
+}
+
+/**
+ * Durasi (detik) di antara dua waktu yang jatuh pada hari kerja saja.
+ */
+function slaWorkingSecondsBetween(DateTimeInterface $start, DateTimeInterface $end): int
+{
+    $cursor = DateTimeImmutable::createFromInterface($start);
+    $end = DateTimeImmutable::createFromInterface($end);
+    $total = 0;
+
+    while ($cursor < $end) {
+        $dayEnd = $cursor->modify('tomorrow');
+        $segmentEnd = $dayEnd < $end ? $dayEnd : $end;
+
+        if (slaIsWorkingDay($cursor)) {
+            $total += $segmentEnd->getTimestamp() - $cursor->getTimestamp();
+        }
+
+        $cursor = $segmentEnd;
+    }
+
+    return $total;
 }
 
 function formatSlaDuration(int $seconds): string
@@ -376,7 +434,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
     }
 
     if ($completedAt !== null && $startedAt !== null && $dueAt !== null) {
-        $elapsed = max(0, $completedAt->getTimestamp() - $startedAt->getTimestamp());
+        $elapsed = slaWorkingSecondsBetween($startedAt, $completedAt);
         if ($completedAt <= $dueAt) {
             $remaining = $dueAt->getTimestamp() - $completedAt->getTimestamp();
             return [
@@ -411,7 +469,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
             'class' => 'secondary',
             'alert' => null,
             'elapsed' => $startedAt !== null
-                ? formatSlaDuration(max(0, $completedAt->getTimestamp() - $startedAt->getTimestamp()))
+                ? formatSlaDuration(slaWorkingSecondsBetween($startedAt, $completedAt))
                 : null,
             'remaining' => null,
             'overdue' => null,
@@ -541,6 +599,9 @@ function crfDisplayStatus(array $crf): array
     if ($stage === 'OTOMASI') {
         return ['key' => 'diproses', 'label' => 'Diproses', 'class' => 'badge-status-proses'];
     }
+    if ($stage === 'PEMOHON_PIR') {
+        return ['key' => 'pir', 'label' => 'Menunggu PIR Pemohon', 'class' => 'badge-stage-pir'];
+    }
     if ($stage === 'CMO_FINAL') {
         return ['key' => 'finalisasi', 'label' => 'Menunggu Finalisasi', 'class' => 'badge-stage-cmo-final'];
     }
@@ -562,7 +623,7 @@ function crfDisplayStatusConditions(string $alias = 'cr'): array
         'review'     => ['label' => 'Menunggu Review', 'sql' => "{$a}status = 'Belum Ditindak Lanjuti' AND {$a}workflow_stage = 'CMO_FILTER'"],
         'diproses'   => ['label' => 'Diproses', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage = 'OTOMASI' AND {$a}kadep_operasional_approved_at IS NULL"],
         'approval'   => ['label' => 'Menunggu Approval', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage = 'kadep_operasional'"],
-        'disetujui'  => ['label' => 'Disetujui · Eksekusi', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage IN ('OTOMASI','CMO_FINAL') AND {$a}kadep_operasional_approved_at IS NOT NULL"],
+        'disetujui'  => ['label' => 'Disetujui · Eksekusi', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage IN ('OTOMASI','PEMOHON_PIR','CMO_FINAL') AND {$a}kadep_operasional_approved_at IS NOT NULL"],
         'revisi'     => ['label' => 'Ditolak / Perlu Revisi', 'sql' => "{$a}status = 'Perlu Revisi'"],
         'selesai'    => ['label' => 'Selesai', 'sql' => "{$a}status = 'Solve'"],
         'dibatalkan' => ['label' => 'Dibatalkan', 'sql' => "{$a}status = 'Cancel'"],
@@ -587,13 +648,14 @@ function finalizeCrfSla(PDO $pdo, int $crfId): void
         return;
     }
 
-    $started = strtotime($row['sla_started_at']);
-    $completed = strtotime($row['automation_completed_at']);
-    $minutes = (int) max(0, round(($completed - $started) / 60));
+    $started = new DateTimeImmutable($row['sla_started_at']);
+    $completed = new DateTimeImmutable($row['automation_completed_at']);
+    // Durasi aktual hanya menghitung hari kerja, sama seperti batas SLA.
+    $minutes = (int) round(slaWorkingSecondsBetween($started, $completed) / 60);
     $result = null;
 
     if (!empty($row['sla_due_at'])) {
-        $result = $completed <= strtotime($row['sla_due_at']) ? 'Sesuai SLA' : 'Melebihi SLA';
+        $result = $completed->getTimestamp() <= strtotime($row['sla_due_at']) ? 'Sesuai SLA' : 'Melebihi SLA';
     }
 
     $update = $pdo->prepare('
@@ -824,6 +886,62 @@ function crfUrgencyForImpact(?string $impact): ?string
     ];
 
     return $urgencyByImpact[$impact ?? ''] ?? null;
+}
+
+/**
+ * Matriks SLA satu kategori CRF per level urgensi.
+ * Kolom sla_value / sla_unit = SLA Normal; Tinggi/Rendah kosong ikut Normal.
+ *
+ * @return array<string,?array{value:float,unit:string}>
+ */
+function crfCategorySlaMatrix(array $category): array
+{
+    $pick = static function ($value, $unit): ?array {
+        return ($value !== null && $value !== '' && (float) $value > 0 && in_array($unit, ['Menit', 'Jam', 'Hari'], true))
+            ? ['value' => (float) $value, 'unit' => (string) $unit]
+            : null;
+    };
+    $normal = $pick($category['sla_value'] ?? null, $category['sla_unit'] ?? null);
+
+    return [
+        'Tinggi' => $pick($category['sla_tinggi_value'] ?? null, $category['sla_tinggi_unit'] ?? null) ?? $normal,
+        'Normal' => $normal,
+        'Rendah' => $pick($category['sla_rendah_value'] ?? null, $category['sla_rendah_unit'] ?? null) ?? $normal,
+    ];
+}
+
+/**
+ * Level urgensi yang berlaku untuk CRF: final Forum > level tersimpan > otomatis dari dampak.
+ */
+function crfEffectiveUrgency(array $crf): ?string
+{
+    return ($crf['final_urgency_level'] ?? null)
+        ?: ($crf['level'] ?? null)
+        ?: crfUrgencyForImpact($crf['impact_category'] ?? null);
+}
+
+/**
+ * SLA standar CRF dari matriks Kategori x Urgensi, atau null bila belum diatur.
+ *
+ * @return ?array{value:float,unit:string}
+ */
+function crfStandardSla(PDO $pdo, ?int $categoryId, ?string $urgency): ?array
+{
+    if (empty($categoryId) || !in_array($urgency, ['Tinggi', 'Normal', 'Rendah'], true)) {
+        return null;
+    }
+
+    $category = findCrfCategory($pdo, $categoryId);
+
+    return $category ? crfCategorySlaMatrix($category)[$urgency] : null;
+}
+
+function crfSlaEquals(?array $sla, $value, ?string $unit): bool
+{
+    return $sla !== null
+        && is_numeric($value)
+        && abs((float) $value - $sla['value']) < 0.001
+        && $unit === $sla['unit'];
 }
 
 function crfImpactLabel(?string $impact): string

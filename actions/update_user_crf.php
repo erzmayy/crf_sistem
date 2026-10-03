@@ -14,7 +14,7 @@ verifyCsrf();
 $id = (int) ($_POST['id'] ?? 0);
 $_SESSION['flash'] = [
     'type' => 'warning',
-    'message' => 'Implementasi dan Post Implementation Review diisi oleh Otomasi, bukan Pemohon.'
+    'message' => 'Implementasi diisi oleh Otomasi. Post Implementation Review diisi Pemohon setelah implementasi dicatat.'
 ];
 
 header(

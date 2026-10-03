@@ -13,8 +13,11 @@ $activityLabels = [
     'Dalam Proses' => 'Diperiksa Admin CAB',
     'Lolos Filter CMO' => 'Review Teknis & Komite',
     'Otomasi - SLA Ditentukan' => 'SLA Ditentukan',
+    'SLA Otomatis' => 'SLA Standar Kategori',
+    'SLA Disesuaikan Handler' => 'SLA Disesuaikan Handler',
     'Approval Kepala Departemen Operasional' => 'Persetujuan Kepala Departemen',
-    'Otomasi Selesai' => 'Mulai Implementasi / Selesai',
+    'Otomasi Selesai' => 'Implementasi Selesai',
+    'PIR Diisi Pemohon' => 'Post Implementation Review',
     'Solve' => 'CRF Selesai',
     'Cancel' => 'CRF Dibatalkan',
     'Dibuat dari Helpdesk' => 'Draft CRF Dibuat dari Helpdesk',
@@ -43,13 +46,13 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
             }
             $pendingStep = empty($crf['kadep_operasional_approved_at'])
                 ? ['title' => 'Penetapan SLA', 'description' => 'Menunggu Handler menentukan level urgensi dan SLA.']
-                : ['title' => 'Mulai Implementasi / Selesai', 'description' => 'Menunggu proses implementasi dan Post Implementation Review dari Handler.'];
+                : ['title' => 'Mulai Implementasi / Selesai', 'description' => 'Menunggu Handler mencatat hasil implementasi.'];
             break;
         case 'kadep_operasional':
             $pendingStep = ['title' => 'Persetujuan Kepala Departemen', 'description' => 'Menunggu persetujuan Kepala Departemen Operasional.'];
             break;
         case 'PEMOHON_PIR':
-            $pendingStep = ['title' => 'Review Hasil Perubahan', 'description' => 'Menunggu Post Implementation Review.'];
+            $pendingStep = ['title' => 'Post Implementation Review', 'description' => 'Menunggu Pemohon mengisi Post Implementation Review.'];
             break;
         case 'CMO_FINAL':
             $pendingStep = ['title' => 'Finalisasi CMO', 'description' => 'Menunggu CMO menyelesaikan atau menutup CRF.'];

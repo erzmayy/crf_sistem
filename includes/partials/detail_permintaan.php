@@ -77,7 +77,7 @@ $urgencyLabel = !empty($crf['final_urgency_level'])
                                 <div class="crf-attachment-row">
                                     <div class="crf-attachment-name">
                                         <i class="bi bi-paperclip text-primary"></i>
-                                        <span><?= h($file['original_name'] ?? '-') ?></span>
+                                        <span title="<?= h($file['original_name'] ?? '-') ?>"><?= h($file['original_name'] ?? '-') ?></span>
                                         <small class="text-muted">
                                             <?= round(((int) ($file['file_size'] ?? 0)) / 1024) ?> KB
                                         </small>

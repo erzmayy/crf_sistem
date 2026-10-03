@@ -19,10 +19,9 @@ $action = $_POST['action'] ?? 'save';
 $submittedLevel = $_POST['level'] ?? '';
 $slaValue = trim($_POST['sla_value'] ?? '');
 $slaUnit = $_POST['sla_unit'] ?? '';
+$slaReason = trim($_POST['sla_reason'] ?? '');
 $implementation = trim($_POST['implementation'] ?? '');
-$pir = trim($_POST['post_implementation_review'] ?? '');
 $implementationDate = trim($_POST['implementation_date'] ?? '');
-$pirDate = trim($_POST['pir_date'] ?? '');
 
 if ($id <= 0) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'CRF tidak valid.'];
@@ -110,9 +109,44 @@ try {
         ?: crfUrgencyForImpact($crf['impact_category'] ?? null)
         ?: $submittedLevel;
     $isExecutionStage = !empty($crf['kadep_operasional_approved_at']);
-    if ($isExecutionStage || !empty($crf['final_urgency_level'])) {
+    $isSlaLocked = $isExecutionStage || !empty($crf['final_urgency_level']);
+    if ($isSlaLocked) {
         $slaValue = (string) ($crf['sla_value'] ?? '');
         $slaUnit = $crf['sla_unit'] ?? '';
+    }
+
+    /*
+     * SLA standar dari matriks Kategori x Urgensi. Handler boleh
+     * menyimpang dari standar asalkan menuliskan alasannya.
+     */
+    $standardSla = $isSlaLocked ? null : crfStandardSla($pdo, (int) ($crf['crf_category_id'] ?? 0), $level);
+    $slaDeviates = $standardSla !== null && !crfSlaEquals($standardSla, $slaValue, $slaUnit);
+
+    if ($slaDeviates && ($slaReason === '' || mb_strlen($slaReason) > 500)) {
+        $pdo->rollBack();
+        $_SESSION['flash'] = [
+            'type' => 'danger',
+            'message' => 'SLA berbeda dari standar kategori (' . slaLabel($standardSla['value'], $standardSla['unit'])
+                . '). Alasan perubahan SLA wajib diisi (maks. 500 karakter).',
+        ];
+        header('Location: ../otomasi/detail.php?id=' . $id);
+        exit;
+    }
+
+    $slaChanged = !crfSlaEquals(
+        $crf['sla_value'] !== null ? ['value' => (float) $crf['sla_value'], 'unit' => (string) $crf['sla_unit']] : null,
+        $slaValue,
+        $slaUnit
+    );
+    if ($slaDeviates && ($slaChanged || $action === 'complete')) {
+        logCrfActivity(
+            $pdo,
+            $id,
+            'SLA Disesuaikan Handler',
+            'SLA ' . slaLabel($slaValue, $slaUnit) . ' (standar kategori ' . slaLabel($standardSla['value'], $standardSla['unit'])
+                . '). Alasan: ' . $slaReason,
+            crfActorName($user)
+        );
     }
 
     if (
@@ -142,18 +176,9 @@ try {
                 && $implementationDateErrors['error_count'] === 0
             )
         );
-    $parsedPirDate = DateTime::createFromFormat('!Y-m-d', $pirDate);
-    $pirDateErrors = DateTime::getLastErrors();
-    $isValidPirDate = $parsedPirDate !== false
-        && $parsedPirDate->format('Y-m-d') === $pirDate
-        && (
-            $pirDateErrors === false
-            || ($pirDateErrors['warning_count'] === 0 && $pirDateErrors['error_count'] === 0)
-        );
+    // PIR tidak lagi diisi Otomasi; Pemohon mengisinya setelah implementasi.
     $hasMissingExecutionDetails = !$isValidImplementationDate
-        || !$isValidPirDate
-        || $implementation === ''
-        || $pir === '';
+        || $implementation === '';
 
     if (
         $action === 'complete'
@@ -163,7 +188,7 @@ try {
         $pdo->rollBack();
         $_SESSION['flash'] = [
             'type' => 'danger',
-            'message' => 'Tanggal implementasi, Implementasi / Hasil Perubahan, Tanggal PIR, dan Post Implementation Review wajib diisi dengan benar sebelum eksekusi diselesaikan.'
+            'message' => 'Tanggal Implementasi dan Implementasi / Hasil Perubahan wajib diisi dengan benar sebelum eksekusi diselesaikan.'
         ];
         header('Location: ../otomasi/detail.php?id=' . $id);
         exit;
@@ -255,9 +280,7 @@ try {
                 automation_completed_at = :automation_completed_at,
                 implementation_date = :implementation_date,
                 implementation = :implementation,
-                pir_date = :pir_date,
-                post_implementation_review = :pir,
-                workflow_stage = 'CMO_FINAL',
+                workflow_stage = 'PEMOHON_PIR',
                 status = 'Dalam Proses'
             WHERE id = :id
               AND workflow_stage = 'OTOMASI'
@@ -267,8 +290,6 @@ try {
             'automation_completed_at' => $now,
             'implementation_date' => $parsedImplementationDate->format('Y-m-d'),
             'implementation' => $implementation,
-            'pir_date' => $parsedPirDate->format('Y-m-d'),
-            'pir' => $pir,
             'id' => $id,
         ]);
 
@@ -280,24 +301,24 @@ try {
             $pdo,
             $id,
             'Otomasi Selesai',
-            'Otomasi menyelesaikan eksekusi dan mengisi Tanggal Implementasi, Implementasi / Hasil Perubahan, Tanggal PIR, serta Post Implementation Review. CRF diteruskan ke CMO untuk finalisasi.',
+            'Otomasi menyelesaikan eksekusi dan mencatat Tanggal Implementasi serta Implementasi / Hasil Perubahan. CRF diteruskan ke Pemohon untuk Post Implementation Review.',
             $actor,
             'Disetujui · Eksekusi',
-            'Menunggu Finalisasi'
+            'Menunggu PIR Pemohon'
         );
         finalizeCrfSla($pdo, $id);
         notifyUsers(
             $pdo,
-            crfUserIdsForRole($pdo, 'cmo'),
-            'Finalisasi CRF: ' . $crf['request_number'],
-            'Eksekusi CRF ' . $crf['request_number'] . ' selesai dan menunggu finalisasi CMO.',
+            [(int) $crf['user_id']],
+            'Isi PIR CRF: ' . $crf['request_number'],
+            'Implementasi CRF ' . $crf['request_number'] . ' sudah selesai. Silakan isi Post Implementation Review.',
             'crf/open.php?id=' . $id,
             $id,
             null,
             (int) $user['id']
         );
-        $message = 'Eksekusi, Tanggal Implementasi, dan Tanggal PIR berhasil disimpan. CRF diteruskan ke CMO untuk finalisasi.';
-        $redirect = isAdmin() ? '../cmo/index.php' : '../otomasi/index.php?queue=history';
+        $message = 'Hasil implementasi berhasil disimpan. CRF diteruskan ke Pemohon untuk mengisi Post Implementation Review.';
+        $redirect = '../otomasi/index.php?queue=history';
     }
 
     syncHelpdeskTicketFromCrf($pdo, $id, $actor);

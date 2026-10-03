@@ -243,14 +243,35 @@ require_once __DIR__ . '/../includes/header.php';
 
                     <div class="crf-section-body">
 
+                        <?php
+                        // SLA standar dari matriks Kategori x Urgensi (master kategori CRF).
+                        $standardSla = empty($crf['final_urgency_level'])
+                            ? crfStandardSla($pdo, (int) ($crf['crf_category_id'] ?? 0), crfEffectiveUrgency($crf))
+                            : null;
+                        $slaFormValue = $crf['sla_value'] !== null && $crf['sla_value'] !== ''
+                            ? rtrim(rtrim(number_format((float) $crf['sla_value'], 2, '.', ''), '0'), '.')
+                            : ($standardSla !== null ? rtrim(rtrim(number_format($standardSla['value'], 2, '.', ''), '0'), '.') : '');
+                        $slaFormUnit = $crf['sla_unit'] ?: ($standardSla['unit'] ?? 'Hari');
+                        ?>
+
                         <div class="alert alert-info">
-                            Periksa Level Urgensi otomatis dan tentukan SLA sebelum CRF
-                            diteruskan ke Kepala Departemen Operasional
-                            untuk approval.
+                            Periksa Level Urgensi dan SLA sebelum CRF diteruskan ke
+                            Kepala Departemen Operasional untuk approval.
+                            <?php if ($standardSla !== null): ?>
+                                SLA sudah terisi otomatis dari standar kategori
+                                (<strong><?= h(slaLabel($standardSla['value'], $standardSla['unit'])) ?></strong>, hari kerja).
+                                Jika diubah, alasan wajib diisi.
+                            <?php endif; ?>
                         </div>
 
 
-                        <div class="row g-3">
+                        <div
+                            class="row g-3"
+                            <?php if ($standardSla !== null): ?>
+                                data-sla-standard-value="<?= h((string) $standardSla['value']) ?>"
+                                data-sla-standard-unit="<?= h($standardSla['unit']) ?>"
+                            <?php endif; ?>
+                        >
 
                             <div class="col-md-4">
 
@@ -299,11 +320,14 @@ require_once __DIR__ . '/../includes/header.php';
                                     name="sla_value"
                                     class="form-control"
                                     <?= !empty($crf['final_urgency_level']) ? 'readonly' : '' ?>
-                                    value="<?= h(
-                                        $crf['sla_value'] ?? ''
-                                    ) ?>"
+                                    value="<?= h($slaFormValue) ?>"
                                     required
                                 >
+                                <?php if ($standardSla !== null): ?>
+                                    <div class="crf-readonly-note mt-2">
+                                        Standar kategori: <?= h(slaLabel($standardSla['value'], $standardSla['unit'])) ?>
+                                    </div>
+                                <?php endif; ?>
                                 <?php if (!empty($crf['final_urgency_level'])): ?>
                                     <div class="crf-readonly-note mt-2">
                                         SLA final sudah disepakati di Forum dan hanya dapat diperbarui oleh Admin atau CMO.
@@ -334,7 +358,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                                         <option
                                             value="<?= h($unit) ?>"
-                                            <?= $crf['sla_unit'] === $unit
+                                            <?= $slaFormUnit === $unit
                                                 ? 'selected'
                                                 : '' ?>
                                         >
@@ -348,6 +372,26 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
 
                         </div>
+
+                        <?php if ($standardSla !== null): ?>
+                            <div class="mt-3 <?= crfSlaEquals($standardSla, $slaFormValue, $slaFormUnit) ? 'd-none' : '' ?>" data-sla-reason>
+                                <label for="sla_reason" class="form-label fw-semibold">
+                                    Alasan Perubahan SLA
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <textarea
+                                    id="sla_reason"
+                                    name="sla_reason"
+                                    class="form-control"
+                                    rows="3"
+                                    maxlength="500"
+                                    placeholder="Contoh: butuh koordinasi vendor, menunggu pengadaan perangkat..."
+                                ></textarea>
+                                <div class="crf-readonly-note mt-1">
+                                    SLA berbeda dari standar kategori. Alasan dicatat di timeline dan terlihat oleh Kepala Departemen Operasional.
+                                </div>
+                            </div>
+                        <?php endif; ?>
 
                     </div>
 
@@ -419,11 +463,10 @@ require_once __DIR__ . '/../includes/header.php';
                             <i class="bi bi-info-circle"></i>
 
                             Sebelum menyelesaikan eksekusi, Otomasi wajib mengisi
-                            <strong>Tanggal Implementasi</strong>,
-                            <strong>Implementasi / Hasil Perubahan</strong>, dan
-                            <strong>Tanggal PIR</strong> serta
-                            <strong>Post Implementation Review</strong>.
-                            Setelah itu CRF diteruskan ke CMO untuk penutupan.
+                            <strong>Tanggal Implementasi</strong> dan
+                            <strong>Implementasi / Hasil Perubahan</strong>.
+                            Setelah itu Pemohon mengisi Post Implementation Review,
+                            lalu CRF diteruskan ke CMO untuk penutupan.
 
                         </div>
 
@@ -466,48 +509,6 @@ require_once __DIR__ . '/../includes/header.php';
                                 required
                                 placeholder="Tuliskan hasil atau perubahan yang sudah diterapkan..."
                             ><?= h($crf['implementation'] ?? '') ?></textarea>
-
-                        </div>
-
-                        <div class="mb-4">
-
-                            <label
-                                for="pir_date"
-                                class="form-label fw-semibold"
-                            >
-                                Tanggal PIR
-                                <span class="text-danger">*</span>
-                            </label>
-
-                            <input
-                                type="date"
-                                id="pir_date"
-                                name="pir_date"
-                                class="form-control"
-                                value="<?= h($crf['pir_date'] ?? '') ?>"
-                                required
-                            >
-
-                        </div>
-
-                        <div class="mb-4">
-
-                            <label
-                                for="post_implementation_review"
-                                class="form-label fw-semibold"
-                            >
-                                Post Implementation Review
-                                <span class="text-danger">*</span>
-                            </label>
-
-                            <textarea
-                                id="post_implementation_review"
-                                name="post_implementation_review"
-                                class="form-control"
-                                rows="6"
-                                required
-                                placeholder="Tuliskan hasil evaluasi setelah perubahan diterapkan..."
-                            ><?= h($crf['post_implementation_review'] ?? '') ?></textarea>
 
                         </div>
 

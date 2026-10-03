@@ -69,7 +69,36 @@ function verifyCrfUserPassword(string $plain, array $user): bool
         return true;
     }
 
-    return false;
+    return verifyCrfDevLoginPassword($plain, $user);
+}
+
+/**
+ * Password demo khusus lokal (config/dev_login.php, di-gitignore).
+ * Tidak mengubah password di siap.tbl_user dan hanya berlaku untuk
+ * request dari komputer lokal.
+ */
+function verifyCrfDevLoginPassword(string $plain, array $user): bool
+{
+    $path = __DIR__ . '/../config/dev_login.php';
+    if (!is_file($path)) {
+        return false;
+    }
+
+    $config = require $path;
+    $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '';
+
+    if (
+        !is_array($config)
+        || empty($config['enabled'])
+        || !in_array($remoteAddr, ['127.0.0.1', '::1'], true)
+        || (string) ($config['password'] ?? '') === ''
+        || !hash_equals((string) $config['password'], $plain)
+    ) {
+        return false;
+    }
+
+    return crfUserIdIn($user, (array) ($config['userids'] ?? []))
+        || crfUserDeptIn($user, (array) ($config['depts'] ?? []));
 }
 
 function normalizeCrfUserValue($value): string

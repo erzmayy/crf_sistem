@@ -144,6 +144,14 @@ require_once __DIR__ . '/../includes/header.php';
                                 'sort_order' => (int) $category['sort_order'],
                                 'is_active' => (int) $category['is_active'],
                             ];
+                            if ($tabKey === 'crf') {
+                                $formData += [
+                                    'sla_tinggi_value' => $category['sla_tinggi_value'] !== null ? (float) $category['sla_tinggi_value'] : '',
+                                    'sla_tinggi_unit' => $category['sla_tinggi_unit'] ?? 'Hari',
+                                    'sla_rendah_value' => $category['sla_rendah_value'] !== null ? (float) $category['sla_rendah_value'] : '',
+                                    'sla_rendah_unit' => $category['sla_rendah_unit'] ?? 'Hari',
+                                ];
+                            }
                             if ($tabKey === 'helpdesk') {
                                 $formData += [
                                     'icon' => $category['icon'],
@@ -173,7 +181,14 @@ require_once __DIR__ . '/../includes/header.php';
                                         <?php endif; ?>
                                         <div class="text-muted small mt-1">
                                             <?php if (!empty($category['description'])): ?><?= h($category['description']) ?><br><?php endif; ?>
-                                            SLA <?= h(slaLabel($category['sla_value'], $category['sla_unit'])) ?>
+                                            <?php if ($tabKey === 'crf'): ?>
+                                                <?php $slaMatrix = crfCategorySlaMatrix($category); ?>
+                                                SLA<?php foreach ($slaMatrix as $slaLevel => $slaItem): ?>
+                                                    · <?= h($slaLevel) ?>: <?= $slaItem ? h(slaLabel($slaItem['value'], $slaItem['unit'])) : '-' ?>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                SLA <?= h(slaLabel($category['sla_value'], $category['sla_unit'])) ?>
+                                            <?php endif; ?>
                                             · <?= (int) $category['usage_count'] ?> <?= h($tab['usage_label']) ?>
                                             <?php if ($tabKey === 'crf'): ?>
                                                 · Laporan: <?= h($category['legacy_change_category']) ?>
@@ -343,19 +358,35 @@ require_once __DIR__ . '/../includes/header.php';
                     </select>
                     <div class="crf-readonly-note">Dipakai untuk export laporan &amp; PDF CRF.</div>
                 </div>
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <label class="crf-field-label" for="crfCategorySla">Target SLA</label>
-                        <input type="number" class="form-control" id="crfCategorySla" name="sla_value" min="0" step="0.5">
+                <div class="mb-3">
+                    <label class="crf-field-label">Target SLA per Level Urgensi</label>
+                    <div class="crf-readonly-note mb-2">
+                        Terisi otomatis saat CRF lolos review CMO. Dihitung dengan hari kerja
+                        (Sabtu, Minggu, dan libur tidak dihitung). Tinggi / Rendah kosong = ikut Normal.
                     </div>
-                    <div class="col-6">
-                        <label class="crf-field-label" for="crfCategorySlaUnit">Satuan</label>
-                        <select class="form-select" id="crfCategorySlaUnit" name="sla_unit">
-                            <option value="Hari">Hari</option>
-                            <option value="Jam">Jam</option>
-                            <option value="Menit">Menit</option>
-                        </select>
-                    </div>
+                    <?php
+                    $slaMatrixFields = [
+                        'Tinggi' => ['sla_tinggi_value', 'sla_tinggi_unit'],
+                        'Normal' => ['sla_value', 'sla_unit'],
+                        'Rendah' => ['sla_rendah_value', 'sla_rendah_unit'],
+                    ];
+                    foreach ($slaMatrixFields as $slaLevel => [$slaValueField, $slaUnitField]): ?>
+                        <div class="row g-2 align-items-center mb-2">
+                            <div class="col-3">
+                                <span class="crf-badge <?= h(levelBadgeClass($slaLevel)) ?>"><?= h($slaLevel) ?></span>
+                            </div>
+                            <div class="col-4">
+                                <input type="number" class="form-control" name="<?= h($slaValueField) ?>" min="0" step="0.5" aria-label="Nilai SLA <?= h($slaLevel) ?>">
+                            </div>
+                            <div class="col-5">
+                                <select class="form-select" name="<?= h($slaUnitField) ?>" aria-label="Satuan SLA <?= h($slaLevel) ?>">
+                                    <option value="Hari">Hari</option>
+                                    <option value="Jam">Jam</option>
+                                    <option value="Menit">Menit</option>
+                                </select>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
                 <div class="row g-2 align-items-end">
                     <div class="col-6">

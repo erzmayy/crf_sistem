@@ -61,6 +61,32 @@ class HelpdeskIntegrationStaticTests(unittest.TestCase):
         self.assertIn("crfCategories($pdo)", form)
         self.assertNotIn('<option value="Aplikasi"', form)
 
+    def test_pir_is_filled_by_pemohon_not_otomasi(self):
+        otomasi_form = read("otomasi/detail.php")
+        self.assertNotIn('name="post_implementation_review"', otomasi_form)
+        self.assertNotIn('name="pir_date"', otomasi_form)
+
+        automation = read("actions/automation_action.php")
+        self.assertNotIn("post_implementation_review", automation)
+        self.assertIn("workflow_stage = 'PEMOHON_PIR'", automation)
+
+        submit_pir = read("actions/submit_pir.php")
+        self.assertIn("verifyCsrf();", submit_pir)
+        self.assertIn("AND user_id = :user_id", submit_pir)
+        self.assertIn("workflow_stage = 'CMO_FINAL'", submit_pir)
+        self.assertIn("syncHelpdeskTicketFromCrf($pdo", submit_pir)
+        self.assertIn('action="../actions/submit_pir.php"', read("user/detail.php"))
+
+    def test_sla_uses_category_matrix_and_working_days(self):
+        functions = read("includes/functions.php")
+        self.assertIn("return slaAddWorkingSeconds($date, $seconds)", functions)
+        self.assertIn("slaWorkingSecondsBetween($started, $completed)", functions)
+        self.assertIn("crfStandardSla($pdo", read("actions/cmo_action.php"))
+
+        automation = read("actions/automation_action.php")
+        self.assertIn("$slaDeviates && ($slaReason === ''", automation)
+        self.assertIn("'SLA Disesuaikan Handler'", automation)
+
     def test_category_delete_is_soft_delete(self):
         source = read("actions/category_master.php")
         self.assertIn("deleted_at = NOW()", source)

@@ -109,14 +109,6 @@ unset($_SESSION['login_error']);
             border-radius: 6px;
             font-size: 13px;
         }
-
-        .login-info {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-            font-size: 12px;
-            color: #666;
-        }
     </style>
 </head>
 
@@ -167,12 +159,6 @@ unset($_SESSION['login_error']);
         </button>
 
     </form>
-
-    <div class="login-info">
-        <strong>Akun demo:</strong><br>
-        USER001 / password — Pemohon<br>
-        ADMIN001 / password — Admin
-    </div>
 
 </div>
 
