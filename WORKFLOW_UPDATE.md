@@ -33,13 +33,13 @@ Semua password: `password`
 ## Database
 Untuk database `crf_sistem` lama yang belum memiliki kolom approval Kepala Departemen Operasional, jalankan:
 
-`kadep_approval_migration.sql`
+`database/migrations/003_kadep_approval_migration.sql`
 
-Migrasi ini aman dijalankan ulang. Untuk instalasi workflow lama yang belum memiliki kolom workflow/SLA atau tabel role, gunakan `workflow_migration.sql`.
+Migrasi ini aman dijalankan ulang. Untuk instalasi workflow lama yang belum memiliki kolom workflow/SLA atau tabel role, gunakan `database/migrations/002_workflow_migration.sql`.
 
-Untuk database yang nilai enum `workflow_stage`-nya masih menggunakan `PAK_JOKO`, jalankan `kadep_workflow_stage_migration.sql` agar nilai tersebut diselaraskan dengan `kadep_operasional`.
+Untuk database yang nilai enum `workflow_stage`-nya masih menggunakan `PAK_JOKO`, jalankan `database/migrations/004_kadep_workflow_stage_migration.sql` agar nilai tersebut diselaraskan dengan `kadep_operasional`.
 
-Untuk database yang sudah berjalan, jalankan `implementation_date_migration.sql` sebelum menggunakan form terbaru. Migrasi ini menyediakan kolom Tanggal Implementasi, Tanggal PIR, Tipe Pengajuan, dan kategori Dampak.
+Untuk database yang sudah berjalan, jalankan `database/migrations/007_implementation_date_migration.sql` sebelum menggunakan form terbaru. Migrasi ini menyediakan kolom Tanggal Implementasi, Tanggal PIR, Tipe Pengajuan, dan kategori Dampak.
 
 Migration menambahkan:
 - `workflow_stage`

@@ -313,15 +313,6 @@ require_once __DIR__ . '/../includes/header.php';
                                 : '<span class="text-muted">Belum diisi.</span>' ?>
                         </div>
                     </div>
-                    <?php if (!$isPirStage): ?>
-                    <div class="crf-info-row">
-                        <span class="crf-info-label">Tanggal PIR</span>
-                        <div class="crf-info-value">
-                            <?= !empty($crf['pir_date'])
-                                ? h(date('d-m-Y', strtotime($crf['pir_date'])))
-                                : '<span class="text-muted">Belum diisi.</span>' ?>
-                        </div>
-                    </div>
                     <div class="crf-info-row crf-request-row-long">
                         <span class="crf-info-label">Implementasi / Hasil Perubahan</span>
                         <div class="crf-info-value">
@@ -330,6 +321,15 @@ require_once __DIR__ . '/../includes/header.php';
                             <?php else: ?>
                                 <span class="text-muted">Belum diisi.</span>
                             <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php if (!$isPirStage): ?>
+                    <div class="crf-info-row">
+                        <span class="crf-info-label">Tanggal PIR</span>
+                        <div class="crf-info-value">
+                            <?= !empty($crf['pir_date'])
+                                ? h(date('d-m-Y', strtotime($crf['pir_date'])))
+                                : '<span class="text-muted">Belum diisi.</span>' ?>
                         </div>
                     </div>
                     <div class="crf-info-row crf-request-row-long">
