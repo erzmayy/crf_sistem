@@ -10,6 +10,15 @@
  */
 
 $showStatusInGrid = $showStatusInGrid ?? false;
+
+// Ticket Helpdesk asal CRF (link dua arah Helpdesk <-> CRF).
+$infoTicket = null;
+if (!empty($crf['helpdesk_ticket_id'])) {
+    $infoTicketStmt = getConnection()->prepare('SELECT id, ticket_number FROM helpdesk_tickets WHERE id = :id');
+    $infoTicketStmt->execute(['id' => $crf['helpdesk_ticket_id']]);
+    $infoTicket = $infoTicketStmt->fetch() ?: null;
+}
+$infoDisplayStatus = crfDisplayStatus($crf);
 ?>
 <div class="crf-section crf-detail-card mb-4">
     <div class="crf-section-header">
@@ -31,9 +40,35 @@ $showStatusInGrid = $showStatusInGrid ?? false;
                 <span class="crf-info-label">Email Pemohon</span>
                 <span class="crf-info-value"><?= h($crf['email'] ?? '-') ?></span>
             </div>
+            <?php if (!empty($crf['requester_position'])): ?>
+                <div class="crf-info-row">
+                    <span class="crf-info-label">Jabatan</span>
+                    <span class="crf-info-value"><?= h($crf['requester_position']) ?></span>
+                </div>
+            <?php endif; ?>
             <div class="crf-info-row">
                 <span class="crf-info-label">Nomor Register</span>
                 <span class="crf-info-value crf-info-register"><?= h($crf['request_number'] ?? '-') ?></span>
+            </div>
+            <div class="crf-info-row">
+                <span class="crf-info-label">Ticket Helpdesk</span>
+                <span class="crf-info-value">
+                    <?php if ($infoTicket): ?>
+                        <a href="../helpdesk/detail.php?id=<?= (int) $infoTicket['id'] ?>" class="crf-link">
+                            <i class="bi bi-ticket-detailed"></i> <?= h($infoTicket['ticket_number']) ?>
+                        </a>
+                    <?php else: ?>
+                        <span class="text-muted">Tidak terhubung</span>
+                    <?php endif; ?>
+                </span>
+            </div>
+            <div class="crf-info-row">
+                <span class="crf-info-label">Kategori CRF</span>
+                <span class="crf-info-value"><?= h(crfCategoryName($crf)) ?></span>
+            </div>
+            <div class="crf-info-row">
+                <span class="crf-info-label">Handler</span>
+                <span class="crf-info-value"><?= h($crf['assigned_handler_name'] ?? '') ?: '<span class="text-muted">Belum ada</span>' ?></span>
             </div>
             <div class="crf-info-row">
                 <span class="crf-info-label">Tanggal Pengajuan</span>
@@ -67,8 +102,8 @@ $showStatusInGrid = $showStatusInGrid ?? false;
                 <div class="crf-info-row">
                     <span class="crf-info-label">Status</span>
                     <span class="crf-info-value">
-                        <span class="crf-badge crf-info-status <?= statusBadgeClass($crf['status'] ?? '') ?>">
-                            <?= h(statusLabel($crf['status'] ?? '')) ?>
+                        <span class="crf-badge crf-info-status <?= h($infoDisplayStatus['class']) ?>">
+                            <?= h($infoDisplayStatus['label']) ?>
                         </span>
                     </span>
                 </div>
@@ -77,4 +112,4 @@ $showStatusInGrid = $showStatusInGrid ?? false;
     </div>
 </div>
 <?php
-unset($showStatusInGrid);
+unset($showStatusInGrid, $infoTicket, $infoTicketStmt, $infoDisplayStatus);

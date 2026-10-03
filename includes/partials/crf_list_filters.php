@@ -8,7 +8,7 @@
 
 $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
 ?>
-<form method="GET" class="crf-list-filters <?= !empty($listCategories) ? 'crf-list-filters-with-category' : '' ?>">
+<form method="GET" class="crf-list-filters <?= !empty($listHandlers) ? 'crf-list-filters-advanced' : (!empty($listFilters['categories']) ? 'crf-list-filters-with-category' : '') ?>">
     <?php if (!empty($listContextName)): ?>
         <input type="hidden" name="<?= h($listContextName) ?>" value="<?= h($listContextValue ?? '') ?>">
     <?php endif; ?>
@@ -50,17 +50,35 @@ $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
         </select>
     </label>
 
-    <?php if (!empty($listCategories)): ?>
+    <?php if (!empty($listFilters['categories'])): ?>
         <label class="crf-list-filter-field">
-            <span>Kategori</span>
-            <select name="category" class="form-select" aria-label="Filter kategori">
+            <span>Kategori CRF</span>
+            <select name="category_id" class="form-select" aria-label="Filter kategori CRF">
                 <option value="">Semua Kategori</option>
-                <?php foreach ($listCategories as $categoryOption): ?>
-                    <option value="<?= h($categoryOption) ?>" <?= ($listCategoryValue ?? '') === $categoryOption ? 'selected' : '' ?>>
-                        <?= h($categoryOption) ?>
+                <?php foreach ($listFilters['categories'] as $categoryOption): ?>
+                    <option value="<?= (int) $categoryOption['id'] ?>" <?= (int) ($listFilters['category_id'] ?? 0) === (int) $categoryOption['id'] ? 'selected' : '' ?>>
+                        <?= h($categoryOption['name']) ?>
                     </option>
                 <?php endforeach; ?>
             </select>
+        </label>
+    <?php endif; ?>
+
+    <?php if (!empty($listHandlers)): ?>
+        <label class="crf-list-filter-field">
+            <span>Handler</span>
+            <select name="handler_id" class="form-select" aria-label="Filter handler">
+                <option value="">Semua Handler</option>
+                <?php foreach ($listHandlers as $handlerOption): ?>
+                    <option value="<?= (int) $handlerOption['id'] ?>" <?= (int) ($listFilters['handler_id'] ?? 0) === (int) $handlerOption['id'] ? 'selected' : '' ?>>
+                        <?= h($handlerOption['name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+        <label class="crf-list-filter-field">
+            <span>Pemohon</span>
+            <input type="search" name="requester" class="form-control" placeholder="Nama pemohon" value="<?= h($listFilters['requester'] ?? '') ?>">
         </label>
     <?php endif; ?>
 

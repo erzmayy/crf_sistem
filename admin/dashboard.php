@@ -18,19 +18,10 @@ $forumUnread = forumUnreadTotal($pdo, (int) getCurrentUser()['id']);
 
 $search         = $_GET['q'] ?? '';
 $statusFilter   = $_GET['status'] ?? '';
-$categoryFilter = is_string($_GET['category'] ?? null) ? $_GET['category'] : '';
 $departmentFilter = $_GET['department'] ?? '';
 $levelFilter = $_GET['level'] ?? '';
 $dateFrom = $_GET['date_from'] ?? '';
 $dateTo = $_GET['date_to'] ?? '';
-
-$allowedCategories = [
-    'Aplikasi',
-    'Infrastruktur',
-    'Proses',
-    'Security',
-    'Lainnya'
-];
 
 $where  = ["cr.status <> 'Draft'"];
 $params = [];
@@ -47,6 +38,10 @@ $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
     'level' => $levelFilter,
     'date_from' => $dateFrom,
     'date_to' => $dateTo,
+    'category_id' => $_GET['category_id'] ?? '',
+    'handler_id' => $_GET['handler_id'] ?? '',
+    'requester' => $_GET['requester'] ?? '',
+    'display_status' => $_GET['display_status'] ?? '',
 ]);
 $search = $listFilters['search'];
 $statusFilter = $listFilters['status'];
@@ -55,12 +50,17 @@ $levelFilter = $listFilters['level'];
 $dateFrom = $listFilters['date_from'];
 $dateTo = $listFilters['date_to'];
 
-if (in_array($categoryFilter, $allowedCategories, true)) {
-
-    $where[] = 'cr.change_category = :category';
-
-    $params['category'] = $categoryFilter;
-}
+// Daftar handler untuk filter (pernah memegang CRF atau terdaftar di kategori).
+$listHandlers = $pdo->query("
+    SELECT DISTINCT user_id AS id, user_name AS name FROM (
+        SELECT assigned_handler_id AS user_id, assigned_handler_name AS user_name
+        FROM change_requests WHERE assigned_handler_id IS NOT NULL
+        UNION
+        SELECT user_id, user_name FROM crf_category_handlers
+    ) handlers
+    WHERE user_name IS NOT NULL
+    ORDER BY name
+")->fetchAll();
 /* =========================================================
  * PAGINATION
  * ========================================================= */
@@ -104,8 +104,9 @@ $offset = ($page - 1) * $perPage;
  * ========================================================= */
 
 $sql = "
-    SELECT cr.*
+    SELECT cr.*, cc.name AS crf_category_name
     FROM change_requests cr
+    LEFT JOIN crf_categories cc ON cc.id = cr.crf_category_id
     WHERE " . implode(' AND ', $where) . "
     ORDER BY cr.created_at DESC
     LIMIT {$perPage} OFFSET {$offset}
@@ -134,6 +135,23 @@ $summaryStmt = $pdo->query(
 );
 
 $summary = $summaryStmt->fetch() ?: [];
+
+// Ringkasan per status tampilan alur Helpdesk/CRF (termasuk Draft).
+$displayConditions = crfDisplayStatusConditions('cr');
+$displaySumSql = implode(",\n", array_map(
+    static fn($key, $condition) => "SUM(CASE WHEN {$condition['sql']} THEN 1 ELSE 0 END) AS `{$key}`",
+    array_keys($displayConditions),
+    $displayConditions
+));
+$displaySummary = array_map('intval', $pdo->query("
+    SELECT {$displaySumSql}, SUM(cr.status <> 'Draft') AS total
+    FROM change_requests cr
+")->fetch() ?: []);
+$displayIcons = [
+    'draft' => 'bi-pencil', 'review' => 'bi-hourglass-split', 'diproses' => 'bi-gear',
+    'approval' => 'bi-person-check', 'disetujui' => 'bi-check2-square', 'revisi' => 'bi-arrow-counterclockwise',
+    'selesai' => 'bi-check-circle-fill', 'dibatalkan' => 'bi-slash-circle-fill',
+];
 if (
     (array_key_exists('report_date_from', $_GET) && !is_string($_GET['report_date_from']))
     || (array_key_exists('report_date_to', $_GET) && !is_string($_GET['report_date_to']))
@@ -784,47 +802,20 @@ require_once __DIR__ . '/../includes/header.php';
 
         <div class="crf-stat-grid crf-helpdesk-summary dashboard-summary-grid">
 
-            <div class="crf-stat-card">
-                <span><i class="bi bi-inboxes-fill"></i> Total Pengajuan</span>
-                <strong>
-                    <?= (int) ($summary['total'] ?? 0) ?>
-                </strong>
-            </div>
+            <a class="crf-stat-card text-decoration-none <?= $listFilters['display_status'] === '' ? 'is-active' : '' ?>" href="dashboard.php#crf-table">
+                <span><i class="bi bi-inboxes-fill"></i> Total CRF</span>
+                <strong><?= (int) ($displaySummary['total'] ?? 0) ?></strong>
+            </a>
 
-            <div class="crf-stat-card">
-                <span><i class="bi bi-hourglass-split"></i> Belum Ditindak Lanjuti</span>
-                <strong>
-                    <?= (int) ($summary['pending'] ?? 0) ?>
-                </strong>
-            </div>
-
-            <div class="crf-stat-card">
-                <span><i class="bi bi-pencil-square"></i> Perlu Revisi</span>
-                <strong>
-                    <?= (int) ($summary['revision'] ?? 0) ?>
-                </strong>
-            </div>
-
-            <div class="crf-stat-card">
-                <span><i class="bi bi-arrow-repeat"></i> Dalam Proses</span>
-                <strong>
-                    <?= (int) ($summary['processing'] ?? 0) ?>
-                </strong>
-            </div>
-
-            <div class="crf-stat-card">
-                <span><i class="bi bi-check-circle-fill"></i> Selesai</span>
-                <strong>
-                    <?= (int) ($summary['solved'] ?? 0) ?>
-                </strong>
-            </div>
-
-            <div class="crf-stat-card">
-                <span><i class="bi bi-slash-circle-fill"></i> Dibatalkan</span>
-                <strong>
-                    <?= (int) ($summary['cancelled'] ?? 0) ?>
-                </strong>
-            </div>
+            <?php foreach ($displayConditions as $displayKey => $displayCondition): ?>
+                <a
+                    class="crf-stat-card text-decoration-none <?= $listFilters['display_status'] === $displayKey ? 'is-active' : '' ?>"
+                    href="?display_status=<?= h($displayKey) ?>#crf-table"
+                >
+                    <span><i class="bi <?= h($displayIcons[$displayKey] ?? 'bi-circle') ?>"></i> <?= h($displayCondition['label']) ?></span>
+                    <strong><?= (int) ($displaySummary[$displayKey] ?? 0) ?></strong>
+                </a>
+            <?php endforeach; ?>
 
             <a class="crf-stat-card crf-forum-stat text-decoration-none" href="../forum/index.php">
                 <span><i class="bi bi-chat-square-text"></i> Komentar Baru di Forum</span>
@@ -853,7 +844,10 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php foreach ([
                     'q' => $search,
                     'status' => $statusFilter,
-                    'category' => $categoryFilter,
+                    'category_id' => $listFilters['category_id'] ?: '',
+                    'handler_id' => $listFilters['handler_id'] ?: '',
+                    'requester' => $listFilters['requester'],
+                    'display_status' => $listFilters['display_status'],
                     'department' => $departmentFilter,
                     'level' => $levelFilter,
                     'date_from' => $dateFrom,
@@ -946,13 +940,11 @@ require_once __DIR__ . '/../includes/header.php';
 
             <!-- FILTER -->
             <?php
-            $listContextName = '';
-            $listContextValue = '';
-            $listCategories = $allowedCategories;
-            $listCategoryValue = $categoryFilter;
+            $listContextName = $listFilters['display_status'] !== '' ? 'display_status' : '';
+            $listContextValue = $listFilters['display_status'];
             $listResetUrl = 'dashboard.php';
             require __DIR__ . '/../includes/partials/crf_list_filters.php';
-            unset($listContextName, $listContextValue, $listCategories, $listCategoryValue, $listResetUrl);
+            unset($listContextName, $listContextValue, $listResetUrl);
             ?>
 
 
@@ -1023,7 +1015,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                                     <td data-label="Isi Pengajuan">
                                         <div class="crf-request-content">
-                                            <span class="crf-request-category-chip"><?= h($row['change_category'] ?? 'Lainnya') ?></span>
+                                            <span class="crf-request-category-chip"><?= h(crfCategoryName($row, 'Lainnya')) ?></span>
                                             <div class="crf-request-description"><?= h($row['change_description'] ?? '-') ?></div>
                                         </div>
                                     </td>

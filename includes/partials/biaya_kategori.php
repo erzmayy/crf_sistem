@@ -33,7 +33,7 @@ $sectionNumber = $sectionNumber ?? 4;
             <div class="crf-detail-item">
                 <div class="crf-detail-label">Kategori Perubahan</div>
                 <div class="crf-detail-value">
-                    <?= h($crf['change_category'] ?? '-') ?>
+                    <?= h(crfCategoryName($crf)) ?>
                     <?php if (!empty($crf['change_category_detail'])): ?>
                         &mdash; <?= h($crf['change_category_detail']) ?>
                     <?php endif; ?>

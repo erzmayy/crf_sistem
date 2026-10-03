@@ -12,7 +12,9 @@ if (!in_array($queue, ['all', 'sla', 'execution', 'history'], true)) {
     $queue = 'all';
 }
 
-$where = ["cr.status <> 'Draft'"];
+// Handler hanya melihat CRF pada kategori yang ditanganinya (Admin: semua).
+$handlerScopeSql = crfHandlerScopeSql($pdo, 'cr');
+$where = ["cr.status <> 'Draft'", $handlerScopeSql];
 $params = [];
 
 /* =========================================================
@@ -47,8 +49,18 @@ $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
     'level' => $_GET['level'] ?? '',
     'date_from' => $_GET['date_from'] ?? '',
     'date_to' => $_GET['date_to'] ?? '',
+    'category_id' => $_GET['category_id'] ?? '',
 ]);
 $search = $listFilters['search'];
+
+// Filter kategori hanya menampilkan kategori dalam lingkup handler.
+$handlerScope = crfHandlerScope($pdo);
+if (!$handlerScope['all']) {
+    $listFilters['categories'] = array_values(array_filter(
+        $listFilters['categories'],
+        static fn($category) => in_array((int) $category['id'], $handlerScope['category_ids'], true)
+    ));
+}
 
 /* =========================================================
  * PAGINATION
@@ -78,8 +90,9 @@ $offset = ($page - 1) * $perPage;
  * ========================================================= */
 
 $sql = "
-    SELECT cr.*
+    SELECT cr.*, cc.name AS crf_category_name
     FROM change_requests cr
+    LEFT JOIN crf_categories cc ON cc.id = cr.crf_category_id
     WHERE " . implode(' AND ', $where) . "
     ORDER BY " . ($queue === 'history'
         ? 'cr.updated_at DESC'
@@ -104,10 +117,22 @@ $summaryStmt = $pdo->query("
     SELECT
         SUM(CASE WHEN kadep_operasional_approved_at IS NULL THEN 1 ELSE 0 END) AS waiting_sla,
         SUM(CASE WHEN kadep_operasional_approved_at IS NOT NULL THEN 1 ELSE 0 END) AS waiting_execution
-    FROM change_requests
-    WHERE workflow_stage = 'OTOMASI'
-      AND status <> 'Draft'
+    FROM change_requests cr
+    WHERE cr.workflow_stage = 'OTOMASI'
+      AND cr.status <> 'Draft'
+      AND {$handlerScopeSql}
 ");
+$myQueueStmt = $pdo->prepare("
+    SELECT COUNT(*) FROM change_requests cr
+    WHERE cr.workflow_stage = 'OTOMASI' AND cr.assigned_handler_id = :user_id
+");
+$myQueueStmt->execute(['user_id' => (int) $_SESSION['user_id']]);
+$myQueue = (int) $myQueueStmt->fetchColumn();
+$unassignedStmt = $pdo->query("
+    SELECT COUNT(*) FROM change_requests cr
+    WHERE cr.workflow_stage = 'OTOMASI' AND cr.assigned_handler_id IS NULL AND {$handlerScopeSql}
+");
+$unassigned = (int) $unassignedStmt->fetchColumn();
 
 $summary = $summaryStmt->fetch() ?: [];
 
@@ -149,8 +174,8 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-helpdesk-banner">
             <div>
                 <span class="crf-helpdesk-eyebrow">PORTAL CRF · PELAKSANAAN PERUBAHAN</span>
-                <h1>Dashboard Otomasi</h1>
-                <p>Menangani permintaan, menentukan Level Urgensi dan SLA, serta mengisi hasil implementasi.</p>
+                <h1>Handler CRF</h1>
+                <p>CRF pada kategori yang Anda tangani: ambil CRF, tentukan Level Urgensi &amp; SLA, lalu isi hasil implementasi.</p>
             </div>
         </div>
 
@@ -172,6 +197,16 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="crf-stat-card">
                 <span><i class="bi bi-gear-wide-connected"></i> Menunggu Eksekusi</span>
                 <strong><?= $waitingExecution ?></strong>
+            </div>
+
+            <div class="crf-stat-card">
+                <span><i class="bi bi-person-dash"></i> Belum Diambil Handler</span>
+                <strong><?= $unassigned ?></strong>
+            </div>
+
+            <div class="crf-stat-card">
+                <span><i class="bi bi-person-check"></i> Ditangani Saya</span>
+                <strong><?= $myQueue ?></strong>
             </div>
         </div>
 
@@ -279,8 +314,12 @@ require_once __DIR__ . '/../includes/header.php';
 
                                 <td data-label="Isi Pengajuan">
                                     <div class="crf-request-content">
-                                        <span class="crf-request-category-chip"><?= h($row['change_category'] ?? 'Lainnya') ?></span>
+                                        <span class="crf-request-category-chip"><?= h(crfCategoryName($row, 'Lainnya')) ?></span>
                                         <div class="crf-request-description"><?= h($row['change_description'] ?? '-') ?></div>
+                                        <div class="small mt-1 <?= empty($row['assigned_handler_id']) ? 'text-danger' : 'text-muted' ?>">
+                                            <i class="bi <?= empty($row['assigned_handler_id']) ? 'bi-person-dash' : 'bi-person-check' ?>"></i>
+                                            <?= empty($row['assigned_handler_id']) ? 'Belum diambil handler' : 'Handler: ' . h($row['assigned_handler_name']) ?>
+                                        </div>
                                     </div>
                                 </td>
 

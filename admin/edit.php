@@ -150,7 +150,7 @@ require_once __DIR__ . '/../includes/header.php';
 
         <div class="crf-detail-value">
 
-          <?= h($crf['change_category'] ?? '-') ?>
+          <?= h(crfCategoryName($crf)) ?>
 
           <?php if (!empty($crf['change_category_detail'])): ?>
 

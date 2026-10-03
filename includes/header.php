@@ -4,6 +4,7 @@
  */
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/forum.php';
+require_once __DIR__ . '/notifications.php';
 
 if (!isset($pageTitle)) {
     $pageTitle = 'CRF';
@@ -13,104 +14,128 @@ $currentUser = getCurrentUser();
 $crfRole = getCrfRole();
 $isAdminUser = $crfRole === 'admin';
 $currentPath = basename($_SERVER['PHP_SELF'] ?? '');
+$scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+$currentFolder = basename(dirname($scriptPath));
 
-$isDashboard = $currentPath === 'dashboard.php';
-$isForm = $currentPath === 'form_crf.php';
-$isPengajuanSaya = $currentPath === 'pengajuan_saya.php';
-$isCmo = str_contains(str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? ''), '/cmo/');
-$isOtomasi = str_contains(str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? ''), '/otomasi/');
-$isPakJoko = str_contains(str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? ''), '/pak_joko/');
-$isForum = str_contains(str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? ''), '/forum/');
+$isNav = static function (string $folder, ?string $file = null) use ($currentFolder, $currentPath): bool {
+    return $currentFolder === $folder && ($file === null || $currentPath === $file);
+};
+
+$isForum = $currentFolder === 'forum';
 $forumUnreadTotal = in_array($crfRole, forumRoles(), true)
     ? forumUnreadTotal(getConnection(), (int) ($currentUser['id'] ?? 0))
     : 0;
 
-$scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
-$appBasePath = preg_replace('#/(?:admin|user|cmo|otomasi|pak_joko|forum)/[^/]+$#', '', $scriptPath) ?: '';
+$navUserId = (int) ($currentUser['id'] ?? 0);
+$isPicUser = $isAdminUser || isHelpdeskPic(getConnection(), $navUserId);
+$notificationUnread = unreadNotificationCount(getConnection(), $navUserId);
+$notificationItems = recentNotifications(getConnection(), $navUserId, 6);
+
+$appBasePath = preg_replace('#/(?:admin|user|cmo|otomasi|pak_joko|forum|helpdesk|crf|notifications)/[^/]+$#', '', $scriptPath) ?: '';
 $appBasePath = rtrim($appBasePath, '/');
 
 $homePath = $isAdminUser
     ? '/admin/dashboard.php'
-    : '/user/pengajuan_saya.php';
+    : '/index.php';
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= h($pageTitle) ?> · CRF PPU</title>
+<title><?= h($pageTitle) ?> · Helpdesk & CRF PPU</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="<?= h($appBasePath) ?>/assets/css/style.css?v=<?= (int) filemtime(__DIR__ . '/../assets/css/style.css') ?>" rel="stylesheet">
 </head>
-<body>
+<body data-app-base="<?= h($appBasePath) ?>">
 <div class="crf-app-shell">
     <div class="crf-sidebar-overlay"></div>
 
-  <aside class="crf-sidebar">
+  <?php
+  /*
+   * Menu sidebar gaya SIAP: grup "Menu Saya" dengan submenu melayang
+   * (flyout) dan link utama tebal di bagian bawah. Item difilter per role.
+   */
+  $navGroups = [
+      [
+          'label' => 'Help Desk',
+          'icon' => 'bi-headset',
+          'items' => [
+              ['label' => 'Kategori Help Desk', 'url' => '/admin/master_data.php?tab=helpdesk', 'show' => $isAdminUser, 'active' => $isNav('admin', 'master_data.php') && ($_GET['tab'] ?? 'helpdesk') !== 'crf'],
+              ['label' => 'Dashboard Help Desk', 'url' => '/helpdesk/dashboard.php', 'show' => $isPicUser, 'active' => $isNav('helpdesk', 'dashboard.php')],
+              ['label' => 'Formulir Help Desk', 'url' => '/helpdesk/form.php', 'show' => true, 'active' => $isNav('helpdesk', 'form.php')],
+              ['label' => 'Tiket Saya', 'url' => '/helpdesk/saya.php', 'show' => true, 'active' => $isNav('helpdesk', 'saya.php') || $isNav('helpdesk', 'detail.php')],
+              ['label' => 'Dashboard Handling Help Desk', 'url' => '/helpdesk/handling.php', 'show' => $isPicUser, 'active' => $isNav('helpdesk', 'handling.php') || $isNav('helpdesk', 'kategori.php')],
+          ],
+      ],
+      [
+          'label' => 'Change Request (CRF)',
+          'icon' => 'bi-file-earmark-diff',
+          'items' => [
+              ['label' => 'Kategori & Handling CRF', 'url' => '/admin/master_data.php?tab=crf', 'show' => $isAdminUser, 'active' => $isNav('admin', 'master_data.php') && ($_GET['tab'] ?? '') === 'crf'],
+              ['label' => 'Dashboard CRF', 'url' => '/admin/dashboard.php', 'show' => $isAdminUser, 'active' => $isNav('admin', 'dashboard.php') || $isNav('admin', 'detail.php') || $isNav('admin', 'edit.php')],
+              ['label' => 'Dashboard Kategori CRF', 'url' => '/crf/dashboard_kategori.php', 'show' => in_array($crfRole, ['admin', 'cmo', 'otomasi', 'kadep_operasional'], true), 'active' => $isNav('crf', 'dashboard_kategori.php')],
+              ['label' => 'Review CMO', 'url' => '/cmo/index.php', 'show' => in_array($crfRole, ['admin', 'cmo'], true), 'active' => $currentFolder === 'cmo'],
+              ['label' => 'Handler CRF', 'url' => '/otomasi/index.php', 'show' => in_array($crfRole, ['admin', 'otomasi'], true), 'active' => $currentFolder === 'otomasi'],
+              ['label' => 'Approval Kadep Operasional', 'url' => '/pak_joko/index.php', 'show' => in_array($crfRole, ['admin', 'kadep_operasional'], true), 'active' => $currentFolder === 'pak_joko'],
+              ['label' => 'Form CRF', 'url' => '/user/form_crf.php', 'show' => true, 'active' => $isNav('user', 'form_crf.php')],
+              ['label' => 'Pengajuan CRF Saya', 'url' => '/user/pengajuan_saya.php', 'show' => !$isAdminUser, 'active' => $isNav('user', 'pengajuan_saya.php') || $isNav('user', 'detail.php')],
+              ['label' => 'Forum', 'url' => '/forum/index.php', 'show' => in_array($crfRole, forumRoles(), true), 'active' => $isForum, 'badge' => $forumUnreadTotal],
+          ],
+      ],
+  ];
+  ?>
+  <aside class="crf-sidebar siap-sidebar">
     <a class="crf-sidebar-brand" href="<?= h($appBasePath . $homePath) ?>">
-      <span class="crf-sidebar-mark"><i class="bi bi-house-door-fill"></i></span>
-      <span class="ppu-brand-text">CRF</span>
+      <span class="crf-sidebar-mark"><i class="bi bi-journal-bookmark-fill"></i></span>
+      <span class="ppu-brand-text">Home / Dashboard</span>
     </a>
 
-    <div class="crf-sidebar-section">Menu Utama</div>
-    <nav class="crf-sidebar-nav" aria-label="Navigasi utama">
-      <?php if ($isAdminUser): ?>
-        <a class="<?= $isDashboard ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/admin/dashboard.php">
-          <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
-        </a>
-        <a class="<?= $isCmo ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/cmo/index.php">
-          <i class="bi bi-funnel-fill"></i><span>CMO</span>
-        </a>
-        <a class="<?= $isOtomasi ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/otomasi/index.php">
-          <i class="bi bi-gear-fill"></i><span>Otomasi</span>
-        </a>
-        <a class="<?= $isPakJoko ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/pak_joko/index.php">
-          <i class="bi bi-check2-square"></i><span>Kepala Departemen Operasional</span>
-        </a>
-        <a class="<?= $isForm ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/user/form_crf.php">
-          <i class="bi bi-file-earmark-plus"></i><span>Form CRF</span>
-        </a>
-      <?php else: ?>
+    <div class="siap-menu-title">Menu Saya</div>
+    <ul class="siap-menu" aria-label="Menu Saya">
+      <?php foreach ($navGroups as $groupIndex => $navGroup): ?>
+        <?php
+        $visibleItems = array_values(array_filter($navGroup['items'], static fn($item) => $item['show']));
+        if (!$visibleItems) {
+            continue;
+        }
+        $groupActive = (bool) array_filter($visibleItems, static fn($item) => $item['active']);
+        $groupBadge = array_sum(array_map(static fn($item) => (int) ($item['badge'] ?? 0), $visibleItems));
+        ?>
+        <li class="siap-menu-item <?= $groupActive ? 'is-active is-open' : '' ?>">
+          <button type="button" class="siap-menu-link" aria-expanded="<?= $groupActive ? 'true' : 'false' ?>" aria-controls="siap-submenu-<?= $groupIndex ?>">
+            <span><?= h($navGroup['label']) ?></span>
+            <?php if ($groupBadge > 0): ?>
+              <span class="crf-nav-unread"><?= $groupBadge > 99 ? '99+' : $groupBadge ?></span>
+            <?php endif; ?>
+            <i class="bi bi-caret-right-fill siap-menu-caret" aria-hidden="true"></i>
+          </button>
+          <ul class="siap-submenu" id="siap-submenu-<?= $groupIndex ?>">
+            <?php foreach ($visibleItems as $navItem): ?>
+              <li>
+                <a class="<?= $navItem['active'] ? 'active' : '' ?>" href="<?= h($appBasePath . $navItem['url']) ?>">
+                  <?= h($navItem['label']) ?>
+                  <?php if (!empty($navItem['badge'])): ?>
+                    <span class="crf-nav-unread" aria-label="<?= (int) $navItem['badge'] ?> baru"><?= $navItem['badge'] > 99 ? '99+' : (int) $navItem['badge'] ?></span>
+                  <?php endif; ?>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </li>
+      <?php endforeach; ?>
+    </ul>
 
-        <?php if ($crfRole === 'cmo'): ?>
-          <a class="<?= $isCmo ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/cmo/index.php">
-            <i class="bi bi-funnel-fill"></i><span>CMO</span>
-          </a>
-        <?php elseif ($crfRole === 'otomasi'): ?>
-          <a class="<?= $isOtomasi ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/otomasi/index.php">
-            <i class="bi bi-gear-fill"></i><span>Otomasi</span>
-          </a>
-        <?php elseif ($crfRole === 'kadep_operasional'): ?>
-          <a class="<?= $isPakJoko ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/pak_joko/index.php">
-            <i class="bi bi-check2-square"></i><span>Kepala Departemen Operasional</span>
-          </a>
+    <nav class="siap-menu-main" aria-label="Menu utama">
+      <a class="<?= $currentFolder === 'notifications' ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/notifications/index.php">
+        Notifikasi
+        <?php if ($notificationUnread > 0): ?>
+          <span class="crf-nav-unread"><?= $notificationUnread > 99 ? '99+' : $notificationUnread ?></span>
         <?php endif; ?>
-
-        <a class="<?= $isForm ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/user/form_crf.php">
-          <i class="bi bi-file-earmark-plus"></i><span>Form CRF</span>
-        </a>
-        <a class="<?= $isPengajuanSaya ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/user/pengajuan_saya.php">
-          <i class="bi bi-file-earmark-check"></i><span>Pengajuan Saya</span>
-        </a>
-      <?php endif; ?>
-      <?php if (in_array($crfRole, forumRoles(), true)): ?>
-        <a class="<?= $isForum ? 'active' : '' ?>" href="<?= h($appBasePath) ?>/forum/index.php">
-          <i class="bi bi-chat-square-text"></i><span>Forum</span>
-          <?php if ($forumUnreadTotal > 0): ?>
-            <span class="crf-nav-unread" aria-label="<?= $forumUnreadTotal ?> komentar baru">
-              <?= $forumUnreadTotal > 99 ? '99+' : $forumUnreadTotal ?>
-            </span>
-          <?php endif; ?>
-        </a>
-      <?php endif; ?>
-    </nav>
-
-    <div class="crf-sidebar-footer">
-      <a href="<?= h($appBasePath) ?>/actions/logout.php">
-        <i class="bi bi-box-arrow-left"></i> Keluar
       </a>
-    </div>
+      <a href="<?= h($appBasePath) ?>/actions/logout.php">Keluar</a>
+    </nav>
   </aside>
 
   <div class="crf-content-shell">
@@ -118,10 +143,36 @@ $homePath = $isAdminUser
       <button type="button" class="crf-sidebar-toggle" aria-label="Buka menu">
         <i class="bi bi-list"></i>
     </button>
-      <div class="crf-user">
-        <strong><?= h($currentUser['nama'] ?? '-') ?></strong>
-        <span class="crf-avatar">
-          <?= h(strtoupper(substr($currentUser['nama'] ?? 'U', 0, 2))) ?>
-        </span>
+      <div class="crf-topbar-right">
+        <div class="dropdown crf-notification">
+          <button type="button" class="crf-notification-bell" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifikasi<?= $notificationUnread > 0 ? ' (' . $notificationUnread . ' belum dibaca)' : '' ?>">
+            <i class="bi bi-bell"></i>
+            <?php if ($notificationUnread > 0): ?>
+              <span class="crf-notification-count"><?= $notificationUnread > 99 ? '99+' : $notificationUnread ?></span>
+            <?php endif; ?>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end crf-notification-menu">
+            <div class="crf-notification-head">
+              <strong>Notifikasi</strong>
+              <a href="<?= h($appBasePath) ?>/notifications/index.php">Lihat semua</a>
+            </div>
+            <?php if (!$notificationItems): ?>
+              <div class="crf-notification-empty"><i class="bi bi-bell-slash"></i> Belum ada notifikasi.</div>
+            <?php endif; ?>
+            <?php foreach ($notificationItems as $notificationItem): ?>
+              <a class="crf-notification-item <?= $notificationItem['read_at'] === null ? 'unread' : '' ?>" href="<?= h($appBasePath) ?>/notifications/open.php?id=<?= (int) $notificationItem['id'] ?>">
+                <strong><?= h($notificationItem['title']) ?></strong>
+                <span><?= h(mb_strimwidth((string) $notificationItem['message'], 0, 110, '…')) ?></span>
+                <small><?= h(date('d M Y H:i', strtotime($notificationItem['created_at']))) ?></small>
+              </a>
+            <?php endforeach; ?>
+          </div>
+        </div>
+        <div class="crf-user">
+          <strong><?= h($currentUser['nama'] ?? '-') ?></strong>
+          <span class="crf-avatar">
+            <?= h(strtoupper(substr($currentUser['nama'] ?? 'U', 0, 2))) ?>
+          </span>
+        </div>
       </div>
     </header>

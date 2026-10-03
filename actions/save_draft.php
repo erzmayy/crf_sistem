@@ -64,7 +64,14 @@ if (
     $budgetAmount = null;
 }
 
-$changeCategory = $_POST['change_category'] ?? '';
+/*
+ * Kategori CRF dinamis (master crf_categories). Kolom ENUM lama
+ * change_category tetap diisi dari kelompok laporan kategori.
+ */
+$crfCategory = resolveActiveCrfCategory($pdo, $_POST['crf_category_id'] ?? null);
+$crfCategoryId = $crfCategory ? (int) $crfCategory['id'] : null;
+$changeCategory = $crfCategory['legacy_change_category'] ?? '';
+$requesterPosition = mb_substr(trim($_POST['requester_position'] ?? ''), 0, 150);
 
 $changeCategoryDetail = trim(
     $_POST['change_category_detail'] ?? ''
@@ -203,6 +210,8 @@ try {
                 budget_type = :budget_type,
                 budget_amount = :budget_amount,
                 change_category = :change_category,
+                crf_category_id = :crf_category_id,
+                requester_position = :requester_position,
                 change_category_detail = :change_category_detail,
                 alternative_suggestion = :alternative_suggestion,
                 workflow_stage = 'PEMOHON'
@@ -229,6 +238,8 @@ try {
             'budget_type' => $budgetType !== '' ? $budgetType : null,
             'budget_amount' => $budgetAmount,
             'change_category' => $changeCategory !== '' ? $changeCategory : null,
+            'crf_category_id' => $crfCategoryId,
+            'requester_position' => $requesterPosition !== '' ? $requesterPosition : null,
             'change_category_detail' => $changeCategoryDetail,
             'alternative_suggestion' => $alternativeSuggestion,
             'id' => $id,
@@ -274,6 +285,8 @@ try {
                 budget_type,
                 budget_amount,
                 change_category,
+                crf_category_id,
+                requester_position,
                 change_category_detail,
                 alternative_suggestion,
                 post_implementation_review,
@@ -301,6 +314,8 @@ try {
                 :budget_type,
                 :budget_amount,
                 :change_category,
+                :crf_category_id,
+                :requester_position,
                 :change_category_detail,
                 :alternative_suggestion,
                 NULL,
@@ -332,6 +347,8 @@ try {
                 'budget_type' => $budgetType !== '' ? $budgetType : null,
                 'budget_amount' => $budgetAmount,
                 'change_category' => $changeCategory !== '' ? $changeCategory : null,
+                'crf_category_id' => $crfCategoryId,
+                'requester_position' => $requesterPosition !== '' ? $requesterPosition : null,
                 'change_category_detail' => $changeCategoryDetail,
                 'alternative_suggestion' => $alternativeSuggestion
             ]);

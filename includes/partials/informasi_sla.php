@@ -112,6 +112,15 @@ $slaDueEpoch = !empty($crf['sla_due_at'])
 
         </div>
 
+        <?php if (!empty($crf['sla_result'])): ?>
+            <?php $slaOnTime = $crf['sla_result'] === 'Sesuai SLA'; ?>
+            <div class="crf-sla-result <?= $slaOnTime ? 'is-success' : 'is-danger' ?>">
+                <div><span class="crf-detail-label">Durasi SLA</span><strong><?= h(formatSlaDuration(((int) $crf['sla_actual_minutes']) * 60)) ?></strong></div>
+                <div><span class="crf-detail-label">Target SLA</span><strong><?= h($slaValueDisplay ?? '-') ?></strong></div>
+                <div><span class="crf-detail-label">Status</span><strong><?= $slaOnTime ? '✓ Sesuai SLA' : '⚠ Melebihi SLA' ?></strong></div>
+            </div>
+        <?php endif; ?>
+
         <?php if ($slaIsLive): ?>
             <div
                 class="alert <?= $slaStatus['alert'] === null ? 'd-none' : 'alert-' . ($slaStatus['alert'] === 'overdue' ? 'danger' : 'warning') ?> crf-sla-alert"

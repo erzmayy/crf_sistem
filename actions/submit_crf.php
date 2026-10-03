@@ -14,6 +14,7 @@
 
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/helpdesk.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../user/form_crf.php');
@@ -52,8 +53,10 @@ $fromDivision   = trim($_POST['from_division'] ?? '');
 $budgetTypeRaw   = $_POST['budget_type'] ?? null;
 $budgetAmountRaw = $_POST['budget_amount'] ?? null;
 
-$changeCategory       = $_POST['change_category'] ?? '';
+$crfCategory          = resolveActiveCrfCategory($pdo, $_POST['crf_category_id'] ?? null);
+$changeCategory       = $crfCategory['legacy_change_category'] ?? '';
 $changeCategoryDetail = trim($_POST['change_category_detail'] ?? '');
+$requesterPosition    = mb_substr(trim($_POST['requester_position'] ?? ''), 0, 150);
 
 $alternativeSuggestion = trim($_POST['alternative_suggestion'] ?? '');
 
@@ -128,9 +131,9 @@ if ($fromDivision === '') {
     $errors[] = 'Divisi wajib diisi.';
 }
 
-/* Kategori */
-if (!in_array($changeCategory, $allowedCategories, true)) {
-    $errors[] = 'Kategori Perubahan wajib dipilih.';
+/* Kategori (master Kategori CRF yang aktif) */
+if (!$crfCategory || !in_array($changeCategory, $allowedCategories, true)) {
+    $errors[] = 'Kategori CRF wajib dipilih.';
 }
 
 if ($changeCategory === 'Lainnya' && $changeCategoryDetail === '') {
@@ -288,6 +291,8 @@ try {
                 budget_type = :budget_type,
                 budget_amount = :budget_amount,
                 change_category = :change_category,
+                crf_category_id = :crf_category_id,
+                requester_position = :requester_position,
                 change_category_detail = :change_category_detail,
                 alternative_suggestion = :alternative_suggestion,
                 workflow_stage = 'CMO_FILTER',
@@ -317,6 +322,8 @@ try {
             'budget_type'            => $budgetTypeRaw,
             'budget_amount'          => $budgetAmount,
             'change_category'        => $changeCategory,
+            'crf_category_id'        => (int) $crfCategory['id'],
+            'requester_position'     => $requesterPosition !== '' ? $requesterPosition : null,
             'change_category_detail' => $changeCategoryDetailValue,
             'alternative_suggestion' => $alternativeSuggestion,
             'id'                     => $draftId,
@@ -355,6 +362,8 @@ try {
                 budget_type,
                 budget_amount,
                 change_category,
+                crf_category_id,
+                requester_position,
                 change_category_detail,
                 alternative_suggestion,
                 level,
@@ -380,6 +389,8 @@ try {
                 :budget_type,
                 :budget_amount,
                 :change_category,
+                :crf_category_id,
+                :requester_position,
                 :change_category_detail,
                 :alternative_suggestion,
                 :level,
@@ -409,6 +420,8 @@ try {
             'budget_type'            => $budgetTypeRaw,
             'budget_amount'          => $budgetAmount,
             'change_category'        => $changeCategory,
+            'crf_category_id'        => (int) $crfCategory['id'],
+            'requester_position'     => $requesterPosition !== '' ? $requesterPosition : null,
             'change_category_detail' => $changeCategoryDetailValue,
             'alternative_suggestion' => $alternativeSuggestion,
         ]);
@@ -428,30 +441,39 @@ try {
         ? 'CRF dikirim ulang setelah dilakukan perbaikan.'
         : 'CRF berhasil diajukan.';
 
-    $actor = !empty($user['nama'])
-        ? $user['nama']
-        : $user['userid'];
+    $actor = crfActorName($user);
 
-    $logStmt = $pdo->prepare("
-        INSERT INTO crf_activity_logs (
-            change_request_id,
-            activity,
-            description,
-            actor
-        ) VALUES (
-            :change_request_id,
-            :activity,
-            :description,
-            :actor
-        )
-    ");
+    logCrfActivity(
+        $pdo,
+        $crfId,
+        $activity,
+        $description,
+        $actor,
+        $isResubmission ? 'Perlu Revisi' : 'Draft',
+        'Menunggu Review'
+    );
 
-    $logStmt->execute([
-        'change_request_id' => $crfId,
-        'activity'          => $activity,
-        'description'       => $description,
-        'actor'             => $actor,
-    ]);
+    /* ------------------------------------------------------------------
+     * 6B. Ticket Helpdesk ikut diperbarui + notifikasi CMO & Handler
+     * ------------------------------------------------------------------ */
+    syncHelpdeskTicketFromCrf($pdo, $crfId, $actor);
+
+    $notifyTitle = ($isResubmission ? 'CRF dikirim ulang: ' : 'CRF baru: ') . $requestNumber;
+    $notifyMessage = $actor . ' mengajukan CRF kategori ' . $crfCategory['name']
+        . '. CRF menunggu review CMO.';
+    notifyUsers(
+        $pdo,
+        array_merge(
+            crfUserIdsForRole($pdo, 'cmo'),
+            crfCategoryHandlerIds($pdo, (int) $crfCategory['id'])
+        ),
+        $notifyTitle,
+        $notifyMessage,
+        'crf/open.php?id=' . $crfId,
+        $crfId,
+        null,
+        (int) $user['id']
+    );
 
     /* ------------------------------------------------------------------
      * 7. Upload attachment
@@ -463,6 +485,8 @@ try {
     );
 
     $pdo->commit();
+
+    dispatchPendingNotificationEmails($pdo);
 
     /* ------------------------------------------------------------------
      * 8. Pesan sukses

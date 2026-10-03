@@ -1,6 +1,7 @@
 {
     "require": {
         "aws/aws-sdk-php": "^3.397",
-        "dompdf/dompdf": "^3.1"
+        "dompdf/dompdf": "^3.1",
+        "phpmailer/phpmailer": "6.9"
     }
 }

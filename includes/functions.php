@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/categories.php';
 
 use Aws\S3\S3Client;
 use Aws\Exception\AwsException;
@@ -459,28 +460,153 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
     ];
 }
 
-function logCrfActivity(PDO $pdo, int $crfId, string $activity, string $description, string $actor): void
-{
+/**
+ * Catat timeline/audit trail CRF. $oldStatus/$newStatus opsional
+ * (label status tampilan, lihat crfDisplayStatus()).
+ * user_id diambil dari session bila tersedia.
+ */
+function logCrfActivity(
+    PDO $pdo,
+    int $crfId,
+    string $activity,
+    string $description,
+    string $actor,
+    ?string $oldStatus = null,
+    ?string $newStatus = null
+): void {
     $stmt = $pdo->prepare("
         INSERT INTO crf_activity_logs (
             change_request_id,
+            user_id,
             activity,
             description,
-            actor
+            actor,
+            old_status,
+            new_status
         ) VALUES (
             :change_request_id,
+            :user_id,
             :activity,
             :description,
-            :actor
+            :actor,
+            :old_status,
+            :new_status
         )
     ");
 
     $stmt->execute([
         'change_request_id' => $crfId,
+        'user_id' => isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null,
         'activity' => $activity,
         'description' => $description,
         'actor' => $actor,
+        'old_status' => $oldStatus,
+        'new_status' => $newStatus,
     ]);
+}
+
+/**
+ * Status tampilan CRF (label sesuai alur Helpdesk/CRF) yang diturunkan
+ * dari kombinasi status + workflow_stage. ENUM database tidak diubah.
+ *
+ * @return array{key:string,label:string,class:string}
+ */
+function crfDisplayStatus(array $crf): array
+{
+    $status = (string) ($crf['status'] ?? '');
+    $stage = (string) ($crf['workflow_stage'] ?? '');
+    $approved = !empty($crf['kadep_operasional_approved_at']);
+
+    if ($status === 'Draft') {
+        return ['key' => 'draft', 'label' => 'Draft', 'class' => 'badge-status-draft'];
+    }
+    if ($status === 'Solve') {
+        return ['key' => 'selesai', 'label' => 'Selesai', 'class' => 'badge-status-solve'];
+    }
+    if ($status === 'Cancel') {
+        return ['key' => 'dibatalkan', 'label' => 'Dibatalkan', 'class' => 'badge-status-cancel'];
+    }
+    if ($status === 'Perlu Revisi') {
+        return ['key' => 'revisi', 'label' => 'Ditolak / Perlu Revisi', 'class' => 'badge-status-revisi'];
+    }
+    if ($stage === 'CMO_FILTER') {
+        return ['key' => 'review', 'label' => 'Menunggu Review', 'class' => 'badge-status-belum'];
+    }
+    if ($stage === 'kadep_operasional') {
+        return ['key' => 'approval', 'label' => 'Menunggu Approval', 'class' => 'badge-stage-joko'];
+    }
+    if ($stage === 'OTOMASI' && $approved) {
+        return ['key' => 'disetujui', 'label' => 'Disetujui · Eksekusi', 'class' => 'badge-stage-otomasi'];
+    }
+    if ($stage === 'OTOMASI') {
+        return ['key' => 'diproses', 'label' => 'Diproses', 'class' => 'badge-status-proses'];
+    }
+    if ($stage === 'CMO_FINAL') {
+        return ['key' => 'finalisasi', 'label' => 'Menunggu Finalisasi', 'class' => 'badge-stage-cmo-final'];
+    }
+
+    return ['key' => 'submitted', 'label' => 'Submitted', 'class' => 'badge-status-belum'];
+}
+
+/**
+ * Kondisi SQL untuk setiap status tampilan (dipakai summary & filter dashboard).
+ *
+ * @return array<string,array{label:string,sql:string}>
+ */
+function crfDisplayStatusConditions(string $alias = 'cr'): array
+{
+    $a = $alias . '.';
+
+    return [
+        'draft'      => ['label' => 'Draft', 'sql' => "{$a}status = 'Draft'"],
+        'review'     => ['label' => 'Menunggu Review', 'sql' => "{$a}status = 'Belum Ditindak Lanjuti' AND {$a}workflow_stage = 'CMO_FILTER'"],
+        'diproses'   => ['label' => 'Diproses', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage = 'OTOMASI' AND {$a}kadep_operasional_approved_at IS NULL"],
+        'approval'   => ['label' => 'Menunggu Approval', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage = 'kadep_operasional'"],
+        'disetujui'  => ['label' => 'Disetujui · Eksekusi', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage IN ('OTOMASI','CMO_FINAL') AND {$a}kadep_operasional_approved_at IS NOT NULL"],
+        'revisi'     => ['label' => 'Ditolak / Perlu Revisi', 'sql' => "{$a}status = 'Perlu Revisi'"],
+        'selesai'    => ['label' => 'Selesai', 'sql' => "{$a}status = 'Solve'"],
+        'dibatalkan' => ['label' => 'Dibatalkan', 'sql' => "{$a}status = 'Cancel'"],
+    ];
+}
+
+/**
+ * Hitung durasi aktual SLA dan hasilnya (Sesuai / Melebihi SLA) saat
+ * eksekusi diselesaikan. Dipanggil di dalam transaksi.
+ */
+function finalizeCrfSla(PDO $pdo, int $crfId): void
+{
+    $stmt = $pdo->prepare('
+        SELECT sla_started_at, sla_due_at, automation_completed_at
+        FROM change_requests
+        WHERE id = :id
+    ');
+    $stmt->execute(['id' => $crfId]);
+    $row = $stmt->fetch();
+
+    if (!$row || empty($row['sla_started_at']) || empty($row['automation_completed_at'])) {
+        return;
+    }
+
+    $started = strtotime($row['sla_started_at']);
+    $completed = strtotime($row['automation_completed_at']);
+    $minutes = (int) max(0, round(($completed - $started) / 60));
+    $result = null;
+
+    if (!empty($row['sla_due_at'])) {
+        $result = $completed <= strtotime($row['sla_due_at']) ? 'Sesuai SLA' : 'Melebihi SLA';
+    }
+
+    $update = $pdo->prepare('
+        UPDATE change_requests
+        SET sla_actual_minutes = :minutes, sla_result = :result
+        WHERE id = :id
+    ');
+    $update->execute(['minutes' => $minutes, 'result' => $result, 'id' => $crfId]);
+}
+
+function crfActorName(array $user): string
+{
+    return !empty($user['nama']) ? (string) $user['nama'] : (string) ($user['userid'] ?? '-');
 }
 
 function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $filters): array
@@ -547,6 +673,36 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
         $params['list_date_to'] = $dateTo;
     }
 
+    $categoryId = (int) $filterString($filters['category_id'] ?? '');
+    if ($categoryId > 0) {
+        $where[] = 'cr.crf_category_id = :list_category_id';
+        $params['list_category_id'] = $categoryId;
+    } else {
+        $categoryId = 0;
+    }
+
+    $handlerId = (int) $filterString($filters['handler_id'] ?? '');
+    if ($handlerId > 0) {
+        $where[] = 'cr.assigned_handler_id = :list_handler_id';
+        $params['list_handler_id'] = $handlerId;
+    } else {
+        $handlerId = 0;
+    }
+
+    $requester = $filterString($filters['requester'] ?? '');
+    if ($requester !== '') {
+        $where[] = 'cr.full_name LIKE :list_requester';
+        $params['list_requester'] = '%' . $requester . '%';
+    }
+
+    $displayStatus = $filterString($filters['display_status'] ?? '');
+    $displayConditions = crfDisplayStatusConditions('cr');
+    if (isset($displayConditions[$displayStatus])) {
+        $where[] = '(' . $displayConditions[$displayStatus]['sql'] . ')';
+    } else {
+        $displayStatus = '';
+    }
+
     $departmentStmt = $pdo->query("
         SELECT DISTINCT from_department
         FROM change_requests
@@ -556,6 +712,17 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
         ORDER BY from_department
     ");
 
+    $categories = [];
+    try {
+        $categories = $pdo->query('
+            SELECT id, name FROM crf_categories
+            WHERE deleted_at IS NULL
+            ORDER BY sort_order, name
+        ')->fetchAll();
+    } catch (Throwable $e) {
+        error_log('applyCrfRequestFilters categories: ' . $e->getMessage());
+    }
+
     return [
         'search' => $search,
         'status' => $status,
@@ -563,7 +730,12 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
         'level' => $level,
         'date_from' => $dateFrom,
         'date_to' => $dateTo,
+        'category_id' => $categoryId,
+        'handler_id' => $handlerId,
+        'requester' => $requester,
+        'display_status' => $displayStatus,
         'departments' => $departmentStmt->fetchAll(PDO::FETCH_COLUMN),
+        'categories' => $categories,
     ];
 }
 
@@ -691,6 +863,41 @@ const CRF_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB per file
  */
 function handleAttachmentUploads(PDO $pdo, int $crfId, array $filesInput): array
 {
+    $stmt = $pdo->prepare(
+        'INSERT INTO attachments
+        (change_request_id, original_name, stored_name, file_path, file_type, file_size)
+        VALUES
+        (:owner_id, :original_name, :stored_name, :file_path, :file_type, :file_size)'
+    );
+
+    return uploadAttachmentsToStorage($filesInput, 'crf_' . $crfId . '_', $stmt, $crfId);
+}
+
+/**
+ * Lampiran ticket Helpdesk: validasi & penyimpanan sama dengan lampiran CRF.
+ *
+ * @return string[]
+ */
+function handleHelpdeskAttachmentUploads(PDO $pdo, int $ticketId, array $filesInput): array
+{
+    $stmt = $pdo->prepare(
+        'INSERT INTO helpdesk_attachments
+        (helpdesk_ticket_id, original_name, stored_name, file_path, file_type, file_size)
+        VALUES
+        (:owner_id, :original_name, :stored_name, :file_path, :file_type, :file_size)'
+    );
+
+    return uploadAttachmentsToStorage($filesInput, 'hd_' . $ticketId . '_', $stmt, $ticketId);
+}
+
+/**
+ * Validasi lalu upload file ke Wasabi, dan catat lewat $insertStmt
+ * (parameter: owner_id, original_name, stored_name, file_path, file_type, file_size).
+ *
+ * @return string[] daftar pesan error
+ */
+function uploadAttachmentsToStorage(array $filesInput, string $storedPrefix, PDOStatement $insertStmt, int $ownerId): array
+{
     $errors = [];
 
     if (empty($filesInput['name']) || empty($filesInput['name'][0])) {
@@ -758,7 +965,7 @@ function handleAttachmentUploads(PDO $pdo, int $crfId, array $filesInput): array
         }
 
         // Buat nama file unik
-        $storedName = uniqid('crf_' . $crfId . '_', true) . '.' . $ext;
+        $storedName = uniqid($storedPrefix, true) . '.' . $ext;
 
         // Path file di Wasabi
         $key = $uploadPath . $storedName;
@@ -778,29 +985,8 @@ function handleAttachmentUploads(PDO $pdo, int $crfId, array $filesInput): array
             $fileUrl = $result['ObjectURL'];
 
             // Simpan informasi file ke database
-            $stmt = $pdo->prepare(
-                'INSERT INTO attachments
-                (
-                    change_request_id,
-                    original_name,
-                    stored_name,
-                    file_path,
-                    file_type,
-                    file_size
-                )
-                VALUES
-                (
-                    :crf_id,
-                    :original_name,
-                    :stored_name,
-                    :file_path,
-                    :file_type,
-                    :file_size
-                )'
-            );
-
-            $stmt->execute([
-                'crf_id' => $crfId,
+            $insertStmt->execute([
+                'owner_id' => $ownerId,
                 'original_name' => $originalName,
                 'stored_name' => $storedName,
                 'file_path' => $fileUrl,

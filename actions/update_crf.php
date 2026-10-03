@@ -24,6 +24,7 @@
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/helpdesk.php';
 
 requireAdmin();
 
@@ -135,6 +136,7 @@ if ($id <= 0 || $status === null) {
  */
 $stmt = $pdo->prepare(
     'SELECT
+        user_id,
         status,
         level,
         tanggapan_tindak_lanjut,
@@ -356,7 +358,24 @@ try {
         ]);
     }
 
+    // Status ticket Helpdesk terkait mengikuti perubahan status CRF.
+    syncHelpdeskTicketFromCrf($pdo, $id, $actor);
+
+    if ($currentStatus !== $status && in_array($status, ['Perlu Revisi', 'Solve', 'Cancel'], true)) {
+        notifyUsers(
+            $pdo,
+            [(int) ($current['user_id'] ?? 0)],
+            'Status CRF diperbarui: ' . statusLabel($status),
+            'Admin mengubah status CRF Anda menjadi ' . statusLabel($status) . '.',
+            'crf/open.php?id=' . $id,
+            $id,
+            null,
+            (int) $_SESSION['user_id']
+        );
+    }
+
     $pdo->commit();
+    dispatchPendingNotificationEmails($pdo);
 
     $_SESSION['flash'] = [
         'type' => 'success',

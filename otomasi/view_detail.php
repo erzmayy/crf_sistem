@@ -48,6 +48,11 @@ $stmt->execute(['id' => $id]);
 
 $crf = $stmt->fetch();
 
+// Handler hanya boleh melihat CRF pada kategori yang ditanganinya.
+if ($crf && !canHandleCrf($pdo, $crf)) {
+    $crf = false;
+}
+
 if (!$crf) {
     http_response_code(404);
 
@@ -98,6 +103,8 @@ $logStmt = $pdo->prepare("
         activity,
         description,
         actor,
+        old_status,
+        new_status,
         created_at
     FROM crf_activity_logs
     WHERE change_request_id = :id

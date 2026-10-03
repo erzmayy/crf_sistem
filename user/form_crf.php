@@ -52,6 +52,32 @@ if ($draftId > 0) {
     }
 }
 
+/*
+ * Kategori CRF dinamis + ticket Helpdesk asal (jika CRF dibuat dari Helpdesk).
+ */
+$crfCategoryOptions = crfCategories($pdo);
+$sourceTicket = null;
+if (!empty($draftData['helpdesk_ticket_id'])) {
+    $ticketStmt = $pdo->prepare('
+        SELECT t.id, t.ticket_number, t.created_at, c.name AS category_name
+        FROM helpdesk_tickets t
+        JOIN helpdesk_categories c ON c.id = t.helpdesk_category_id
+        WHERE t.id = :id
+    ');
+    $ticketStmt->execute(['id' => $draftData['helpdesk_ticket_id']]);
+    $sourceTicket = $ticketStmt->fetch() ?: null;
+}
+
+// Kategori lama yang sudah dinonaktifkan tetap tampil agar draft tidak kehilangan pilihan.
+$selectedCategoryId = (int) ($_SESSION['old_crf']['crf_category_id'] ?? ($draftData['crf_category_id'] ?? 0));
+if ($selectedCategoryId > 0 && !in_array($selectedCategoryId, array_map('intval', array_column($crfCategoryOptions, 'id')), true)) {
+    $selectedCategory = findCrfCategory($pdo, $selectedCategoryId);
+    if ($selectedCategory) {
+        $selectedCategory['name'] .= ' (nonaktif)';
+        $crfCategoryOptions[] = $selectedCategory;
+    }
+}
+
 $today = new DateTime();
 $tanggalDisplay   = formatTanggalIndonesia($today);
 $previewRequestNo = !empty($draftData['request_number'])
@@ -131,6 +157,20 @@ require_once __DIR__ . '/../includes/header.php';
       <strong>Mohon periksa kembali data berikut:</strong>
       <ul id="validationList" class="mb-0 mt-2"></ul>
     </div>
+
+    <?php if ($sourceTicket): ?>
+      <div class="crf-ticket-link-card">
+        <span class="crf-ticket-link-icon"><i class="bi bi-ticket-detailed"></i></span>
+        <div>
+          <span class="crf-request-caption">CRF ini berasal dari ticket Helpdesk</span>
+          <a href="../helpdesk/detail.php?id=<?= (int) $sourceTicket['id'] ?>" class="crf-link">
+            <strong><?= h($sourceTicket['ticket_number']) ?></strong>
+          </a>
+          <small class="text-muted"> · <?= h($sourceTicket['category_name']) ?> · <?= h(date('d-m-Y H:i', strtotime($sourceTicket['created_at']))) ?></small>
+          <div class="crf-readonly-note mb-0">Data pelapor &amp; isi permintaan dari Helpdesk sudah terisi otomatis. Lengkapi sisanya lalu ajukan CRF.</div>
+        </div>
+      </div>
+    <?php endif; ?>
 
     <form action="../actions/submit_crf.php" method="POST" enctype="multipart/form-data" id="crfForm" novalidate>
 
@@ -213,6 +253,25 @@ require_once __DIR__ . '/../includes/header.php';
               <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
             </div>
             
+            <div class="col-md-6">
+              <label for="requester_position" class="crf-field-label">Jabatan</label>
+              <input
+                type="text"
+                class="form-control"
+                id="requester_position"
+                name="requester_position"
+                maxlength="150"
+                placeholder="Contoh: Staf Keuangan"
+                value="<?= h($old['requester_position'] ?? '') ?>"
+              >
+            </div>
+
+            <div class="col-md-6">
+              <label class="crf-field-label">Nomor Ticket Helpdesk</label>
+              <input type="text" class="form-control" value="<?= h($sourceTicket['ticket_number'] ?? 'Tidak terhubung ke ticket Helpdesk') ?>" readonly>
+              <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis bila CRF dibuat dari Formulir Helpdesk</div>
+            </div>
+
             <div class="col-md-6">
               <label class="crf-field-label">Hari/Tanggal<span class="text-danger">*</span>
               </label>
@@ -389,32 +448,24 @@ require_once __DIR__ . '/../includes/header.php';
           <h2>Kategori Perubahan</h2>
         </div>
         <div class="crf-section-body">
-          <label for="change_category" class="crf-field-label">Kategori<span class="text-danger">*</span></label>
-          <select class="form-select mb-3" id="change_category" name="change_category" required style="max-width: 320px;">
-            <option value="" disabled <?= empty($old['change_category']) ? 'selected' : '' ?>>
+          <label for="change_category" class="crf-field-label">Kategori CRF<span class="text-danger">*</span></label>
+          <select class="form-select mb-1" id="change_category" name="crf_category_id" required style="max-width: 360px;">
+            <option value="" disabled <?= $selectedCategoryId === 0 ? 'selected' : '' ?>>
               Pilih kategori...
             </option>
-
-            <option value="Aplikasi" <?= ($old['change_category'] ?? '') === 'Aplikasi' ? 'selected' : '' ?>>
-              Aplikasi
-            </option>
-
-            <option value="Infrastruktur" <?= ($old['change_category'] ?? '') === 'Infrastruktur' ? 'selected' : '' ?>>
-              Infrastruktur
-            </option>
-
-            <option value="Proses" <?= ($old['change_category'] ?? '') === 'Proses' ? 'selected' : '' ?>>
-              Proses
-            </option>
-
-            <option value="Security" <?= ($old['change_category'] ?? '') === 'Security' ? 'selected' : '' ?>>
-              Security
-            </option>
-
-            <option value="Lainnya" <?= ($old['change_category'] ?? '') === 'Lainnya' ? 'selected' : '' ?>>
-              Lainnya
-            </option>
+            <?php foreach ($crfCategoryOptions as $categoryOption): ?>
+              <option
+                value="<?= (int) $categoryOption['id'] ?>"
+                data-legacy="<?= h($categoryOption['legacy_change_category']) ?>"
+                <?= $selectedCategoryId === (int) $categoryOption['id'] ? 'selected' : '' ?>
+              ><?= h($categoryOption['name']) ?></option>
+            <?php endforeach; ?>
           </select>
+          <?php if (!$crfCategoryOptions): ?>
+            <div class="text-danger small mb-3">Belum ada Kategori CRF aktif. Hubungi Admin.</div>
+          <?php else: ?>
+            <div class="crf-readonly-note mb-3">Kategori menentukan Handler yang akan memproses CRF Anda.</div>
+          <?php endif; ?>
 
           <div id="category-detail-wrap" class="d-none">
             <label for="change_category_detail" class="crf-field-label" id="category-detail-label">Detail Kategori<span class="text-danger">*</span></label>

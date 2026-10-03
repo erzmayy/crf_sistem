@@ -20,6 +20,11 @@ $stmt->execute(['id' => $id]);
 
 $crf = $stmt->fetch();
 
+// Handler hanya boleh memproses CRF pada kategori yang ditanganinya.
+if ($crf && !canHandleCrf($pdo, $crf)) {
+    $crf = false;
+}
+
 if (!$crf) {
     http_response_code(404);
 
@@ -58,7 +63,7 @@ $attStmt->execute(['id' => $id]);
 $attachments = $attStmt->fetchAll();
 
 $timelineStmt = $pdo->prepare("
-    SELECT activity, description, actor, created_at
+    SELECT activity, description, actor, old_status, new_status, created_at
     FROM crf_activity_logs
     WHERE change_request_id = :id
     ORDER BY created_at ASC, id ASC
@@ -67,6 +72,10 @@ $timelineStmt->execute(['id' => $id]);
 $timeline = $timelineStmt->fetchAll();
 
 $isExecutionStage = !empty($crf['kadep_operasional_approved_at']);
+$isAssignedToOther = !empty($crf['assigned_handler_id']) && !isAssignedCrfHandler($crf);
+$categoryHandlers = !empty($crf['crf_category_id']) && isAdmin()
+    ? (categoryMembers($pdo, 'crf_category_handlers', 'crf_category_id')[(int) $crf['crf_category_id']] ?? [])
+    : [];
 
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
@@ -165,6 +174,8 @@ require_once __DIR__ . '/../includes/header.php';
 
         </div>
 
+        <?php require __DIR__ . '/../includes/partials/handler_assignment.php'; ?>
+
         <div class="crf-detail-layout">
           <main class="crf-detail-main">
 
@@ -187,9 +198,17 @@ require_once __DIR__ . '/../includes/header.php';
              FORM OTOMASI
              ===================================================== -->
 
+        <?php if ($isAssignedToOther): ?>
+        <div class="alert alert-warning crf-alert">
+            <i class="bi bi-person-lock"></i>
+            CRF ini sedang ditangani oleh <strong><?= h($crf['assigned_handler_name'] ?? '-') ?></strong>.
+            Hanya handler tersebut atau Admin yang dapat memprosesnya.
+        </div>
+        <?php else: ?>
         <form
             action="../actions/automation_action.php"
             method="POST"
+            data-loading-form
         >
 
             <?= csrfField() ?>
@@ -514,6 +533,7 @@ require_once __DIR__ . '/../includes/header.php';
             <?php endif; ?>
 
         </form>
+        <?php endif; ?>
 
           </main>
           <aside class="crf-detail-sidebar">

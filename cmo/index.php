@@ -51,6 +51,7 @@ $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
     'level' => $_GET['level'] ?? '',
     'date_from' => $_GET['date_from'] ?? '',
     'date_to' => $_GET['date_to'] ?? '',
+    'category_id' => $_GET['category_id'] ?? '',
 ]);
 $search = $listFilters['search'];
 
@@ -193,7 +194,7 @@ require_once __DIR__ . '/../includes/header.php';
                 </td>
                 <td data-label="Isi Pengajuan">
                   <div class="crf-request-content">
-                    <span class="crf-request-category-chip"><?= h($row['change_category'] ?? 'Lainnya') ?></span>
+                    <span class="crf-request-category-chip"><?= h(crfCategoryName($row, 'Lainnya')) ?></span>
                     <div class="crf-request-description"><?= h($row['change_description'] ?? '-') ?></div>
                   </div>
                 </td>

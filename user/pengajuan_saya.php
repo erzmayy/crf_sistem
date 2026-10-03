@@ -36,7 +36,7 @@ $summary = $summaryStmt->fetch();
 
 $search = trim($_GET['search'] ?? '');
 $statusFilter = trim($_GET['status'] ?? '');
-$categoryFilter = trim($_GET['category'] ?? '');
+$categoryFilter = (int) ($_GET['category'] ?? 0);
 
 $allowedStatuses = [
     'Draft',
@@ -47,13 +47,8 @@ $allowedStatuses = [
     'Cancel'
 ];
 
-$allowedCategories = [
-    'Aplikasi',
-    'Infrastruktur',
-    'Proses',
-    'Security',
-    'Lainnya'
-];
+// Kategori CRF dinamis (master crf_categories): [id => nama].
+$allowedCategories = array_column(crfCategories(getConnection(), false), 'name', 'id');
 
 /*
  * Kalau filter tidak valid, kosongkan.
@@ -66,10 +61,10 @@ if (
 }
 
 if (
-    $categoryFilter !== ''
-    && !in_array($categoryFilter, $allowedCategories, true)
+    $categoryFilter !== 0
+    && !isset($allowedCategories[$categoryFilter])
 ) {
-    $categoryFilter = '';
+    $categoryFilter = 0;
 }
 
 
@@ -119,9 +114,9 @@ if ($statusFilter !== '') {
 /*
  * Filter Kategori
  */
-if ($categoryFilter !== '') {
+if ($categoryFilter !== 0) {
 
-    $where[] = 'change_category = :category';
+    $where[] = 'crf_category_id = :category';
 
     $params['category'] = $categoryFilter;
 }
@@ -183,6 +178,7 @@ $sql = "
         from_department,
         submission_date,
         change_category,
+        crf_category_id,
         level,
         status,
         workflow_stage,
@@ -298,7 +294,7 @@ require_once __DIR__ . '/../includes/header.php';
                     empty($pengajuan)
                     && $search === ''
                     && $statusFilter === ''
-                    && $categoryFilter === ''
+                    && $categoryFilter === 0
                 ): ?>
 
                     <div class="crf-empty-state">
@@ -369,10 +365,10 @@ require_once __DIR__ . '/../includes/header.php';
                                 <select id="pengajuan-category" name="category" class="form-select">
                                     <option value="">Semua Kategori</option>
 
-                                    <?php foreach ($allowedCategories as $categoryOption): ?>
+                                    <?php foreach ($allowedCategories as $categoryOptionId => $categoryOption): ?>
                                         <option
-                                            value="<?= h($categoryOption) ?>"
-                                            <?= $categoryFilter === $categoryOption ? 'selected' : '' ?>
+                                            value="<?= (int) $categoryOptionId ?>"
+                                            <?= $categoryFilter === (int) $categoryOptionId ? 'selected' : '' ?>
                                         >
                                             <?= h($categoryOption) ?>
                                         </option>
@@ -397,7 +393,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <?php if (
                             $search !== ''
                             || $statusFilter !== ''
-                            || $categoryFilter !== ''
+                            || $categoryFilter !== 0
                         ): ?>
 
                             <div class="pengajuan-filter-reset">
@@ -474,7 +470,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     <!-- ISI PENGAJUAN -->
                                     <td data-label="Isi Pengajuan">
                                         <div class="crf-request-content">
-                                            <span class="crf-request-category-chip"><?= h($row['change_category'] ?: 'Kategori belum dipilih') ?></span>
+                                            <span class="crf-request-category-chip"><?= h(crfCategoryName($row, 'Kategori belum dipilih')) ?></span>
                                             <div class="crf-request-description"><?= h($row['change_description'] ?? '-') ?></div>
                                         </div>
                                     </td>

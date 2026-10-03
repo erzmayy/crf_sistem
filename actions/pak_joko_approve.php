@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/helpdesk.php';
 
 requireCrfRole(['kadep_operasional']);
 
@@ -29,7 +30,7 @@ if ($id <= 0) {
 }
 
 $stmt = $pdo->prepare("
-    SELECT id, workflow_stage
+    SELECT id, user_id, request_number, assigned_handler_id, crf_category_id, workflow_stage
     FROM change_requests
     WHERE id = :id
     LIMIT 1
@@ -68,9 +69,14 @@ try {
 
     $now = date('Y-m-d H:i:s');
 
-    $actor = !empty($user['nama'])
-        ? $user['nama']
-        : $user['userid'];
+    $actor = crfActorName($user);
+    $crfLink = 'crf/open.php?id=' . $id;
+    $crfNumber = (string) $crf['request_number'];
+
+    // Handler pemegang CRF; bila belum ada, seluruh handler kategori.
+    $handlerRecipients = !empty($crf['assigned_handler_id'])
+        ? [(int) $crf['assigned_handler_id']]
+        : (!empty($crf['crf_category_id']) ? crfCategoryHandlerIds($pdo, (int) $crf['crf_category_id']) : []);
 
 
     /* =====================================================
@@ -108,11 +114,26 @@ try {
             $id,
             'Perlu Revisi',
             'Kepala Departemen Operasional mengembalikan CRF ke Otomasi untuk revisi sebelum approval. Catatan: ' . $note,
-            $actor
+            $actor,
+            'Menunggu Approval',
+            'Diproses'
         );
 
+        notifyUsers(
+            $pdo,
+            array_merge($handlerRecipients, [(int) $crf['user_id']]),
+            'CRF ditolak Kadep: ' . $crfNumber,
+            'Kepala Departemen Operasional belum menyetujui CRF ' . $crfNumber . ' dan mengembalikannya ke Handler. Catatan: ' . $note,
+            $crfLink,
+            $id,
+            null,
+            (int) $user['id']
+        );
+
+        syncHelpdeskTicketFromCrf($pdo, $id, $actor);
 
         $pdo->commit();
+        dispatchPendingNotificationEmails($pdo);
 
 
         $_SESSION['flash'] = [
@@ -207,11 +228,26 @@ try {
             $note !== ''
                 ? 'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. CRF diteruskan ke Otomasi untuk eksekusi. Catatan: ' . $note
                 : 'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. CRF diteruskan ke Otomasi untuk eksekusi.',
-            $actor
+            $actor,
+            'Menunggu Approval',
+            'Disetujui · Eksekusi'
         );
 
+        notifyUsers(
+            $pdo,
+            array_merge($handlerRecipients, [(int) $crf['user_id']]),
+            'CRF disetujui: ' . $crfNumber,
+            'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional. SLA dimulai dan eksekusi dapat dilakukan.',
+            $crfLink,
+            $id,
+            null,
+            (int) $user['id']
+        );
+
+        syncHelpdeskTicketFromCrf($pdo, $id, $actor);
 
         $pdo->commit();
+        dispatchPendingNotificationEmails($pdo);
 
 
         $_SESSION['flash'] = [

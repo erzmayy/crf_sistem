@@ -110,7 +110,7 @@ $urgencyLabel = !empty($crf['final_urgency_level'])
             <div class="crf-info-row">
                 <span class="crf-info-label">Kategori Perubahan</span>
                 <div class="crf-info-value">
-                    <?= h($crf['change_category'] ?? '-') ?>
+                    <?= h(crfCategoryName($crf)) ?>
                     <?php if (!empty($crf['change_category_detail'])): ?>
                         &mdash; <?= h($crf['change_category_detail']) ?>
                     <?php endif; ?>

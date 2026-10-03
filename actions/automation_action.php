@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/helpdesk.php';
 
 requireCrfRole(['otomasi']);
 
@@ -41,6 +42,11 @@ try {
     $stmt = $pdo->prepare("
         SELECT
             id,
+            user_id,
+            request_number,
+            crf_category_id,
+            assigned_handler_id,
+            assigned_handler_name,
             workflow_stage,
             automation_started_at,
             kadep_operasional_approved_at,
@@ -64,6 +70,40 @@ try {
         ];
         header('Location: ../otomasi/index.php');
         exit;
+    }
+
+    /*
+     * Hanya handler kategori CRF ini. Jika CRF belum diambil, handler
+     * yang memproses pertama kali otomatis menjadi pemegang CRF.
+     */
+    if (!canHandleCrf($pdo, $crf)) {
+        $pdo->rollBack();
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'CRF ini bukan kategori yang Anda tangani.'];
+        header('Location: ../otomasi/index.php');
+        exit;
+    }
+
+    if (!empty($crf['assigned_handler_id']) && !isAssignedCrfHandler($crf)) {
+        $pdo->rollBack();
+        $_SESSION['flash'] = [
+            'type' => 'danger',
+            'message' => 'CRF ini sedang ditangani oleh ' . ($crf['assigned_handler_name'] ?? 'handler lain') . '.',
+        ];
+        header('Location: ../otomasi/detail.php?id=' . $id);
+        exit;
+    }
+
+    if (empty($crf['assigned_handler_id'])) {
+        $pdo->prepare('
+            UPDATE change_requests
+            SET assigned_handler_id = :handler_id, assigned_handler_name = :handler_name, assigned_at = NOW()
+            WHERE id = :id
+        ')->execute([
+            'handler_id' => (int) $user['id'],
+            'handler_name' => crfActorName($user),
+            'id' => $id,
+        ]);
+        logCrfActivity($pdo, $id, 'CRF Diambil Handler', 'CRF diterima dan diproses oleh ' . crfActorName($user) . '.', crfActorName($user));
     }
 
     $level = $crf['level']
@@ -192,10 +232,22 @@ try {
             $id,
             'Otomasi - SLA Ditentukan',
             'Otomasi menentukan Level Urgensi dan SLA. CRF diteruskan ke Kepala Departemen Operasional untuk approval.',
-            $actor
+            $actor,
+            'Diproses',
+            'Menunggu Approval'
+        );
+        notifyUsers(
+            $pdo,
+            crfUserIdsForRole($pdo, 'kadep_operasional'),
+            'Approval CRF: ' . $crf['request_number'],
+            'CRF ' . $crf['request_number'] . ' menunggu approval Anda (SLA ' . slaLabel($slaValue, $slaUnit) . ').',
+            'crf/open.php?id=' . $id,
+            $id,
+            null,
+            (int) $user['id']
         );
         $message = 'Level Urgensi dan SLA berhasil ditentukan. CRF menunggu approval Kepala Departemen Operasional.';
-        $redirect = '../pak_joko/index.php';
+        $redirect = isAdmin() ? '../pak_joko/index.php' : '../otomasi/index.php';
     } else {
         $stmt = $pdo->prepare("
             UPDATE change_requests
@@ -229,13 +281,29 @@ try {
             $id,
             'Otomasi Selesai',
             'Otomasi menyelesaikan eksekusi dan mengisi Tanggal Implementasi, Implementasi / Hasil Perubahan, Tanggal PIR, serta Post Implementation Review. CRF diteruskan ke CMO untuk finalisasi.',
-            $actor
+            $actor,
+            'Disetujui · Eksekusi',
+            'Menunggu Finalisasi'
+        );
+        finalizeCrfSla($pdo, $id);
+        notifyUsers(
+            $pdo,
+            crfUserIdsForRole($pdo, 'cmo'),
+            'Finalisasi CRF: ' . $crf['request_number'],
+            'Eksekusi CRF ' . $crf['request_number'] . ' selesai dan menunggu finalisasi CMO.',
+            'crf/open.php?id=' . $id,
+            $id,
+            null,
+            (int) $user['id']
         );
         $message = 'Eksekusi, Tanggal Implementasi, dan Tanggal PIR berhasil disimpan. CRF diteruskan ke CMO untuk finalisasi.';
-        $redirect = '../cmo/index.php';
+        $redirect = isAdmin() ? '../cmo/index.php' : '../otomasi/index.php?queue=history';
     }
 
+    syncHelpdeskTicketFromCrf($pdo, $id, $actor);
+
     $pdo->commit();
+    dispatchPendingNotificationEmails($pdo);
     $_SESSION['flash'] = ['type' => 'success', 'message' => $message];
     header('Location: ' . $redirect);
     exit;

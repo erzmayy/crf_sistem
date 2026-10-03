@@ -17,6 +17,9 @@ $activityLabels = [
     'Otomasi Selesai' => 'Mulai Implementasi / Selesai',
     'Solve' => 'CRF Selesai',
     'Cancel' => 'CRF Dibatalkan',
+    'Dibuat dari Helpdesk' => 'Draft CRF Dibuat dari Helpdesk',
+    'CRF Diambil Handler' => 'CRF Diterima Handler',
+    'Handler Ditugaskan' => 'Handler Ditugaskan',
 ];
 
 $pendingStep = null;
@@ -34,9 +37,13 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
             $pendingStep = ['title' => 'Review Teknis & Komite', 'description' => 'Menunggu pemeriksaan pengajuan oleh CMO.'];
             break;
         case 'OTOMASI':
+            if (array_key_exists('assigned_handler_id', $crf) && empty($crf['assigned_handler_id'])) {
+                $pendingStep = ['title' => 'Menunggu Handler', 'description' => 'Menunggu Handler kategori mengambil CRF.'];
+                break;
+            }
             $pendingStep = empty($crf['kadep_operasional_approved_at'])
-                ? ['title' => 'Penetapan SLA', 'description' => 'Menunggu Otomasi menentukan level urgensi dan SLA.']
-                : ['title' => 'Mulai Implementasi / Selesai', 'description' => 'Menunggu proses implementasi dan Post Implementation Review dari Otomasi.'];
+                ? ['title' => 'Penetapan SLA', 'description' => 'Menunggu Handler menentukan level urgensi dan SLA.']
+                : ['title' => 'Mulai Implementasi / Selesai', 'description' => 'Menunggu proses implementasi dan Post Implementation Review dari Handler.'];
             break;
         case 'kadep_operasional':
             $pendingStep = ['title' => 'Persetujuan Kepala Departemen', 'description' => 'Menunggu persetujuan Kepala Departemen Operasional.'];
@@ -93,6 +100,14 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
                             <?php endif; ?>
                             <?php if (!empty($item['description'])): ?>
                                 <div class="crf-timeline-description"><?= nl2br(h($item['description'])) ?></div>
+                            <?php endif; ?>
+                            <?php if (!empty($item['new_status']) && ($item['old_status'] ?? '') !== $item['new_status']): ?>
+                                <div class="crf-timeline-status">
+                                    <?php if (!empty($item['old_status'])): ?>
+                                        <span><?= h($item['old_status']) ?></span> <i class="bi bi-arrow-right"></i>
+                                    <?php endif; ?>
+                                    <strong><?= h($item['new_status']) ?></strong>
+                                </div>
                             <?php endif; ?>
                             <?php if (!empty($item['actor'])): ?>
                                 <div class="crf-timeline-actor">Dilakukan oleh <?= h($item['actor']) ?></div>

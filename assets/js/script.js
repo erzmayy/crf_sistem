@@ -113,13 +113,21 @@ document.addEventListener('DOMContentLoaded', function () {
     'Lainnya': 'Jelaskan kategori perubahan yang dimaksud'
   };
 
+  // Kategori CRF dinamis: nilai option = id kategori, kelompok lama ada di data-legacy.
+  function legacyCategoryValue(select) {
+    if (!select || select.selectedIndex < 0) { return ''; }
+    var option = select.options[select.selectedIndex];
+    return option.getAttribute('data-legacy') || option.value || '';
+  }
+
   function updateCategoryDetail() {
     if (!categorySelect) { return; }
-    var val = categorySelect.value;
+    var val = legacyCategoryValue(categorySelect);
 
     if (val && categoryHints[val]) {
       categoryDetailWrap.classList.remove('d-none');
-      categoryDetailLabel.textContent = 'Detail Kategori - ' + val;
+      categoryDetailLabel.textContent = 'Detail Kategori - '
+        + categorySelect.options[categorySelect.selectedIndex].text.trim();
       categoryDetailInput.placeholder = categoryHints[val];
       // Sesuai brief butir 14: hanya kategori "Lainnya" yang wajib diisi.
       categoryDetailInput.required = (val === 'Lainnya');
@@ -325,7 +333,7 @@ if (fileInput && fileList) {
     }
 
     var categoryDetail = document.getElementById('change_category_detail');
-    if (isComplete && category && category.value === 'Lainnya'
+    if (isComplete && category && legacyCategoryValue(category) === 'Lainnya'
       && categoryDetail && categoryDetail.value.trim() === '') {
       isComplete = false;
     }
@@ -405,7 +413,7 @@ if (fileInput && fileList) {
     }
 
     var categoryDetail = document.getElementById('change_category_detail');
-    if (category && category.value === 'Lainnya'
+    if (category && legacyCategoryValue(category) === 'Lainnya'
       && categoryDetail && categoryDetail.value.trim() === '') {
       addInlineError(categoryDetail, 'Detail kategori wajib diisi.', errors);
     }

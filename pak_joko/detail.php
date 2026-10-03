@@ -107,6 +107,8 @@ $logStmt = $pdo->prepare("
         activity,
         description,
         actor,
+        old_status,
+        new_status,
         created_at
     FROM crf_activity_logs
     WHERE change_request_id = :id

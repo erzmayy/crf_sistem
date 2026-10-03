@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/categories.php';
 
 /**
  * Memastikan user sudah login.
@@ -31,7 +32,7 @@ function getCrfRole(): string
 
     if (CRF_ROLE_SOURCE === 'resolver') {
         $user = getCurrentUser();
-        return $cache = resolveCrfRoleFromUser($user);
+        return $cache = promoteCategoryHandlerRole(resolveCrfRoleFromUser($user));
     }
 
     try {
@@ -53,7 +54,133 @@ function getCrfRole(): string
         error_log('getCrfRole fallback: ' . $e->getMessage());
     }
 
-    return $cache = 'pemohon';
+    return $cache = promoteCategoryHandlerRole('pemohon');
+}
+
+/**
+ * User biasa yang didaftarkan Admin di Handling Kategori otomatis
+ * mendapat role 'otomasi' (Handler), sehingga halaman otomasi/* bisa
+ * dipakai sebagai halaman Handler. Role lain tidak diubah.
+ */
+function promoteCategoryHandlerRole(string $role): string
+{
+    if ($role !== 'pemohon') {
+        return $role;
+    }
+
+    try {
+        if (isCrfCategoryHandler(getConnection(), (int) $_SESSION['user_id'])) {
+            return 'otomasi';
+        }
+    } catch (Throwable $e) {
+        error_log('promoteCategoryHandlerRole: ' . $e->getMessage());
+    }
+
+    return $role;
+}
+
+/**
+ * User Otomasi "lama" (daftar userid di config/siap.php). Mereka tetap
+ * menangani CRF tanpa kategori dan kategori yang belum punya handler.
+ */
+function isLegacyOtomasiUser(): bool
+{
+    return CRF_ROLE_SOURCE === 'resolver'
+        ? crfUserIdIn(getCurrentUser(), CRF_OTOMASI_USERIDS)
+        : getCrfRole() === 'otomasi';
+}
+
+/**
+ * Lingkup kategori CRF yang boleh ditangani user aktif.
+ *
+ * @return array{all:bool,category_ids:int[],uncategorized:bool}
+ */
+function crfHandlerScope(PDO $pdo): array
+{
+    static $scope = null;
+
+    if ($scope !== null) {
+        return $scope;
+    }
+
+    if (getCrfRole() === 'admin') {
+        return $scope = ['all' => true, 'category_ids' => [], 'uncategorized' => true];
+    }
+
+    $userId = (int) ($_SESSION['user_id'] ?? 0);
+    $categoryIds = handledCrfCategoryIds($pdo, $userId);
+    $uncategorized = false;
+
+    if (getCrfRole() === 'otomasi' && isLegacyOtomasiUser()) {
+        $categoryIds = array_merge($categoryIds, unhandledCrfCategoryIds($pdo));
+        $uncategorized = true;
+    }
+
+    return $scope = [
+        'all' => false,
+        'category_ids' => array_values(array_unique($categoryIds)),
+        'uncategorized' => $uncategorized,
+    ];
+}
+
+/**
+ * Kondisi SQL lingkup handler untuk query list/summary (alias tabel change_requests).
+ */
+function crfHandlerScopeSql(PDO $pdo, string $alias = 'cr'): string
+{
+    $scope = crfHandlerScope($pdo);
+
+    if ($scope['all']) {
+        return '1 = 1';
+    }
+
+    $parts = [];
+    if ($scope['category_ids']) {
+        $parts[] = $alias . '.crf_category_id IN (' . implode(',', array_map('intval', $scope['category_ids'])) . ')';
+    }
+    if ($scope['uncategorized']) {
+        $parts[] = $alias . '.crf_category_id IS NULL';
+    }
+
+    return $parts ? '(' . implode(' OR ', $parts) . ')' : '1 = 0';
+}
+
+/**
+ * Apakah user aktif boleh memproses CRF ini sebagai Handler?
+ */
+function canHandleCrf(PDO $pdo, array $crf): bool
+{
+    $scope = crfHandlerScope($pdo);
+
+    if ($scope['all']) {
+        return true;
+    }
+
+    if (getCrfRole() !== 'otomasi') {
+        return false;
+    }
+
+    $categoryId = (int) ($crf['crf_category_id'] ?? 0);
+
+    if ($categoryId === 0) {
+        return $scope['uncategorized'];
+    }
+
+    return in_array($categoryId, $scope['category_ids'], true);
+}
+
+/**
+ * Handler yang memegang CRF (atau admin). CRF yang belum di-assign
+ * harus "diambil" terlebih dahulu sebelum diproses.
+ */
+function isAssignedCrfHandler(array $crf): bool
+{
+    if (getCrfRole() === 'admin') {
+        return true;
+    }
+
+    return !empty($crf['assigned_handler_id'])
+        && (int) $crf['assigned_handler_id'] === (int) ($_SESSION['user_id'] ?? 0);
 }
 
 /**
@@ -119,7 +246,7 @@ function crfRoleLabel(string $role): string
         case 'cmo':
             return 'CMO';
         case 'otomasi':
-            return 'Otomasi';
+            return 'Handler (Otomasi)';
         case 'kadep_operasional':
             return 'Kepala Departemen Operasional';
         case 'admin':
@@ -149,7 +276,7 @@ function canAccessCrf(PDO $pdo, int $crfId): bool
     }
 
     $stmt = $pdo->prepare(
-        'SELECT user_id, status
+        'SELECT user_id, status, crf_category_id
          FROM change_requests
          WHERE id = :id
          LIMIT 1'
@@ -170,9 +297,55 @@ function canAccessCrf(PDO $pdo, int $crfId): bool
         return false;
     }
 
-    return in_array(
-        getCrfRole(),
-        ['admin', 'cmo', 'otomasi', 'kadep_operasional'],
-        true
-    );
+    $role = getCrfRole();
+
+    // Handler hanya boleh melihat CRF pada kategori yang ditanganinya.
+    if ($role === 'otomasi') {
+        return canHandleCrf($pdo, $row);
+    }
+
+    return in_array($role, ['admin', 'cmo', 'kadep_operasional'], true);
+}
+
+/**
+ * Halaman khusus Handler: role otomasi + CRF berada pada kategorinya.
+ * Mengembalikan baris CRF jika lolos.
+ */
+function requireCrfHandlerAccess(PDO $pdo, int $crfId, string $redirect): array
+{
+    requireCrfRole(['otomasi']);
+
+    $stmt = $pdo->prepare('SELECT * FROM change_requests WHERE id = :id LIMIT 1');
+    $stmt->execute(['id' => $crfId]);
+    $crf = $stmt->fetch();
+
+    if (!$crf || !canHandleCrf($pdo, $crf)) {
+        $_SESSION['flash'] = [
+            'type' => 'danger',
+            'message' => 'CRF tidak ditemukan atau bukan kategori yang Anda tangani.',
+        ];
+        header('Location: ' . $redirect);
+        exit;
+    }
+
+    return $crf;
+}
+
+/**
+ * Halaman Helpdesk untuk PIC (atau admin).
+ */
+function requireHelpdeskPic(): void
+{
+    requireLogin();
+
+    if (getCrfRole() === 'admin' || isHelpdeskPic(getConnection(), (int) $_SESSION['user_id'])) {
+        return;
+    }
+
+    $_SESSION['flash'] = [
+        'type' => 'danger',
+        'message' => 'Halaman ini khusus PIC kategori Helpdesk.',
+    ];
+    header('Location: ../helpdesk/saya.php');
+    exit;
 }
