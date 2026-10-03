@@ -16,7 +16,7 @@ date_default_timezone_set('Asia/Jakarta');
  */
 
 define('DB_HOST', '127.0.0.1');
-define('DB_NAME', 'crf_system');
+define('DB_NAME', 'crf_sistem');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');

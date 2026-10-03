@@ -14,6 +14,6 @@ return [
     'password'   => '',
     'from_email' => 'no-reply@example.com',
     'from_name'  => 'Helpdesk & CRF PPU',
-    // URL dasar aplikasi untuk link di email, contoh: https://siap.ptppu.co.id/crf_system
-    'app_url'    => 'http://localhost/crf_system',
+    // URL dasar aplikasi untuk link di email, contoh: https://siap.ptppu.co.id/crf_sistem
+    'app_url'    => 'http://localhost/crf_sistem',
 ];

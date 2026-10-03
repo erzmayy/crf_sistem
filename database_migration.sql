@@ -4,7 +4,7 @@
 -- dengan versi schema lama.
 -- =====================================================================
 
-USE crf_system;
+USE crf_sistem;
 
 ALTER TABLE change_requests
     ADD COLUMN full_name VARCHAR(150) NULL AFTER user_id,

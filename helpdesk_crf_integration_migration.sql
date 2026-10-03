@@ -2,9 +2,9 @@
 -- Menambahkan: master Kategori Helpdesk + PIC, ticket Helpdesk,
 -- master Kategori CRF + Handling Kategori, notifikasi, relasi
 -- ticket <-> CRF, assignment handler, dan hasil SLA.
--- Aman dijalankan ulang pada database crf_system.
+-- Aman dijalankan ulang pada database crf_sistem.
 
-USE crf_system;
+USE crf_sistem;
 
 DROP PROCEDURE IF EXISTS crf_add_column;
 DROP PROCEDURE IF EXISTS crf_add_index;

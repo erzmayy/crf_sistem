@@ -3,11 +3,11 @@
 -- PT Persona Prima Utama (PPU)
 -- =====================================================================
 
-CREATE DATABASE IF NOT EXISTS crf_system
+CREATE DATABASE IF NOT EXISTS crf_sistem
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
-USE crf_system;
+USE crf_sistem;
 
 -- ---------------------------------------------------------------------
 -- Tabel: users
@@ -320,9 +320,9 @@ INSERT INTO crf_user_roles (user_id, role) VALUES
 -- Menambahkan: master Kategori Helpdesk + PIC, ticket Helpdesk,
 -- master Kategori CRF + Handling Kategori, notifikasi, relasi
 -- ticket <-> CRF, assignment handler, dan hasil SLA.
--- Aman dijalankan ulang pada database crf_system.
+-- Aman dijalankan ulang pada database crf_sistem.
 
-USE crf_system;
+USE crf_sistem;
 
 DROP PROCEDURE IF EXISTS crf_add_column;
 DROP PROCEDURE IF EXISTS crf_add_index;

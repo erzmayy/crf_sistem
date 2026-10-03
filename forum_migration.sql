@@ -1,8 +1,8 @@
 -- Tabel komentar dan penanda komentar yang sudah dibaca per user.
 -- Mendukung sumber akun CRF lokal maupun SIAP.
--- Aman dijalankan ulang pada database crf_system.
+-- Aman dijalankan ulang pada database crf_sistem.
 
-USE crf_system;
+USE crf_sistem;
 
 CREATE TABLE IF NOT EXISTS forum_comments (
     id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

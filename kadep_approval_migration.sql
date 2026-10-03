@@ -1,7 +1,7 @@
 -- Menambahkan kolom approval Kepala Departemen Operasional pada database lama.
 -- Aman dijalankan ulang jika sebagian/semua kolom sudah tersedia.
 
-USE crf_system;
+USE crf_sistem;
 
 DROP PROCEDURE IF EXISTS add_kadep_approval_columns;
 

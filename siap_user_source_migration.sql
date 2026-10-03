@@ -2,7 +2,7 @@
 -- CRF - Migrasi awal integrasi user SIAP (opsi B)
 -- =====================================================================
 -- Tujuan:
--- - CRF tetap memakai database sendiri: crf_system
+-- - CRF tetap memakai database sendiri: crf_sistem
 -- - Data user dibaca dari database SIAP: siap.tbl_user
 -- - Kolom user_id tetap disimpan sebagai integer, tetapi tidak lagi
 --   memakai foreign key ke tabel users lokal.
@@ -10,7 +10,7 @@
 -- Jalankan setelah backup database.
 -- =====================================================================
 
-USE crf_system;
+USE crf_sistem;
 
 DROP PROCEDURE IF EXISTS crf_drop_fk_if_exists;
 

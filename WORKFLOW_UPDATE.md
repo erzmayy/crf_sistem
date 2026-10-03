@@ -31,7 +31,7 @@ Semua password: `password`
 - ADMIN001 — Admin
 
 ## Database
-Untuk database `crf_system` lama yang belum memiliki kolom approval Kepala Departemen Operasional, jalankan:
+Untuk database `crf_sistem` lama yang belum memiliki kolom approval Kepala Departemen Operasional, jalankan:
 
 `kadep_approval_migration.sql`
 

@@ -1,8 +1,8 @@
 -- Menambahkan tanggal implementasi, tanggal PIR, tipe pengajuan, dan dampak
--- untuk database crf_system yang sudah ada.
+-- untuk database crf_sistem yang sudah ada.
 -- Aman dijalankan ulang jika kolom sudah tersedia.
 
-USE crf_system;
+USE crf_sistem;
 
 DROP PROCEDURE IF EXISTS add_crf_form_columns;
 

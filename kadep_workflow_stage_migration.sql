@@ -1,7 +1,7 @@
 -- Menyelaraskan tahap approval Kepala Departemen Operasional
 -- pada database yang masih menggunakan nilai enum PAK_JOKO.
 
-USE crf_system;
+USE crf_sistem;
 
 ALTER TABLE change_requests
     MODIFY COLUMN workflow_stage ENUM(

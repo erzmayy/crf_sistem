@@ -1,7 +1,7 @@
 -- Menambahkan level urgensi final hasil kesepakatan Forum.
--- Aman dijalankan ulang pada database crf_system.
+-- Aman dijalankan ulang pada database crf_sistem.
 
-USE crf_system;
+USE crf_sistem;
 
 DROP PROCEDURE IF EXISTS add_forum_final_urgency_column;
 
