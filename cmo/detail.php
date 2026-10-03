@@ -360,8 +360,9 @@ require_once __DIR__ . '/../includes/header.php';
 
                     <p class="text-muted">
 
-                        Otomasi sudah menyelesaikan eksekusi serta mengisi
-                        Implementasi / Hasil Perubahan dan Post Implementation Review.
+                        Otomasi sudah menyelesaikan eksekusi dan mengisi
+                        Implementasi / Hasil Perubahan, lalu Pemohon sudah mengisi
+                        Post Implementation Review.
                         CMO dapat menutup CRF setelah memastikan
                         seluruh proses sudah lengkap.
 

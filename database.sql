@@ -400,7 +400,11 @@ CREATE TABLE IF NOT EXISTS crf_categories (
     description            VARCHAR(255) NULL,
     legacy_change_category ENUM('Aplikasi','Infrastruktur','Proses','Security','Lainnya') NOT NULL DEFAULT 'Lainnya',
     sla_value              DECIMAL(10,2) NULL,
-    sla_unit               ENUM('Menit','Jam','Hari') NULL,
+    sla_unit               ENUM('Menit','Jam','Hari') NULL,   -- SLA urgensi Normal
+    sla_tinggi_value       DECIMAL(10,2) NULL,                -- kosong = ikut Normal
+    sla_tinggi_unit        ENUM('Menit','Jam','Hari') NULL,
+    sla_rendah_value       DECIMAL(10,2) NULL,                -- kosong = ikut Normal
+    sla_rendah_unit        ENUM('Menit','Jam','Hari') NULL,
     is_active              TINYINT(1) NOT NULL DEFAULT 1,
     sort_order             INT NOT NULL DEFAULT 0,
     deleted_at             DATETIME NULL,

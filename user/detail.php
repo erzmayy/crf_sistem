@@ -4,8 +4,9 @@
  * ---------------------------------------------------------------
  * Menampilkan detail CRF milik user yang sedang login.
  *
- * Implementasi dan Post Implementation Review diisi oleh Otomasi
- * dan ditampilkan read-only kepada user.
+ * Implementasi diisi oleh Otomasi (read-only bagi user). Setelah itu
+ * CRF masuk tahap PEMOHON_PIR dan pemohon mengisi Post Implementation
+ * Review dari halaman ini.
  * ---------------------------------------------------------------
  */
 
@@ -290,9 +291,16 @@ require_once __DIR__ . '/../includes/header.php';
 
             <div class="crf-section-body">
 
-                <?php if (($crf['workflow_stage'] ?? '') === 'PEMOHON_PIR'): ?>
+                <?php $isPirStage = ($crf['workflow_stage'] ?? '') === 'PEMOHON_PIR'; ?>
+                <?php if ($isPirStage): ?>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-pencil-square"></i>
+                        Otomasi sudah mencatat hasil implementasi. Silakan periksa hasilnya lalu isi
+                        <strong>Tanggal PIR</strong> dan <strong>Post Implementation Review</strong> di bawah.
+                    </div>
+                <?php elseif (empty($crf['implementation'])): ?>
                     <div class="alert alert-info">
-                        Isian Implementasi dan Post Implementation Review akan dilengkapi oleh Otomasi.
+                        Implementasi akan dicatat oleh Otomasi. Setelah itu Anda diminta mengisi Post Implementation Review.
                     </div>
                 <?php endif; ?>
 
@@ -305,6 +313,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 : '<span class="text-muted">Belum diisi.</span>' ?>
                         </div>
                     </div>
+                    <?php if (!$isPirStage): ?>
                     <div class="crf-info-row">
                         <span class="crf-info-label">Tanggal PIR</span>
                         <div class="crf-info-value">
@@ -333,7 +342,50 @@ require_once __DIR__ . '/../includes/header.php';
                             <?php endif; ?>
                         </div>
                     </div>
+                    <?php endif; ?>
                 </div>
+
+                <?php if ($isPirStage): ?>
+                    <form action="../actions/submit_pir.php" method="POST" class="mt-4">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
+
+                        <div class="mb-4">
+                            <label for="pir_date" class="form-label fw-semibold">
+                                Tanggal PIR <span class="text-danger">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                id="pir_date"
+                                name="pir_date"
+                                class="form-control"
+                                value="<?= h($crf['pir_date'] ?? date('Y-m-d')) ?>"
+                                <?= !empty($crf['implementation_date']) ? 'min="' . h($crf['implementation_date']) . '"' : '' ?>
+                                required
+                            >
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="post_implementation_review" class="form-label fw-semibold">
+                                Post Implementation Review <span class="text-danger">*</span>
+                            </label>
+                            <textarea
+                                id="post_implementation_review"
+                                name="post_implementation_review"
+                                class="form-control"
+                                rows="6"
+                                required
+                                placeholder="Apakah perubahan sudah sesuai kebutuhan? Tuliskan hasil evaluasi Anda setelah perubahan diterapkan..."
+                            ><?= h($crf['post_implementation_review'] ?? '') ?></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-crf-primary">
+                                <i class="bi bi-send-check"></i> Kirim PIR
+                            </button>
+                        </div>
+                    </form>
+                <?php endif; ?>
 
             </div>
 

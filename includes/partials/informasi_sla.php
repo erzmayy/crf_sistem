@@ -10,6 +10,12 @@ $slaValueDisplay = (!empty($crf['sla_value']) && !empty($crf['sla_unit']))
     ? rtrim(rtrim(number_format((float) $crf['sla_value'], 2, '.', ''), '0'), '.') . ' ' . $crf['sla_unit']
     : null;
 $slaStatus = getCrfSlaStatus($crf);
+// Standar matriks Kategori x Urgensi, untuk menandai SLA yang disesuaikan.
+$slaStandard = empty($crf['final_urgency_level'])
+    ? crfStandardSla(getConnection(), (int) ($crf['crf_category_id'] ?? 0), crfEffectiveUrgency($crf))
+    : null;
+$slaAdjusted = $slaValueDisplay !== null && $slaStandard !== null
+    && !crfSlaEquals($slaStandard, $crf['sla_value'], $crf['sla_unit']);
 $slaIsLive = !empty($slaStatus['live']);
 $slaStartedEpoch = !empty($crf['sla_started_at'])
     ? strtotime($crf['sla_started_at'])
@@ -48,6 +54,12 @@ $slaDueEpoch = !empty($crf['sla_due_at'])
                 <div class="crf-detail-value">
                     <?php if ($slaValueDisplay !== null): ?>
                         <span class="crf-sla-value"><?= h($slaValueDisplay) ?></span>
+                        <small class="d-block text-muted">hari kerja</small>
+                        <?php if ($slaAdjusted): ?>
+                            <small class="d-block text-warning-emphasis">
+                                <i class="bi bi-pencil"></i> Disesuaikan dari standar <?= h(slaLabel($slaStandard['value'], $slaStandard['unit'])) ?> (alasan di timeline)
+                            </small>
+                        <?php endif; ?>
                     <?php else: ?>
                         <span class="crf-sla-empty">Belum ditentukan</span>
                     <?php endif; ?>
@@ -135,4 +147,4 @@ $slaDueEpoch = !empty($crf['sla_due_at'])
     </div>
 </div>
 <?php
-unset($slaValueDisplay, $slaStatus, $slaIsLive, $slaStartedEpoch, $slaDueEpoch);
+unset($slaValueDisplay, $slaStatus, $slaStandard, $slaAdjusted, $slaIsLive, $slaStartedEpoch, $slaDueEpoch);

@@ -24,7 +24,8 @@ if ($id <= 0) {
 
 $stmt = $pdo->prepare('
     SELECT id, user_id, request_number, crf_category_id, assigned_handler_id,
-           status, workflow_stage, kadep_operasional_approved_at
+           status, workflow_stage, kadep_operasional_approved_at,
+           level, impact_category, final_urgency_level, sla_value, sla_unit
     FROM change_requests
     WHERE id = :id
     LIMIT 1
@@ -92,6 +93,34 @@ try {
             $oldDisplayStatus,
             'Diproses'
         );
+
+        /*
+         * SLA otomatis dari matriks Kategori x Urgensi. SLA final yang
+         * sudah disepakati di Forum tidak ditimpa.
+         */
+        $urgency = crfEffectiveUrgency($crf);
+        $standardSla = empty($crf['final_urgency_level'])
+            ? crfStandardSla($pdo, (int) ($crf['crf_category_id'] ?? 0), $urgency)
+            : null;
+        if ($standardSla !== null) {
+            $pdo->prepare('
+                UPDATE change_requests
+                SET level = :level, sla_value = :sla_value, sla_unit = :sla_unit
+                WHERE id = :id
+            ')->execute([
+                'level' => $urgency,
+                'sla_value' => $standardSla['value'],
+                'sla_unit' => $standardSla['unit'],
+                'id' => $id,
+            ]);
+            logCrfActivity(
+                $pdo,
+                $id,
+                'SLA Otomatis',
+                'SLA standar kategori untuk urgensi ' . $urgency . ': ' . slaLabel($standardSla['value'], $standardSla['unit']) . ' (hari kerja).',
+                'Sistem'
+            );
+        }
 
         // Handler kategori; bila kategori belum punya handler, tim Otomasi lama.
         $handlerIds = !empty($crf['crf_category_id'])

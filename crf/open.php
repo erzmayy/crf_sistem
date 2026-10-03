@@ -41,5 +41,10 @@ if ($isOwner && $crf['status'] === 'Draft') {
     $target = 'user/form_crf.php';
 }
 
+// Pemohon mengisi Post Implementation Review dari halaman detail miliknya.
+if ($isOwner && $crf['workflow_stage'] === 'PEMOHON_PIR') {
+    $target = 'user/detail.php';
+}
+
 header('Location: ../' . $target . '?id=' . $id);
 exit;

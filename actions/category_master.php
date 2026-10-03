@@ -100,6 +100,24 @@ try {
 
             $extra = [];
             if ($type === 'crf') {
+                // Matriks SLA: kolom sla_value/sla_unit di atas = SLA Normal.
+                foreach (['tinggi' => 'Tinggi', 'rendah' => 'Rendah'] as $levelKey => $levelLabel) {
+                    $levelValueRaw = trim($_POST['sla_' . $levelKey . '_value'] ?? '');
+                    $levelUnit = $_POST['sla_' . $levelKey . '_unit'] ?? '';
+                    $levelValue = null;
+                    if ($levelValueRaw !== '') {
+                        if (!is_numeric($levelValueRaw) || (float) $levelValueRaw <= 0) {
+                            $errors[] = 'Nilai SLA ' . $levelLabel . ' harus angka lebih dari 0.';
+                        } elseif (!in_array($levelUnit, ['Menit', 'Jam', 'Hari'], true)) {
+                            $errors[] = 'Satuan SLA ' . $levelLabel . ' tidak valid.';
+                        } else {
+                            $levelValue = (float) $levelValueRaw;
+                        }
+                    }
+                    $extra['sla_' . $levelKey . '_value'] = $levelValue;
+                    $extra['sla_' . $levelKey . '_unit'] = $levelValue !== null ? $levelUnit : null;
+                }
+
                 $legacy = $_POST['legacy_change_category'] ?? 'Lainnya';
                 if (!in_array($legacy, ['Aplikasi', 'Infrastruktur', 'Proses', 'Security', 'Lainnya'], true)) {
                     $errors[] = 'Kelompok kategori laporan tidak valid.';
