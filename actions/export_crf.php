@@ -105,6 +105,21 @@ $fromValue = trim(
 
 $statusDisplay = statusLabel($crf['status'] ?? '');
 
+/*
+ * Tanda pada PDF yang dicetak sebelum CRF selesai, agar salinan lama tidak
+ * dikira dokumen akhir. CRF berstatus Solve dicetak tanpa tanda.
+ */
+$watermarkText = [
+    'Solve' => '',
+    'Cancel' => 'DIBATALKAN',
+][$crf['status'] ?? ''] ?? 'BELUM FINAL';
+$watermarkHtml = $watermarkText === '' ? '' : '
+    <div class="watermark">' . htmlspecialchars($watermarkText, ENT_QUOTES, 'UTF-8') . '</div>
+    <div class="draft-note">
+        Dokumen ' . ($watermarkText === 'DIBATALKAN' ? 'CRF yang dibatalkan' : 'belum final') . ' · status saat dicetak: '
+        . htmlspecialchars($statusDisplay, ENT_QUOTES, 'UTF-8') . ' · dicetak ' . date('d-m-Y H:i') . '
+    </div>';
+
 $categoryDisplay = $crf['change_category'] ?? '-';
 
 if (!empty($crf['change_category_detail'])) {
@@ -343,6 +358,30 @@ $html = '
             padding: 7px;
         }
 
+        .watermark {
+            position: fixed;
+            top: 42%;
+            left: 0;
+            right: 0;
+            z-index: -1;
+            color: #c8102e;
+            font-size: 72px;
+            font-weight: bold;
+            letter-spacing: 6px;
+            text-align: center;
+            opacity: 0.12;
+            transform: rotate(-30deg);
+        }
+
+        .draft-note {
+            margin-bottom: 8px;
+            padding: 4px 7px;
+            border: 1px solid #c8102e;
+            color: #c8102e;
+            font-size: 9px;
+            text-align: center;
+        }
+
         .process-date {
             margin-top: 4px;
             font-size: 9px;
@@ -403,6 +442,7 @@ $html = '
 </head>
 
 <body>
+    ' . $watermarkHtml . '
 
     <!-- =========================================================
          HALAMAN 1
@@ -574,30 +614,6 @@ $html = '
 
         <tr>
             <td class="form-label">
-                Post Implementation Review
-            </td>
-
-            <td class="form-content large-content">
-                ' . pdfValue($crf['post_implementation_review']) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
-                Tanggal PIR
-            </td>
-
-            <td class="form-content">
-                ' . (
-                    !empty($crf['pir_date'])
-                        ? formatTanggalIndonesia(new DateTime($crf['pir_date']))
-                        : '-'
-                ) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
                 Tanggal Implementasi
             </td>
 
@@ -617,6 +633,30 @@ $html = '
 
             <td class="form-content large-content">
                 ' . pdfValue($crf['implementation']) . '
+            </td>
+        </tr>
+
+        <tr>
+            <td class="form-label">
+                Tanggal PIR
+            </td>
+
+            <td class="form-content">
+                ' . (
+                    !empty($crf['pir_date'])
+                        ? formatTanggalIndonesia(new DateTime($crf['pir_date']))
+                        : '-'
+                ) . '
+            </td>
+        </tr>
+
+        <tr>
+            <td class="form-label">
+                Post Implementation Review
+            </td>
+
+            <td class="form-content large-content">
+                ' . pdfValue($crf['post_implementation_review']) . '
             </td>
         </tr>
 
@@ -664,18 +704,18 @@ $html = '
             </td>
 
 
-            <!-- 2. CMO FILTERING -->
+            <!-- 2. VERIFIKASI CMO -->
             <td>
                 <div class="process-table-title">
                     CMO
                 </div>
 
                 <div class="process-table-role">
-                    Filtering
+                    Verifikasi
                 </div>
 
                 <div class="process-table-label">
-                    Diteruskan ke Otomasi
+                    Diteruskan ke Divisi Otomasi
                 </div>
 
                 <div class="process-table-date">
@@ -691,7 +731,7 @@ $html = '
                 </div>
 
                 <div class="process-table-role">
-                    Menentukan SLA
+                    Penetapan SLA
                 </div>
 
                 <div class="process-table-label">
@@ -711,15 +751,15 @@ $html = '
             <!-- 4. APPROVAL -->
             <td>
                 <div class="process-table-title">
-                    Kepala Dept. Operasional
+                    Kepala Departemen Operasional
                 </div>
 
                 <div class="process-table-role">
-                    Approval
+                    Persetujuan
                 </div>
 
                 <div class="process-table-label">
-                    Tanggal Approval
+                    Tanggal Persetujuan
                 </div>
 
                 <div class="process-table-date">
@@ -743,11 +783,11 @@ $html = '
                 </div>
 
                 <div class="process-table-role">
-                    Eksekusi
+                    Implementasi
                 </div>
 
                 <div class="process-table-label">
-                    Eksekusi Selesai
+                    Implementasi Selesai
                 </div>
 
                 <div class="process-table-date">

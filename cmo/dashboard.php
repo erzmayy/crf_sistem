@@ -15,7 +15,7 @@ $pageTitle='Dashboard CMO'; require_once __DIR__ . '/../includes/header.php';
 <div class="crf-page-header"><h1>Dashboard CMO</h1><p>Ringkasan antrean CRF yang menjadi tanggung jawab CMO.</p></div>
 <?php if($flash): ?><div class="alert alert-<?= h($flash['type']) ?> crf-alert"><?= h($flash['message']) ?></div><?php endif; ?>
 <div class="crf-stat-grid">
-<a class="crf-stat-card text-decoration-none" href="index.php?stage=filter"><span>Menunggu Filter</span><strong><?= $counts['CMO_FILTER'] ?></strong></a>
+<a class="crf-stat-card text-decoration-none" href="index.php?stage=filter"><span>Menunggu Verifikasi</span><strong><?= $counts['CMO_FILTER'] ?></strong></a>
 <a class="crf-stat-card text-decoration-none" href="index.php?stage=final"><span>Menunggu Finalisasi</span><strong><?= $counts['CMO_FINAL'] ?></strong></a>
 <div class="crf-stat-card"><span>Sudah Selesai</span><strong><?= $counts['SELESAI'] ?></strong></div>
 <a class="crf-stat-card text-decoration-none crf-forum-stat" href="../forum/index.php"><span>Komentar Baru di Forum</span><strong><?= $forumUnread ?></strong></a>

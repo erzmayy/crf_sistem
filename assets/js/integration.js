@@ -3,7 +3,7 @@
    - Dialog konfirmasi untuk form ber-atribut data-confirm
    - Loading state tombol submit (data-loading-form / data-confirm)
    - Isi otomatis modal kategori (data-category-form)
-   - Pencarian user untuk Handler / PIC (data-user-picker)
+   - Pencarian user untuk Petugas Otomasi / PIC (data-user-picker)
    - Formulir Helpdesk: alihkan ke Form CRF untuk kategori "Butuh CRF"
    Semua aturan akses tetap divalidasi di server.
    ===================================================================== */
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   /* -----------------------------------------------------------------
-   * Handler: alasan wajib bila SLA berbeda dari standar kategori
+   * Petugas Otomasi: alasan wajib bila SLA berbeda dari standar kategori
    * ----------------------------------------------------------------- */
   document.querySelectorAll('[data-sla-standard-value]').forEach(function (row) {
     var form = row.closest('form');
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   /* -----------------------------------------------------------------
-   * Pencarian user (Handler / PIC)
+   * Pencarian user (Petugas Otomasi / PIC)
    * ----------------------------------------------------------------- */
   var appBase = (document.body.getAttribute('data-app-base') || '');
 

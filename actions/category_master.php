@@ -31,7 +31,7 @@ $config = [
         'table'    => 'crf_categories',
         'pivot'    => 'crf_category_handlers',
         'fk'       => 'crf_category_id',
-        'member'   => 'Handler',
+        'member'   => 'Petugas Otomasi',
         'pages'    => ['master_data.php'],
     ],
     'helpdesk' => [

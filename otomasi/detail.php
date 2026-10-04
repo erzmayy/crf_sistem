@@ -97,8 +97,8 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <h1>
                     <?= $isExecutionStage
-                        ? 'Eksekusi Otomasi'
-                        : 'Proses Otomasi'
+                        ? 'Tindak Lanjut Otomasi · Implementasi'
+                        : 'Tindak Lanjut Otomasi · Penetapan SLA'
                     ?>
                 </h1>
 
@@ -202,7 +202,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="alert alert-warning crf-alert">
             <i class="bi bi-person-lock"></i>
             CRF ini sedang ditangani oleh <strong><?= h($crf['assigned_handler_name'] ?? '-') ?></strong>.
-            Hanya handler tersebut atau Admin yang dapat memprosesnya.
+            Hanya Petugas Otomasi tersebut atau Admin yang dapat memprosesnya.
         </div>
         <?php else: ?>
         <form
@@ -256,7 +256,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                         <div class="alert alert-info">
                             Periksa Level Urgensi dan SLA sebelum CRF diteruskan ke
-                            Kepala Departemen Operasional untuk approval.
+                            Kepala Departemen Operasional untuk persetujuan.
                             <?php if ($standardSla !== null): ?>
                                 SLA sudah terisi otomatis dari standar kategori
                                 (<strong><?= h(slaLabel($standardSla['value'], $standardSla['unit'])) ?></strong>, hari kerja).

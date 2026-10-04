@@ -173,8 +173,8 @@ require_once __DIR__ . '/../includes/header.php';
 
         <div class="crf-helpdesk-banner">
             <div>
-                <span class="crf-helpdesk-eyebrow">PORTAL CRF · PELAKSANAAN PERUBAHAN</span>
-                <h1>Handler CRF</h1>
+                <span class="crf-helpdesk-eyebrow">PORTAL CRF · TINDAK LANJUT OTOMASI</span>
+                <h1>Tindak Lanjut Permohonan Perubahan</h1>
                 <p>CRF pada kategori yang Anda tangani: ambil CRF, tentukan Level Urgensi &amp; SLA, lalu isi hasil implementasi.</p>
             </div>
         </div>
@@ -200,7 +200,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
             <div class="crf-stat-card">
-                <span><i class="bi bi-person-dash"></i> Belum Diambil Handler</span>
+                <span><i class="bi bi-person-dash"></i> Belum Diambil Petugas Otomasi</span>
                 <strong><?= $unassigned ?></strong>
             </div>
 
@@ -213,7 +213,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-table-card crf-list-table-card">
 
             <div class="crf-table-heading">
-                <h2><?= $queue === 'history' ? 'Riwayat Otomasi' : 'Antrean Otomasi' ?></h2>
+                <h2><?= $queue === 'history' ? 'Riwayat Tindak Lanjut' : 'Antrean Tindak Lanjut' ?></h2>
 
                 <!-- FILTER ANTREAN -->
                 <div class="btn-group">

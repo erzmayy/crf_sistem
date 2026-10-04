@@ -450,7 +450,7 @@ try {
         $description,
         $actor,
         $isResubmission ? 'Perlu Revisi' : 'Draft',
-        'Menunggu Review'
+        'Menunggu Verifikasi'
     );
 
     /* ------------------------------------------------------------------
@@ -460,7 +460,7 @@ try {
 
     $notifyTitle = ($isResubmission ? 'CRF dikirim ulang: ' : 'CRF baru: ') . $requestNumber;
     $notifyMessage = $actor . ' mengajukan CRF kategori ' . $crfCategory['name']
-        . '. CRF menunggu review CMO.';
+        . '. CRF menunggu verifikasi CMO.';
     notifyUsers(
         $pdo,
         array_merge(

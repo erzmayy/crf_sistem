@@ -215,10 +215,10 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
         <div class="crf-section-body">
           <p class="crf-readonly-note mb-3">
-            Admin memantau alur dan tidak memproses CRF atas nama CMO, Handler, atau Kadep.
+            Admin memantau alur dan tidak memproses CRF atas nama CMO, Petugas Otomasi, atau Kepala Departemen Operasional.
             Gunakan pembatalan administratif hanya bila CRF tidak bisa dilanjutkan lewat alur normal
             (duplikat, salah input, pemohon tidak lagi bekerja, dsb). Alasan dicatat di timeline
-            dan dikirim ke Pemohon serta Handler.
+            dan dikirim ke Pemohon serta Petugas Otomasi.
           </p>
           <form method="POST" action="../actions/admin_cancel_crf.php" data-confirm="Batalkan CRF <?= h($crf['request_number']) ?> secara administratif? Tindakan ini tidak bisa diurungkan.">
             <?= csrfField() ?>

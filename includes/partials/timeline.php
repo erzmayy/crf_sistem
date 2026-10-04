@@ -11,20 +11,32 @@ $activityLabels = [
     'Pengajuan Diajukan' => 'Pengajuan CRF Dibuat',
     'Kirim Ulang' => 'Pengajuan CRF Dikirim Ulang',
     'Dalam Proses' => 'Diperiksa Admin CAB',
-    'Lolos Filter CMO' => 'Review Teknis & Komite',
+    'Lolos Filter CMO' => 'Verifikasi CMO',
     'Otomasi - SLA Ditentukan' => 'SLA Ditentukan',
     'SLA Otomatis' => 'SLA Standar Kategori',
-    'SLA Disesuaikan Handler' => 'SLA Disesuaikan Handler',
-    'Approval Kepala Departemen Operasional' => 'Persetujuan Kepala Departemen',
+    'SLA Disesuaikan Handler' => 'SLA Disesuaikan Petugas Otomasi',
+    'Approval Kepala Departemen Operasional' => 'Persetujuan Kepala Departemen Operasional',
     'Otomasi Selesai' => 'Implementasi Selesai',
     'PIR Diisi Pemohon' => 'Post Implementation Review',
     'Pengingat PIR' => 'Pengingat PIR ke Pemohon',
     'Solve' => 'CRF Selesai',
     'Cancel' => 'CRF Dibatalkan',
     'Dibuat dari Helpdesk' => 'Draft CRF Dibuat dari Helpdesk',
-    'CRF Diambil Handler' => 'CRF Diterima Handler',
-    'Handler Ditugaskan' => 'Handler Ditugaskan',
+    'CRF Diambil Handler' => 'CRF Diterima Petugas Otomasi',
+    'Handler Ditugaskan' => 'Petugas Otomasi Ditugaskan',
 ];
+
+// Istilah lama pada riwayat yang tersimpan, diseragamkan saat ditampilkan.
+$legacyTerms = [
+    'Menunggu Approval' => 'Menunggu Persetujuan',
+    'Menunggu Review' => 'Menunggu Verifikasi',
+    'untuk approval' => 'untuk persetujuan',
+    'setelah approval' => 'setelah persetujuan',
+    'lolos filter CMO' => 'lolos verifikasi CMO',
+    'Handler kategori' => 'Petugas Otomasi',
+    'ke Handler' => 'ke Petugas Otomasi',
+];
+$modernizeTerm = static fn(?string $text): string => strtr((string) $text, $legacyTerms);
 
 $pendingStep = null;
 $workflowStage = (string) ($crf['workflow_stage'] ?? '');
@@ -38,19 +50,19 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
                 : ['title' => 'Perbaikan oleh Pemohon', 'description' => 'Menunggu pemohon memperbaiki dan mengirim ulang CRF.'];
             break;
         case 'CMO_FILTER':
-            $pendingStep = ['title' => 'Review Teknis & Komite', 'description' => 'Menunggu pemeriksaan pengajuan oleh CMO.'];
+            $pendingStep = ['title' => 'Verifikasi CMO', 'description' => 'Menunggu verifikasi permohonan oleh CMO.'];
             break;
         case 'OTOMASI':
             if (array_key_exists('assigned_handler_id', $crf) && empty($crf['assigned_handler_id'])) {
-                $pendingStep = ['title' => 'Menunggu Handler', 'description' => 'Menunggu Handler kategori mengambil CRF.'];
+                $pendingStep = ['title' => 'Menunggu Petugas Otomasi', 'description' => 'Menunggu Petugas Otomasi kategori mengambil CRF.'];
                 break;
             }
             $pendingStep = empty($crf['kadep_operasional_approved_at'])
-                ? ['title' => 'Penetapan SLA', 'description' => 'Menunggu Handler menentukan level urgensi dan SLA.']
-                : ['title' => 'Mulai Implementasi / Selesai', 'description' => 'Menunggu Handler mencatat hasil implementasi.'];
+                ? ['title' => 'Penetapan SLA', 'description' => 'Menunggu Petugas Otomasi menentukan level urgensi dan SLA.']
+                : ['title' => 'Tindak Lanjut Divisi Otomasi', 'description' => 'Menunggu Petugas Otomasi mencatat hasil implementasi.'];
             break;
         case 'kadep_operasional':
-            $pendingStep = ['title' => 'Persetujuan Kepala Departemen', 'description' => 'Menunggu persetujuan Kepala Departemen Operasional.'];
+            $pendingStep = ['title' => 'Persetujuan Kepala Departemen Operasional', 'description' => 'Menunggu persetujuan Kepala Departemen Operasional.'];
             break;
         case 'PEMOHON_PIR':
             $pendingStep = ['title' => 'Post Implementation Review', 'description' => 'Menunggu Pemohon mengisi Post Implementation Review.'];
@@ -103,14 +115,14 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
                                 </time>
                             <?php endif; ?>
                             <?php if (!empty($item['description'])): ?>
-                                <div class="crf-timeline-description"><?= nl2br(h($item['description'])) ?></div>
+                                <div class="crf-timeline-description"><?= nl2br(h($modernizeTerm($item['description']))) ?></div>
                             <?php endif; ?>
                             <?php if (!empty($item['new_status']) && ($item['old_status'] ?? '') !== $item['new_status']): ?>
                                 <div class="crf-timeline-status">
                                     <?php if (!empty($item['old_status'])): ?>
-                                        <span><?= h($item['old_status']) ?></span> <i class="bi bi-arrow-right"></i>
+                                        <span><?= h($modernizeTerm($item['old_status'])) ?></span> <i class="bi bi-arrow-right"></i>
                                     <?php endif; ?>
-                                    <strong><?= h($item['new_status']) ?></strong>
+                                    <strong><?= h($modernizeTerm($item['new_status'])) ?></strong>
                                 </div>
                             <?php endif; ?>
                             <?php if (!empty($item['actor'])): ?>

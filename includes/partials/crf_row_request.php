@@ -38,7 +38,7 @@ $rowMeta = array_filter([
         <?php if ($rowShowHandler): ?>
             <div class="crf-row-handler <?= empty($row['assigned_handler_id']) ? 'is-empty' : '' ?>">
                 <i class="bi <?= empty($row['assigned_handler_id']) ? 'bi-person-dash' : 'bi-person-check' ?>"></i>
-                <?= empty($row['assigned_handler_id']) ? 'Belum diambil handler' : 'Handler: ' . h($row['assigned_handler_name']) ?>
+                <?= empty($row['assigned_handler_id']) ? 'Belum diambil Petugas Otomasi' : 'Petugas Otomasi: ' . h($row['assigned_handler_name']) ?>
             </div>
         <?php endif; ?>
     </div>

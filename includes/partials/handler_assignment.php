@@ -20,14 +20,14 @@ $categoryHandlers = $categoryHandlers ?? [];
         <?php endif; ?>
     </div>
     <div class="crf-assignment-item">
-        <span class="crf-request-caption">Handler</span>
+        <span class="crf-request-caption">Petugas Otomasi</span>
         <?php if (!empty($crf['assigned_handler_id'])): ?>
             <strong><i class="bi bi-person-check"></i> <?= h($crf['assigned_handler_name'] ?? '-') ?></strong>
             <?php if (!empty($crf['assigned_at'])): ?>
                 <small class="text-muted">sejak <?= h(date('d-m-Y H:i', strtotime($crf['assigned_at']))) ?></small>
             <?php endif; ?>
         <?php else: ?>
-            <strong class="text-muted"><i class="bi bi-person-dash"></i> Belum ada handler</strong>
+            <strong class="text-muted"><i class="bi bi-person-dash"></i> Belum ada Petugas Otomasi</strong>
         <?php endif; ?>
     </div>
     <div class="crf-assignment-actions">
@@ -40,14 +40,14 @@ $categoryHandlers = $categoryHandlers ?? [];
             </form>
         <?php endif; ?>
         <?php if (isAdmin() && !isOwnHandledCrf($crf) && $crf['workflow_stage'] === 'OTOMASI' && $categoryHandlers): ?>
-            <form method="POST" action="../actions/crf_assign.php" class="d-flex gap-1" data-confirm="Tugaskan CRF ini ke handler terpilih?">
+            <form method="POST" action="../actions/crf_assign.php" class="d-flex gap-1" data-confirm="Tugaskan CRF ini ke Petugas Otomasi terpilih?">
                 <?= csrfField() ?>
                 <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
                 <input type="hidden" name="op" value="assign">
                 <?php if (!empty($assignmentReturn)): ?>
                     <input type="hidden" name="return" value="<?= h($assignmentReturn) ?>">
                 <?php endif; ?>
-                <select name="user_id" class="form-select form-select-sm" required aria-label="Pilih handler">
+                <select name="user_id" class="form-select form-select-sm" required aria-label="Pilih Petugas Otomasi">
                     <option value="">Tugaskan ke…</option>
                     <?php foreach ($categoryHandlers as $handler): ?>
                         <option value="<?= (int) $handler['user_id'] ?>" <?= (int) ($crf['assigned_handler_id'] ?? 0) === (int) $handler['user_id'] ? 'selected' : '' ?>><?= h($handler['user_name']) ?></option>
