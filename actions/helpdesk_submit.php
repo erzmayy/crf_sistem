@@ -76,8 +76,8 @@ if ($mode === 'existing') {
         notifyUsers(
             $pdo,
             helpdeskCategoryPicIds($pdo, (int) $ticket['helpdesk_category_id']),
-            'Keterangan tambahan: ' . $ticket['ticket_number'],
-            $actor . ' menambahkan keterangan pada ticket ' . $ticket['ticket_number'] . '.',
+            'Keterangan tambahan: ' . helpdeskTicketLabel($ticket),
+            $actor . ' menambahkan keterangan pada ticket ' . helpdeskTicketLabel($ticket) . '.',
             'helpdesk/detail.php?id=' . $ticketId,
             null,
             $ticketId,
@@ -111,19 +111,45 @@ if (!$category || (int) $category['is_active'] !== 1) {
 if (!array_key_exists($requestKind, helpdeskRequestKinds())) {
     $errors[] = 'Kategori/Dampak wajib dipilih.';
 }
-if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $reportTime)) {
-    $errors[] = 'Jam Mulai Laporan tidak valid.';
-}
 if ($phone === '') {
     $errors[] = 'No Handphone/WA wajib diisi.';
 }
 
+/*
+ * Request pada kategori "via CRF" tidak menjadi ticket Helpdesk: pemohon
+ * langsung diarahkan ke Form CRF dengan isi pesan & kategori terisi.
+ * Belum ada data yang disimpan sampai pemohon menyimpan draft / mengajukan CRF.
+ */
+if ($category && helpdeskRoutesToCrf($category, (string) $requestKind)) {
+    if ($errors) {
+        helpdeskSubmitFail($errors);
+    }
+
+    $crfCategory = !empty($category['default_crf_category_id'])
+        ? findCrfCategory($pdo, (int) $category['default_crf_category_id'])
+        : null;
+
+    $_SESSION['old_crf'] = array_filter([
+        'change_description' => $message,
+        'crf_category_id'    => $crfCategory['id'] ?? null,
+        'phone'              => $phone,
+    ]);
+    $_SESSION['flash'] = [
+        'type' => 'info',
+        'message' => 'Permintaan perubahan ' . $category['name'] . ' diajukan melalui Change Request Form. '
+            . 'Data pelapor dan isi pesan sudah terisi — lengkapi lalu klik Ajukan CRF.',
+    ];
+    header('Location: ../user/form_crf.php');
+    exit;
+}
+
+if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $reportTime)) {
+    $errors[] = 'Jam Mulai Laporan tidak valid.';
+}
 if ($errors) {
     helpdeskSubmitFail($errors);
 }
 
-$requiresCrf = (int) $category['requires_crf'] === 1;
-$crfDraftId = null;
 $uploadErrors = [];
 
 try {
@@ -136,73 +162,21 @@ try {
         'message'      => $message,
     ]);
 
-    $ticketStmt = $pdo->prepare('SELECT ticket_number FROM helpdesk_tickets WHERE id = :id');
-    $ticketStmt->execute(['id' => $ticketId]);
-    $ticketNumber = (string) $ticketStmt->fetchColumn();
+    $ticketLabel = helpdeskTicketLabel(['category_name' => $category['name'], 'created_at' => date('Y-m-d H:i:s')]);
 
-    if ($requiresCrf) {
-        $crfCategory = !empty($category['default_crf_category_id'])
-            ? findCrfCategory($pdo, (int) $category['default_crf_category_id'])
-            : null;
+    $uploadErrors = handleHelpdeskAttachmentUploads($pdo, $ticketId, $_FILES['attachments'] ?? []);
 
-        $draftStmt = $pdo->prepare("
-            INSERT INTO change_requests (
-                user_id, helpdesk_ticket_id, full_name, phone, email,
-                to_department, to_division, from_department, from_division,
-                change_description, change_category, crf_category_id,
-                change_category_detail, workflow_stage, status
-            ) VALUES (
-                :user_id, :ticket_id, :full_name, :phone, :email,
-                'Departemen Operasional', 'Divisi Otomasi', :from_department, :from_division,
-                :change_description, :change_category, :crf_category_id,
-                '', 'PEMOHON', 'Draft'
-            )
-        ");
-        $draftStmt->execute([
-            'user_id'            => (int) $user['id'],
-            'ticket_id'          => $ticketId,
-            'full_name'          => $actor,
-            'phone'              => $phone,
-            'email'              => (string) ($user['email'] ?? ''),
-            'from_department'    => $user['dept'] ?? null,
-            'from_division'      => $user['divisi'] ?? null,
-            'change_description' => $message,
-            'change_category'    => $crfCategory['legacy_change_category'] ?? null,
-            'crf_category_id'    => $crfCategory['id'] ?? null,
-        ]);
-        $crfDraftId = (int) $pdo->lastInsertId();
-
-        logCrfActivity(
-            $pdo,
-            $crfDraftId,
-            'Dibuat dari Helpdesk',
-            'Draft CRF dibuat otomatis dari ticket Helpdesk ' . $ticketNumber . '.',
-            $actor,
-            null,
-            'Draft'
-        );
-        logHelpdeskActivity(
-            $pdo,
-            $ticketId,
-            'Diteruskan ke CRF',
-            'Permintaan memerlukan Change Request Form. Draft CRF dibuat otomatis.',
-            $actor
-        );
-    } else {
-        $uploadErrors = handleHelpdeskAttachmentUploads($pdo, $ticketId, $_FILES['attachments'] ?? []);
-
-        notifyUsers(
-            $pdo,
-            helpdeskCategoryPicIds($pdo, (int) $category['id']),
-            'Ticket baru: ' . $ticketNumber,
-            $actor . ' mengirim permintaan pada kategori ' . $category['name'] . ': '
-                . mb_strimwidth($message, 0, 200, '…'),
-            'helpdesk/detail.php?id=' . $ticketId,
-            null,
-            $ticketId,
-            (int) $user['id']
-        );
-    }
+    notifyUsers(
+        $pdo,
+        helpdeskCategoryPicIds($pdo, (int) $category['id']),
+        'Ticket baru: ' . $ticketLabel,
+        $actor . ' mengirim permintaan pada kategori ' . $category['name'] . ': '
+            . mb_strimwidth($message, 0, 200, '…'),
+        'helpdesk/detail.php?id=' . $ticketId,
+        null,
+        $ticketId,
+        (int) $user['id']
+    );
 
     $pdo->commit();
     dispatchPendingNotificationEmails($pdo);
@@ -214,18 +188,8 @@ try {
     helpdeskSubmitFail(['Terjadi kesalahan saat menyimpan permintaan. Silakan coba lagi.']);
 }
 
-if ($requiresCrf) {
-    $_SESSION['flash'] = [
-        'type' => 'info',
-        'message' => 'Ticket ' . $ticketNumber . ' dibuat dan diteruskan ke CRF. '
-            . 'Data pelapor dan isi pesan sudah terisi — lengkapi Form CRF lalu klik Ajukan CRF.',
-    ];
-    header('Location: ../user/form_crf.php?id=' . $crfDraftId);
-    exit;
-}
-
 $_SESSION['flash'] = $uploadErrors
-    ? ['type' => 'warning', 'message' => 'Ticket ' . $ticketNumber . ' berhasil dikirim, namun ada lampiran yang gagal diupload: ' . implode(' ', $uploadErrors)]
-    : ['type' => 'success', 'message' => 'Ticket ' . $ticketNumber . ' berhasil dikirim ke PIC ' . $category['name'] . '.'];
+    ? ['type' => 'warning', 'message' => 'Ticket berhasil dikirim, namun ada lampiran yang gagal diupload: ' . implode(' ', $uploadErrors)]
+    : ['type' => 'success', 'message' => 'Ticket berhasil dikirim ke PIC ' . $category['name'] . '.'];
 header('Location: ../helpdesk/detail.php?id=' . $ticketId);
 exit;

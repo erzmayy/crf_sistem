@@ -83,7 +83,7 @@ try {
     notifyUsers(
         $pdo,
         [(int) $ticket['user_id']],
-        'Ticket ' . $ticket['ticket_number'] . ': ' . $status,
+        'Ticket ' . helpdeskTicketLabel($ticket) . ': ' . $status,
         'PIC ' . $ticket['category_name'] . ' (' . $actor . ') menindaklanjuti ticket Anda: '
             . mb_strimwidth($followUp, 0, 200, '…'),
         'helpdesk/detail.php?id=' . $ticketId,

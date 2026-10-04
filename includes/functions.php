@@ -702,6 +702,24 @@ function crfPirReminderInfo(PDO $pdo, array $crf): array
     ];
 }
 
+/**
+ * Label ticket untuk tampilan & notifikasi (tanpa nomor ticket, mengikuti
+ * SIAP): "Kategori · dd-mm-YYYY HH:ii".
+ * $ticket butuh category_name & created_at.
+ */
+function helpdeskTicketLabel(array $ticket): string
+{
+    $parts = [];
+    if (!empty($ticket['category_name'])) {
+        $parts[] = (string) $ticket['category_name'];
+    }
+    if (!empty($ticket['created_at'])) {
+        $parts[] = date('d-m-Y H:i', strtotime((string) $ticket['created_at']));
+    }
+
+    return $parts ? implode(' · ', $parts) : 'Ticket Helpdesk';
+}
+
 function crfActorName(array $user): string
 {
     return !empty($user['nama']) ? (string) $user['nama'] : (string) ($user['userid'] ?? '-');

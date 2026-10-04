@@ -62,7 +62,9 @@ require_once __DIR__ . '/../includes/header.php';
         <?php if ($category['requires_crf']): ?>
             <div class="alert alert-info crf-alert">
                 <i class="bi bi-info-circle"></i>
-                Permintaan pada kategori ini diproses melalui <strong>CRF</strong>. Status ticket mengikuti progres CRF terkait.
+                Jenis <strong>Request/Permintaan</strong> pada kategori ini diajukan langsung lewat <strong>Form CRF</strong>
+                (dipantau di Dashboard CRF / tab CRF Dashboard Handling). Daftar di bawah berisi
+                <strong>Maintenance</strong> dan <strong>Komplain</strong> yang ditindaklanjuti PIC.
             </div>
         <?php endif; ?>
 
@@ -72,7 +74,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <input type="hidden" name="per_page" value="<?= (int) $perPage ?>">
                 <label class="crf-list-filter-field crf-list-search">
                     <span>Cari</span>
-                    <input type="search" name="q" class="form-control" placeholder="Nomor / nama / isi" value="<?= h($filters['search']) ?>">
+                    <input type="search" name="q" class="form-control" placeholder="Nama / isi permintaan" value="<?= h($filters['search']) ?>">
                 </label>
                 <label class="crf-list-filter-field">
                     <span>Status</span>

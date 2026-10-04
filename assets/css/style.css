@@ -5188,3 +5188,30 @@ body .crf-app-shell .crf-stat-grid .crf-forum-stat { border-left-color: #0f766e;
 }
 .crf-demo-badge.is-admin { background: rgba(255, 255, 255, 0.18); color: #fff; }
 .crf-detail-page .crf-assignment-card { margin-bottom: 1rem; }
+
+/* Form CRF: keterangan status penyimpanan di bar tombol */
+.crf-save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.crf-save-status.is-new { background: #f1f5f9; color: #64748b; }
+.crf-save-status.is-new i::before { content: "\F28A"; }          /* bi-circle */
+.crf-save-status.is-saved { background: #ecfdf3; color: #146c43; }
+.crf-save-status.is-saved i::before { content: "\F26A"; }        /* bi-check-circle-fill */
+.crf-save-status.is-unsaved,
+.crf-save-status.is-dirty { background: #fff8e6; color: #8a5a00; }
+.crf-save-status.is-unsaved i::before,
+.crf-save-status.is-dirty i::before { content: "\F332"; }        /* bi-exclamation-circle-fill */
+.crf-save-status.is-revision { background: #fdecec; color: #a12622; }
+.crf-save-status.is-revision i::before { content: "\F33A"; }     /* bi-exclamation-triangle-fill */
+@media (max-width: 768px) {
+  .crf-save-status { width: 100%; justify-content: center; }
+  .crf-sticky-actions .crf-sticky-buttons { width: 100%; flex-direction: column-reverse; }
+  .crf-sticky-actions .crf-sticky-buttons > button { width: 100%; }
+}

@@ -115,7 +115,7 @@ require_once __DIR__ . '/../includes/header.php';
                 </label>
                 <label class="crf-list-filter-field">
                     <span>Cari</span>
-                    <input type="search" name="q" class="form-control" placeholder="Nomor / nama / isi" value="<?= h($filters['search']) ?>">
+                    <input type="search" name="q" class="form-control" placeholder="Nama / isi permintaan" value="<?= h($filters['search']) ?>">
                 </label>
                 <div class="crf-list-filter-actions">
                     <button type="submit" class="btn btn-crf-primary"><i class="bi bi-search"></i> <span>View</span></button>

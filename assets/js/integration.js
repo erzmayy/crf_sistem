@@ -166,6 +166,43 @@ document.addEventListener('DOMContentLoaded', function () {
   }, true);
 
   /* -----------------------------------------------------------------
+   * Form CRF: status penyimpanan + konfirmasi browser bila meninggalkan
+   * halaman yang punya isian belum disimpan.
+   *   new      : belum ada isian
+   *   unsaved  : isian dibawa dari Helpdesk, belum pernah disimpan
+   *   saved    : draft tersimpan, belum ada perubahan
+   *   revision : perlu revisi, belum dikirim ulang
+   *   dirty    : ada perubahan yang belum disimpan
+   * ----------------------------------------------------------------- */
+  document.querySelectorAll('form[data-unsaved-guard]').forEach(function (form) {
+    var initialState = form.getAttribute('data-save-state') || 'new';
+    var status = form.querySelector('[data-save-status]');
+    var statusText = status ? status.querySelector('[data-save-status-text]') : null;
+    var dirty = initialState === 'unsaved';
+    var submitting = false;
+
+    function markDirty() {
+      if (dirty) { return; }
+      dirty = true;
+      if (!status || !statusText) { return; }
+      status.className = 'crf-save-status is-dirty';
+      statusText.textContent = initialState === 'revision'
+        ? 'Ada perubahan yang belum dikirim ulang'
+        : 'Ada perubahan yang belum disimpan';
+    }
+
+    form.addEventListener('input', markDirty);
+    form.addEventListener('change', markDirty);
+    form.addEventListener('submit', function () { submitting = true; });
+
+    window.addEventListener('beforeunload', function (event) {
+      if (!dirty || submitting) { return; }
+      event.preventDefault();
+      event.returnValue = '';
+    });
+  });
+
+  /* -----------------------------------------------------------------
    * Handler: alasan wajib bila SLA berbeda dari standar kategori
    * ----------------------------------------------------------------- */
   document.querySelectorAll('[data-sla-standard-value]').forEach(function (row) {
@@ -361,7 +398,10 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateHelpdeskForm() {
       var mode = currentMode();
       var option = categorySelect ? categorySelect.options[categorySelect.selectedIndex] : null;
-      var requiresCrf = mode === 'new' && option && option.getAttribute('data-requires-crf') === '1';
+      // Diteruskan ke CRF hanya bila kategori "via CRF" DAN jenis = Request/Permintaan.
+      var kindInput = helpdeskForm.querySelector('input[name="request_kind"]:checked');
+      var requiresCrf = mode === 'new' && option && option.getAttribute('data-requires-crf') === '1'
+        && kindInput && kindInput.value === 'request';
 
       if (newRequestSection) { newRequestSection.classList.toggle('d-none', mode !== 'new'); }
       if (existingSection) { existingSection.classList.toggle('d-none', mode !== 'existing'); }
@@ -373,9 +413,16 @@ document.addEventListener('DOMContentLoaded', function () {
       helpdeskForm.querySelectorAll('[data-new-only]').forEach(function (field) {
         field.disabled = mode !== 'new';
       });
+      // Request via CRF: Jam Mulai Laporan tidak dipakai.
+      helpdeskForm.querySelectorAll('[data-hide-for-crf]').forEach(function (block) {
+        block.classList.toggle('d-none', requiresCrf);
+        block.querySelectorAll('input').forEach(function (field) {
+          field.disabled = mode !== 'new' || requiresCrf;
+        });
+      });
     }
 
-    helpdeskForm.querySelectorAll('input[name="request_mode"]').forEach(function (radio) {
+    helpdeskForm.querySelectorAll('input[name="request_mode"], input[name="request_kind"]').forEach(function (radio) {
       radio.addEventListener('change', updateHelpdeskForm);
     });
     if (categorySelect) { categorySelect.addEventListener('change', updateHelpdeskForm); }

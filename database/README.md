@@ -29,5 +29,6 @@ migrasi aman dijalankan ulang.
 | 011 | `pir_pemohon_migration.sql` | Tahap `PEMOHON_PIR` (PIR diisi pemohon) |
 | 012 | `sla_matrix_migration.sql` | Matriks SLA kategori × urgensi |
 | 013 | `crf_category_five_migration.sql` | Kategori CRF jadi 5: Aplikasi, Infrastruktur, Proses, Security, Lainnya |
+| 014 | `drop_helpdesk_ticket_number_migration.sql` | Hapus nomor ticket Helpdesk (mengikuti SIAP) |
 
-Migrasi baru berikutnya diberi nomor `014_...`.
+Migrasi baru berikutnya diberi nomor `015_...`.

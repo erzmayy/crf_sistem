@@ -44,7 +44,6 @@ $ticketShowFollowUp = $ticketShowFollowUp ?? true;
                             <span class="crf-request-caption">Oleh</span>
                             <strong><?= h($ticketRow['full_name']) ?></strong>
                         <?php endif; ?>
-                        <span class="crf-request-register"><?= h($ticketRow['ticket_number']) ?></span>
                         <div class="crf-request-date-card">
                             <span class="crf-request-caption">Waktu Permintaan</span>
                             <span><?= h(date('d-m-Y H:i', strtotime($ticketRow['created_at']))) ?></span>

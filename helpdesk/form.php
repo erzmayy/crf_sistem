@@ -14,7 +14,7 @@ $user = getCurrentUser(true);
 $categories = helpdeskCategories($pdo);
 
 $openTicketsStmt = $pdo->prepare("
-    SELECT t.id, t.ticket_number, t.status, c.name AS category_name, t.created_at
+    SELECT t.id, t.status, t.message, c.name AS category_name, t.created_at
     FROM helpdesk_tickets t
     JOIN helpdesk_categories c ON c.id = t.helpdesk_category_id
     WHERE t.user_id = :user_id
@@ -129,14 +129,14 @@ require_once __DIR__ . '/../includes/header.php';
                       value="<?= (int) $category['id'] ?>"
                       data-requires-crf="<?= (int) $category['requires_crf'] ?>"
                       <?= $selectedCategory === (int) $category['id'] ? 'selected' : '' ?>
-                    ><?= h($category['name']) ?><?= $category['requires_crf'] ? ' (via CRF)' : '' ?></option>
+                    ><?= h($category['name']) ?><?= $category['requires_crf'] ? ' (Request via CRF)' : '' ?></option>
                   <?php endforeach; ?>
                 </select>
                 <?php if (!$categories): ?>
                   <div class="text-danger small mt-1">Belum ada kategori Helpdesk aktif. Hubungi Admin.</div>
                 <?php endif; ?>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-4" data-hide-for-crf>
                 <label for="report_time" class="crf-field-label">Jam Mulai Laporan<span class="text-danger">*</span></label>
                 <input type="time" class="form-control" id="report_time" name="report_time" data-new-only required value="<?= h($old['report_time'] ?? date('H:i')) ?>">
               </div>
@@ -145,12 +145,13 @@ require_once __DIR__ . '/../includes/header.php';
             <div id="helpdeskCrfNotice" class="crf-crf-notice d-none" role="status">
               <i class="bi bi-info-circle-fill"></i>
               <div>
-                <strong>Permintaan ini memerlukan Change Request Form (CRF).</strong>
-                Setelah klik <em>Lanjut ke Form CRF</em>, ticket Helpdesk dibuat dan Anda diarahkan ke Form CRF
-                dengan data pelapor dan isi pesan yang sudah terisi otomatis.
+                <strong>Request pada kategori ini diajukan melalui Change Request Form (CRF).</strong>
+                Setelah klik <em>Lanjut ke Form CRF</em>, Anda diarahkan ke Form CRF dengan data pelapor
+                dan isi pesan yang sudah terisi. Permintaan ini dicatat sebagai CRF, bukan ticket Helpdesk.
               </div>
             </div>
 
+            <div>
             <label class="crf-field-label mt-3">Kategori / Dampak<span class="text-danger">*</span></label>
             <div class="crf-choice-row crf-choice-row--3" role="radiogroup" aria-label="Kategori dampak">
               <?php foreach (helpdeskRequestKinds() as $kindKey => $kind): ?>
@@ -160,6 +161,7 @@ require_once __DIR__ . '/../includes/header.php';
                   <span><strong><?= h($kind['label']) ?></strong><small><?= h($kind['hint']) ?></small></span>
                 </label>
               <?php endforeach; ?>
+            </div>
             </div>
           </div>
 
@@ -175,7 +177,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <option value="">-- Pilih ticket yang masih berjalan --</option>
                 <?php foreach ($openTickets as $ticket): ?>
                   <option value="<?= (int) $ticket['id'] ?>" <?= (int) ($old['existing_ticket_id'] ?? 0) === (int) $ticket['id'] ? 'selected' : '' ?>>
-                    <?= h($ticket['ticket_number'] . ' · ' . $ticket['category_name'] . ' · ' . $ticket['status']) ?>
+                    <?= h(helpdeskTicketLabel($ticket) . ' · ' . $ticket['status'] . ' — ' . mb_strimwidth((string) $ticket['message'], 0, 60, '…')) ?>
                   </option>
                 <?php endforeach; ?>
               </select>

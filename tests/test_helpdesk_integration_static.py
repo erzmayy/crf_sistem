@@ -100,6 +100,24 @@ class HelpdeskIntegrationStaticTests(unittest.TestCase):
         self.assertIn("slaWorkingSecondsBetween(Math.floor(Date.now() / 1000), dueAt)", read("assets/js/script.js"))
         self.assertIn("data-sla-holidays", read("includes/header.php"))
 
+    def test_request_via_crf_goes_straight_to_crf_form_without_ticket(self):
+        helpdesk = read("includes/helpdesk.php")
+        self.assertIn("return !empty($source['requires_crf']) && $requestKind === 'request';", helpdesk)
+        self.assertNotIn("Menunggu Pengajuan CRF", helpdesk)
+        submit = read("actions/helpdesk_submit.php")
+        routed = submit[submit.index("if ($category && helpdeskRoutesToCrf("):submit.index("header('Location: ../user/form_crf.php');")]
+        self.assertIn("$_SESSION['old_crf']", routed)
+        self.assertNotIn("createHelpdeskTicket", routed)
+        self.assertNotIn("INSERT INTO change_requests", submit)
+
+    def test_crf_form_warns_before_leaving_unsaved_changes(self):
+        form = read("user/form_crf.php")
+        self.assertIn('data-unsaved-guard data-save-state=', form)
+        self.assertIn("data-save-status", form)
+        js = read("assets/js/integration.js")
+        self.assertIn("window.addEventListener('beforeunload'", js)
+        self.assertIn("if (!dirty || submitting) { return; }", js)
+
     def test_category_delete_is_soft_delete(self):
         source = read("actions/category_master.php")
         self.assertIn("deleted_at = NOW()", source)

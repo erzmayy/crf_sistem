@@ -33,7 +33,7 @@ $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
 $backUrl = $isOwner ? 'saya.php' : 'kategori.php?id=' . (int) $ticket['helpdesk_category_id'];
-$pageTitle = 'Ticket ' . $ticket['ticket_number'];
+$pageTitle = 'Ticket ' . helpdeskTicketLabel($ticket);
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -41,8 +41,8 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="container">
         <div class="crf-helpdesk-banner crf-banner-with-actions">
             <div>
-                <span class="crf-helpdesk-eyebrow">DETAIL TICKET · <?= h($ticket['category_name']) ?></span>
-                <h1><?= h($ticket['ticket_number']) ?></h1>
+                <span class="crf-helpdesk-eyebrow">DETAIL TICKET HELPDESK</span>
+                <h1><?= h($ticket['category_name']) ?></h1>
                 <p>Dibuat <?= h(formatTanggalIndonesia(new DateTime($ticket['created_at']))) ?>, <?= h(date('H:i', strtotime($ticket['created_at']))) ?></p>
             </div>
             <div class="crf-banner-actions">
@@ -114,7 +114,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                 </section>
 
-                <?php if (!$ticket['requires_crf']): ?>
+                <?php if (!helpdeskTicketViaCrf($ticket)): ?>
                     <section class="crf-section">
                         <div class="crf-section-header">
                             <span class="crf-section-number">3</span>
@@ -226,11 +226,11 @@ require_once __DIR__ . '/../includes/header.php';
     <?php $allowedStatuses = helpdeskStatusTransitions()[$ticket['status']] ?? []; ?>
     <div class="modal fade" id="followUpModal" tabindex="-1" aria-labelledby="followUpModalTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form class="modal-content" method="POST" action="../actions/helpdesk_follow_up.php" data-confirm="Simpan tindak lanjut ticket <?= h($ticket['ticket_number']) ?>?">
+            <form class="modal-content" method="POST" action="../actions/helpdesk_follow_up.php" data-confirm="Simpan tindak lanjut ticket <?= h(helpdeskTicketLabel($ticket)) ?>?">
                 <?= csrfField() ?>
                 <input type="hidden" name="id" value="<?= (int) $ticket['id'] ?>">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="followUpModalTitle">Tindak Lanjut <?= h($ticket['ticket_number']) ?></h5>
+                    <h5 class="modal-title" id="followUpModalTitle">Tindak Lanjut · <?= h(helpdeskTicketLabel($ticket)) ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                 </div>
                 <div class="modal-body">
@@ -264,5 +264,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 <?php endif; ?>
+
+
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

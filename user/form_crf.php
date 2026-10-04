@@ -59,7 +59,7 @@ $crfCategoryOptions = crfCategories($pdo);
 $sourceTicket = null;
 if (!empty($draftData['helpdesk_ticket_id'])) {
     $ticketStmt = $pdo->prepare('
-        SELECT t.id, t.ticket_number, t.created_at, c.name AS category_name
+        SELECT t.id, t.created_at, c.name AS category_name
         FROM helpdesk_tickets t
         JOIN helpdesk_categories c ON c.id = t.helpdesk_category_id
         WHERE t.id = :id
@@ -129,6 +129,25 @@ $old = array_merge(
 );
 unset($_SESSION['old_crf']);
 
+/*
+ * Status penyimpanan form (ditampilkan di samping tombol & dipakai untuk
+ * konfirmasi browser saat meninggalkan halaman yang belum disimpan).
+ */
+if (($draftData['status'] ?? '') === 'Perlu Revisi') {
+    $saveState = 'revision';
+    $saveStateText = 'Perlu revisi · belum dikirim ulang';
+} elseif ($draftData) {
+    $saveState = 'saved';
+    $saveStateText = 'Tersimpan sebagai Draft · ' . date('d-m-Y H:i', strtotime($draftData['updated_at'] ?? $draftData['created_at'] ?? 'now'));
+} elseif (trim((string) ($old['change_description'] ?? '')) !== '') {
+    // Isian dibawa dari Formulir Helpdesk / gagal validasi: belum pernah tersimpan.
+    $saveState = 'unsaved';
+    $saveStateText = 'Belum disimpan · klik Simpan Draft atau Ajukan CRF';
+} else {
+    $saveState = 'new';
+    $saveStateText = 'Belum ada isian';
+}
+
 $pageTitle = 'Form CRF';
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -164,15 +183,15 @@ require_once __DIR__ . '/../includes/header.php';
         <div>
           <span class="crf-request-caption">CRF ini berasal dari ticket Helpdesk</span>
           <a href="../helpdesk/detail.php?id=<?= (int) $sourceTicket['id'] ?>" class="crf-link">
-            <strong><?= h($sourceTicket['ticket_number']) ?></strong>
+            <strong><?= h(helpdeskTicketLabel($sourceTicket)) ?></strong>
           </a>
-          <small class="text-muted"> · <?= h($sourceTicket['category_name']) ?> · <?= h(date('d-m-Y H:i', strtotime($sourceTicket['created_at']))) ?></small>
           <div class="crf-readonly-note mb-0">Data pelapor &amp; isi permintaan dari Helpdesk sudah terisi otomatis. Lengkapi sisanya lalu ajukan CRF.</div>
         </div>
       </div>
     <?php endif; ?>
 
-    <form action="../actions/submit_crf.php" method="POST" enctype="multipart/form-data" id="crfForm" novalidate>
+    <form action="../actions/submit_crf.php" method="POST" enctype="multipart/form-data" id="crfForm" novalidate
+          data-unsaved-guard data-save-state="<?= h($saveState) ?>">
 
     <input
         type="hidden"
@@ -240,11 +259,6 @@ require_once __DIR__ . '/../includes/header.php';
               <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
             </div>
             
-            <div class="col-12">
-              <label class="crf-field-label">Nomor Ticket Helpdesk</label>
-              <input type="text" class="form-control" value="<?= h($sourceTicket['ticket_number'] ?? 'Tidak terhubung ke ticket Helpdesk') ?>" readonly>
-              <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis bila CRF dibuat dari Formulir Helpdesk</div>
-            </div>
 
             <div class="col-md-6">
               <label class="crf-field-label">Hari/Tanggal<span class="text-danger">*</span>
@@ -486,7 +500,14 @@ require_once __DIR__ . '/../includes/header.php';
       <!-- TOMBOL FORM (sticky)                                          -->
       <!-- ============================================================ -->
       <div class="crf-sticky-actions">
-        <div class="d-flex justify-content-end gap-2">
+        <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+
+          <div class="crf-save-status is-<?= h($saveState) ?>" data-save-status role="status" aria-live="polite">
+            <i class="bi" aria-hidden="true"></i>
+            <span data-save-status-text><?= h($saveStateText) ?></span>
+          </div>
+
+          <div class="d-flex gap-2 crf-sticky-buttons">
 
           <button
             type="submit"
@@ -517,6 +538,7 @@ require_once __DIR__ . '/../includes/header.php';
             ?>
           </button>
 
+          </div>
         </div>
       </div>
 

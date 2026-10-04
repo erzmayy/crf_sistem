@@ -74,29 +74,24 @@ function helpdeskLevelBadgeClass(?string $level): string
     }
 }
 
+
 /**
- * Nomor ticket: HD-YYYY-NNNNN. Atomik di dalam transaksi.
+ * Request/Permintaan pada kategori "via CRF" diajukan langsung lewat Form CRF
+ * (tidak menjadi ticket Helpdesk). Maintenance & Komplain pada kategori yang
+ * sama tetap menjadi ticket biasa yang ditindaklanjuti PIC.
  */
-function generateTicketNumber(PDO $pdo, DateTimeInterface $date): string
+function helpdeskRoutesToCrf(array $source, string $requestKind): bool
 {
-    $year = $date->format('Y');
+    return !empty($source['requires_crf']) && $requestKind === 'request';
+}
 
-    $pdo->prepare("
-        INSERT INTO app_sequences (name, year, last_number)
-        VALUES ('helpdesk', :year, 0)
-        ON DUPLICATE KEY UPDATE last_number = last_number
-    ")->execute(['year' => $year]);
-
-    $stmt = $pdo->prepare("
-        UPDATE app_sequences
-        SET last_number = LAST_INSERT_ID(last_number + 1)
-        WHERE name = 'helpdesk' AND year = :year
-    ");
-    $stmt->execute(['year' => $year]);
-
-    $sequence = (int) $pdo->query('SELECT LAST_INSERT_ID()')->fetchColumn();
-
-    return sprintf('HD-%s-%05d', $year, $sequence);
+/**
+ * Ticket lama (sebelum Request diarahkan langsung ke Form CRF) yang sudah
+ * diteruskan ke CRF: status mengikuti CRF, tidak ditindaklanjuti PIC.
+ */
+function helpdeskTicketViaCrf(array $ticket): bool
+{
+    return ($ticket['status'] ?? '') === 'Diteruskan ke CRF' || !empty($ticket['crf_id']);
 }
 
 /**
@@ -104,23 +99,20 @@ function generateTicketNumber(PDO $pdo, DateTimeInterface $date): string
  */
 function createHelpdeskTicket(PDO $pdo, array $user, array $category, array $data): int
 {
-    $now = new DateTimeImmutable();
-    $ticketNumber = generateTicketNumber($pdo, $now);
-    $status = !empty($category['requires_crf']) ? 'Diteruskan ke CRF' : 'Belum Ditindaklanjuti';
+    $status = 'Belum Ditindaklanjuti';
 
     $stmt = $pdo->prepare('
         INSERT INTO helpdesk_tickets (
-            ticket_number, user_id, full_name, phone, email, department, division,
+            user_id, full_name, phone, email, department, division,
             helpdesk_category_id, request_kind, report_time, message, status,
             sla_value, sla_unit
         ) VALUES (
-            :ticket_number, :user_id, :full_name, :phone, :email, :department, :division,
+            :user_id, :full_name, :phone, :email, :department, :division,
             :category_id, :request_kind, :report_time, :message, :status,
             :sla_value, :sla_unit
         )
     ');
     $stmt->execute([
-        'ticket_number' => $ticketNumber,
         'user_id'       => (int) $user['id'],
         'full_name'     => crfActorName($user),
         'phone'         => $data['phone'] ?? ($user['no_wa'] ?? null),
@@ -142,7 +134,7 @@ function createHelpdeskTicket(PDO $pdo, array $user, array $category, array $dat
         $pdo,
         $ticketId,
         'Ticket Dibuat',
-        'Ticket ' . $ticketNumber . ' dibuat pada kategori ' . $category['name'] . '.',
+        'Ticket dibuat pada kategori ' . $category['name'] . '.',
         crfActorName($user),
         null,
         $status
@@ -179,7 +171,8 @@ function logHelpdeskActivity(
 function findHelpdeskTicket(PDO $pdo, int $ticketId): ?array
 {
     $stmt = $pdo->prepare('
-        SELECT t.*, c.name AS category_name, c.icon AS category_icon, c.requires_crf
+        SELECT t.*, c.name AS category_name, c.icon AS category_icon, c.requires_crf,
+            (SELECT cr.id FROM change_requests cr WHERE cr.helpdesk_ticket_id = t.id ORDER BY cr.id LIMIT 1) AS crf_id
         FROM helpdesk_tickets t
         JOIN helpdesk_categories c ON c.id = t.helpdesk_category_id
         WHERE t.id = :id
@@ -242,7 +235,7 @@ function canAccessTicket(PDO $pdo, array $ticket): bool
  */
 function canManageTicket(PDO $pdo, array $ticket): bool
 {
-    if (!empty($ticket['requires_crf']) || $ticket['status'] === 'Diteruskan ke CRF') {
+    if (helpdeskTicketViaCrf($ticket)) {
         return false;
     }
 
@@ -329,11 +322,7 @@ function syncHelpdeskTicketFromCrf(PDO $pdo, int $crfId, string $actor): void
  */
 function helpdeskTicketSla(array $ticket): array
 {
-    if (
-        !empty($ticket['requires_crf'])
-        || ($ticket['status'] ?? '') === 'Diteruskan ke CRF'
-        || !empty($ticket['crf_id'])
-    ) {
+    if (helpdeskTicketViaCrf($ticket)) {
         return [
             'target'   => 'Mengikuti SLA CRF',
             'duration' => null,
@@ -415,8 +404,8 @@ function helpdeskTicketWhere(array $filters, ?array $categoryScope, array &$para
     }
     $search = trim((string) ($filters['search'] ?? ''));
     if ($search !== '') {
-        $where[] = '(t.ticket_number LIKE :f_search_number OR t.full_name LIKE :f_search_name OR t.message LIKE :f_search_message)';
-        $params['f_search_number'] = $params['f_search_name'] = $params['f_search_message'] = '%' . $search . '%';
+        $where[] = '(t.full_name LIKE :f_search_name OR t.message LIKE :f_search_message)';
+        $params['f_search_name'] = $params['f_search_message'] = '%' . $search . '%';
     }
 
     return implode(' AND ', $where);

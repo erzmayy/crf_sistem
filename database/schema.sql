@@ -502,7 +502,6 @@ WHERE NOT EXISTS (SELECT 1 FROM helpdesk_categories existing WHERE existing.name
 -- ------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS helpdesk_tickets (
     id                   INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    ticket_number        VARCHAR(30) NOT NULL,
     user_id              INT UNSIGNED NOT NULL,
     full_name            VARCHAR(150) NOT NULL,
     phone                VARCHAR(30) NULL,
@@ -526,7 +525,6 @@ CREATE TABLE IF NOT EXISTS helpdesk_tickets (
     created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_helpdesk_tickets_number (ticket_number),
     KEY idx_helpdesk_tickets_user (user_id),
     KEY idx_helpdesk_tickets_category_status (helpdesk_category_id, status),
     KEY idx_helpdesk_tickets_created (created_at),
