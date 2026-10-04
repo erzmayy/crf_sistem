@@ -124,10 +124,12 @@ function crfUserDeptIn(array $user, array $depts): bool
 
 function resolveCrfRoleFromUser(array $user): string
 {
-    if (crfUserIdIn($user, CRF_ADMIN_USERIDS)) {
-        return 'admin';
+    if (CRF_DEMO_MODE && crfUserIdIn($user, CRF_DEMO_USERIDS)) {
+        return 'demo';
     }
 
+    // Admin adalah hak akses tambahan (lihat isAdmin()); peran kerja
+    // didahulukan. Hanya user tanpa peran kerja yang berperan 'admin'.
     if (crfUserIdIn($user, CRF_OTOMASI_USERIDS)) {
         return 'otomasi';
     }
@@ -138,6 +140,10 @@ function resolveCrfRoleFromUser(array $user): string
 
     if (crfUserDeptIn($user, CRF_CMO_DEPTS)) {
         return 'cmo';
+    }
+
+    if (crfUserIdIn($user, CRF_ADMIN_USERIDS)) {
+        return 'admin';
     }
 
     return 'pemohon';

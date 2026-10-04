@@ -658,12 +658,27 @@ require_once __DIR__ . '/../includes/header.php';
 
     .admin-report-bar-track {
         display: flex;
-        width: min(100%, 22px);
+        width: min(100%, 26px);
         height: 105px;
         align-items: flex-end;
         overflow: hidden;
+        border-bottom: 2px solid #e2e8f0;
         border-radius: 4px 4px 0 0;
-        background: #f1f5f9;
+        /* tanpa latar: bulan bernilai 0 tidak terlihat seperti ada data */
+        background: transparent;
+    }
+
+    .admin-report-month-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .admin-report-month-label small {
+        color: #94a3b8;
+        font-size: 0.6rem;
     }
 
     .admin-report-bar {
@@ -809,7 +824,7 @@ require_once __DIR__ . '/../includes/header.php';
 
             <?php foreach ($displayConditions as $displayKey => $displayCondition): ?>
                 <a
-                    class="crf-stat-card text-decoration-none <?= $listFilters['display_status'] === $displayKey ? 'is-active' : '' ?>"
+                    class="crf-stat-card crf-stat-tone-<?= h($displayKey) ?> text-decoration-none <?= $listFilters['display_status'] === $displayKey ? 'is-active' : '' ?>"
                     href="?display_status=<?= h($displayKey) ?>#crf-table"
                 >
                     <span><i class="bi <?= h($displayIcons[$displayKey] ?? 'bi-circle') ?>"></i> <?= h($displayCondition['label']) ?></span>
@@ -882,7 +897,15 @@ require_once __DIR__ . '/../includes/header.php';
                                 <span class="admin-report-bar-track">
                                     <span class="admin-report-bar <?= $month['count'] === 0 ? 'is-empty' : '' ?>" style="height: <?= h((string) $barHeight) ?>%;"></span>
                                 </span>
-                                <span><?= h($month['label']) ?></span>
+                                <?php
+                                // Label 2 baris yang seragam (Jan / 2026) agar alas batang sejajar.
+                                $monthParts = explode(' ', (string) $month['label']);
+                                $monthYear = count($monthParts) > 1 ? array_pop($monthParts) : '';
+                                ?>
+                                <span class="admin-report-month-label">
+                                    <span><?= h(mb_substr(implode(' ', $monthParts), 0, 3)) ?></span>
+                                    <small><?= h($monthYear) ?></small>
+                                </span>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -958,11 +981,10 @@ require_once __DIR__ . '/../includes/header.php';
                         <tr>
 
                             <th>No</th>
-                            <th>Keterangan Pengajuan</th>
+                            <th>Pengajuan</th>
                             <th>Isi Pengajuan</th>
-                            <th>Level Urgensi</th>
+                            <th>Urgensi</th>
                             <th>Status</th>
-                            <th>Tahap</th>
                             <th>Aksi</th>
 
                         </tr>
@@ -976,7 +998,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <tr>
 
-                                <td data-label="Pengajuan" colspan="7" class="crf-empty-cell">
+                                <td data-label="Pengajuan" colspan="6" class="crf-empty-cell">
                                     <div class="crf-empty-state crf-empty-state-compact">
                                         <div class="crf-empty-icon">
                                             <i class="bi bi-search"></i>
@@ -998,83 +1020,8 @@ require_once __DIR__ . '/../includes/header.php';
                                         <?= $offset + $i + 1 ?>
                                     </td>
 
-                                    <td data-label="Keterangan Pengajuan">
-                                        <div class="crf-request-meta">
-                                            <strong><?= h($row['full_name'] ?? '-') ?></strong>
-                                            <span class="crf-request-caption"><?= h($row['from_department'] ?? '-') ?></span>
-                                            <span class="crf-request-caption">Nomor Register</span>
-                                            <span class="crf-request-register"><?= h($row['request_number'] ?? '-') ?></span>
-                                            <div class="crf-request-date-card">
-                                                <span class="crf-request-caption">Tanggal Pengajuan</span>
-                                                <span><?= !empty($row['submission_date'])
-                                                    ? h(date('d-m-Y', strtotime($row['submission_date'])))
-                                                    : '-' ?></span>
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    <td data-label="Isi Pengajuan">
-                                        <div class="crf-request-content">
-                                            <span class="crf-request-category-chip"><?= h(crfCategoryName($row, 'Lainnya')) ?></span>
-                                            <div class="crf-request-description"><?= h($row['change_description'] ?? '-') ?></div>
-                                        </div>
-                                    </td>
-
-
-                                    <!-- LEVEL -->
-                                    <td data-label="Level Urgensi">
-
-                                        <span
-                                            class="crf-badge <?= levelBadgeClass($row['level']) ?>"
-                                        >
-                                            <?= h(
-                                                ($row['level'] ?? null) === 'Normal'
-                                                    ? 'Sedang'
-                                                    : ($row['level'] ?? 'Belum ditentukan')
-                                            ) ?>
-                                        </span>
-
-                                    </td>
-
-
-                                    <!-- STATUS -->
-                                    <td data-label="Status">
-
-                                        <span
-                                            class="crf-badge <?= statusBadgeClass($row['status']) ?>"
-                                        >
-                                            <?= h(
-                                                statusLabel(
-                                                    $row['status']
-                                                )
-                                            ) ?>
-                                        </span>
-
-                                    </td>
-
-
-                                    <!-- TAHAP -->
-                                    <td data-label="Tahap">
-
-                                        <span
-                                            class="crf-badge <?= workflowStageBadgeClass($row['workflow_stage'] ?? '') ?>"
-                                            title="<?= h(
-                                                workflowStageLabel(
-                                                    $row['workflow_stage']
-                                                    ?? ''
-                                                )
-                                            ) ?>"
-                                        >
-                                            <?= h(
-                                                workflowStageLabel(
-                                                    $row['workflow_stage']
-                                                    ?? ''
-                                                )
-                                            ) ?>
-                                        </span>
-
-                                    </td>
-
+                                    <?php require __DIR__ . '/../includes/partials/crf_row_request.php'; ?>
+                                    <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
 
                                     <!-- AKSI -->
                                     <td data-label="Aksi">

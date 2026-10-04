@@ -83,7 +83,9 @@ $ticketShowFollowUp = $ticketShowFollowUp ?? true;
                     <?php endif; ?>
                 </td>
                 <td data-label="SLA">
-                    <div class="small"><i class="bi bi-stopwatch"></i> <?= h($ticketSla['duration'] ?? '-') ?></div>
+                    <?php if ($ticketSla['duration'] !== null): ?>
+                        <div class="small"><i class="bi bi-stopwatch"></i> <?= h($ticketSla['duration']) ?></div>
+                    <?php endif; ?>
                     <span class="badge text-bg-<?= h($ticketSla['class']) ?>"><?= h($ticketSla['label']) ?></span>
                 </td>
                 <td data-label="Status">

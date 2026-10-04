@@ -430,14 +430,11 @@ CREATE TABLE IF NOT EXISTS crf_category_handlers (
 
 INSERT INTO crf_categories (name, description, legacy_change_category, sla_value, sla_unit, sort_order)
 SELECT * FROM (
-    SELECT 'Aplikasi SIAP' AS name, 'Perubahan terkait aplikasi SIAP' AS description, 'Aplikasi' AS legacy, 2 AS sla_value, 'Hari' AS sla_unit, 1 AS sort_order
-    UNION ALL SELECT 'Jaringan', 'Perubahan jaringan (LAN/WAN/Internet)', 'Infrastruktur', 1, 'Hari', 2
-    UNION ALL SELECT 'Infrastruktur', 'Perubahan infrastruktur', 'Infrastruktur', 3, 'Hari', 3
-    UNION ALL SELECT 'Server', 'Perubahan server', 'Infrastruktur', 2, 'Hari', 4
-    UNION ALL SELECT 'Database', 'Perubahan struktur atau data database', 'Aplikasi', 2, 'Hari', 5
-    UNION ALL SELECT 'Security', 'Perubahan kewenangan menu, user ID, password', 'Security', 1, 'Hari', 6
-    UNION ALL SELECT 'Proses', 'Perubahan proses bisnis pada sistem', 'Proses', 3, 'Hari', 7
-    UNION ALL SELECT 'Lainnya', 'Perubahan lain di luar kategori yang tersedia', 'Lainnya', 3, 'Hari', 8
+    SELECT 'Aplikasi' AS name, 'Perubahan aplikasi (SIAP, database, dan aplikasi lain)' AS description, 'Aplikasi' AS legacy, 2 AS sla_value, 'Hari' AS sla_unit, 1 AS sort_order
+    UNION ALL SELECT 'Infrastruktur', 'Perubahan infrastruktur (jaringan, server, perangkat)', 'Infrastruktur', 3, 'Hari', 2
+    UNION ALL SELECT 'Proses', 'Perubahan proses bisnis pada sistem', 'Proses', 3, 'Hari', 3
+    UNION ALL SELECT 'Security', 'Perubahan kewenangan menu, user ID, password', 'Security', 1, 'Hari', 4
+    UNION ALL SELECT 'Lainnya', 'Perubahan lain di luar kategori yang tersedia', 'Lainnya', 3, 'Hari', 5
 ) seed
 WHERE NOT EXISTS (SELECT 1 FROM crf_categories existing WHERE existing.name = seed.name);
 
@@ -484,7 +481,7 @@ SELECT seed.name, seed.description, seed.icon, seed.requires_crf,
        (SELECT id FROM crf_categories WHERE name = seed.crf_category),
        seed.sla_value, seed.sla_unit, seed.sort_order
 FROM (
-    SELECT 'Aplikasi SIAP' AS name, 'Permintaan perubahan aplikasi SIAP (diteruskan ke CRF)' AS description, 'bi-window-stack' AS icon, 1 AS requires_crf, 'Aplikasi SIAP' AS crf_category, 2 AS sla_value, 'Hari' AS sla_unit, 1 AS sort_order
+    SELECT 'Aplikasi SIAP' AS name, 'Permintaan perubahan aplikasi SIAP (diteruskan ke CRF)' AS description, 'bi-window-stack' AS icon, 1 AS requires_crf, 'Aplikasi' AS crf_category, 2 AS sla_value, 'Hari' AS sla_unit, 1 AS sort_order
     UNION ALL SELECT 'User ID dan Reset Password', 'Pembuatan user ID dan reset password', 'bi-lock', 0, NULL, 4, 'Jam', 2
     UNION ALL SELECT 'BPJS Managemen', 'Permintaan terkait BPJS', 'bi-heart-pulse', 0, NULL, 1, 'Hari', 3
     UNION ALL SELECT 'Tele Sales & Call Center', 'Permintaan tele sales & call center', 'bi-telephone', 0, NULL, 1, 'Hari', 4
@@ -596,7 +593,7 @@ CALL crf_add_foreign_key('change_requests', 'fk_change_requests_crf_category',
 UPDATE change_requests cr
 JOIN crf_categories c
   ON c.name = CASE cr.change_category
-                WHEN 'Aplikasi' THEN 'Aplikasi SIAP'
+                WHEN 'Aplikasi' THEN 'Aplikasi'
                 WHEN 'Infrastruktur' THEN 'Infrastruktur'
                 WHEN 'Proses' THEN 'Proses'
                 WHEN 'Security' THEN 'Security'

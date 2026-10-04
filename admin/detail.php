@@ -69,6 +69,12 @@ $timeline = $timelineStmt->fetchAll();
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
+// Admin: penugasan ulang handler (tahap Handler) & pembatalan administratif.
+$categoryHandlers = !empty($crf['crf_category_id'])
+    ? (categoryMembers($pdo, 'crf_category_handlers', 'crf_category_id')[(int) $crf['crf_category_id']] ?? [])
+    : [];
+$canAdminCancel = !in_array($crf['status'], ['Solve', 'Cancel'], true) && !isOwnHandledCrf($crf);
+
 $pageTitle = 'Detail CRF - ' . $crf['request_number'];
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -112,6 +118,10 @@ require_once __DIR__ . '/../includes/header.php';
         Status: <?= h(statusLabel($crf['status'])) ?>
       </span>
     </div>
+
+    <?php if ($crf['workflow_stage'] === 'OTOMASI'): ?>
+      <?php $assignmentReturn = 'admin'; require __DIR__ . '/../includes/partials/handler_assignment.php'; ?>
+    <?php endif; ?>
 
     <div class="crf-detail-layout">
       <main class="crf-detail-main">
@@ -196,6 +206,30 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
       </div>
     </div>
+
+    <?php if ($canAdminCancel): ?>
+      <div class="crf-section crf-detail-card mb-4">
+        <div class="crf-section-header">
+          <span class="crf-section-number"><i class="bi bi-shield-exclamation"></i></span>
+          <h2>Tindakan Admin</h2>
+        </div>
+        <div class="crf-section-body">
+          <p class="crf-readonly-note mb-3">
+            Admin memantau alur dan tidak memproses CRF atas nama CMO, Handler, atau Kadep.
+            Gunakan pembatalan administratif hanya bila CRF tidak bisa dilanjutkan lewat alur normal
+            (duplikat, salah input, pemohon tidak lagi bekerja, dsb). Alasan dicatat di timeline
+            dan dikirim ke Pemohon serta Handler.
+          </p>
+          <form method="POST" action="../actions/admin_cancel_crf.php" data-confirm="Batalkan CRF <?= h($crf['request_number']) ?> secara administratif? Tindakan ini tidak bisa diurungkan.">
+            <?= csrfField() ?>
+            <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
+            <label for="admin_cancel_reason" class="form-label fw-semibold">Alasan Pembatalan <span class="text-danger">*</span></label>
+            <textarea id="admin_cancel_reason" name="reason" class="form-control mb-3" rows="3" maxlength="1000" required placeholder="Contoh: Duplikat dengan CRF PPU-02.4.0063.10.26."></textarea>
+            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-octagon"></i> Batalkan CRF</button>
+          </form>
+        </div>
+      </div>
+    <?php endif; ?>
 
       </main>
       <aside class="crf-detail-sidebar">

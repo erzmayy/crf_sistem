@@ -490,8 +490,11 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
         ];
     }
 
-    $remaining = $dueAt->getTimestamp() - $now->getTimestamp();
-    if ($remaining >= 0) {
+    // Sisa waktu / keterlambatan dihitung dalam jam kerja, sama dengan batas SLA.
+    $remaining = $now <= $dueAt
+        ? slaWorkingSecondsBetween($now, $dueAt)
+        : -slaWorkingSecondsBetween($dueAt, $now);
+    if ($now <= $dueAt) {
         $isApproaching = $remaining <= 3600;
         return [
             'label' => 'Masih dalam SLA',
@@ -664,6 +667,39 @@ function finalizeCrfSla(PDO $pdo, int $crfId): void
         WHERE id = :id
     ');
     $update->execute(['minutes' => $minutes, 'result' => $result, 'id' => $crfId]);
+}
+
+/**
+ * Pengingat PIR untuk Pemohon (dikirim CMO saat CRF tertahan di tahap
+ * PEMOHON_PIR). Maksimal satu pengingat per CRF_PIR_REMINDER_INTERVAL detik.
+ *
+ * @return array{count:int, last_at:?string, can_send:bool, next_at:?string, waiting_days:?int}
+ */
+const CRF_PIR_REMINDER_INTERVAL = 86400;
+
+function crfPirReminderInfo(PDO $pdo, array $crf): array
+{
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) AS total, MAX(created_at) AS last_at
+        FROM crf_activity_logs
+        WHERE change_request_id = :id AND activity = 'Pengingat PIR'
+    ");
+    $stmt->execute(['id' => (int) $crf['id']]);
+    $row = $stmt->fetch() ?: ['total' => 0, 'last_at' => null];
+
+    $lastAt = $row['last_at'] ?: null;
+    $nextAt = $lastAt !== null ? date('Y-m-d H:i:s', strtotime($lastAt) + CRF_PIR_REMINDER_INTERVAL) : null;
+    $waitingDays = !empty($crf['automation_completed_at'])
+        ? (int) floor(slaWorkingSecondsBetween(new DateTimeImmutable($crf['automation_completed_at']), new DateTimeImmutable()) / 86400)
+        : null;
+
+    return [
+        'count' => (int) $row['total'],
+        'last_at' => $lastAt,
+        'can_send' => ($crf['workflow_stage'] ?? '') === 'PEMOHON_PIR' && ($nextAt === null || time() >= strtotime($nextAt)),
+        'next_at' => $nextAt,
+        'waiting_days' => $waitingDays,
+    ];
 }
 
 function crfActorName(array $user): string

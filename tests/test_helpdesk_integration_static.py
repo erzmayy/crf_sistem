@@ -50,7 +50,7 @@ class HelpdeskIntegrationStaticTests(unittest.TestCase):
             "actions/cmo_action.php",
             "actions/automation_action.php",
             "actions/pak_joko_approve.php",
-            "actions/update_crf.php",
+            "actions/admin_cancel_crf.php",
         ]:
             with self.subTest(action=action):
                 self.assertIn("syncHelpdeskTicketFromCrf($pdo", read(action))
@@ -86,6 +86,19 @@ class HelpdeskIntegrationStaticTests(unittest.TestCase):
         automation = read("actions/automation_action.php")
         self.assertIn("$slaDeviates && ($slaReason === ''", automation)
         self.assertIn("'SLA Disesuaikan Handler'", automation)
+
+    def test_pir_reminder_only_notifies_with_rate_limit(self):
+        action = read("actions/cmo_action.php")
+        self.assertIn("'remind_pir' => 'PEMOHON_PIR'", action)
+        self.assertIn("if (!$reminder['can_send'])", action)
+        # Pengingat tidak boleh mengubah tahap CRF.
+        remind_block = action[action.index("if ($action === 'remind_pir')"):action.index("try {\n    $pdo->beginTransaction();\n    $now")]
+        self.assertNotIn("UPDATE change_requests", remind_block)
+        self.assertIn("CRF_PIR_REMINDER_INTERVAL", read("includes/functions.php"))
+
+    def test_sla_countdown_uses_working_time(self):
+        self.assertIn("slaWorkingSecondsBetween(Math.floor(Date.now() / 1000), dueAt)", read("assets/js/script.js"))
+        self.assertIn("data-sla-holidays", read("includes/header.php"))
 
     def test_category_delete_is_soft_delete(self):
         source = read("actions/category_master.php")

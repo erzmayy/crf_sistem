@@ -30,7 +30,7 @@ $stmt = $pdo->prepare("
     FROM change_requests cr
     WHERE cr.id = :id
       AND (
-          cr.workflow_stage IN ('CMO_FILTER', 'CMO_FINAL')
+          cr.workflow_stage IN ('CMO_FILTER', 'PEMOHON_PIR', 'CMO_FINAL')
           OR EXISTS (
               SELECT 1
               FROM crf_activity_logs activity_log
@@ -395,6 +395,79 @@ require_once __DIR__ . '/../includes/header.php';
                             </button>
 
                         </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        <?php elseif ($crf['workflow_stage'] === 'PEMOHON_PIR'): ?>
+
+            <?php $pirReminder = crfPirReminderInfo($pdo, $crf); ?>
+            <div class="crf-section crf-detail-card mb-4">
+
+                <div class="crf-section-header">
+                    <span class="crf-section-number"><i class="bi bi-bell"></i></span>
+                    <h2>Menunggu PIR Pemohon</h2>
+                </div>
+
+                <div class="crf-section-body">
+
+                    <div class="alert alert-warning">
+                        Implementasi selesai
+                        <?php if (!empty($crf['automation_completed_at'])): ?>
+                            pada <strong><?= h(date('d-m-Y H:i', strtotime($crf['automation_completed_at']))) ?></strong>
+                            (<?= $pirReminder['waiting_days'] > 0 ? (int) $pirReminder['waiting_days'] . ' hari kerja lalu' : 'kurang dari 1 hari kerja' ?>),
+                        <?php endif; ?>
+                        tetapi Pemohon belum mengisi Post Implementation Review.
+                        CRF baru bisa difinalisasi setelah PIR diisi.
+                    </div>
+
+                    <p class="crf-readonly-note mb-3">
+                        <?php if ($pirReminder['count'] > 0): ?>
+                            <i class="bi bi-clock-history"></i>
+                            Sudah <?= (int) $pirReminder['count'] ?> kali diingatkan, terakhir
+                            <?= h(date('d-m-Y H:i', strtotime($pirReminder['last_at']))) ?>.
+                        <?php else: ?>
+                            <i class="bi bi-info-circle"></i> Belum pernah diingatkan.
+                        <?php endif; ?>
+                        Pengingat dikirim sebagai notifikasi ke Pemohon, maksimal sekali per 24 jam.
+                    </p>
+
+                    <form action="../actions/cmo_action.php" method="POST">
+
+                        <?= csrfField() ?>
+
+                        <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
+
+                        <div class="mb-3">
+                            <label for="pir_reminder_note" class="form-label fw-semibold">Pesan tambahan (opsional)</label>
+                            <textarea
+                                id="pir_reminder_note"
+                                name="tanggapan"
+                                class="form-control"
+                                rows="2"
+                                maxlength="500"
+                                placeholder="Contoh: Mohon diisi paling lambat hari Jumat."
+                            ></textarea>
+                        </div>
+
+                        <button
+                            name="action"
+                            value="remind_pir"
+                            class="btn btn-crf-primary"
+                            <?= $pirReminder['can_send'] ? '' : 'disabled' ?>
+                        >
+                            <i class="bi bi-bell"></i>
+                            Kirim Pengingat ke Pemohon
+                        </button>
+
+                        <?php if (!$pirReminder['can_send'] && $pirReminder['next_at']): ?>
+                            <div class="crf-readonly-note mt-2">
+                                Pengingat berikutnya bisa dikirim setelah <?= h(date('d-m-Y H:i', strtotime($pirReminder['next_at']))) ?>.
+                            </div>
+                        <?php endif; ?>
 
                     </form>
 

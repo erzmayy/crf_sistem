@@ -4962,3 +4962,229 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   .crf-detail-page .crf-info-row:last-child { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
   .crf-detail-page .crf-sla-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* =====================================================================
+   Tabel daftar CRF ringkas (Dashboard Admin, CMO, Handler, Kadep,
+   Pengajuan Saya). Sel dibangun oleh partial crf_row_request.php &
+   crf_row_status.php.
+   ===================================================================== */
+.crf-row-request { display: grid; gap: 0.15rem; min-width: 0; }
+.crf-row-name { color: #0f2742; font-size: 0.82rem; font-weight: 700; line-height: 1.3; }
+.crf-row-register {
+  color: #1f568f;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+.crf-row-meta { color: #64748b; font-size: 0.7rem; }
+.crf-row-meta i { margin-right: 0.15rem; font-size: 0.65rem; }
+
+.crf-row-content { display: grid; justify-items: start; gap: 0.3rem; min-width: 0; }
+.crf-row-description {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #334155;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.crf-row-handler { color: #64748b; font-size: 0.7rem; }
+.crf-row-handler.is-empty { color: #b3261e; }
+
+.crf-row-status { display: grid; justify-items: start; gap: 0.3rem; }
+.crf-row-stage { color: #64748b; font-size: 0.68rem; line-height: 1.3; }
+.crf-row-stage i { font-size: 0.62rem; }
+.crf-row-muted { color: #94a3b8; font-size: 0.72rem; font-style: italic; }
+
+/* Badge tidak boleh terlipat dua baris */
+.crf-helpdesk-table tbody td .crf-badge,
+.crf-helpdesk-table.pengajuan-table tbody td .crf-badge {
+  max-width: none !important;
+  white-space: nowrap !important;
+}
+
+@media (min-width: 1025px) {
+  /* Lebar kolom mengikuti isi: kolom kecil menyusut, Isi Pengajuan mengambil sisa. */
+  .crf-helpdesk-table:has(.crf-row-request) { table-layout: auto; min-width: 0; }
+  .crf-helpdesk-table:has(.crf-row-request) th,
+  .crf-helpdesk-table:has(.crf-row-request) td { width: auto; }
+  .crf-helpdesk-table:has(.crf-row-request) tbody td,
+  .crf-table.pengajuan-table.crf-helpdesk-table:has(.crf-row-request) tbody td {
+    padding: 0.6rem 0.65rem !important;
+    vertical-align: middle !important;
+  }
+  .crf-helpdesk-table:has(.crf-row-request) th:first-child,
+  .crf-helpdesk-table:has(.crf-row-request) td[data-label="No"] {
+    width: 1%;
+    min-width: 2.6rem;
+    padding-right: 0.4rem !important;
+    padding-left: 0.4rem !important;
+    color: #94a3b8;
+    text-align: center;
+    white-space: nowrap; /* nomor 2-3 digit tidak boleh terlipat */
+  }
+  .crf-helpdesk-table:has(.crf-row-request) td[data-label="Pengajuan"] { width: 22%; }
+  .crf-helpdesk-table:has(.crf-row-request) td[data-label="Urgensi"],
+  .crf-helpdesk-table:has(.crf-row-request) td[data-label="Status"],
+  .crf-helpdesk-table:has(.crf-row-request) td[data-label="SLA"],
+  .crf-helpdesk-table:has(.crf-row-request) td[data-label="Status SLA"],
+  .crf-helpdesk-table:has(.crf-row-request) td[data-label="Aksi"] {
+    width: 1%;
+    white-space: nowrap;
+  }
+  .crf-helpdesk-table:has(.crf-row-request) td[data-label="Status SLA"] { white-space: normal; min-width: 150px; }
+  .crf-helpdesk-table:has(.crf-row-request) td[data-label="Aksi"] .d-flex,
+  .crf-helpdesk-table:has(.crf-row-request) td[data-label="Aksi"] .dashboard-actions {
+    flex-wrap: nowrap;
+    gap: 0.35rem !important;
+  }
+}
+
+/* Tombol aksi di tabel: ukuran seragam */
+.crf-helpdesk-table td[data-label="Aksi"] .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 30px;
+  padding: 0.25rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* =====================================================================
+   Kartu angka ringkasan: SATU gaya untuk seluruh halaman.
+   (.crf-stat-card di dashboard/daftar & .crf-kpi-card di Dashboard
+   Handling/Helpdesk). Selector diawali "body .crf-app-shell" agar
+   menimpa variasi lama per halaman, termasuk <style> di admin/dashboard.
+   Warna aksen kiri tetap mengikuti aturan per kartu yang sudah ada.
+   ===================================================================== */
+body .crf-app-shell .crf-stat-card,
+body .crf-app-shell .crf-kpi-card {
+  position: relative;
+  min-width: 0;
+  min-height: 76px;
+  padding: 0.8rem 0.95rem;
+  overflow: hidden;
+  border: 1px solid #e3e9f0;
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: #2563eb;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(15, 39, 66, 0.05);
+  color: inherit;
+}
+body .crf-app-shell a.crf-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 39, 66, 0.1);
+}
+body .crf-app-shell .crf-stat-card span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.35rem;
+  color: #5b6b82;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+body .crf-app-shell .crf-stat-card strong,
+body .crf-app-shell .crf-kpi-card strong {
+  display: block;
+  color: #0f2742;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* .crf-kpi-card: ikon kotak -> ikon kecil sebaris dengan label */
+body .crf-app-shell .crf-kpi-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.4rem;
+  row-gap: 0.35rem;
+}
+body .crf-app-shell .crf-kpi-card > div { display: contents; }
+body .crf-app-shell .crf-kpi-icon {
+  flex: none;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none !important;
+  color: var(--kpi-accent, #2563eb);
+  font-size: 0.72rem;
+}
+body .crf-app-shell .crf-kpi-label {
+  color: #5b6b82;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+}
+body .crf-app-shell .crf-kpi-card strong,
+body .crf-app-shell .crf-kpi-bar { grid-column: 1 / -1; }
+body .crf-app-shell .crf-kpi-bar { margin-top: 0; }
+body .crf-app-shell .crf-kpi-card--primary { --kpi-accent: #2563eb; border-left-color: #2563eb; }
+body .crf-app-shell .crf-kpi-card--info { --kpi-accent: #1c8fdb; border-left-color: #1c8fdb; }
+body .crf-app-shell .crf-kpi-card--success { --kpi-accent: #1e7a3d; border-left-color: #1e7a3d; }
+body .crf-app-shell .crf-kpi-card--danger { --kpi-accent: #b3261e; border-left-color: #b3261e; }
+body .crf-app-shell .crf-kpi-card--secondary { --kpi-accent: #64748b; border-left-color: #64748b; }
+/* Warna aksen kartu status (Pengajuan Saya & dashboard pemohon) */
+body .crf-app-shell .pengajuan-stat-total { border-left-color: #2563eb; }
+body .crf-app-shell .pengajuan-stat-draft { border-left-color: #94a3b8; }
+body .crf-app-shell .pengajuan-stat-pending { border-left-color: #dc2626; }
+body .crf-app-shell .pengajuan-stat-revision { border-left-color: #7c3aed; }
+body .crf-app-shell .pengajuan-stat-processing { border-left-color: #d97706; }
+body .crf-app-shell .pengajuan-stat-solved { border-left-color: #15803d; }
+body .crf-app-shell .pengajuan-stat-cancelled { border-left-color: #64748b; }
+
+/* Logo perusahaan (PPU) di pojok kiri header */
+.crf-app-shell .siap-sidebar .crf-sidebar-mark.crf-sidebar-logo {
+  width: auto;
+  height: 20px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.crf-sidebar-logo img {
+  display: block;
+  width: auto;
+  height: 100%;
+}
+
+/* Warna aksen kartu status CRF mengikuti arti status (Dashboard Admin) */
+body .crf-app-shell .crf-stat-grid .crf-stat-tone-draft { border-left-color: #94a3b8; }
+body .crf-app-shell .crf-stat-grid .crf-stat-tone-review { border-left-color: #7c3aed; }
+body .crf-app-shell .crf-stat-grid .crf-stat-tone-diproses { border-left-color: #d97706; }
+body .crf-app-shell .crf-stat-grid .crf-stat-tone-approval { border-left-color: #0891b2; }
+body .crf-app-shell .crf-stat-grid .crf-stat-tone-disetujui { border-left-color: #2563eb; }
+body .crf-app-shell .crf-stat-grid .crf-stat-tone-revisi { border-left-color: #dc2626; }
+body .crf-app-shell .crf-stat-grid .crf-stat-tone-selesai { border-left-color: #15803d; }
+body .crf-app-shell .crf-stat-grid .crf-stat-tone-dibatalkan { border-left-color: #64748b; }
+body .crf-app-shell .crf-stat-grid .crf-forum-stat { border-left-color: #0f766e; }
+
+/* Teks di samping logo tetap satu baris */
+.crf-app-shell .siap-sidebar .ppu-brand-text { font-size: 0.95rem; white-space: nowrap; }
+
+/* Penanda peran di topbar: Mode Demo / Admin */
+.crf-demo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.crf-demo-badge.is-admin { background: rgba(255, 255, 255, 0.18); color: #fff; }
+.crf-detail-page .crf-assignment-card { margin-bottom: 1rem; }

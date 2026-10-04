@@ -5,6 +5,7 @@
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/forum.php';
 require_once __DIR__ . '/notifications.php';
+require_once __DIR__ . '/../config/sla.php';
 
 if (!isset($pageTitle)) {
     $pageTitle = 'CRF';
@@ -12,7 +13,9 @@ if (!isset($pageTitle)) {
 
 $currentUser = getCurrentUser();
 $crfRole = getCrfRole();
-$isAdminUser = $crfRole === 'admin';
+$isAdminUser = isAdmin();          // admin atau akun demo
+$isDemoUser = $crfRole === 'demo'; // akun demo: semua peran
+$canRole = static fn(string $role): bool => $isDemoUser || $crfRole === $role;
 $currentPath = basename($_SERVER['PHP_SELF'] ?? '');
 $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
 $currentFolder = basename(dirname($scriptPath));
@@ -48,7 +51,7 @@ $homePath = $isAdminUser
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="<?= h($appBasePath) ?>/assets/css/style.css?v=<?= (int) filemtime(__DIR__ . '/../assets/css/style.css') ?>" rel="stylesheet">
 </head>
-<body data-app-base="<?= h($appBasePath) ?>">
+<body data-app-base="<?= h($appBasePath) ?>" data-sla-holidays="<?= h(json_encode(CRF_SLA_HOLIDAYS)) ?>">
 <div class="crf-app-shell">
     <div class="crf-sidebar-overlay"></div>
 
@@ -65,7 +68,7 @@ $homePath = $isAdminUser
               // Satu halaman master Kategori & Handling (tab Helpdesk / CRF).
               ['label' => 'Kategori & Handling', 'url' => '/admin/master_data.php', 'show' => $isAdminUser, 'active' => $isNav('admin', 'master_data.php')],
               // Satu dashboard kategori untuk Helpdesk & CRF (tab per jenis).
-              ['label' => 'Dashboard Handling Kategori', 'url' => '/helpdesk/handling.php', 'show' => $isPicUser || in_array($crfRole, ['cmo', 'otomasi', 'kadep_operasional'], true), 'active' => $isNav('helpdesk', 'handling.php') || $isNav('helpdesk', 'kategori.php')],
+              ['label' => 'Dashboard Handling Kategori', 'url' => '/helpdesk/handling.php', 'show' => $isPicUser || in_array($crfRole, ['cmo', 'otomasi', 'kadep_operasional', 'demo'], true), 'active' => $isNav('helpdesk', 'handling.php') || $isNav('helpdesk', 'kategori.php')],
           ],
       ],
       [
@@ -82,11 +85,11 @@ $homePath = $isAdminUser
           'icon' => 'bi-file-earmark-diff',
           'items' => [
               ['label' => 'Dashboard CRF', 'url' => '/admin/dashboard.php', 'show' => $isAdminUser, 'active' => $isNav('admin', 'dashboard.php') || $isNav('admin', 'detail.php') || $isNav('admin', 'edit.php')],
-              ['label' => 'Review CMO', 'url' => '/cmo/index.php', 'show' => in_array($crfRole, ['admin', 'cmo'], true), 'active' => $currentFolder === 'cmo'],
-              ['label' => 'Handler CRF', 'url' => '/otomasi/index.php', 'show' => in_array($crfRole, ['admin', 'otomasi'], true), 'active' => $currentFolder === 'otomasi'],
-              ['label' => 'Approval Kadep Operasional', 'url' => '/pak_joko/index.php', 'show' => in_array($crfRole, ['admin', 'kadep_operasional'], true), 'active' => $currentFolder === 'pak_joko'],
+              ['label' => 'Review CMO', 'url' => '/cmo/index.php', 'show' => $canRole('cmo'), 'active' => $currentFolder === 'cmo'],
+              ['label' => 'Handler CRF', 'url' => '/otomasi/index.php', 'show' => $canRole('otomasi'), 'active' => $currentFolder === 'otomasi'],
+              ['label' => 'Approval Kadep Operasional', 'url' => '/pak_joko/index.php', 'show' => $canRole('kadep_operasional'), 'active' => $currentFolder === 'pak_joko'],
               ['label' => 'Form CRF', 'url' => '/user/form_crf.php', 'show' => true, 'active' => $isNav('user', 'form_crf.php')],
-              ['label' => 'Pengajuan CRF Saya', 'url' => '/user/pengajuan_saya.php', 'show' => !$isAdminUser, 'active' => $isNav('user', 'pengajuan_saya.php') || $isNav('user', 'detail.php')],
+              ['label' => 'Pengajuan CRF Saya', 'url' => '/user/pengajuan_saya.php', 'show' => $crfRole !== 'admin', 'active' => $isNav('user', 'pengajuan_saya.php') || $isNav('user', 'detail.php')],
               ['label' => 'Forum', 'url' => '/forum/index.php', 'show' => in_array($crfRole, forumRoles(), true), 'active' => $isForum, 'badge' => $forumUnreadTotal],
           ],
       ],
@@ -94,7 +97,7 @@ $homePath = $isAdminUser
   ?>
   <aside class="crf-sidebar siap-sidebar">
     <a class="crf-sidebar-brand" href="<?= h($appBasePath . $homePath) ?>">
-      <span class="crf-sidebar-mark"><i class="bi bi-journal-bookmark-fill"></i></span>
+      <span class="crf-sidebar-mark crf-sidebar-logo"><img src="<?= h($appBasePath) ?>/assets/img/logo-ppu-header.png" alt="PT Persona Prima Utama"></span>
       <span class="ppu-brand-text">Home / Dashboard</span>
     </a>
 
@@ -174,6 +177,15 @@ $homePath = $isAdminUser
             <?php endforeach; ?>
           </div>
         </div>
+        <?php if ($isDemoUser): ?>
+          <span class="crf-demo-badge" title="Akun demo presentasi: dapat menjalankan semua peran. Nonaktifkan lewat CRF_DEMO_MODE di config/siap.php.">
+            <i class="bi bi-easel"></i> Mode Demo
+          </span>
+        <?php elseif ($isAdminUser): ?>
+          <span class="crf-demo-badge is-admin" title="<?= h($crfRole === 'admin' ? 'Admin: pengelola & pemantau sistem' : 'Hak Admin tambahan di samping peran ' . crfRoleLabel($crfRole)) ?>">
+            <i class="bi bi-shield-check"></i> Admin
+          </span>
+        <?php endif; ?>
         <div class="crf-user">
           <strong><?= h($currentUser['nama'] ?? '-') ?></strong>
           <span class="crf-avatar">

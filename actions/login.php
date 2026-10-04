@@ -34,6 +34,7 @@ $_SESSION['active_user'] = $user;
 
 switch (getCrfRole()) {
     case 'admin':
+    case 'demo':
         header('Location: ../admin/dashboard.php');
         break;
     case 'cmo':

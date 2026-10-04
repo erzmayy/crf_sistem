@@ -6,7 +6,8 @@
  */
 require_once __DIR__ . '/../includes/helpdesk.php';
 
-requireCrfRole(['otomasi']);
+// Handler mengambil CRF; Admin (atau demo) menugaskan ulang handler.
+requireCrfRole(['otomasi', 'admin']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../otomasi/index.php');
@@ -20,7 +21,9 @@ $user = getCurrentUser();
 $actor = crfActorName($user);
 $id = (int) ($_POST['id'] ?? 0);
 $op = $_POST['op'] ?? 'take';
-$redirect = '../otomasi/detail.php?id=' . $id;
+$redirect = ($_POST['return'] ?? '') === 'admin'
+    ? '../admin/detail.php?id=' . $id
+    : '../otomasi/detail.php?id=' . $id;
 
 try {
     $pdo->beginTransaction();
@@ -29,13 +32,16 @@ try {
     $stmt->execute(['id' => $id]);
     $crf = $stmt->fetch();
 
-    if (!$crf || $crf['workflow_stage'] !== 'OTOMASI' || !canHandleCrf($pdo, $crf)) {
+    if (!$crf || $crf['workflow_stage'] !== 'OTOMASI' || (!isAdmin() && !canHandleCrf($pdo, $crf))) {
         throw new DomainException('CRF tidak tersedia untuk ditangani.');
     }
 
     if ($op === 'assign') {
         if (!isAdmin()) {
             throw new DomainException('Hanya Admin yang dapat menugaskan handler.');
+        }
+        if (isOwnHandledCrf($crf)) {
+            throw new DomainException('Anda sedang memegang CRF ini. Penugasan ulang harus dilakukan Admin lain.');
         }
         $targetId = (int) ($_POST['user_id'] ?? 0);
         if (!in_array($targetId, crfCategoryHandlerIds($pdo, (int) $crf['crf_category_id']), true)) {
@@ -48,6 +54,9 @@ try {
         $activity = 'Handler Ditugaskan';
         $description = 'Admin menugaskan CRF kepada ' . crfActorName($target) . '.';
     } else {
+        if (getCrfRole() === 'admin') {
+            throw new DomainException('Admin tidak mengambil CRF. Gunakan "Tugaskan" untuk menunjuk handler.');
+        }
         if (!empty($crf['assigned_handler_id'])) {
             throw new DomainException('CRF sudah diambil oleh ' . ($crf['assigned_handler_name'] ?? 'handler lain') . '.');
         }

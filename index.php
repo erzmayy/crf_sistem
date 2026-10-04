@@ -8,6 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 
 switch (getCrfRole()) {
     case 'admin':
+    case 'demo':
         header('Location: admin/dashboard.php');
         break;
     case 'cmo':

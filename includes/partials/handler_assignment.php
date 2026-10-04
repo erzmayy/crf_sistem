@@ -39,11 +39,14 @@ $categoryHandlers = $categoryHandlers ?? [];
                 <button type="submit" class="btn btn-crf-primary btn-sm"><i class="bi bi-hand-index-thumb"></i> Ambil CRF</button>
             </form>
         <?php endif; ?>
-        <?php if (isAdmin() && $crf['workflow_stage'] === 'OTOMASI' && $categoryHandlers): ?>
+        <?php if (isAdmin() && !isOwnHandledCrf($crf) && $crf['workflow_stage'] === 'OTOMASI' && $categoryHandlers): ?>
             <form method="POST" action="../actions/crf_assign.php" class="d-flex gap-1" data-confirm="Tugaskan CRF ini ke handler terpilih?">
                 <?= csrfField() ?>
                 <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
                 <input type="hidden" name="op" value="assign">
+                <?php if (!empty($assignmentReturn)): ?>
+                    <input type="hidden" name="return" value="<?= h($assignmentReturn) ?>">
+                <?php endif; ?>
                 <select name="user_id" class="form-select form-select-sm" required aria-label="Pilih handler">
                     <option value="">Tugaskan ke…</option>
                     <?php foreach ($categoryHandlers as $handler): ?>
@@ -56,4 +59,4 @@ $categoryHandlers = $categoryHandlers ?? [];
     </div>
 </div>
 <?php
-unset($assignmentCategory, $canTakeCrf);
+unset($assignmentCategory, $canTakeCrf, $assignmentReturn);

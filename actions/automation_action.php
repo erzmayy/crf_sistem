@@ -272,7 +272,7 @@ try {
             (int) $user['id']
         );
         $message = 'Level Urgensi dan SLA berhasil ditentukan. CRF menunggu approval Kepala Departemen Operasional.';
-        $redirect = isAdmin() ? '../pak_joko/index.php' : '../otomasi/index.php';
+        $redirect = isDemoUser() ? '../pak_joko/index.php' : '../otomasi/index.php';
     } else {
         $stmt = $pdo->prepare("
             UPDATE change_requests

@@ -24,7 +24,16 @@ if (!$crf || !canAccessCrf($pdo, $id)) {
 $role = getCrfRole();
 $isOwner = (int) $crf['user_id'] === (int) $_SESSION['user_id'];
 
-if ($role === 'admin') {
+if ($role === 'demo') {
+    // Akun demo dibawa ke halaman peran yang sedang memegang CRF.
+    $target = [
+        'CMO_FILTER' => 'cmo/detail.php',
+        'PEMOHON_PIR' => 'cmo/detail.php',
+        'CMO_FINAL' => 'cmo/detail.php',
+        'OTOMASI' => 'otomasi/detail.php',
+        'kadep_operasional' => 'pak_joko/detail.php',
+    ][$crf['workflow_stage']] ?? 'admin/detail.php';
+} elseif ($role === 'admin') {
     $target = 'admin/detail.php';
 } elseif ($role === 'cmo') {
     $target = 'cmo/detail.php';
@@ -32,6 +41,9 @@ if ($role === 'admin') {
     $target = 'pak_joko/detail.php';
 } elseif ($role === 'otomasi' && canHandleCrf($pdo, $crf)) {
     $target = $crf['workflow_stage'] === 'OTOMASI' ? 'otomasi/detail.php' : 'otomasi/view_detail.php';
+} elseif (isAdmin()) {
+    // Hak Admin tambahan: CRF di luar kategori yang ditangani dibuka di detail Admin.
+    $target = 'admin/detail.php';
 } else {
     $target = 'user/detail.php';
 }

@@ -24,7 +24,7 @@ if ($id <= 0) {
 
 $stmt = $pdo->prepare('
     SELECT id, user_id, request_number, crf_category_id, assigned_handler_id,
-           status, workflow_stage, kadep_operasional_approved_at,
+           status, workflow_stage, kadep_operasional_approved_at, automation_completed_at,
            level, impact_category, final_urgency_level, sla_value, sla_unit
     FROM change_requests
     WHERE id = :id
@@ -44,6 +44,7 @@ $allowed = [
     'revision' => 'CMO_FILTER',
     'cancel' => ['CMO_FILTER','CMO_FINAL'],
     'complete' => 'CMO_FINAL',
+    'remind_pir' => 'PEMOHON_PIR',
 ];
 
 $expected = $allowed[$action] ?? null;
@@ -55,6 +56,57 @@ if ($expected === null || (is_array($expected) ? !in_array($crf['workflow_stage'
 
 if (in_array($action, ['revision','cancel'], true) && $tanggapan === '') {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Tanggapan / Tindak Lanjut wajib diisi untuk aksi ini.'];
+    header('Location: ../cmo/detail.php?id=' . $id);
+    exit;
+}
+
+/*
+ * Pengingat PIR: hanya notifikasi + catatan timeline, tidak mengubah tahap.
+ */
+if ($action === 'remind_pir') {
+    $reminder = crfPirReminderInfo($pdo, $crf);
+    if (!$reminder['can_send']) {
+        $_SESSION['flash'] = [
+            'type' => 'warning',
+            'message' => 'Pengingat sudah dikirim. Pengingat berikutnya bisa dikirim setelah '
+                . date('d-m-Y H:i', strtotime($reminder['next_at'])) . '.',
+        ];
+        header('Location: ../cmo/detail.php?id=' . $id);
+        exit;
+    }
+
+    try {
+        $pdo->beginTransaction();
+        $actor = crfActorName($user);
+        $note = $tanggapan !== '' ? ' Pesan CMO: ' . $tanggapan : '';
+        logCrfActivity(
+            $pdo,
+            $id,
+            'Pengingat PIR',
+            'CMO mengingatkan Pemohon untuk mengisi Post Implementation Review (pengingat ke-' . ($reminder['count'] + 1) . ').' . $note,
+            $actor
+        );
+        notifyUsers(
+            $pdo,
+            [(int) $crf['user_id']],
+            'Pengingat: isi PIR CRF ' . $crf['request_number'],
+            'Implementasi CRF ' . $crf['request_number'] . ' sudah selesai'
+                . ($reminder['waiting_days'] ? ' sejak ' . $reminder['waiting_days'] . ' hari kerja lalu' : '')
+                . '. Mohon segera isi Post Implementation Review agar CRF dapat ditutup.' . $note,
+            'crf/open.php?id=' . $id,
+            $id,
+            null,
+            (int) $user['id']
+        );
+        $pdo->commit();
+        dispatchPendingNotificationEmails($pdo);
+        $_SESSION['flash'] = ['type' => 'success', 'message' => 'Pengingat PIR berhasil dikirim ke Pemohon.'];
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        error_log('cmo_action remind_pir error: ' . $e->getMessage());
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Terjadi kesalahan saat mengirim pengingat.'];
+    }
+
     header('Location: ../cmo/detail.php?id=' . $id);
     exit;
 }
@@ -172,7 +224,7 @@ try {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Terjadi kesalahan saat memproses CRF.'];
 }
 
-if ($action === 'to_automation' && isAdmin()) {
+if ($action === 'to_automation' && isDemoUser()) {
     header('Location: ../otomasi/index.php');
 } else {
     header('Location: ../cmo/index.php');

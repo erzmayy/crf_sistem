@@ -1,5 +1,5 @@
 /* =====================================================================
-   CRF Prototype - script.js
+   Helpdesk & CRF - script.js
    Validasi client-side ringan + interaksi form.
    Validasi asli tetap dilakukan di server (lihat actions/*.php).
    ===================================================================== */
@@ -19,10 +19,47 @@ document.addEventListener('DOMContentLoaded', function () {
     return parts.join(' ');
   }
 
+  /*
+   * Hari kerja SLA, sama dengan server (includes/functions.php):
+   * Sabtu, Minggu, dan tanggal libur (config/sla.php) tidak dihitung.
+   */
+  var slaHolidays = [];
+  try {
+    slaHolidays = JSON.parse(document.body.getAttribute('data-sla-holidays') || '[]');
+  } catch (e) { slaHolidays = []; }
+
+  function slaDateKey(date) {
+    var month = String(date.getMonth() + 1).padStart(2, '0');
+    var day = String(date.getDate()).padStart(2, '0');
+    return date.getFullYear() + '-' + month + '-' + day;
+  }
+
+  function slaIsWorkingDay(date) {
+    var weekday = date.getDay();
+    return weekday !== 0 && weekday !== 6 && slaHolidays.indexOf(slaDateKey(date)) === -1;
+  }
+
+  // Detik kerja di antara dua epoch (detik); hasil negatif bila end < start.
+  function slaWorkingSecondsBetween(startEpoch, endEpoch) {
+    if (endEpoch < startEpoch) { return -slaWorkingSecondsBetween(endEpoch, startEpoch); }
+    var cursor = new Date(startEpoch * 1000);
+    var end = new Date(endEpoch * 1000);
+    var total = 0;
+
+    while (cursor < end) {
+      var dayEnd = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 1);
+      var segmentEnd = dayEnd < end ? dayEnd : end;
+      if (slaIsWorkingDay(cursor)) { total += (segmentEnd - cursor) / 1000; }
+      cursor = segmentEnd;
+    }
+
+    return Math.round(total);
+  }
+
   function updateLiveSlaStatus() {
     document.querySelectorAll('[data-sla-live="true"]').forEach(function (slaGrid) {
       var dueAt = Number(slaGrid.getAttribute('data-sla-due-at'));
-      var remaining = dueAt - Math.floor(Date.now() / 1000);
+      var remaining = slaWorkingSecondsBetween(Math.floor(Date.now() / 1000), dueAt);
       var statusBadge = slaGrid.querySelector('[data-sla-status-label]');
       var statusDetail = slaGrid.querySelector('[data-sla-status-detail]');
       var alertBox = slaGrid.parentElement.querySelector('[data-sla-alert]');
@@ -68,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.querySelectorAll('[data-sla-countdown="true"]').forEach(function (slaCell) {
       var dueAt = Number(slaCell.getAttribute('data-sla-due-at'));
-      var remaining = dueAt - Math.floor(Date.now() / 1000);
+      var remaining = slaWorkingSecondsBetween(Math.floor(Date.now() / 1000), dueAt);
       var statusBadge = slaCell.querySelector('[data-sla-status-label]');
       var statusDetail = slaCell.querySelector('[data-sla-status-detail]');
 

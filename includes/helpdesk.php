@@ -218,7 +218,7 @@ function canAccessTicket(PDO $pdo, array $ticket): bool
     $userId = (int) ($_SESSION['user_id'] ?? 0);
     $role = getCrfRole();
 
-    if ((int) $ticket['user_id'] === $userId || $role === 'admin') {
+    if ((int) $ticket['user_id'] === $userId || in_array($role, ['admin', 'demo'], true)) {
         return true;
     }
 
@@ -236,7 +236,8 @@ function canAccessTicket(PDO $pdo, array $ticket): bool
 }
 
 /**
- * PIC kategori / admin boleh menindaklanjuti ticket non-CRF.
+ * PIC kategori (atau akun demo) boleh menindaklanjuti ticket non-CRF.
+ * Admin hanya memantau, kecuali ia juga terdaftar sebagai PIC kategori.
  * Ticket yang diteruskan ke CRF statusnya mengikuti workflow CRF.
  */
 function canManageTicket(PDO $pdo, array $ticket): bool
@@ -245,7 +246,7 @@ function canManageTicket(PDO $pdo, array $ticket): bool
         return false;
     }
 
-    if (getCrfRole() === 'admin') {
+    if (isDemoUser()) {
         return true;
     }
 
@@ -321,11 +322,27 @@ function syncHelpdeskTicketFromCrf(PDO $pdo, int $crfId, string $actor): void
 
 /**
  * Status SLA ticket berdasarkan SLA kategori saat ticket dibuat.
+ * Ticket yang diteruskan ke CRF tidak dinilai dengan SLA ticket: pekerjaannya
+ * mengikuti alur & SLA CRF (dimulai setelah approval Kepala Departemen).
  *
- * @return array{target:string,duration:?string,label:string,class:string}
+ * @return array{target:string,duration:?string,label:string,class:string,via_crf?:bool}
  */
 function helpdeskTicketSla(array $ticket): array
 {
+    if (
+        !empty($ticket['requires_crf'])
+        || ($ticket['status'] ?? '') === 'Diteruskan ke CRF'
+        || !empty($ticket['crf_id'])
+    ) {
+        return [
+            'target'   => 'Mengikuti SLA CRF',
+            'duration' => null,
+            'label'    => 'Mengikuti SLA CRF',
+            'class'    => 'secondary',
+            'via_crf'  => true,
+        ];
+    }
+
     $target = slaLabel($ticket['sla_value'] ?? null, $ticket['sla_unit'] ?? null);
     $due = slaDueAt($ticket['created_at'] ?? null, $ticket['sla_value'] ?? null, $ticket['sla_unit'] ?? null);
 
@@ -469,7 +486,8 @@ function helpdeskTicketSummary(PDO $pdo, array $filters, ?array $categoryScope):
  */
 function helpdeskCategoryScopeForUser(PDO $pdo): ?array
 {
-    return getCrfRole() === 'admin'
+    // Admin & demo memantau semua kategori.
+    return isAdmin()
         ? null
         : picHelpdeskCategoryIds($pdo, (int) ($_SESSION['user_id'] ?? 0));
 }
