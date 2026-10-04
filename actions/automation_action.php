@@ -86,7 +86,7 @@ try {
         $pdo->rollBack();
         $_SESSION['flash'] = [
             'type' => 'danger',
-            'message' => 'CRF ini sedang ditangani oleh ' . ($crf['assigned_handler_name'] ?? 'handler lain') . '.',
+            'message' => 'CRF ini sedang ditangani oleh ' . ($crf['assigned_handler_name'] ?? 'Petugas Otomasi lain') . '.',
         ];
         header('Location: ../otomasi/detail.php?id=' . $id);
         exit;
@@ -249,29 +249,29 @@ try {
         ]);
 
         if ($stmt->rowCount() !== 1) {
-            throw new RuntimeException('CRF sudah tidak tersedia untuk approval.');
+            throw new RuntimeException('CRF sudah tidak tersedia untuk persetujuan.');
         }
 
         logCrfActivity(
             $pdo,
             $id,
             'Otomasi - SLA Ditentukan',
-            'Otomasi menentukan Level Urgensi dan SLA. CRF diteruskan ke Kepala Departemen Operasional untuk approval.',
+            'Otomasi menentukan Level Urgensi dan SLA. CRF diteruskan ke Kepala Departemen Operasional untuk persetujuan.',
             $actor,
             'Diproses',
-            'Menunggu Approval'
+            'Menunggu Persetujuan'
         );
         notifyUsers(
             $pdo,
             crfUserIdsForRole($pdo, 'kadep_operasional'),
-            'Approval CRF: ' . $crf['request_number'],
-            'CRF ' . $crf['request_number'] . ' menunggu approval Anda (SLA ' . slaLabel($slaValue, $slaUnit) . ').',
+            'Persetujuan CRF: ' . $crf['request_number'],
+            'CRF ' . $crf['request_number'] . ' menunggu persetujuan Anda (SLA ' . slaLabel($slaValue, $slaUnit) . ').',
             'crf/open.php?id=' . $id,
             $id,
             null,
             (int) $user['id']
         );
-        $message = 'Level Urgensi dan SLA berhasil ditentukan. CRF menunggu approval Kepala Departemen Operasional.';
+        $message = 'Level Urgensi dan SLA berhasil ditentukan. CRF menunggu persetujuan Kepala Departemen Operasional.';
         $redirect = isDemoUser() ? '../pak_joko/index.php' : '../otomasi/index.php';
     } else {
         $stmt = $pdo->prepare("

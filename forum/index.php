@@ -106,7 +106,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-page-header">
             <div>
                 <h1>Forum CRF</h1>
-                <p>Ruang diskusi lintas fungsi untuk cross-check data, prioritas, urgensi, SLA, approval, dan implementasi.</p>
+                <p>Ruang diskusi lintas fungsi untuk cross-check data, prioritas, urgensi, SLA, persetujuan, dan implementasi.</p>
             </div>
         </div>
 
@@ -223,7 +223,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?php if (!empty($selectedCrf['sla_started_at'])): ?>
                                     <span class="crf-forum-sla-note">SLA berjalan sejak <?= h(date('d M Y H:i', strtotime($selectedCrf['sla_started_at']))) ?>; tenggat dihitung ulang dari waktu mulai tersebut.</span>
                                 <?php else: ?>
-                                    <span class="crf-forum-sla-note">Perhitungan waktu SLA dimulai sesuai alur approval yang berlaku.</span>
+                                    <span class="crf-forum-sla-note">Perhitungan waktu SLA dimulai sesuai alur persetujuan yang berlaku.</span>
                                 <?php endif; ?>
                             </div>
                             <div class="crf-forum-final-sla-fields">
@@ -314,7 +314,7 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
                         <?php endif; ?>
                         <label for="forum-comment" class="form-label">Tambahkan komentar atau tanggapan</label>
-                        <textarea class="form-control" id="forum-comment" name="comment" rows="4" maxlength="5000" required placeholder="Tulis pembahasan terkait data CRF, prioritas, urgensi, SLA, approval, atau implementasi..."></textarea>
+                        <textarea class="form-control" id="forum-comment" name="comment" rows="4" maxlength="5000" required placeholder="Tulis pembahasan terkait data CRF, prioritas, urgensi, SLA, persetujuan, atau implementasi..."></textarea>
                         <div class="crf-forum-form-footer">
                             <small>Riwayat pembahasan dapat dilihat oleh CMO, Otomasi, Admin, dan Kepala Departemen Operasional.</small>
                             <button type="submit" class="btn btn-crf-primary"><i class="bi bi-send"></i> Kirim Komentar</button>

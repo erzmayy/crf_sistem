@@ -16,7 +16,8 @@ $pdo = getConnection();
 $user = getCurrentUser();
 
 $id = (int) ($_POST['id'] ?? 0);
-$action = $_POST['action'] ?? 'approve';
+// Kepala Departemen Operasional hanya menyetujui (tidak ada jalur revisi).
+$action = 'approve';
 $note = trim($_POST['approval_note'] ?? '');
 
 if ($id <= 0) {
@@ -43,7 +44,7 @@ $crf = $stmt->fetch();
 if (!$crf || $crf['workflow_stage'] !== 'kadep_operasional') {
     $_SESSION['flash'] = [
         'type' => 'danger',
-        'message' => 'CRF tidak tersedia untuk approval.'
+        'message' => 'CRF tidak tersedia untuk persetujuan.'
     ];
 
     header('Location: ../pak_joko/index.php');
@@ -55,7 +56,7 @@ if ($note === '') {
 
     $_SESSION['flash'] = [
         'type' => 'danger',
-        'message' => 'Catatan approval wajib diisi.'
+        'message' => 'Catatan persetujuan wajib diisi.'
     ];
 
     header('Location: ../pak_joko/detail.php?id=' . $id);
@@ -80,74 +81,6 @@ try {
 
 
     /* =====================================================
-     * PERLU REVISI
-     * ===================================================== */
-
-    if ($action === 'revision') {
-
-        $stmt = $pdo->prepare("
-            UPDATE change_requests
-            SET
-                kadep_operasional_approved_by = NULL,
-                kadep_operasional_approved_at = NULL,
-                kadep_operasional_approval_note = :approval_note,
-                sla_started_at = NULL,
-                sla_due_at = NULL,
-                automation_started_at = NULL,
-                workflow_stage = 'OTOMASI',
-                status = 'Dalam Proses'
-            WHERE id = :id
-              AND workflow_stage = 'kadep_operasional'
-        ");
-
-        $stmt->execute([
-            'approval_note' => $note,
-            'id' => $id,
-        ]);
-
-        if ($stmt->rowCount() !== 1) {
-            throw new RuntimeException('CRF sudah tidak tersedia untuk approval.');
-        }
-
-        logCrfActivity(
-            $pdo,
-            $id,
-            'Perlu Revisi',
-            'Kepala Departemen Operasional mengembalikan CRF ke Otomasi untuk revisi sebelum approval. Catatan: ' . $note,
-            $actor,
-            'Menunggu Approval',
-            'Diproses'
-        );
-
-        notifyUsers(
-            $pdo,
-            array_merge($handlerRecipients, [(int) $crf['user_id']]),
-            'CRF ditolak Kadep: ' . $crfNumber,
-            'Kepala Departemen Operasional belum menyetujui CRF ' . $crfNumber . ' dan mengembalikannya ke Handler. Catatan: ' . $note,
-            $crfLink,
-            $id,
-            null,
-            (int) $user['id']
-        );
-
-        syncHelpdeskTicketFromCrf($pdo, $id, $actor);
-
-        $pdo->commit();
-        dispatchPendingNotificationEmails($pdo);
-
-
-        $_SESSION['flash'] = [
-            'type' => 'warning',
-            'message' => 'CRF berhasil dikembalikan ke Otomasi untuk revisi.'
-        ];
-
-
-        header('Location: ../pak_joko/index.php');
-        exit;
-    }
-
-
-    /* =====================================================
      * APPROVE
      * Kembali ke Otomasi untuk eksekusi
      * ===================================================== */
@@ -169,7 +102,7 @@ try {
         $approvalCrf = $stmt->fetch();
 
         if (!$approvalCrf) {
-            throw new RuntimeException('CRF sudah tidak tersedia untuk approval.');
+            throw new RuntimeException('CRF sudah tidak tersedia untuk persetujuan.');
         }
 
         if (
@@ -218,7 +151,7 @@ try {
         ]);
 
         if ($stmt->rowCount() !== 1) {
-            throw new RuntimeException('CRF sudah tidak tersedia untuk approval.');
+            throw new RuntimeException('CRF sudah tidak tersedia untuk persetujuan.');
         }
 
         logCrfActivity(
@@ -229,7 +162,7 @@ try {
                 ? 'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. CRF diteruskan ke Otomasi untuk eksekusi. Catatan: ' . $note
                 : 'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. CRF diteruskan ke Otomasi untuk eksekusi.',
             $actor,
-            'Menunggu Approval',
+            'Menunggu Persetujuan',
             'Disetujui · Eksekusi'
         );
 
@@ -262,7 +195,7 @@ try {
 
 
     throw new RuntimeException(
-        'Aksi approval tidak dikenal.'
+        'Aksi persetujuan tidak dikenal.'
     );
 
 
@@ -279,7 +212,7 @@ try {
 
     $_SESSION['flash'] = [
         'type' => 'danger',
-        'message' => 'Terjadi kesalahan saat memproses approval.'
+        'message' => 'Terjadi kesalahan saat memproses persetujuan.'
     ];
 
     header('Location: ../pak_joko/index.php');

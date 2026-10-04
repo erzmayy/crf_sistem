@@ -256,13 +256,13 @@ function workflowStageLabel(string $stage): string
         case 'PEMOHON':
             return 'Menunggu Pemeriksaan';
         case 'CMO_FILTER':
-            return 'Pemeriksaan CMO';
+            return 'Verifikasi CMO';
         case 'OTOMASI':
-            return 'Proses Otomasi';
+            return 'Tindak Lanjut Divisi Otomasi';
         case 'PEMOHON_PIR':
             return 'Menunggu PIR Pemohon';
         case 'kadep_operasional':
-            return 'Menunggu Persetujuan Kepala Departemen';
+            return 'Persetujuan Kepala Departemen Operasional';
         case 'CMO_FINAL':
             return 'Finalisasi CMO';
         case 'SELESAI':
@@ -480,7 +480,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
     if ($startedAt === null || $dueAt === null) {
         return [
             'label' => 'SLA belum dimulai',
-            'detail' => 'SLA dimulai setelah approval Kepala Departemen Operasional.',
+            'detail' => 'SLA dimulai setelah persetujuan Kepala Departemen Operasional.',
             'class' => 'secondary',
             'alert' => null,
             'elapsed' => null,
@@ -591,10 +591,10 @@ function crfDisplayStatus(array $crf): array
         return ['key' => 'revisi', 'label' => 'Ditolak / Perlu Revisi', 'class' => 'badge-status-revisi'];
     }
     if ($stage === 'CMO_FILTER') {
-        return ['key' => 'review', 'label' => 'Menunggu Review', 'class' => 'badge-status-belum'];
+        return ['key' => 'review', 'label' => 'Menunggu Verifikasi', 'class' => 'badge-status-belum'];
     }
     if ($stage === 'kadep_operasional') {
-        return ['key' => 'approval', 'label' => 'Menunggu Approval', 'class' => 'badge-stage-joko'];
+        return ['key' => 'approval', 'label' => 'Menunggu Persetujuan', 'class' => 'badge-stage-joko'];
     }
     if ($stage === 'OTOMASI' && $approved) {
         return ['key' => 'disetujui', 'label' => 'Disetujui · Eksekusi', 'class' => 'badge-stage-otomasi'];
@@ -623,9 +623,9 @@ function crfDisplayStatusConditions(string $alias = 'cr'): array
 
     return [
         'draft'      => ['label' => 'Draft', 'sql' => "{$a}status = 'Draft'"],
-        'review'     => ['label' => 'Menunggu Review', 'sql' => "{$a}status = 'Belum Ditindak Lanjuti' AND {$a}workflow_stage = 'CMO_FILTER'"],
+        'review'     => ['label' => 'Menunggu Verifikasi', 'sql' => "{$a}status = 'Belum Ditindak Lanjuti' AND {$a}workflow_stage = 'CMO_FILTER'"],
         'diproses'   => ['label' => 'Diproses', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage = 'OTOMASI' AND {$a}kadep_operasional_approved_at IS NULL"],
-        'approval'   => ['label' => 'Menunggu Approval', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage = 'kadep_operasional'"],
+        'approval'   => ['label' => 'Menunggu Persetujuan', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage = 'kadep_operasional'"],
         'disetujui'  => ['label' => 'Disetujui · Eksekusi', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage IN ('OTOMASI','PEMOHON_PIR','CMO_FINAL') AND {$a}kadep_operasional_approved_at IS NOT NULL"],
         'revisi'     => ['label' => 'Ditolak / Perlu Revisi', 'sql' => "{$a}status = 'Perlu Revisi'"],
         'selesai'    => ['label' => 'Selesai', 'sql' => "{$a}status = 'Solve'"],

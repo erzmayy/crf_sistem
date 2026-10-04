@@ -48,11 +48,11 @@ $tabs = [
         'usage_label' => 'ticket',
     ],
     'crf' => [
-        'label' => 'Kategori CRF & Handler',
+        'label' => 'Kategori CRF & Petugas Otomasi',
         'icon' => 'bi-bookmarks',
         'rows' => $crfCategoryRows,
         'members' => $crfMembers,
-        'member_label' => 'Handler',
+        'member_label' => 'Petugas Otomasi',
         'modal' => '#crfCategoryModal',
         'usage_label' => 'CRF',
     ],
@@ -72,11 +72,11 @@ require_once __DIR__ . '/../includes/header.php';
             <div>
                 <span class="crf-helpdesk-eyebrow">MASTER DATA</span>
                 <h1>Kategori &amp; Handling</h1>
-                <p>Kelola kategori Helpdesk beserta PIC, dan kategori CRF beserta Handler, dalam satu halaman.</p>
+                <p>Kelola kategori Helpdesk beserta PIC, dan kategori CRF beserta Petugas Otomasi, dalam satu halaman.</p>
             </div>
             <div class="crf-banner-actions">
                 <span class="crf-banner-pill"><i class="bi bi-headset"></i> <?= count($helpdeskCategoryRows) ?> Kategori Helpdesk · <?= $totalPic ?> PIC</span>
-                <span class="crf-banner-pill"><i class="bi bi-bookmarks"></i> <?= count($crfCategoryRows) ?> Kategori CRF · <?= $totalHandler ?> Handler</span>
+                <span class="crf-banner-pill"><i class="bi bi-bookmarks"></i> <?= count($crfCategoryRows) ?> Kategori CRF · <?= $totalHandler ?> Petugas Otomasi</span>
             </div>
         </div>
 
@@ -88,7 +88,7 @@ require_once __DIR__ . '/../includes/header.php';
             <i class="bi bi-info-circle"></i>
             Alur: <strong>Kategori Helpdesk</strong> bertanda <span class="crf-badge badge-stage-otomasi">Butuh CRF</span>
             meneruskan Permintaan Baru ke Form CRF dengan <strong>Kategori CRF</strong> default, lalu CRF diproses oleh
-            <strong>Handler</strong> kategori tersebut.
+            <strong>Petugas Otomasi</strong> kategori tersebut.
         </div>
 
         <ul class="nav nav-tabs crf-master-tabs" role="tablist">
@@ -361,7 +361,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="mb-3">
                     <label class="crf-field-label">Target SLA per Level Urgensi</label>
                     <div class="crf-readonly-note mb-2">
-                        Terisi otomatis saat CRF lolos review CMO. Dihitung dengan hari kerja
+                        Terisi otomatis saat CRF lolos verifikasi CMO. Dihitung dengan hari kerja
                         (Sabtu, Minggu, dan libur tidak dihitung). Tinggi / Rendah kosong = ikut Normal.
                     </div>
                     <?php

@@ -131,8 +131,8 @@ require_once __DIR__ . '/../includes/header.php';
   <div class="container">
     <div class="crf-helpdesk-banner">
       <div>
-        <span class="crf-helpdesk-eyebrow">PORTAL CRF · REVIEW PERUBAHAN</span>
-        <h1>Dashboard CMO</h1>
+        <span class="crf-helpdesk-eyebrow">PORTAL CRF · VERIFIKASI CMO</span>
+        <h1>Verifikasi Permohonan Perubahan</h1>
         <p>Kelola CRF pada tahap filter, pemantauan PIR, dan finalisasi.</p>
       </div>
     </div>
@@ -143,7 +143,7 @@ require_once __DIR__ . '/../includes/header.php';
 
     <div class="crf-stat-grid crf-helpdesk-summary mb-4">
       <a class="crf-stat-card text-decoration-none" href="?stage=filter">
-        <span><i class="bi bi-funnel-fill"></i> Menunggu Filter</span>
+        <span><i class="bi bi-funnel-fill"></i> Menunggu Verifikasi</span>
         <strong><?= $counts['CMO_FILTER'] ?></strong>
       </a>
       <a class="crf-stat-card text-decoration-none" href="?stage=pir" title="Implementasi selesai, menunggu Post Implementation Review dari Pemohon">
@@ -161,7 +161,7 @@ require_once __DIR__ . '/../includes/header.php';
         <h2><?= $filter === 'history' ? 'Riwayat CRF CMO' : 'Daftar CRF CMO' ?></h2>
         <div class="btn-group">
           <a href="?stage=all" class="btn btn-sm <?= $filter === 'all' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Semua</a>
-          <a href="?stage=filter" class="btn btn-sm <?= $filter === 'filter' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Filter</a>
+          <a href="?stage=filter" class="btn btn-sm <?= $filter === 'filter' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Verifikasi</a>
           <a href="?stage=pir" class="btn btn-sm <?= $filter === 'pir' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Menunggu PIR</a>
           <a href="?stage=final" class="btn btn-sm <?= $filter === 'final' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Finalisasi</a>
           <a href="?stage=history" class="btn btn-sm <?= $filter === 'history' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Riwayat</a>
@@ -190,7 +190,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <td data-label="No"><?= $offset + $i + 1 ?></td>
                 <?php require __DIR__ . '/../includes/partials/crf_row_request.php'; ?>
                 <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
-                <td data-label="Aksi"><a href="detail.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline"><i class="bi bi-eye"></i> Detail</a></td>
+                <td data-label="Aksi"><div class="d-flex gap-2"><a href="detail.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline"><i class="bi bi-eye"></i> Detail</a><?php if (($row['status'] ?? '') !== 'Draft'): ?><a href="../actions/export_crf.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline" target="_blank" rel="noopener" title="Cetak PDF"><i class="bi bi-printer"></i> Cetak</a><?php endif; ?></div></td>
               </tr>
             <?php endforeach; ?>
           <?php endif; ?>

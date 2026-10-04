@@ -38,14 +38,14 @@ try {
 
     if ($op === 'assign') {
         if (!isAdmin()) {
-            throw new DomainException('Hanya Admin yang dapat menugaskan handler.');
+            throw new DomainException('Hanya Admin yang dapat menugaskan Petugas Otomasi.');
         }
         if (isOwnHandledCrf($crf)) {
             throw new DomainException('Anda sedang memegang CRF ini. Penugasan ulang harus dilakukan Admin lain.');
         }
         $targetId = (int) ($_POST['user_id'] ?? 0);
         if (!in_array($targetId, crfCategoryHandlerIds($pdo, (int) $crf['crf_category_id']), true)) {
-            throw new DomainException('User bukan handler kategori CRF ini.');
+            throw new DomainException('User bukan Petugas Otomasi kategori CRF ini.');
         }
         $target = findCrfUserById($pdo, $targetId);
         if (!$target) {
@@ -55,10 +55,10 @@ try {
         $description = 'Admin menugaskan CRF kepada ' . crfActorName($target) . '.';
     } else {
         if (getCrfRole() === 'admin') {
-            throw new DomainException('Admin tidak mengambil CRF. Gunakan "Tugaskan" untuk menunjuk handler.');
+            throw new DomainException('Admin tidak mengambil CRF. Gunakan "Tugaskan" untuk menunjuk Petugas Otomasi.');
         }
         if (!empty($crf['assigned_handler_id'])) {
-            throw new DomainException('CRF sudah diambil oleh ' . ($crf['assigned_handler_name'] ?? 'handler lain') . '.');
+            throw new DomainException('CRF sudah diambil oleh ' . ($crf['assigned_handler_name'] ?? 'Petugas Otomasi lain') . '.');
         }
         $target = $user;
         $activity = 'CRF Diambil Handler';

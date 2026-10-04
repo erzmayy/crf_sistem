@@ -140,7 +140,7 @@ try {
             $pdo,
             $id,
             'Lolos Filter CMO',
-            'CRF lolos filter CMO dan diteruskan ke Handler kategori.',
+            'CRF lolos verifikasi CMO dan diteruskan ke Divisi Otomasi.',
             $actor,
             $oldDisplayStatus,
             'Diproses'
@@ -182,14 +182,14 @@ try {
             $pdo,
             $handlerIds ?: crfUserIdsForRole($pdo, 'otomasi'),
             'CRF masuk: ' . $crfNumber,
-            'CRF ' . $crfNumber . ' lolos review CMO dan siap diambil Handler.',
+            'CRF ' . $crfNumber . ' lolos verifikasi CMO dan siap ditindaklanjuti Petugas Otomasi.',
             $crfLink,
             $id,
             null,
             (int) $user['id']
         );
 
-        $message = 'CRF berhasil diteruskan ke Handler kategori.';
+        $message = 'CRF berhasil diteruskan ke Divisi Otomasi.';
     } elseif ($action === 'revision') {
         $stmt = $pdo->prepare("UPDATE change_requests SET status = 'Perlu Revisi', workflow_stage = 'PEMOHON', tanggapan_tindak_lanjut = :tanggapan WHERE id = :id AND workflow_stage = 'CMO_FILTER'");
         $stmt->execute(['tanggapan' => $tanggapan, 'id' => $id]);
@@ -207,7 +207,7 @@ try {
     } else {
         $stmt = $pdo->prepare("UPDATE change_requests SET status = 'Solve', workflow_stage = 'SELESAI', solved_at = :now, cancelled_at = NULL WHERE id = :id AND workflow_stage = 'CMO_FINAL'");
         $stmt->execute(['now' => $now, 'id' => $id]);
-        logCrfActivity($pdo, $id, 'Solve', 'CMO menyelesaikan dan menutup CRF setelah approval Kepala Departemen Operasional.', $actor, $oldDisplayStatus, 'Selesai');
+        logCrfActivity($pdo, $id, 'Solve', 'CMO menyelesaikan dan menutup CRF setelah persetujuan Kepala Departemen Operasional.', $actor, $oldDisplayStatus, 'Selesai');
         notifyUsers($pdo, [(int) $crf['user_id'], (int) $crf['assigned_handler_id']], 'CRF selesai: ' . $crfNumber,
             'CRF ' . $crfNumber . ' telah selesai dan ditutup. Ticket Helpdesk terkait ikut diperbarui.', $crfLink, $id, null, (int) $user['id']);
         $message = 'CRF berhasil ditandai selesai.';

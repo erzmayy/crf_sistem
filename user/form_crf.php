@@ -465,7 +465,7 @@ require_once __DIR__ . '/../includes/header.php';
           <?php if (!$crfCategoryOptions): ?>
             <div class="text-danger small mb-3">Belum ada Kategori CRF aktif. Hubungi Admin.</div>
           <?php else: ?>
-            <div class="crf-readonly-note mb-3">Kategori menentukan Handler yang akan memproses CRF Anda.</div>
+            <div class="crf-readonly-note mb-3">Kategori menentukan Petugas Otomasi yang akan memproses CRF Anda.</div>
           <?php endif; ?>
 
           <div id="category-detail-wrap" class="d-none">

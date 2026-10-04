@@ -204,7 +204,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <dl class="crf-detail-grid crf-detail-grid--single">
                             <div><dt>Target SLA</dt><dd><?= h($sla['target']) ?></dd></div>
                             <?php if (!empty($sla['via_crf'])): ?>
-                                <div><dt>Keterangan</dt><dd class="text-muted">Ticket ini diteruskan ke CRF. Target, durasi, dan status SLA dinilai pada CRF terkait (dimulai setelah approval Kepala Departemen Operasional).</dd></div>
+                                <div><dt>Keterangan</dt><dd class="text-muted">Ticket ini diteruskan ke CRF. Target, durasi, dan status SLA dinilai pada CRF terkait (dimulai setelah persetujuan Kepala Departemen Operasional).</dd></div>
                             <?php else: ?>
                                 <div><dt>Durasi</dt><dd><?= h($sla['duration'] ?? '-') ?></dd></div>
                             <?php endif; ?>

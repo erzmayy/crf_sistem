@@ -121,8 +121,8 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-helpdesk-banner">
             <div>
                 <span class="crf-helpdesk-eyebrow">PORTAL CRF · PERSETUJUAN PERUBAHAN</span>
-                <h1>Dashboard Kepala Departemen Operasional</h1>
-                <p>Daftar CRF dengan Level Urgensi dan SLA yang menunggu persetujuan sebelum eksekusi Otomasi.</p>
+                <h1>Persetujuan Kepala Departemen Operasional</h1>
+                <p>Daftar CRF dengan Level Urgensi dan SLA yang menunggu persetujuan sebelum ditindaklanjuti Divisi Otomasi.</p>
             </div>
         </div>
 
@@ -137,7 +137,7 @@ require_once __DIR__ . '/../includes/header.php';
              ===================================================== -->
         <div class="crf-stat-grid crf-helpdesk-summary mb-4">
             <div class="crf-stat-card">
-                <span><i class="bi bi-clipboard-check-fill"></i> Menunggu Approval</span>
+                <span><i class="bi bi-clipboard-check-fill"></i> Menunggu Persetujuan</span>
                 <strong><?= $waitingApproval ?></strong>
             </div>
         </div>
@@ -145,7 +145,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-table-card crf-list-table-card">
 
             <div class="crf-table-heading">
-                <h2><?= $view === 'history' ? 'Riwayat Persetujuan' : 'Menunggu Approval' ?></h2>
+                <h2><?= $view === 'history' ? 'Riwayat Persetujuan' : 'Menunggu Persetujuan' ?></h2>
                 <div class="btn-group">
                     <a
                         href="?view=queue"
@@ -193,7 +193,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     ? 'Belum ada CRF yang pernah diproses oleh Kepala Departemen Operasional.'
                                     : ($search !== ''
                                     ? 'Tidak ada CRF yang sesuai dengan pencarian.'
-                                    : 'Tidak ada CRF yang menunggu approval.') ?>
+                                    : 'Tidak ada CRF yang menunggu persetujuan.') ?>
                             </td>
                         </tr>
                     <?php else: ?>
@@ -211,13 +211,16 @@ require_once __DIR__ . '/../includes/header.php';
                                 </td>
 
                                 <td data-label="Aksi">
+                                    <div class="d-flex gap-2">
                                     <a
                                         href="detail.php?id=<?= (int) $row['id'] ?>"
                                         class="btn btn-sm <?= $view === 'history' ? 'btn-crf-outline' : 'btn-crf-primary' ?>"
                                     >
                                         <i class="bi bi-<?= $view === 'history' ? 'eye' : 'check2-square' ?>"></i>
-                                        <?= $view === 'history' ? 'Detail' : 'Review' ?>
+                                        <?= $view === 'history' ? 'Detail' : 'Tinjau' ?>
                                     </a>
+                                    <?php if (($row['status'] ?? '') !== 'Draft'): ?><a href="../actions/export_crf.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline" target="_blank" rel="noopener" title="Cetak PDF"><i class="bi bi-printer"></i> Cetak</a><?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

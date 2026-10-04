@@ -67,7 +67,7 @@ if (!$crf) {
         <div class="container">
 
             <div class="alert alert-danger">
-                CRF tidak ditemukan pada antrean approval Kepala Departemen Operasional.
+                CRF tidak ditemukan pada antrean persetujuan Kepala Departemen Operasional.
             </div>
 
             <a href="index.php" class="btn btn-crf-outline">
@@ -127,7 +127,7 @@ $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
 
-$pageTitle = 'Kepala Departemen Operasional - Review CRF';
+$pageTitle = 'Persetujuan Kepala Departemen Operasional';
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -143,7 +143,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 crf-page-header">
 
             <div>
-                <h1>Review CRF</h1>
+                <h1>Persetujuan Kepala Departemen Operasional</h1>
 
                 <p>
                     Nomor Register:
@@ -151,10 +151,15 @@ require_once __DIR__ . '/../includes/header.php';
                 </p>
             </div>
 
-            <a href="index.php" class="btn btn-crf-outline">
-                <i class="bi bi-arrow-left"></i>
-                Kembali
-            </a>
+            <div class="d-flex gap-2">
+                <a href="../actions/export_crf.php?id=<?= (int) $crf['id'] ?>" class="btn btn-crf-primary" target="_blank" rel="noopener">
+                    <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                </a>
+                <a href="index.php" class="btn btn-crf-outline">
+                    <i class="bi bi-arrow-left"></i>
+                    Kembali
+                </a>
+            </div>
 
         </div>
 
@@ -223,14 +228,14 @@ require_once __DIR__ . '/../includes/header.php';
 
             <div class="crf-section-header">
                 <span class="crf-section-number"><i class="bi bi-person-check"></i></span>
-                <h2>Approval Kepala Departemen Operasional</h2>
+                <h2>Persetujuan Kepala Departemen Operasional</h2>
             </div>
 
             <div class="crf-section-body">
 
                 <p class="text-muted">
                     Periksa detail CRF serta Level Urgensi dan SLA sebelum
-                    menyetujui pelaksanaan oleh Otomasi.
+                    menyetujui tindak lanjut oleh Divisi Otomasi.
                 </p>
 
                 <form action="../actions/pak_joko_approve.php" method="POST">
@@ -242,7 +247,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="mb-3">
 
                         <label for="approval_note" class="form-label fw-semibold">
-                            Catatan Approval
+                            Catatan Persetujuan
                             <span class="text-danger">*</span>
                         </label>
 
@@ -252,14 +257,14 @@ require_once __DIR__ . '/../includes/header.php';
                             class="form-control"
                             rows="4"
                             required
-                            placeholder="Tuliskan catatan approval..."
+                            placeholder="Tuliskan catatan persetujuan..."
                         ><?= h($crf['kadep_operasional_approval_note'] ?? '') ?></textarea>
 
                     </div>
 
                     <button type="submit" class="btn btn-success">
                         <i class="bi bi-check-circle"></i>
-                        Approve CRF
+                        Setujui
                     </button>
 
                 </form>

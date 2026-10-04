@@ -85,9 +85,9 @@ $homePath = $isAdminUser
           'icon' => 'bi-file-earmark-diff',
           'items' => [
               ['label' => 'Dashboard CRF', 'url' => '/admin/dashboard.php', 'show' => $isAdminUser, 'active' => $isNav('admin', 'dashboard.php') || $isNav('admin', 'detail.php') || $isNav('admin', 'edit.php')],
-              ['label' => 'Review CMO', 'url' => '/cmo/index.php', 'show' => $canRole('cmo'), 'active' => $currentFolder === 'cmo'],
-              ['label' => 'Handler CRF', 'url' => '/otomasi/index.php', 'show' => $canRole('otomasi'), 'active' => $currentFolder === 'otomasi'],
-              ['label' => 'Approval Kadep Operasional', 'url' => '/pak_joko/index.php', 'show' => $canRole('kadep_operasional'), 'active' => $currentFolder === 'pak_joko'],
+              ['label' => 'Verifikasi CMO', 'url' => '/cmo/index.php', 'show' => $canRole('cmo'), 'active' => $currentFolder === 'cmo'],
+              ['label' => 'Tindak Lanjut Otomasi', 'url' => '/otomasi/index.php', 'show' => $canRole('otomasi'), 'active' => $currentFolder === 'otomasi'],
+              ['label' => 'Persetujuan Kepala Departemen Operasional', 'url' => '/pak_joko/index.php', 'show' => $canRole('kadep_operasional'), 'active' => $currentFolder === 'pak_joko'],
               ['label' => 'Form CRF', 'url' => '/user/form_crf.php', 'show' => true, 'active' => $isNav('user', 'form_crf.php')],
               ['label' => 'Pengajuan CRF Saya', 'url' => '/user/pengajuan_saya.php', 'show' => $crfRole !== 'admin', 'active' => $isNav('user', 'pengajuan_saya.php') || $isNav('user', 'detail.php')],
               ['label' => 'Forum', 'url' => '/forum/index.php', 'show' => in_array($crfRole, forumRoles(), true), 'active' => $isForum, 'badge' => $forumUnreadTotal],

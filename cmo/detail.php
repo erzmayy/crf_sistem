@@ -140,7 +140,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-page-header d-flex justify-content-between align-items-start gap-2 flex-wrap">
 
             <div>
-                <h1>Detail CRF - CMO</h1>
+                <h1>Verifikasi Permohonan Perubahan</h1>
 
                 <p class="mb-0">
                     Nomor Register:
@@ -148,10 +148,15 @@ require_once __DIR__ . '/../includes/header.php';
                 </p>
             </div>
 
-            <a href="index.php" class="btn btn-crf-outline">
-                <i class="bi bi-arrow-left"></i>
-                Kembali
-            </a>
+            <div class="d-flex gap-2">
+                <a href="../actions/export_crf.php?id=<?= (int) $crf['id'] ?>" class="btn btn-crf-primary" target="_blank" rel="noopener">
+                    <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                </a>
+                <a href="index.php" class="btn btn-crf-outline">
+                    <i class="bi bi-arrow-left"></i>
+                    Kembali
+                </a>
+            </div>
 
         </div>
 
@@ -286,7 +291,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <div class="crf-section-header">
                     <span class="crf-section-number"><i class="bi bi-chat-square-text"></i></span>
-                    <h2>Review CMO</h2>
+                    <h2>Verifikasi CMO</h2>
                 </div>
 
                 <div class="crf-section-body">
@@ -306,7 +311,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 name="tanggapan"
                                 class="form-control"
                                 rows="4"
-                                placeholder="Wajib diisi jika Perlu Revisi atau Dibatalkan."
+                                placeholder="Wajib diisi jika dikembalikan untuk perbaikan atau dibatalkan."
                             ><?= h($crf['tanggapan_tindak_lanjut'] ?? '') ?></textarea>
                         </div>
 
@@ -318,7 +323,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 class="btn btn-crf-primary"
                             >
                                 <i class="bi bi-arrow-right-circle"></i>
-                                Lanjut ke Otomasi
+                                Teruskan ke Divisi Otomasi
                             </button>
 
                             <button
@@ -327,7 +332,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 class="btn btn-warning"
                             >
                                 <i class="bi bi-pencil-square"></i>
-                                Perlu Revisi
+                                Kembalikan untuk Perbaikan
                             </button>
 
                             <button
@@ -336,7 +341,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 class="btn btn-outline-danger"
                             >
                                 <i class="bi bi-x-circle"></i>
-                                Batalkan
+                                Batalkan Permohonan
                             </button>
 
                         </div>

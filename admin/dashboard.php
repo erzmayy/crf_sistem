@@ -1036,6 +1036,8 @@ require_once __DIR__ . '/../includes/header.php';
                                                 Detail
                                             </a>
 
+                                            <?php if (($row['status'] ?? '') !== 'Draft'): ?><a href="../actions/export_crf.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline" target="_blank" rel="noopener" title="Cetak PDF"><i class="bi bi-printer"></i> Cetak</a><?php endif; ?>
+
                                         </div>
 
                                     </td>
