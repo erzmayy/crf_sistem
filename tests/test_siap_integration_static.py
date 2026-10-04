@@ -55,12 +55,25 @@ class SiapIntegrationStaticTests(unittest.TestCase):
         self.assertIn("CRF_ROLE_SOURCE", auth)
         self.assertIn("resolver", auth)
 
-    def test_admin_edit_joins_configured_user_table(self):
+    def test_admin_edit_status_page_is_retired(self):
+        # Ubah status bebas diganti Tindakan Admin di admin/detail.php.
         edit = read("admin/edit.php")
+        self.assertIn("requireAdmin();", edit)
+        self.assertIn("header('Location: detail.php?id='", edit)
+        self.assertNotIn("UPDATE change_requests", read("actions/update_crf.php"))
 
-        self.assertIn("$userTable = crfUserTable();", edit)
-        self.assertIn("JOIN {$userTable} u", edit)
-        self.assertNotIn("JOIN users u", edit)
+    def test_admin_does_not_run_workflow_roles_but_demo_does(self):
+        auth = read("includes/auth.php")
+        self.assertIn("if ($currentRole === 'demo') {", auth)
+        self.assertNotIn("if ($currentRole === 'admin') {\n        return;", auth)
+        self.assertIn("CRF_DEMO_MODE && crfUserIdIn($user, CRF_DEMO_USERIDS)", read("includes/siap_user_provider.php"))
+
+    def test_admin_is_additive_permission_with_separation_of_duties(self):
+        auth = read("includes/auth.php")
+        self.assertIn("crfUserIdIn(getCurrentUser(), CRF_ADMIN_USERIDS)", auth)
+        self.assertIn("function isOwnHandledCrf(array $crf): bool", auth)
+        self.assertIn("isOwnHandledCrf($crf)", read("actions/crf_assign.php"))
+        self.assertIn("isOwnHandledCrf($crf)", read("actions/admin_cancel_crf.php"))
 
 
 if __name__ == "__main__":

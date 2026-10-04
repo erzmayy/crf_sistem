@@ -191,19 +191,6 @@ require_once __DIR__ . '/../includes/header.php';
           <h2>Informasi Pengajuan</h2>
         </div>
         <div class="crf-section-body">
-          <div class="mb-3">
-            <label for="request_type" class="crf-field-label">Tipe Pengajuan<span class="text-danger">*</span></label>
-            <select class="form-select" id="request_type" name="request_type" required>
-              <option value="">Pilih tipe pengajuan</option>
-              <?php foreach (crfRequestTypeOptions() as $requestType): ?>
-                <option
-                  value="<?= h($requestType) ?>"
-                  <?= ($old['request_type'] ?? '') === $requestType ? 'selected' : '' ?>
-                ><?= h($requestType) ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-
           <div class="row g-3">
             <div class="col-md-4">
               <label for="full_name" class="crf-field-label">Nama Lengkap<span class="text-danger">*</span>
@@ -253,20 +240,7 @@ require_once __DIR__ . '/../includes/header.php';
               <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
             </div>
             
-            <div class="col-md-6">
-              <label for="requester_position" class="crf-field-label">Jabatan</label>
-              <input
-                type="text"
-                class="form-control"
-                id="requester_position"
-                name="requester_position"
-                maxlength="150"
-                placeholder="Contoh: Staf Keuangan"
-                value="<?= h($old['requester_position'] ?? '') ?>"
-              >
-            </div>
-
-            <div class="col-md-6">
+            <div class="col-12">
               <label class="crf-field-label">Nomor Ticket Helpdesk</label>
               <input type="text" class="form-control" value="<?= h($sourceTicket['ticket_number'] ?? 'Tidak terhubung ke ticket Helpdesk') ?>" readonly>
               <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis bila CRF dibuat dari Formulir Helpdesk</div>
@@ -288,7 +262,7 @@ require_once __DIR__ . '/../includes/header.php';
               <label class="crf-field-label">Kepada<span class="text-danger">*</span>
               </label>
               <input type="text" class="form-control" value="<?= h($toDepartment . ' (' . $toDivision . ')') ?>" readonly>
-              <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Tujuan pengajuan CRF pada prototype ini tetap</div>
+              <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Tujuan pengajuan CRF ditetapkan sistem</div>
             </div>
             <div class="col-md-6">
               <label class="crf-field-label">Dari<span class="text-danger">*</span>
@@ -341,6 +315,19 @@ require_once __DIR__ . '/../includes/header.php';
           <h2>Change Request Description</h2>
         </div>
         <div class="crf-section-body">
+
+          <div class="mb-3" style="max-width: 360px;">
+            <label for="request_type" class="crf-field-label">Tipe Pengajuan<span class="text-danger">*</span></label>
+            <select class="form-select" id="request_type" name="request_type" required>
+              <option value="">Pilih tipe pengajuan</option>
+              <?php foreach (crfRequestTypeOptions() as $requestType): ?>
+                <option
+                  value="<?= h($requestType) ?>"
+                  <?= ($old['request_type'] ?? '') === $requestType ? 'selected' : '' ?>
+                ><?= h($requestType) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
 
           <div class="mb-3">
             <label for="change_description" class="crf-field-label">Rincian Permohonan Perubahan<span class="text-danger">*</span></label>

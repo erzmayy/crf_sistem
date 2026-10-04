@@ -15,8 +15,8 @@ requireLogin();
 $pdo = getConnection();
 $role = getCrfRole();
 
-$canHelpdesk = $role === 'admin' || isHelpdeskPic($pdo, (int) $_SESSION['user_id']);
-$canCrf = in_array($role, ['admin', 'cmo', 'otomasi', 'kadep_operasional'], true);
+$canHelpdesk = isAdmin() || isHelpdeskPic($pdo, (int) $_SESSION['user_id']);
+$canCrf = in_array($role, ['admin', 'demo', 'cmo', 'otomasi', 'kadep_operasional'], true);
 
 if (!$canHelpdesk && !$canCrf) {
     $_SESSION['flash'] = [
@@ -111,6 +111,7 @@ if ($canCrf) {
     // Tujuan tombol "Lihat CRF" sesuai peran.
     $crfListPage = [
         'admin' => '../admin/dashboard.php',
+        'demo' => '../admin/dashboard.php',
         'cmo' => '../cmo/index.php',
         'otomasi' => '../otomasi/index.php',
         'kadep_operasional' => '../pak_joko/index.php',
@@ -154,7 +155,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <small>CRF selesai</small>
                     </span>
                 <?php endif; ?>
-                <?php if ($role === 'admin'): ?>
+                <?php if (isAdmin()): ?>
                     <a href="../admin/master_data.php?tab=<?= h($activeTab) ?>" class="btn btn-light"><i class="bi bi-people"></i> Master Kategori</a>
                 <?php endif; ?>
             </div>

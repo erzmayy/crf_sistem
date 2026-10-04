@@ -64,7 +64,7 @@ function getCrfRole(): string
  */
 function promoteCategoryHandlerRole(string $role): string
 {
-    if ($role !== 'pemohon') {
+    if (!in_array($role, ['pemohon', 'admin'], true)) {
         return $role;
     }
 
@@ -103,7 +103,8 @@ function crfHandlerScope(PDO $pdo): array
         return $scope;
     }
 
-    if (getCrfRole() === 'admin') {
+    // Hanya akun demo yang boleh memproses semua kategori; Admin tidak memproses CRF.
+    if (isDemoUser()) {
         return $scope = ['all' => true, 'category_ids' => [], 'uncategorized' => true];
     }
 
@@ -175,7 +176,7 @@ function canHandleCrf(PDO $pdo, array $crf): bool
  */
 function isAssignedCrfHandler(array $crf): bool
 {
-    if (getCrfRole() === 'admin') {
+    if (isDemoUser()) {
         return true;
     }
 
@@ -184,14 +185,43 @@ function isAssignedCrfHandler(array $crf): bool
 }
 
 /**
- * Apakah user yang sedang login berperan sebagai admin (superuser)?
- * Mengacu ke crf_user_roles, sama seperti seluruh pengecekan akses
- * lainnya. Aturan lama berbasis dept/divisi (config/crf.php) tidak
- * dipakai lagi.
+ * Punya hak akses Admin (pengelola & pemantau)?
+ * Berlaku untuk role 'admin', akun 'demo', dan user di CRF_ADMIN_USERIDS
+ * yang juga punya peran kerja lain (hak Admin sebagai tambahan).
  */
 function isAdmin(): bool
 {
-    return getCrfRole() === 'admin';
+    static $cache = null;
+
+    if ($cache !== null) {
+        return $cache;
+    }
+
+    if (in_array(getCrfRole(), ['admin', 'demo'], true)) {
+        return $cache = true;
+    }
+
+    return $cache = CRF_ROLE_SOURCE === 'resolver'
+        && crfUserIdIn(getCurrentUser(), CRF_ADMIN_USERIDS);
+}
+
+/**
+ * Hak Admin tidak boleh dipakai pada CRF yang sedang dipegang user itu
+ * sendiri sebagai Handler (pemisahan tugas). Akun demo dikecualikan.
+ */
+function isOwnHandledCrf(array $crf): bool
+{
+    return !isDemoUser()
+        && !empty($crf['assigned_handler_id'])
+        && (int) $crf['assigned_handler_id'] === (int) ($_SESSION['user_id'] ?? 0);
+}
+
+/**
+ * Akun demo presentasi: boleh menjalankan semua peran (lihat config/siap.php).
+ */
+function isDemoUser(): bool
+{
+    return getCrfRole() === 'demo';
 }
 
 function isCrfRole(string $role): bool
@@ -201,9 +231,9 @@ function isCrfRole(string $role): bool
 
 /**
  * Membatasi halaman untuk role tertentu.
- * Role 'admin' adalah superuser: selalu diizinkan, sehingga satu
- * akun admin bisa dipakai mendemokan seluruh alur (CMO, Otomasi,
- * Kepala Departemen Operasional).
+ * - Akun 'demo' selalu diizinkan (satu akun untuk presentasi semua peran).
+ * - Role 'admin' hanya diizinkan bila 'admin' disebut di $roles: Admin
+ *   mengelola & memantau, tidak menjalankan aksi CMO/Handler/Kadep.
  */
 function requireCrfRole($roles): void
 {
@@ -212,7 +242,7 @@ function requireCrfRole($roles): void
     $roles = is_array($roles) ? $roles : [$roles];
     $currentRole = getCrfRole();
 
-    if ($currentRole === 'admin') {
+    if ($currentRole === 'demo') {
         return;
     }
 
@@ -223,6 +253,9 @@ function requireCrfRole($roles): void
         ];
 
         switch ($currentRole) {
+            case 'admin':
+                header('Location: ../admin/dashboard.php');
+                break;
             case 'cmo':
                 header('Location: ../cmo/dashboard.php');
                 break;
@@ -251,6 +284,8 @@ function crfRoleLabel(string $role): string
             return 'Kepala Departemen Operasional';
         case 'admin':
             return 'Admin';
+        case 'demo':
+            return 'Demo (Semua Peran)';
         default:
             return 'Pemohon';
     }
@@ -261,7 +296,13 @@ function crfRoleLabel(string $role): string
  */
 function requireAdmin(): void
 {
-    requireCrfRole(['admin']);
+    requireLogin();
+
+    if (isAdmin()) {
+        return;
+    }
+
+    requireCrfRole(['admin']); // menolak & mengarahkan sesuai peran
 }
 
 /**
@@ -299,12 +340,17 @@ function canAccessCrf(PDO $pdo, int $crfId): bool
 
     $role = getCrfRole();
 
+    // Hak Admin: boleh melihat semua CRF (non-draft).
+    if (isAdmin()) {
+        return true;
+    }
+
     // Handler hanya boleh melihat CRF pada kategori yang ditanganinya.
     if ($role === 'otomasi') {
         return canHandleCrf($pdo, $row);
     }
 
-    return in_array($role, ['admin', 'cmo', 'kadep_operasional'], true);
+    return in_array($role, ['admin', 'demo', 'cmo', 'kadep_operasional'], true);
 }
 
 /**
@@ -338,7 +384,7 @@ function requireHelpdeskPic(): void
 {
     requireLogin();
 
-    if (getCrfRole() === 'admin' || isHelpdeskPic(getConnection(), (int) $_SESSION['user_id'])) {
+    if (isAdmin() || isHelpdeskPic(getConnection(), (int) $_SESSION['user_id'])) {
         return;
     }
 

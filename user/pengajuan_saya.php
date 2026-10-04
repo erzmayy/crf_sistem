@@ -416,11 +416,10 @@ require_once __DIR__ . '/../includes/header.php';
 
                                 <tr>
                                     <th>No</th>
-                                    <th>Keterangan Pengajuan</th>
+                                    <th>Pengajuan</th>
                                     <th>Isi Pengajuan</th>
-                                    <th>Level Urgensi</th>
+                                    <th>Urgensi</th>
                                     <th>Status</th>
-                                    <th>Tahap</th>
                                     <th>Aksi</th>
                                 </tr>
 
@@ -430,7 +429,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <?php if (empty($pengajuan)): ?>
                                 <tr>
-                                    <td data-label="Pengajuan" colspan="7" class="crf-empty-cell">
+                                    <td data-label="Pengajuan" colspan="6" class="crf-empty-cell">
                                         <div class="crf-empty-state crf-empty-state-compact">
                                             <div class="crf-empty-icon">
                                                 <i class="bi bi-search"></i>
@@ -451,59 +450,8 @@ require_once __DIR__ . '/../includes/header.php';
                                     </td>
 
 
-                                    <!-- KETERANGAN PENGAJUAN -->
-                                    <td data-label="Keterangan Pengajuan">
-                                        <div class="crf-request-meta">
-                                            <strong><?= h($row['full_name'] ?? '-') ?></strong>
-                                            <span class="crf-request-caption"><?= h($row['from_department'] ?? '-') ?></span>
-                                            <span class="crf-request-caption">Nomor Register</span>
-                                            <span class="crf-request-register"><?= h($row['request_number'] ?? '-') ?></span>
-                                            <div class="crf-request-date-card">
-                                                <span class="crf-request-caption">Tanggal Pengajuan</span>
-                                                <span><?= !empty($row['submission_date'])
-                                                    ? h(date('d-m-Y', strtotime($row['submission_date'])))
-                                                    : '-' ?></span>
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    <!-- ISI PENGAJUAN -->
-                                    <td data-label="Isi Pengajuan">
-                                        <div class="crf-request-content">
-                                            <span class="crf-request-category-chip"><?= h(crfCategoryName($row, 'Kategori belum dipilih')) ?></span>
-                                            <div class="crf-request-description"><?= h($row['change_description'] ?? '-') ?></div>
-                                        </div>
-                                    </td>
-
-                                    <!-- LEVEL -->
-                                    <td data-label="Level Urgensi">
-                                        <span
-                                            class="crf-badge <?= levelBadgeClass($row['level'] ?? null) ?>"
-                                            title="<?= h(($row['level'] ?? null) === 'Normal' ? 'Sedang' : ($row['level'] ?? '-')) ?>"
-                                        >
-                                            <?= h(($row['level'] ?? null) === 'Normal' ? 'Sedang' : ($row['level'] ?? '-')) ?>
-                                        </span>
-                                    </td>
-
-                                    <!-- STATUS -->
-                                    <td data-label="Status">
-                                        <span
-                                            class="crf-badge <?= statusBadgeClass($row['status']) ?>"
-                                            title="<?= h(statusLabel($row['status'])) ?>"
-                                        >
-                                            <?= h(statusLabel($row['status'])) ?>
-                                        </span>
-                                    </td>
-
-                                    <!-- TAHAP -->
-                                    <td data-label="Tahap">
-                                        <span
-                                            class="crf-badge <?= workflowStageBadgeClass($row['workflow_stage'] ?? 'PEMOHON') ?>"
-                                            title="<?= h(workflowStageLabel($row['workflow_stage'] ?? 'PEMOHON')) ?>"
-                                        >
-                                            <?= h(workflowStageLabel($row['workflow_stage'] ?? 'PEMOHON')) ?>
-                                        </span>
-                                    </td>
+                                    <?php $rowCategoryEmpty = 'Kategori belum dipilih'; require __DIR__ . '/../includes/partials/crf_row_request.php'; ?>
+                                    <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
 
                                    <!-- AKSI -->
                                 <td data-label="Aksi">
@@ -513,9 +461,9 @@ require_once __DIR__ . '/../includes/header.php';
                                         <!-- DETAIL -->
                                         <a
                                             href="detail.php?id=<?= (int) $row['id'] ?>"
-                                            class="btn btn-sm btn-primary"
+                                            class="btn btn-sm btn-crf-outline"
                                         >
-                                            Detail
+                                            <i class="bi bi-eye"></i> Detail
                                         </a>
 
 
@@ -527,7 +475,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                                             <a
                                                 href="../actions/export_crf.php?id=<?= (int) $row['id'] ?>"
-                                                class="btn btn-sm btn-outline-secondary"
+                                                class="btn btn-sm btn-crf-outline"
                                                 target="_blank"
                                                 title="Cetak PDF"
                                             >
@@ -543,7 +491,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                                             <a
                                                 href="detail.php?id=<?= (int) $row['id'] ?>#implementation-review"
-                                                class="btn btn-sm btn-success"
+                                                class="btn btn-sm btn-crf-primary"
                                             >
                                                 <i class="bi bi-pencil-square"></i>
                                                 Isi PIR
@@ -560,7 +508,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                                             <a
                                                 href="form_crf.php?id=<?= (int) $row['id'] ?>"
-                                                class="btn btn-sm btn-warning"
+                                                class="btn btn-sm btn-crf-primary"
                                             >
                                                 <?= $row['status'] === 'Perlu Revisi'
                                                     ? 'Perbaiki'

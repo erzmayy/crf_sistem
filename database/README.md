@@ -28,5 +28,6 @@ migrasi aman dijalankan ulang.
 | 010 | `helpdesk_crf_integration_migration.sql` | Modul Helpdesk, kategori, handler, notifikasi |
 | 011 | `pir_pemohon_migration.sql` | Tahap `PEMOHON_PIR` (PIR diisi pemohon) |
 | 012 | `sla_matrix_migration.sql` | Matriks SLA kategori × urgensi |
+| 013 | `crf_category_five_migration.sql` | Kategori CRF jadi 5: Aplikasi, Infrastruktur, Proses, Security, Lainnya |
 
-Migrasi baru berikutnya diberi nomor `013_...`.
+Migrasi baru berikutnya diberi nomor `014_...`.

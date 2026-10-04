@@ -7,7 +7,7 @@ $pdo = getConnection();
 
 $filter = $_GET['stage'] ?? 'all';
 $search = $_GET['q'] ?? '';
-$allowedFilters = ['all', 'filter', 'final', 'history'];
+$allowedFilters = ['all', 'filter', 'pir', 'final', 'history'];
 if (!in_array($filter, $allowedFilters, true)) {
     $filter = 'all';
 }
@@ -34,11 +34,13 @@ if ($filter === 'history') {
           )
     )";
 } else {
-    $where[] = "cr.workflow_stage IN ('CMO_FILTER','CMO_FINAL')";
+    $where[] = "cr.workflow_stage IN ('CMO_FILTER','PEMOHON_PIR','CMO_FINAL')";
 }
 
 if ($filter === 'filter') {
     $where[] = "cr.workflow_stage = 'CMO_FILTER'";
+} elseif ($filter === 'pir') {
+    $where[] = "cr.workflow_stage = 'PEMOHON_PIR'";
 } elseif ($filter === 'final') {
     $where[] = "cr.workflow_stage = 'CMO_FINAL'";
 }
@@ -114,8 +116,8 @@ $requests = $stmt->fetchAll();
  * SUMMARY
  * ========================================================= */
 
-$countStmt = $pdo->query("SELECT workflow_stage, COUNT(*) total FROM change_requests WHERE workflow_stage IN ('CMO_FILTER','CMO_FINAL') AND status <> 'Draft' GROUP BY workflow_stage");
-$counts = ['CMO_FILTER' => 0, 'CMO_FINAL' => 0];
+$countStmt = $pdo->query("SELECT workflow_stage, COUNT(*) total FROM change_requests WHERE workflow_stage IN ('CMO_FILTER','PEMOHON_PIR','CMO_FINAL') AND status <> 'Draft' GROUP BY workflow_stage");
+$counts = ['CMO_FILTER' => 0, 'PEMOHON_PIR' => 0, 'CMO_FINAL' => 0];
 foreach ($countStmt->fetchAll() as $row) {
     $counts[$row['workflow_stage']] = (int) $row['total'];
 }
@@ -131,7 +133,7 @@ require_once __DIR__ . '/../includes/header.php';
       <div>
         <span class="crf-helpdesk-eyebrow">PORTAL CRF · REVIEW PERUBAHAN</span>
         <h1>Dashboard CMO</h1>
-        <p>Kelola CRF pada tahap filter dan finalisasi.</p>
+        <p>Kelola CRF pada tahap filter, pemantauan PIR, dan finalisasi.</p>
       </div>
     </div>
 
@@ -143,6 +145,10 @@ require_once __DIR__ . '/../includes/header.php';
       <a class="crf-stat-card text-decoration-none" href="?stage=filter">
         <span><i class="bi bi-funnel-fill"></i> Menunggu Filter</span>
         <strong><?= $counts['CMO_FILTER'] ?></strong>
+      </a>
+      <a class="crf-stat-card text-decoration-none" href="?stage=pir" title="Implementasi selesai, menunggu Post Implementation Review dari Pemohon">
+        <span><i class="bi bi-hourglass-split"></i> Menunggu PIR Pemohon</span>
+        <strong><?= $counts['PEMOHON_PIR'] ?></strong>
       </a>
       <a class="crf-stat-card text-decoration-none" href="?stage=final">
         <span><i class="bi bi-check2-square"></i> Menunggu Finalisasi</span>
@@ -156,6 +162,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="btn-group">
           <a href="?stage=all" class="btn btn-sm <?= $filter === 'all' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Semua</a>
           <a href="?stage=filter" class="btn btn-sm <?= $filter === 'filter' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Filter</a>
+          <a href="?stage=pir" class="btn btn-sm <?= $filter === 'pir' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Menunggu PIR</a>
           <a href="?stage=final" class="btn btn-sm <?= $filter === 'final' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Finalisasi</a>
           <a href="?stage=history" class="btn btn-sm <?= $filter === 'history' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Riwayat</a>
         </div>
@@ -172,36 +179,18 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="table-responsive crf-table-responsive-cards crf-helpdesk-table-wrap">
         <table class="table crf-table crf-helpdesk-table crf-helpdesk-table--cmo align-middle">
           <thead><tr>
-            <th>No</th><th>Keterangan Pengajuan</th><th>Isi Pengajuan</th><th>Level Urgensi</th><th>Status</th><th>Tahap</th><th>Aksi</th>
+            <th>No</th><th>Pengajuan</th><th>Isi Pengajuan</th><th>Urgensi</th><th>Status</th><th>Aksi</th>
           </tr></thead>
           <tbody>
           <?php if (!$requests): ?>
-            <tr><td data-label="Pengajuan" colspan="7" class="text-center text-muted py-4">Belum ada CRF yang cocok dengan pencarian/filter ini.</td></tr>
+            <tr><td data-label="Pengajuan" colspan="6" class="text-center text-muted py-4">Belum ada CRF yang cocok dengan pencarian/filter ini.</td></tr>
           <?php else: ?>
             <?php foreach ($requests as $i => $row): ?>
               <tr>
                 <td data-label="No"><?= $offset + $i + 1 ?></td>
-                <td data-label="Keterangan Pengajuan">
-                  <div class="crf-request-meta">
-                    <strong><?= h($row['full_name'] ?? '-') ?></strong>
-                    <span class="crf-request-caption">Nomor Register</span>
-                    <span class="crf-request-register"><?= h($row['request_number'] ?? '-') ?></span>
-                    <div class="crf-request-date-card">
-                      <span class="crf-request-caption">Tanggal Pengajuan</span>
-                      <span><?= !empty($row['submission_date']) ? h(date('d-m-Y', strtotime($row['submission_date']))) : '-' ?></span>
-                    </div>
-                  </div>
-                </td>
-                <td data-label="Isi Pengajuan">
-                  <div class="crf-request-content">
-                    <span class="crf-request-category-chip"><?= h(crfCategoryName($row, 'Lainnya')) ?></span>
-                    <div class="crf-request-description"><?= h($row['change_description'] ?? '-') ?></div>
-                  </div>
-                </td>
-                <td data-label="Level Urgensi"><span class="crf-badge <?= levelBadgeClass($row['level']) ?>"><?= h(($row['level'] ?? null) === 'Normal' ? 'Sedang' : ($row['level'] ?? 'Belum ditentukan')) ?></span></td>
-                <td data-label="Status"><span class="crf-badge <?= statusBadgeClass($row['status']) ?>"><?= h(statusLabel($row['status'])) ?></span></td>
-                <td data-label="Tahap"><span class="crf-badge <?= workflowStageBadgeClass($row['workflow_stage']) ?>"><?= h(workflowStageLabel($row['workflow_stage'])) ?></span></td>
-                <td data-label="Aksi"><a href="detail.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-primary"><i class="bi bi-eye"></i> Detail</a></td>
+                <?php require __DIR__ . '/../includes/partials/crf_row_request.php'; ?>
+                <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
+                <td data-label="Aksi"><a href="detail.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline"><i class="bi bi-eye"></i> Detail</a></td>
               </tr>
             <?php endforeach; ?>
           <?php endif; ?>

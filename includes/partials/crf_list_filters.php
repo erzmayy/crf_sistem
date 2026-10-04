@@ -44,7 +44,7 @@ $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
             <option value="">Semua Level</option>
             <?php foreach (['Tinggi', 'Normal', 'Rendah'] as $levelOption): ?>
                 <option value="<?= h($levelOption) ?>" <?= ($listFilters['level'] ?? '') === $levelOption ? 'selected' : '' ?>>
-                    <?= h($levelOption === 'Normal' ? 'Sedang' : $levelOption) ?>
+                    <?= h($levelOption) ?>
                 </option>
             <?php endforeach; ?>
         </select>

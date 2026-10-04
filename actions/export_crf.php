@@ -794,7 +794,7 @@ $html = '
     </table>
 
     <div class="footer-note">
-        Dokumen ini dihasilkan oleh sistem CRF Prototype PT Persona Prima Utama.
+        Dokumen ini dihasilkan oleh Sistem Helpdesk &amp; CRF PT Persona Prima Utama.
     </div>
 
 </body>

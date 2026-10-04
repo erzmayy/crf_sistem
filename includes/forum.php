@@ -3,7 +3,7 @@ require_once __DIR__ . '/auth.php';
 
 function forumRoles(): array
 {
-    return ['cmo', 'otomasi', 'admin', 'kadep_operasional'];
+    return ['cmo', 'otomasi', 'admin', 'demo', 'kadep_operasional'];
 }
 
 function requireForumAccess(): void
@@ -13,7 +13,7 @@ function requireForumAccess(): void
 
 function canManageForumFinalSla(): bool
 {
-    return in_array(getCrfRole(), ['admin', 'cmo'], true);
+    return isAdmin() || getCrfRole() === 'cmo';
 }
 
 function forumActiveCrfCondition(string $alias = 'cr'): string

@@ -272,14 +272,12 @@ require_once __DIR__ . '/../includes/header.php';
                     <thead>
                         <tr>
                             <th>No</th>
-                            <th>Keterangan Pengajuan</th>
+                            <th>Pengajuan</th>
                             <th>Isi Pengajuan</th>
-                            <th>Level Urgensi</th>
+                            <th>Urgensi</th>
+                            <th>Status</th>
                             <th>SLA</th>
-                            <th>Tahap Saat Ini</th>
-                            <?php if ($queue === 'history'): ?>
-                                <th>Status</th>
-                            <?php else: ?>
+                            <?php if ($queue !== 'history'): ?>
                                 <th>Status SLA</th>
                             <?php endif; ?>
                             <th>Aksi</th>
@@ -289,7 +287,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <tbody>
                     <?php if (!$requests): ?>
                         <tr>
-                            <td data-label="Pengajuan" colspan="8" class="text-center text-muted py-4">
+                            <td data-label="Pengajuan" colspan="<?= $queue === 'history' ? 7 : 8 ?>" class="text-center text-muted py-4">
                                 <?= $queue === 'history'
                                     ? 'Belum ada CRF yang pernah diproses oleh Otomasi.'
                                     : 'Tidak ada CRF pada antrean Otomasi sesuai filter yang dipilih.' ?>
@@ -300,34 +298,8 @@ require_once __DIR__ . '/../includes/header.php';
                             <tr>
                                 <td data-label="No"><?= $offset + $i + 1 ?></td>
 
-                                <td data-label="Keterangan Pengajuan">
-                                    <div class="crf-request-meta">
-                                        <strong><?= h($row['full_name'] ?? '-') ?></strong>
-                                        <span class="crf-request-caption">Nomor Register</span>
-                                        <span class="crf-request-register"><?= h($row['request_number'] ?? '-') ?></span>
-                                        <div class="crf-request-date-card">
-                                            <span class="crf-request-caption">Tanggal Pengajuan</span>
-                                            <span><?= !empty($row['submission_date']) ? h(date('d-m-Y', strtotime($row['submission_date']))) : '-' ?></span>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <td data-label="Isi Pengajuan">
-                                    <div class="crf-request-content">
-                                        <span class="crf-request-category-chip"><?= h(crfCategoryName($row, 'Lainnya')) ?></span>
-                                        <div class="crf-request-description"><?= h($row['change_description'] ?? '-') ?></div>
-                                        <div class="small mt-1 <?= empty($row['assigned_handler_id']) ? 'text-danger' : 'text-muted' ?>">
-                                            <i class="bi <?= empty($row['assigned_handler_id']) ? 'bi-person-dash' : 'bi-person-check' ?>"></i>
-                                            <?= empty($row['assigned_handler_id']) ? 'Belum diambil handler' : 'Handler: ' . h($row['assigned_handler_name']) ?>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <td data-label="Level Urgensi">
-                                    <span class="crf-badge <?= levelBadgeClass($row['level']) ?>">
-                                        <?= h(($row['level'] ?? null) === 'Normal' ? 'Sedang' : ($row['level'] ?? 'Belum ditentukan')) ?>
-                                    </span>
-                                </td>
+                                <?php $rowShowDepartment = false; $rowShowHandler = true; require __DIR__ . '/../includes/partials/crf_row_request.php'; ?>
+                                <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
 
                                 <td data-label="SLA">
                                     <?= $row['sla_value'] !== null && $row['sla_unit']
@@ -335,19 +307,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         : '-' ?>
                                 </td>
 
-                                <td data-label="Tahap Saat Ini">
-                                    <span class="crf-badge <?= workflowStageBadgeClass($row['workflow_stage']) ?>">
-                                        <?= h(workflowStageLabel($row['workflow_stage'])) ?>
-                                    </span>
-                                </td>
-
-                                <?php if ($queue === 'history'): ?>
-                                    <td data-label="Status">
-                                        <span class="crf-badge <?= statusBadgeClass($row['status']) ?>">
-                                            <?= h(statusLabel($row['status'])) ?>
-                                        </span>
-                                    </td>
-                                <?php else: ?>
+                                <?php if ($queue !== 'history'): ?>
                                     <?php $rowSlaStatus = getCrfSlaStatus($row); ?>
                                     <td data-label="Status SLA">
                                         <div

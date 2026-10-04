@@ -18,6 +18,7 @@ $activityLabels = [
     'Approval Kepala Departemen Operasional' => 'Persetujuan Kepala Departemen',
     'Otomasi Selesai' => 'Implementasi Selesai',
     'PIR Diisi Pemohon' => 'Post Implementation Review',
+    'Pengingat PIR' => 'Pengingat PIR ke Pemohon',
     'Solve' => 'CRF Selesai',
     'Cancel' => 'CRF Dibatalkan',
     'Dibuat dari Helpdesk' => 'Draft CRF Dibuat dari Helpdesk',
