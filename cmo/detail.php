@@ -14,6 +14,7 @@
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/forum_proposals.php';
 
 requireCrfRole(['cmo']);
 
@@ -296,6 +297,18 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <div class="crf-section-body">
 
+                    <?php $cmoOpenProposal = forumOpenProposal($pdo, (int) $crf['id']); ?>
+                    <?php if ($cmoOpenProposal): ?>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-flag-fill"></i>
+                            Ada <strong>usulan <?= h(strtolower(forumProposalKindLabel($cmoOpenProposal['kind']))) ?></strong>
+                            dari <?= h($cmoOpenProposal['proposed_by_name']) ?> yang menunggu keputusan
+                            <?= !empty($cmoOpenProposal['due_at']) ? '(batas ' . h(date('d-m-Y H:i', strtotime($cmoOpenProposal['due_at']))) . ')' : '' ?>.
+                            CRF tetap dapat diteruskan; bila belum diputuskan, nilai yang berlaku adalah SLA standar kategori.
+                            <a href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>#forum-proposal">Lihat pembahasan di Forum</a>
+                        </div>
+                    <?php endif; ?>
+
                     <form action="../actions/cmo_action.php" method="POST">
 
                         <?= csrfField() ?>
@@ -319,12 +332,21 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <button
                                 name="action"
-                                value="to_automation"
+                                value="to_approval"
                                 class="btn btn-crf-primary"
                             >
                                 <i class="bi bi-arrow-right-circle"></i>
-                                Teruskan ke Divisi Otomasi
+                                Teruskan ke Kepala Departemen Operasional
                             </button>
+
+                            <a
+                                href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>&amp;propose=1#forum-proposal"
+                                class="btn btn-outline-secondary"
+                                title="Usulkan perubahan Level Urgensi/SLA untuk dibahas dan diputuskan di Forum"
+                            >
+                                <i class="bi bi-flag"></i>
+                                <?= $cmoOpenProposal ? 'Lihat Pembahasan Urgensi/SLA' : 'Ajukan Pembahasan Urgensi/SLA' ?>
+                            </a>
 
                             <button
                                 name="action"

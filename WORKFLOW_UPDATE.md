@@ -1,9 +1,9 @@
 # Alur Workflow CRF
 
 ```
-Pemohon → CMO (Filter) → Otomasi (Level Urgensi + SLA)
-  → Kepala Departemen Operasional (Approval)
-  → Otomasi (Eksekusi & Implementasi)
+Pemohon → CMO (Filter) → Kepala Departemen Operasional (Approval)
+  → Antrean Otomasi → Otomasi: Mulai Kerjakan (SLA mulai)
+  → Otomasi: Selesai (Implementasi)
   → Pemohon (Post Implementation Review)
   → CMO (Finalisasi) → Selesai
 ```
@@ -14,8 +14,8 @@ Pemohon → CMO (Filter) → Otomasi (Level Urgensi + SLA)
 |-------|-------------------|----------|
 | `PEMOHON` | Menunggu Pemeriksaan | Pemohon (draft / revisi) |
 | `CMO_FILTER` | Verifikasi CMO | CMO |
-| `OTOMASI` | Tindak Lanjut Divisi Otomasi | Handler (tetapkan SLA, lalu eksekusi) |
 | `kadep_operasional` | Persetujuan Kepala Departemen Operasional | Kepala Departemen Operasional |
+| `OTOMASI` | Tindak Lanjut Divisi Otomasi | Handler (antrean → Mulai Kerjakan → Selesai) |
 | `PEMOHON_PIR` | Menunggu PIR Pemohon | Pemohon |
 | `CMO_FINAL` | Finalisasi CMO | CMO |
 | `SELESAI` | Selesai | - |
@@ -23,28 +23,71 @@ Pemohon → CMO (Filter) → Otomasi (Level Urgensi + SLA)
 Status (`status`): Draft, Belum Ditindak Lanjuti (Menunggu Tindakan), Perlu Revisi,
 Dalam Proses (Sedang Diproses), Solve (Selesai), Cancel (Dibatalkan).
 
+Pada tahap `OTOMASI`, CRF dengan `automation_started_at` kosong tampil sebagai
+**Disetujui · Antrean**; setelah "Mulai Kerjakan" tampil sebagai **Disetujui · Eksekusi**.
+
 ## Langkah per peran
 
 1. **Pemohon** mengisi Form CRF dan mengajukannya (bisa disimpan sebagai Draft).
    Level Urgensi ditentukan otomatis dari kategori Dampak.
-2. **CMO** memfilter: meneruskan ke Otomasi, meminta revisi (kembali ke Pemohon),
-   atau membatalkan.
-3. **Otomasi (Handler)** mengambil CRF pada kategorinya, lalu menetapkan SLA.
-   SLA standar diambil dari matriks Kategori × Urgensi dan tidak mengubah Level
-   Urgensi. CRF diteruskan ke Kepala Departemen Operasional.
-4. **Kepala Departemen Operasional** menyetujui. **SLA mulai dihitung sejak
-   persetujuan ini**, lalu CRF kembali ke Otomasi.
-5. **Otomasi** mengeksekusi dan mengisi Tanggal serta Hasil Implementasi.
+2. **CMO** memfilter: meneruskan ke Kepala Departemen Operasional, meminta revisi
+   (kembali ke Pemohon), atau membatalkan. Saat diteruskan, Level Urgensi dan SLA
+   terisi otomatis dari matriks Kategori × Urgensi. Bila kategori belum punya SLA
+   standar, Admin mendapat notifikasi untuk menetapkannya di Forum.
+3. **Kepala Departemen Operasional** menyetujui (tidak ada jalur tolak). CRF masuk
+   **antrean Otomasi**; SLA **belum** berjalan. Persetujuan butuh SLA yang valid.
+4. **Otomasi (Handler)** menekan **Mulai Kerjakan** saat benar-benar mengerjakan.
+   **SLA mulai dihitung sejak saat itu.** Handler yang memulai otomatis menjadi
+   pemegang CRF. Waktu tunggu di antrean dicatat di timeline. Otomasi tidak
+   menentukan atau mengubah SLA.
+5. **Otomasi** mengisi Tanggal serta Hasil Implementasi lalu menekan **Selesaikan**.
    CRF diteruskan ke Pemohon.
 6. **Pemohon** mengisi Tanggal PIR dan Post Implementation Review.
    Setelah itu CRF diteruskan ke CMO.
 7. **CMO** memfinalisasi dan menandai selesai.
 
-Admin dapat memantau semua CRF, menugaskan ulang Handler, dan membatalkan CRF
-secara administratif. Forum dipakai CMO, Otomasi, Kepala Departemen Operasional,
-dan Admin untuk berdiskusi; hanya Admin yang dapat menetapkan Level Urgensi dan SLA final di
-Forum (prioritas di atas level otomatis). Kesepakatan ini terkunci setelah
-persetujuan Kepala Departemen Operasional.
+Antrean Otomasi diurutkan: CRF yang sedang dikerjakan (tenggat terdekat) lebih dulu,
+lalu antrean menurut Level Urgensi (Tinggi → Normal → Rendah) dan waktu persetujuan.
+
+Admin dapat memantau semua CRF dan membatalkan CRF secara administratif.
+Tidak ada fitur "Ambil CRF" maupun penugasan Handler oleh Admin: Petugas Otomasi
+yang menekan "Mulai Kerjakan" otomatis menjadi pemegang CRF, dan hanya dia yang
+dapat menyelesaikannya. Forum dipakai CMO, Otomasi, Kepala Departemen Operasional,
+dan Admin untuk berdiskusi. Perubahan Level Urgensi dan SLA hanya lewat mekanisme
+usulan di bawah (prioritas di atas level otomatis).
+
+## Forum: usulan Urgensi & SLA
+
+Level Urgensi dan SLA terisi otomatis dari matriks Kategori × Urgensi. Bila perlu
+diubah, dibahas di Forum dengan alur **usulan → keputusan satu pihak** (tanpa voting):
+
+| | Siapa |
+|---|---|
+| **Mengajukan** | CMO, Admin, Petugas Otomasi kategori CRF (akun demo untuk presentasi) |
+| **Memutuskan** | Penentu = `forumDeciderRoles()` di `includes/forum.php` (saat ini hanya **Admin**) |
+| Hanya berkomentar | Kepala Departemen Operasional |
+
+- **Pemicu pembahasan:** tombol *Ajukan Pembahasan Urgensi/SLA* (halaman verifikasi CMO
+  atau ruang Forum), atau otomatis oleh sistem saat CMO meneruskan CRF yang SLA standar
+  kategorinya kosong. Ruang yang punya usulan terbuka diberi penanda **Perlu dibahas**
+  dan tampil paling atas; filter bawaan Forum menjadi *Perlu dibahas* bila ada.
+- **Jenis usulan** ditentukan dari tahap CRF:
+  - *Urgensi & SLA* — sebelum disetujui Kepala Departemen Operasional.
+  - *Perpanjangan SLA* — setelah disetujui, selama CRF di tahap Otomasi. SLA baru adalah
+    total sejak SLA dimulai dan harus lebih lama; batas SLA dihitung ulang.
+- **Keputusan:** Setujui (boleh menyesuaikan nilai) atau Tolak (catatan wajib). Penentu
+  juga dapat menetapkan nilai langsung tanpa usulan; tetap tercatat di riwayat.
+- **Satu usulan terbuka per CRF** (dijaga UNIQUE `forum_proposals.open_crf_id`).
+- **Tidak menahan alur:** CRF tetap bisa diteruskan/disetujui walau usulan belum
+  diputuskan; usulan ditutup otomatis saat Kepala Departemen Operasional menyetujui
+  (urgensi/SLA) atau CRF selesai dikerjakan/dibatalkan. Pengecualian: CRF **tanpa SLA**
+  tidak dapat disetujui sampai penentu menetapkannya.
+- **Batas keputusan** 2 hari kerja (`FORUM_PROPOSAL_DECISION_DAYS`) — target proses, bukan
+  SLA CRF. Lewat batas, penentu mendapat satu pengingat (dikirim saat Forum dibuka).
+- **Notifikasi:** penentu (dan CMO bila masih verifikasi) saat ada usulan; pengusul,
+  peserta diskusi, handler, dan CMO saat ada keputusan.
+- Urgensi/SLA terkunci setelah persetujuan Kepala Departemen Operasional kecuali lewat
+  perpanjangan SLA.
 
 ## SLA
 
@@ -71,6 +114,11 @@ Request diajukan langsung lewat Form CRF. Ticket lama berstatus
 - Database lama: jalankan migrasi di `database/migrations/` berurutan.
   Daftar lengkap ada di [database/README.md](database/README.md).
 - Tahap `PEMOHON_PIR` dipulihkan oleh migrasi `011_pir_pemohon_migration.sql`.
+- Alur antrean Otomasi: jalankan `015_alur_antrean_otomasi_migration.sql` agar CRF
+  lama di tahap penetapan SLA Otomasi pindah ke antrean persetujuan.
+- Usulan Urgensi & SLA Forum: jalankan `016_forum_proposals_migration.sql` (tabel
+  `forum_proposals` dan kolom `forum_comments.is_system`). **Wajib** sebelum kode ini
+  dipakai: tanpa tabel itu halaman Forum error.
 
 ## Akun
 

@@ -2,7 +2,7 @@
 /**
  * actions/update_crf.php (dinonaktifkan)
  * Dulu menyimpan perubahan status bebas dari admin/edit.php. Diganti
- * actions/admin_cancel_crf.php dan actions/crf_assign.php agar setiap
+ * actions/admin_cancel_crf.php agar setiap
  * perubahan mengikuti workflow dan tercatat dengan alasan.
  */
 require_once __DIR__ . '/../includes/auth.php';

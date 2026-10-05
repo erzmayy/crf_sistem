@@ -12,13 +12,25 @@ function requireForumAccess(): void
     requireCrfRole(forumRoles());
 }
 
+function forumDeciderRoles(): array
+{
+    return ['admin'];
+}
+
 /**
- * Hanya role Admin yang boleh menetapkan Level Urgensi dan SLA final di Forum.
- * Sengaja tidak memakai isAdmin(): akun demo dan hak Admin tambahan pada role lain tidak termasuk.
+ * Penentu usulan Urgensi & SLA di Forum. Sengaja memakai getCrfRole() (bukan
+ * isAdmin()): akun demo dan hak Admin tambahan pada role lain tidak termasuk.
+ * Ubah forumDeciderRoles() untuk mengganti penentu (mis. ['cmo'] atau ['admin', 'cmo']).
  */
+function canDecideForumProposal(): bool
+{
+    return in_array(getCrfRole(), forumDeciderRoles(), true);
+}
+
+/** Nama lama, dipertahankan agar pemanggil lain tetap bekerja. */
 function canManageForumFinalSla(): bool
 {
-    return getCrfRole() === 'admin';
+    return canDecideForumProposal();
 }
 
 function forumActiveCrfCondition(string $alias = 'cr'): string
@@ -83,6 +95,65 @@ function markForumRead(PDO $pdo, int $crfId, int $userId, int $lastCommentId): v
         'change_request_id' => $crfId,
         'last_read_comment_id' => $lastCommentId,
     ]);
+}
+
+/**
+ * Peran Forum boleh melihat detail (read-only) dan mengunduh lampiran
+ * semua CRF yang sedang dibahas di Forum, termasuk Petugas Otomasi di
+ * luar kategorinya. Hak aksi tetap dijaga di halaman proses masing-masing.
+ */
+function canViewForumCrf(PDO $pdo, int $crfId): bool
+{
+    if ($crfId <= 0 || !in_array(getCrfRole(), array_merge(forumRoles(), ['demo']), true)) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare(
+        'SELECT 1 FROM change_requests cr
+         WHERE cr.id = :id AND ' . forumActiveCrfCondition('cr') . '
+         LIMIT 1'
+    );
+    $stmt->execute(['id' => $crfId]);
+
+    return (bool) $stmt->fetchColumn();
+}
+
+/**
+ * Halaman proses yang relevan bagi user untuk CRF ini, atau null bila user
+ * tidak punya aksi pada tahap saat ini.
+ *
+ * @return ?array{url:string,label:string}
+ */
+function forumProcessLink(PDO $pdo, array $crf): ?array
+{
+    $id = (int) $crf['id'];
+    $stage = (string) ($crf['workflow_stage'] ?? '');
+
+    switch (getCrfRole()) {
+        case 'demo':
+            return ['url' => '../crf/open.php?id=' . $id, 'label' => 'Buka halaman proses'];
+        case 'admin':
+            return ['url' => '../admin/detail.php?id=' . $id, 'label' => 'Buka halaman Admin'];
+        case 'cmo':
+            return in_array($stage, ['CMO_FILTER', 'PEMOHON_PIR', 'CMO_FINAL'], true)
+                ? ['url' => '../cmo/detail.php?id=' . $id, 'label' => 'Buka halaman proses CMO']
+                : null;
+        case 'kadep_operasional':
+            return $stage === 'kadep_operasional'
+                ? ['url' => '../pak_joko/detail.php?id=' . $id, 'label' => 'Buka halaman persetujuan']
+                : null;
+        case 'otomasi':
+            $canProcess = $stage === 'OTOMASI'
+                && !empty($crf['kadep_operasional_approved_at'])
+                && canHandleCrf($pdo, $crf)
+                && (empty($crf['assigned_handler_id']) || isAssignedCrfHandler($crf));
+
+            return $canProcess
+                ? ['url' => '../otomasi/detail.php?id=' . $id, 'label' => 'Buka halaman proses Otomasi']
+                : null;
+    }
+
+    return null;
 }
 
 /**
