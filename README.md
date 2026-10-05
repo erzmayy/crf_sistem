@@ -12,7 +12,16 @@ Forum, Helpdesk, dan Notifikasi.
 
 ## Instalasi (lokal / XAMPP)
 
-1. `composer install`
+1. Pasang dependensi PHP:
+   ```bash
+   composer install
+   ```
+   Atau, bila memasang manual satu per satu:
+   ```bash
+   composer require dompdf/dompdf
+   composer require aws/aws-sdk-php
+   composer require phpmailer/phpmailer:6.9
+   ```
 2. Buat database: jalankan `database/schema.sql` (instalasi baru tidak perlu migrasi).
 3. Sesuaikan `config/database.php` (`DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`).
 4. Salin file contoh konfigurasi bila diperlukan:
