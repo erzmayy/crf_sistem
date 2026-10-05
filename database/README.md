@@ -30,5 +30,6 @@ migrasi aman dijalankan ulang.
 | 012 | `sla_matrix_migration.sql` | Matriks SLA kategori × urgensi |
 | 013 | `crf_category_five_migration.sql` | Kategori CRF jadi 5: Aplikasi, Infrastruktur, Proses, Security, Lainnya |
 | 014 | `drop_helpdesk_ticket_number_migration.sql` | Hapus nomor ticket Helpdesk (mengikuti SIAP) |
+| 015 | `forum_enhancement_migration.sql` | Forum: komentar sistem, ubah/hapus komentar, mention, lampiran, status pembahasan selesai |
 
-Migrasi baru berikutnya diberi nomor `015_...`.
+Migrasi baru berikutnya diberi nomor `016_...`.

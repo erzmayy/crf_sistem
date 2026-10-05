@@ -43,7 +43,18 @@ Dalam Proses (Sedang Diproses), Solve (Selesai), Cancel (Dibatalkan).
 Admin dapat memantau semua CRF, menugaskan ulang Handler, dan membatalkan CRF
 secara administratif. Forum dipakai CMO, Otomasi, Kepala Departemen Operasional,
 dan Admin untuk berdiskusi; CMO/Admin dapat menetapkan Level Urgensi final di
-Forum (prioritas di atas level otomatis).
+Forum (prioritas di atas level otomatis) selama CRF belum disetujui Kepala
+Departemen Operasional; setelah approval, urgensi & SLA final terkunci.
+
+Fitur Forum:
+- Notifikasi untuk komentar baru (peserta pembahasan & Handler), tanggapan,
+  dan mention `@Nama` (dengan saran otomatis saat mengetik `@`).
+- Penulis dapat mengubah/menghapus komentarnya; Admin dapat menghapus komentar
+  siapa pun (moderasi). Penghapusan bersifat soft delete dan tercatat di
+  riwayat CRF. Catatan sistem tidak dapat diubah/dihapus.
+- Lampiran komentar (PDF/JPG/PNG, maks. 5 file @ 5 MB).
+- CMO/Admin dapat menandai **Pembahasan Selesai** dan membukanya kembali.
+- Catatan sistem tidak dihitung sebagai komentar belum dibaca.
 
 ## SLA
 
