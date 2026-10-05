@@ -133,9 +133,6 @@ CREATE TABLE change_requests (
     solved_at                   DATETIME        NULL,
     cancelled_at                DATETIME        NULL,
 
-    forum_resolved_at           DATETIME        NULL,
-    forum_resolved_by_name      VARCHAR(150)    NULL,
-
     created_at                  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP
                                                  ON UPDATE CURRENT_TIMESTAMP,
@@ -224,14 +221,9 @@ CREATE TABLE forum_comments (
     user_role               VARCHAR(50) NOT NULL,
     comment                 TEXT NOT NULL,
     reply_to_comment_id     INT UNSIGNED NULL,
-    is_system               TINYINT(1) NOT NULL DEFAULT 0,
     created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    edited_at               DATETIME NULL,
-    deleted_at              DATETIME NULL,
-    deleted_by_name         VARCHAR(150) NULL,
 
     KEY idx_forum_comments_crf_created (change_request_id, created_at, id),
-    KEY idx_forum_comments_crf_id (change_request_id, id),
     KEY idx_forum_comments_user (user_id),
     CONSTRAINT fk_forum_comments_crf
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
@@ -251,33 +243,6 @@ CREATE TABLE forum_read_states (
     PRIMARY KEY (user_id, change_request_id),
     CONSTRAINT fk_forum_read_states_crf
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
-
-CREATE TABLE forum_comment_mentions (
-    forum_comment_id    INT UNSIGNED NOT NULL,
-    user_id             INT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (forum_comment_id, user_id),
-    KEY idx_forum_comment_mentions_user (user_id),
-    CONSTRAINT fk_forum_comment_mentions_comment
-        FOREIGN KEY (forum_comment_id) REFERENCES forum_comments(id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
-
-CREATE TABLE forum_attachments (
-    id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    forum_comment_id    INT UNSIGNED NOT NULL,
-    original_name       VARCHAR(255) NOT NULL,
-    stored_name         VARCHAR(255) NOT NULL,
-    file_path           VARCHAR(500) NOT NULL,
-    file_type           VARCHAR(100) NULL,
-    file_size           INT UNSIGNED NULL,
-    uploaded_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    KEY idx_forum_attachments_comment (forum_comment_id),
-    CONSTRAINT fk_forum_attachments_comment
-        FOREIGN KEY (forum_comment_id) REFERENCES forum_comments(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
