@@ -1,56 +1,78 @@
-# CRF Workflow Update
+# Alur Workflow CRF
 
-Alur workflow:
+```
+Pemohon → CMO (Filter) → Otomasi (Level Urgensi + SLA)
+  → Kepala Departemen Operasional (Approval)
+  → Otomasi (Eksekusi & Implementasi)
+  → Pemohon (Post Implementation Review)
+  → CMO (Finalisasi) → Selesai
+```
 
-Pemohon → CMO (Filter) → Otomasi (Level Urgensi + SLA) → Kepala Departemen Operasional (Approval) → Otomasi (Eksekusi, Implementasi & PIR) → CMO (Finalisasi) → Selesai → Pemohon
+## Tahap workflow (`change_requests.workflow_stage`)
 
-## Tahap workflow
-- PEMOHON
-- CMO_FILTER
-- OTOMASI
-- kadep_operasional
-- CMO_FINAL
-- SELESAI
+| Tahap | Label di aplikasi | Pemegang |
+|-------|-------------------|----------|
+| `PEMOHON` | Menunggu Pemeriksaan | Pemohon (draft / revisi) |
+| `CMO_FILTER` | Verifikasi CMO | CMO |
+| `OTOMASI` | Tindak Lanjut Divisi Otomasi | Handler (tetapkan SLA, lalu eksekusi) |
+| `kadep_operasional` | Persetujuan Kepala Departemen Operasional | Kepala Departemen Operasional |
+| `PEMOHON_PIR` | Menunggu PIR Pemohon | Pemohon |
+| `CMO_FINAL` | Finalisasi CMO | CMO |
+| `SELESAI` | Selesai | - |
 
-`PEMOHON_PIR` tetap ada di enum database untuk kompatibilitas data lama, tetapi bukan lagi tahap aktif.
+Status (`status`): Draft, Belum Ditindak Lanjuti (Menunggu Tindakan), Perlu Revisi,
+Dalam Proses (Sedang Diproses), Solve (Selesai), Cancel (Dibatalkan).
 
-## Role prototype
-- pemohon
-- cmo
-- otomasi
-- kadep_operasional
-- admin
+## Langkah per peran
 
-## Akun demo
-Semua password: `password`
+1. **Pemohon** mengisi Form CRF dan mengajukannya (bisa disimpan sebagai Draft).
+   Level Urgensi ditentukan otomatis dari kategori Dampak.
+2. **CMO** memfilter: meneruskan ke Otomasi, meminta revisi (kembali ke Pemohon),
+   atau membatalkan.
+3. **Otomasi (Handler)** mengambil CRF pada kategorinya, lalu menetapkan SLA.
+   SLA standar diambil dari matriks Kategori × Urgensi dan tidak mengubah Level
+   Urgensi. CRF diteruskan ke Kepala Departemen Operasional.
+4. **Kepala Departemen Operasional** menyetujui. **SLA mulai dihitung sejak
+   persetujuan ini**, lalu CRF kembali ke Otomasi.
+5. **Otomasi** mengeksekusi dan mengisi Tanggal serta Hasil Implementasi.
+   CRF diteruskan ke Pemohon.
+6. **Pemohon** mengisi Tanggal PIR dan Post Implementation Review.
+   Setelah itu CRF diteruskan ke CMO.
+7. **CMO** memfinalisasi dan menandai selesai.
 
-- USER001 — Pemohon
-- CMO001 — CMO
-- OTOMASI001 — Otomasi
-- JOKO001 — Pak Joko
-- ADMIN001 — Admin
+Admin dapat memantau semua CRF, menugaskan ulang Handler, dan membatalkan CRF
+secara administratif. Forum dipakai CMO, Otomasi, Kepala Departemen Operasional,
+dan Admin untuk berdiskusi; CMO/Admin dapat menetapkan Level Urgensi final di
+Forum (prioritas di atas level otomatis).
+
+## SLA
+
+- Satuan: Menit, Jam, atau Hari.
+- Hanya berjalan pada hari kerja. Sabtu, Minggu, dan tanggal di
+  `CRF_SLA_HOLIDAYS` (`config/sla.php`) tidak dihitung.
+- Contoh: SLA 1 Hari yang dimulai Jumat 16:00 jatuh tempo Senin 16:00.
+
+## Nomor register
+
+Format `PPU-02.4.NNNN.MM.YY`. Nomor urut direset per tahun dan dibuat atomik
+lewat tabel `crf_sequence`.
+
+## Helpdesk
+
+Ticket Helpdesk dikelompokkan per kategori dengan PIC masing-masing. Jenis
+permintaan: Maintenance, Request, Komplain. Pada kategori yang mewajibkan CRF,
+Request diajukan langsung lewat Form CRF. Ticket lama berstatus
+"Diteruskan ke CRF" mengikuti status CRF-nya.
 
 ## Database
-Untuk database `crf_sistem` lama yang belum memiliki kolom approval Kepala Departemen Operasional, jalankan:
 
-`database/migrations/003_kadep_approval_migration.sql`
+- Instalasi baru: jalankan `database/schema.sql`.
+- Database lama: jalankan migrasi di `database/migrations/` berurutan.
+  Daftar lengkap ada di [database/README.md](database/README.md).
+- Tahap `PEMOHON_PIR` dipulihkan oleh migrasi `011_pir_pemohon_migration.sql`.
 
-Migrasi ini aman dijalankan ulang. Untuk instalasi workflow lama yang belum memiliki kolom workflow/SLA atau tabel role, gunakan `database/migrations/002_workflow_migration.sql`.
+## Akun
 
-Untuk database yang nilai enum `workflow_stage`-nya masih menggunakan `PAK_JOKO`, jalankan `database/migrations/004_kadep_workflow_stage_migration.sql` agar nilai tersebut diselaraskan dengan `kadep_operasional`.
-
-Untuk database yang sudah berjalan, jalankan `database/migrations/007_implementation_date_migration.sql` sebelum menggunakan form terbaru. Migrasi ini menyediakan kolom Tanggal Implementasi, Tanggal PIR, Tipe Pengajuan, dan kategori Dampak.
-
-Migration menambahkan:
-- `workflow_stage`
-- data SLA
-- timestamp proses Otomasi
-- data approval Pak Joko
-- tabel `crf_user_roles`
-- mapping role dan akun demo workflow bila belum ada
-
-## Catatan
-- Level Urgensi ditentukan otomatis dari Dampak saat Pemohon mengajukan CRF. Otomasi menetapkan SLA tanpa mengubah Level Urgensi, lalu mengirim CRF ke Kepala Departemen Operasional untuk approval sebelum eksekusi.
-- Setelah approval, Otomasi mengisi Implementasi / Hasil Perubahan dan Post Implementation Review saat menyelesaikan eksekusi.
-- Pemohon hanya melihat Implementasi dan PIR; kedua isian tersebut tidak dapat diedit oleh Pemohon.
-- Setelah eksekusi selesai, CRF diteruskan ke CMO untuk finalisasi dan penandaan selesai.
+Login memakai user SIAP (`siap.tbl_user`); peran ditentukan oleh `config/siap.php`.
+Akun demo `CRFDEMO` (aktif bila `CRF_DEMO_MODE = true`) dapat menjalankan semua
+peran. Nonaktifkan mode demo di production.
