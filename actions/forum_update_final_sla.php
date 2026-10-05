@@ -1,7 +1,18 @@
 <?php
 require_once __DIR__ . '/../includes/forum.php';
 require_once __DIR__ . '/../includes/functions.php';
-requireCrfRole(['admin', 'cmo']);
+requireForumAccess();
+
+// requireCrfRole() selalu meloloskan akun demo, jadi hak Admin dicek eksplisit di sini.
+if (!canManageForumFinalSla()) {
+    $crfId = filter_input(INPUT_POST, 'crf_id', FILTER_VALIDATE_INT) ?: 0;
+    $_SESSION['flash'] = [
+        'type' => 'danger',
+        'message' => 'Hanya Admin yang dapat mengubah Level Urgensi dan SLA final di Forum.',
+    ];
+    header('Location: ../forum/index.php' . ($crfId > 0 ? '?crf_id=' . $crfId : ''));
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -48,7 +59,8 @@ try {
     $crfStmt = $pdo->prepare(
         'SELECT id, request_number, level, impact_category,
                 final_urgency_level, sla_value, sla_unit,
-                sla_started_at, status, workflow_stage
+                sla_started_at, status, workflow_stage,
+                kadep_operasional_approved_at, assigned_handler_id
          FROM change_requests cr
          WHERE cr.id = :id
            AND ' . forumActiveCrfCondition('cr') . '
@@ -59,12 +71,21 @@ try {
 
     if (!$crf) {
         $pdo->rollBack();
-        http_response_code(404);
         $_SESSION['flash'] = [
             'type' => 'danger',
             'message' => 'CRF tidak ditemukan atau sudah tidak dalam proses.',
         ];
         header('Location: ../forum/index.php');
+        exit;
+    }
+
+    if (isForumFinalSlaLocked($crf)) {
+        $pdo->rollBack();
+        $_SESSION['flash'] = [
+            'type' => 'danger',
+            'message' => 'Urgensi dan SLA final tidak dapat diubah karena CRF sudah disetujui Kepala Departemen Operasional dan masuk tahap eksekusi.',
+        ];
+        header('Location: ' . $redirect);
         exit;
     }
 
@@ -102,7 +123,7 @@ try {
     ]);
 
     $description = sprintf(
-        'Kesepakatan Forum diperbarui oleh %s. Urgensi final: %s → %s. SLA final: %s → %s.',
+        forumSystemCommentPrefix() . '%s. Urgensi final: %s → %s. SLA final: %s → %s.',
         crfRoleLabel(getCrfRole()),
         $oldFinalUrgency,
         $finalUrgency,
@@ -124,8 +145,22 @@ try {
         'user_role' => getCrfRole(),
         'comment' => $description,
     ]);
+    $commentId = (int) $pdo->lastInsertId();
+    $crfNumber = $crf['request_number'] ?: 'CRF #' . $crfId;
+
+    notifyForumUsers(
+        $pdo,
+        forumParticipantIds($pdo, $crfId, (int) $crf['assigned_handler_id'] ?: null),
+        'Kesepakatan SLA Forum: ' . $crfNumber,
+        'Urgensi final ' . $finalUrgency . ' dan SLA final ' . $newSla . ' ditetapkan untuk ' . $crfNumber . ' oleh ' . $actor . '.',
+        $crfId,
+        $commentId,
+        (int) $user['id']
+    );
 
     $pdo->commit();
+    dispatchPendingNotificationEmails($pdo);
+    $redirect .= '#comment-' . $commentId;
     $_SESSION['flash'] = [
         'type' => 'success',
         'message' => 'Urgensi dan SLA final hasil kesepakatan Forum berhasil disimpan.',

@@ -42,8 +42,9 @@ Dalam Proses (Sedang Diproses), Solve (Selesai), Cancel (Dibatalkan).
 
 Admin dapat memantau semua CRF, menugaskan ulang Handler, dan membatalkan CRF
 secara administratif. Forum dipakai CMO, Otomasi, Kepala Departemen Operasional,
-dan Admin untuk berdiskusi; CMO/Admin dapat menetapkan Level Urgensi final di
-Forum (prioritas di atas level otomatis).
+dan Admin untuk berdiskusi; hanya Admin yang dapat menetapkan Level Urgensi dan SLA final di
+Forum (prioritas di atas level otomatis). Kesepakatan ini terkunci setelah
+persetujuan Kepala Departemen Operasional.
 
 ## SLA
 

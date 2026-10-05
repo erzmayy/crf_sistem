@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/notifications.php';
 
 function forumRoles(): array
 {
@@ -11,9 +12,13 @@ function requireForumAccess(): void
     requireCrfRole(forumRoles());
 }
 
+/**
+ * Hanya role Admin yang boleh menetapkan Level Urgensi dan SLA final di Forum.
+ * Sengaja tidak memakai isAdmin(): akun demo dan hak Admin tambahan pada role lain tidak termasuk.
+ */
 function canManageForumFinalSla(): bool
 {
-    return isAdmin() || getCrfRole() === 'cmo';
+    return getCrfRole() === 'admin';
 }
 
 function forumActiveCrfCondition(string $alias = 'cr'): string
@@ -78,4 +83,128 @@ function markForumRead(PDO $pdo, int $crfId, int $userId, int $lastCommentId): v
         'change_request_id' => $crfId,
         'last_read_comment_id' => $lastCommentId,
     ]);
+}
+
+/**
+ * SLA final Forum dikunci setelah Kadep Operasional menyetujui (tahap eksekusi),
+ * sama seperti aturan SLA di sisi Handler.
+ */
+function isForumFinalSlaLocked(array $crf): bool
+{
+    return !empty($crf['kadep_operasional_approved_at']);
+}
+
+/**
+ * Komentar otomatis dari penyimpanan kesepakatan urgensi & SLA.
+ */
+function forumSystemCommentPrefix(): string
+{
+    return 'Kesepakatan Forum diperbarui oleh ';
+}
+
+function isForumSystemComment(string $comment): bool
+{
+    return str_starts_with($comment, forumSystemCommentPrefix());
+}
+
+/**
+ * Peserta ruang Forum: semua yang pernah berkomentar ditambah Handler yang memegang CRF.
+ *
+ * @return int[]
+ */
+function forumParticipantIds(PDO $pdo, int $crfId, ?int $assignedHandlerId = null): array
+{
+    $stmt = $pdo->prepare('SELECT DISTINCT user_id FROM forum_comments WHERE change_request_id = :crf_id');
+    $stmt->execute(['crf_id' => $crfId]);
+    $ids = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+
+    if ($assignedHandlerId) {
+        $ids[] = $assignedHandlerId;
+    }
+
+    return array_values(array_unique($ids));
+}
+
+/**
+ * Kirim notifikasi Forum tanpa menggagalkan aksi utama bila terjadi error.
+ */
+function notifyForumUsers(
+    PDO $pdo,
+    array $userIds,
+    string $title,
+    string $message,
+    int $crfId,
+    int $commentId,
+    int $actorId
+): void {
+    try {
+        notifyUsers(
+            $pdo,
+            $userIds,
+            $title,
+            $message,
+            'forum/index.php?crf_id=' . $crfId . '#comment-' . $commentId,
+            $crfId,
+            null,
+            $actorId
+        );
+    } catch (Throwable $exception) {
+        error_log('Forum notification failed: ' . $exception->getMessage());
+    }
+}
+
+/**
+ * Waktu relatif singkat untuk daftar ruang Forum.
+ */
+function forumRelativeTime(?string $datetime): string
+{
+    if (empty($datetime)) {
+        return '';
+    }
+
+    $time = strtotime($datetime);
+    $diff = time() - $time;
+
+    if ($diff < 60) {
+        return 'Baru saja';
+    }
+    if ($diff < 3600) {
+        return (int) floor($diff / 60) . ' mnt';
+    }
+    if (date('Y-m-d', $time) === date('Y-m-d')) {
+        return date('H:i', $time);
+    }
+    if (date('Y-m-d', $time) === date('Y-m-d', strtotime('-1 day'))) {
+        return 'Kemarin';
+    }
+
+    return date('d M', $time);
+}
+
+/**
+ * Label pemisah tanggal di daftar komentar.
+ */
+function forumDateLabel(string $datetime): string
+{
+    $date = date('Y-m-d', strtotime($datetime));
+
+    if ($date === date('Y-m-d')) {
+        return 'Hari ini';
+    }
+    if ($date === date('Y-m-d', strtotime('-1 day'))) {
+        return 'Kemarin';
+    }
+
+    return date('d M Y', strtotime($datetime));
+}
+
+function forumInitials(string $name): string
+{
+    $words = preg_split('/\s+/', trim(preg_replace('/[^\p{L}\p{N}\s]/u', '', $name))) ?: [];
+    $initials = '';
+    foreach (array_slice($words, 0, 2) as $word) {
+        $initials .= mb_strtoupper(mb_substr($word, 0, 1));
+    }
+
+    return $initials !== '' ? $initials : '?';
 }
