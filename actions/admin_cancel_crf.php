@@ -10,7 +10,7 @@
  */
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/forum_proposals.php';
+require_once __DIR__ . '/../includes/forum_discussions.php';
 require_once __DIR__ . '/../includes/helpdesk.php';
 
 requireAdmin();
@@ -48,7 +48,7 @@ try {
 
     if ($crf && isOwnHandledCrf($crf)) {
         $pdo->rollBack();
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Anda sedang memegang CRF ini sebagai Petugas Otomasi. Pembatalan harus dilakukan Admin lain.'];
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Anda sedang memegang CRF ini sebagai PIC CRF. Pembatalan harus dilakukan Admin lain.'];
         header('Location: ' . $redirect);
         exit;
     }
@@ -82,7 +82,7 @@ try {
 
     notifyUsers(
         $pdo,
-        [(int) $crf['user_id'], (int) $crf['assigned_handler_id']],
+        [(int) $crf['user_id']],
         'CRF dibatalkan: ' . $crf['request_number'],
         'CRF ' . $crf['request_number'] . ' dibatalkan oleh Admin. Alasan: ' . $reason,
         'crf/open.php?id=' . $id,
@@ -91,7 +91,7 @@ try {
         (int) $user['id']
     );
 
-    forumCloseOpenProposals($pdo, $id, 'dibatalkan', 'CRF dibatalkan oleh Admin.');
+    forumCloseOpenDiscussions($pdo, $id, 'CRF dibatalkan oleh Admin.');
     syncHelpdeskTicketFromCrf($pdo, $id, $actor);
 
     $pdo->commit();

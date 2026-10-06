@@ -112,79 +112,85 @@ document.addEventListener('DOMContentLoaded', function () {
     button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Mengirim...';
   });
 
-  /* 6. Form usulan/keputusan: petunjuk SLA standar kategori + perilaku tombol Tolak. */
-  document.querySelectorAll('form[data-sla-form]').forEach(function (sla) {
-    var urgency = sla.querySelector('select[name="urgency"]');
-    var valueInput = sla.querySelector('input[name="sla_value"]');
-    var unitSelect = sla.querySelector('select[name="sla_unit"]');
-    var hint = sla.querySelector('[data-standard-hint]');
-    var useButton = sla.querySelector('[data-use-standard]');
+  /* 6. Form hasil pembahasan (Admin): Tetap / Diubah + petunjuk SLA standar. */
+  document.querySelectorAll('form[data-result-form]').forEach(function (form) {
+    var radios = form.querySelectorAll('input[name="outcome"]');
+    var values = form.querySelector('[data-result-values]');
+    var urgency = form.querySelector('select[name="urgency"]');
+    var valueInput = form.querySelector('input[name="sla_value"]');
+    var unitSelect = form.querySelector('select[name="sla_unit"]');
+    var hint = form.querySelector('[data-standard-hint]');
+    var useButton = form.querySelector('[data-use-standard]');
 
-    if (urgency && valueInput && unitSelect && hint && useButton) {
-      var showStandard = function () {
-        var option = urgency.options[urgency.selectedIndex];
-        var value = option && option.dataset.slaValue;
-        var unit = option && option.dataset.slaUnit;
+    function isChanged() {
+      var checked = form.querySelector('input[name="outcome"]:checked');
+      return !!checked && checked.value === 'diubah';
+    }
 
-        if (!value || !unit) {
-          hint.hidden = true;
-          return;
+    // Nilai baru hanya diisi dan wajib bila hasilnya "Diubah".
+    function syncOutcome() {
+      var changed = isChanged();
+      if (values) { values.hidden = !changed; }
+      [urgency, valueInput, unitSelect].forEach(function (field) {
+        if (field) {
+          field.disabled = !changed;
+          field.required = changed;
         }
-        hint.querySelector('span').textContent =
-          'SLA standar kategori untuk urgensi ' + option.value + ': ' + value + ' ' + unit + ' (hari kerja).';
-        useButton.hidden = valueInput.value === value && unitSelect.value === unit;
-        hint.hidden = false;
-      };
+      });
+    }
 
-      urgency.addEventListener('change', showStandard);
-      valueInput.addEventListener('input', showStandard);
-      unitSelect.addEventListener('change', showStandard);
+    function showStandard() {
+      if (!urgency || !valueInput || !unitSelect || !hint || !useButton) { return; }
+      var option = urgency.options[urgency.selectedIndex];
+      var value = option && option.dataset.slaValue;
+      var unit = option && option.dataset.slaUnit;
+
+      if (!value || !unit) {
+        hint.hidden = true;
+        return;
+      }
+      hint.querySelector('span').textContent =
+        'SLA standar kategori untuk urgensi ' + option.value + ': ' + value + ' ' + unit + ' (hari kerja).';
+      useButton.hidden = valueInput.value === value && unitSelect.value === unit;
+      hint.hidden = false;
+    }
+
+    radios.forEach(function (radio) { radio.addEventListener('change', syncOutcome); });
+    if (urgency) { urgency.addEventListener('change', showStandard); }
+    if (valueInput) { valueInput.addEventListener('input', showStandard); }
+    if (unitSelect) { unitSelect.addEventListener('change', showStandard); }
+    if (useButton) {
       useButton.addEventListener('click', function () {
         var option = urgency.options[urgency.selectedIndex];
         valueInput.value = option.dataset.slaValue;
         unitSelect.value = option.dataset.slaUnit;
         showStandard();
       });
-      showStandard();
     }
-
-    // Tolak: catatan wajib; Setujui: catatan opsional.
-    var note = sla.querySelector('textarea[name="note"]');
-    var reject = sla.querySelector('[data-reject]');
-    if (note && reject) {
-      reject.addEventListener('click', function (event) {
-        note.required = true;
-        if (!note.value.trim()) {
-          event.preventDefault();
-          note.reportValidity();
-        }
-      });
-      sla.querySelectorAll('button[value="approve"]').forEach(function (button) {
-        button.addEventListener('click', function () { note.required = false; });
-      });
-    }
+    syncOutcome();
+    showStandard();
   });
 
-  /* 7. Cegah kirim ganda pada form usulan/keputusan. */
-  document.querySelectorAll('form[action*="forum_proposal.php"]').forEach(function (proposalForm) {
-    if (proposalForm.hasAttribute('data-confirm')) { return; }
-    proposalForm.addEventListener('submit', function (event) {
-      if (event.defaultPrevented || proposalForm.dataset.submitting === '1') {
-        if (proposalForm.dataset.submitting === '1') { event.preventDefault(); }
+  /* 7. Cegah kirim ganda pada form pembahasan. */
+  document.querySelectorAll('form[action*="forum_discussion.php"]').forEach(function (discussionForm) {
+    if (discussionForm.hasAttribute('data-confirm')) { return; }
+    discussionForm.addEventListener('submit', function (event) {
+      if (event.defaultPrevented || discussionForm.dataset.submitting === '1') {
+        if (discussionForm.dataset.submitting === '1') { event.preventDefault(); }
         return;
       }
-      proposalForm.dataset.submitting = '1';
+      discussionForm.dataset.submitting = '1';
       window.setTimeout(function () {
-        proposalForm.querySelectorAll('button[type="submit"]').forEach(function (button) { button.disabled = true; });
+        discussionForm.querySelectorAll('button[type="submit"]').forEach(function (button) { button.disabled = true; });
       }, 0);
     });
   });
 
-  /* 8. Dibuka dari tautan #forum-proposal / ?propose=1: gulir ke seksi usulan. */
-  if (location.hash === '#forum-proposal' || /[?&]propose=1/.test(location.search)) {
-    var proposal = document.getElementById('forum-proposal');
-    if (proposal) {
-      window.setTimeout(function () { proposal.scrollIntoView({ block: 'start' }); }, 50);
+  /* 8. Dibuka dari tautan #forum-pembahasan: gulir ke seksi pembahasan. */
+  if (location.hash === '#forum-pembahasan') {
+    var discussion = document.getElementById('forum-pembahasan');
+    if (discussion) {
+      window.setTimeout(function () { discussion.scrollIntoView({ block: 'start' }); }, 50);
     }
   }
 });

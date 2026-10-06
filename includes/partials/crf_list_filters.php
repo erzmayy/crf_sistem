@@ -66,9 +66,9 @@ $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
 
     <?php if (!empty($listHandlers)): ?>
         <label class="crf-list-filter-field">
-            <span>Petugas Otomasi</span>
-            <select name="handler_id" class="form-select" aria-label="Filter Petugas Otomasi">
-                <option value="">Semua Petugas Otomasi</option>
+            <span>PIC CRF</span>
+            <select name="handler_id" class="form-select" aria-label="Filter PIC CRF">
+                <option value="">Semua PIC CRF</option>
                 <?php foreach ($listHandlers as $handlerOption): ?>
                     <option value="<?= (int) $handlerOption['id'] ?>" <?= (int) ($listFilters['handler_id'] ?? 0) === (int) $handlerOption['id'] ? 'selected' : '' ?>>
                         <?= h($handlerOption['name']) ?>

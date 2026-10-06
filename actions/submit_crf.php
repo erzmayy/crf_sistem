@@ -15,6 +15,7 @@
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/helpdesk.php';
+require_once __DIR__ . '/../includes/forum_discussions.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../user/form_crf.php');
@@ -51,6 +52,10 @@ $fromDepartment = trim($_POST['from_department'] ?? '');
 $fromDivision   = trim($_POST['from_division'] ?? '');
 
 $budgetTypeRaw   = $_POST['budget_type'] ?? null;
+// "Tidak ada biaya" (bawaan) disimpan sebagai tanpa jenis dan tanpa nominal.
+if ($budgetTypeRaw === 'tidak_ada' || $budgetTypeRaw === '') {
+    $budgetTypeRaw = null;
+}
 $budgetAmountRaw = $_POST['budget_amount'] ?? null;
 
 $crfCategory          = resolveActiveCrfCategory($pdo, $_POST['crf_category_id'] ?? null);
@@ -140,11 +145,6 @@ if ($changeCategory === 'Lainnya' && $changeCategoryDetail === '') {
     $errors[] = 'Detail Kategori wajib diisi untuk kategori "Lainnya".';
 }
 
-/* Saran Alternatif */
-if ($alternativeSuggestion === '') {
-    $errors[] = 'Saran Alternatif wajib diisi.';
-}
-
 /* Budget */
 if (
     $budgetTypeRaw !== null &&
@@ -168,8 +168,6 @@ if ($budgetTypeRaw !== null && $budgetTypeRaw !== '') {
         }
     }
 
-} else {
-    $errors[] = 'Biaya / Anggaran belum dipilih.';
 }
 
 /* ------------------------------------------------------------------
@@ -325,7 +323,7 @@ try {
             'crf_category_id'        => (int) $crfCategory['id'],
             'requester_position'     => $requesterPosition !== '' ? $requesterPosition : null,
             'change_category_detail' => $changeCategoryDetailValue,
-            'alternative_suggestion' => $alternativeSuggestion,
+            'alternative_suggestion' => $alternativeSuggestion !== '' ? $alternativeSuggestion : null,
             'id'                     => $draftId,
             'user_id'                => $user['id'],
         ]);
@@ -423,7 +421,7 @@ try {
             'crf_category_id'        => (int) $crfCategory['id'],
             'requester_position'     => $requesterPosition !== '' ? $requesterPosition : null,
             'change_category_detail' => $changeCategoryDetailValue,
-            'alternative_suggestion' => $alternativeSuggestion,
+            'alternative_suggestion' => $alternativeSuggestion !== '' ? $alternativeSuggestion : null,
         ]);
 
             $crfId = (int) $pdo->lastInsertId();
@@ -453,6 +451,9 @@ try {
         'Menunggu Verifikasi'
     );
 
+    // SLA default terisi sejak submit, jadi CMO dan Forum langsung melihat nilai yang sama.
+    forumApplyDefaultSla($pdo, $crfId, $user);
+
     /* ------------------------------------------------------------------
      * 6B. Ticket Helpdesk ikut diperbarui + notifikasi CMO & Handler
      * ------------------------------------------------------------------ */
@@ -463,10 +464,7 @@ try {
         . '. CRF menunggu verifikasi CMO.';
     notifyUsers(
         $pdo,
-        array_merge(
-            crfUserIdsForRole($pdo, 'cmo'),
-            crfCategoryHandlerIds($pdo, (int) $crfCategory['id'])
-        ),
+        crfUserIdsForRole($pdo, 'cmo'),
         $notifyTitle,
         $notifyMessage,
         'crf/open.php?id=' . $crfId,

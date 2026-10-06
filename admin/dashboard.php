@@ -9,13 +9,13 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/admin_crf_report.php';
-require_once __DIR__ . '/../includes/forum_proposals.php';
+require_once __DIR__ . '/../includes/forum_discussions.php';
 
 requireAdmin();
 
 $pdo = getConnection();
 $forumUnread = forumUnreadTotal($pdo, (int) getCurrentUser()['id']);
-$forumProposalsOpen = forumOpenProposalTotal($pdo);
+$forumDiscussionsOpen = forumOpenDiscussionTotal($pdo);
 
 $search         = $_GET['q'] ?? '';
 $statusFilter   = $_GET['status'] ?? '';
@@ -149,8 +149,8 @@ $displaySummary = array_map('intval', $pdo->query("
     FROM change_requests cr
 ")->fetch() ?: []);
 $displayIcons = [
-    'draft' => 'bi-pencil', 'review' => 'bi-hourglass-split',
-    'approval' => 'bi-person-check', 'antrean' => 'bi-inboxes', 'disetujui' => 'bi-check2-square', 'revisi' => 'bi-arrow-counterclockwise',
+    'draft' => 'bi-pencil', 'review' => 'bi-hourglass-split', 'pembahasan' => 'bi-flag-fill',
+    'approval' => 'bi-person-check', 'disetujui' => 'bi-check2-square', 'revisi' => 'bi-arrow-counterclockwise',
     'selesai' => 'bi-check-circle-fill', 'dibatalkan' => 'bi-slash-circle-fill',
 ];
 if (
@@ -839,8 +839,8 @@ require_once __DIR__ . '/../includes/header.php';
             </a>
 
             <a class="crf-stat-card crf-forum-stat text-decoration-none" href="../forum/index.php?filter=discuss">
-                <span><i class="bi bi-flag-fill"></i> Usulan Urgensi/SLA Menunggu</span>
-                <strong><?= $forumProposalsOpen ?></strong>
+                <span><i class="bi bi-flag-fill"></i> Menunggu Pembahasan Forum</span>
+                <strong><?= $forumDiscussionsOpen ?></strong>
             </a>
 
         </div>

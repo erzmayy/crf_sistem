@@ -190,7 +190,7 @@ function findHelpdeskTicket(PDO $pdo, int $ticketId): ?array
 function ticketLinkedCrfs(PDO $pdo, int $ticketId): array
 {
     $stmt = $pdo->prepare('
-        SELECT cr.id, cr.request_number, cr.status, cr.workflow_stage, cr.kadep_operasional_approved_at, cr.automation_started_at,
+        SELECT cr.id, cr.request_number, cr.status, cr.workflow_stage, cr.kadep_operasional_approved_at,
                cr.user_id, cr.crf_category_id, cr.created_at, c.name AS category_name
         FROM change_requests cr
         LEFT JOIN crf_categories c ON c.id = cr.crf_category_id

@@ -117,6 +117,9 @@ CREATE TABLE change_requests (
                                     'SELESAI'
                                 ) NOT NULL DEFAULT 'PEMOHON',
 
+    -- 1 selama CRF menunggu pembahasan Forum (CMO belum boleh meneruskan ke Kadep).
+    forum_discussion_open       TINYINT(1)      NOT NULL DEFAULT 0,
+
     sla_value                   DECIMAL(10,2) NULL,
     sla_unit                    ENUM('Menit','Jam','Hari') NULL,
     sla_started_at              DATETIME NULL,
@@ -247,29 +250,26 @@ CREATE TABLE forum_read_states (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- Usulan Urgensi & SLA di Forum: usulan -> keputusan, satu usulan terbuka per CRF.
-CREATE TABLE forum_proposals (
+-- Pembahasan Level Urgensi & SLA di Forum: CMO mengajukan, Admin mencatat hasil
+-- (Tetap / Diubah). Satu pembahasan terbuka per CRF.
+CREATE TABLE forum_discussions (
     id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     change_request_id       INT UNSIGNED NOT NULL,
-    kind                    ENUM('urgensi_sla','perpanjangan_sla') NOT NULL DEFAULT 'urgensi_sla',
-    status                  ENUM('menunggu','disetujui','ditolak','dibatalkan','kedaluwarsa') NOT NULL DEFAULT 'menunggu',
-    -- manual = diajukan user, sistem = dipicu otomatis (SLA kosong), langsung = ditetapkan Admin tanpa usulan
-    trigger_source          ENUM('manual','sistem','langsung') NOT NULL DEFAULT 'manual',
+    status                  ENUM('menunggu','selesai','dibatalkan') NOT NULL DEFAULT 'menunggu',
+    -- Hasil pembahasan: tetap = nilai sistem dipakai, diubah = nilai kesepakatan.
+    outcome                 ENUM('tetap','diubah') NULL,
+    -- cmo = diajukan CMO saat screening, sistem = dibuka otomatis (SLA default kosong)
+    trigger_source          ENUM('cmo','sistem') NOT NULL DEFAULT 'cmo',
 
-    proposed_by             INT UNSIGNED NULL,
-    proposed_by_name        VARCHAR(150) NOT NULL,
-    proposed_by_role        VARCHAR(50)  NOT NULL,
-    proposed_urgency        ENUM('Tinggi','Normal','Rendah') NULL,
-    proposed_sla_value      DECIMAL(10,2) NULL,
-    proposed_sla_unit       ENUM('Menit','Jam','Hari') NULL,
+    opened_by               INT UNSIGNED NULL,
+    opened_by_name          VARCHAR(150) NOT NULL,
+    opened_by_role          VARCHAR(50)  NOT NULL,
     reason                  TEXT NOT NULL,
 
-    -- Nilai yang berlaku saat usulan dibuat
+    -- Nilai sebelum dan sesudah hasil pembahasan
     before_urgency          ENUM('Tinggi','Normal','Rendah') NULL,
     before_sla_value        DECIMAL(10,2) NULL,
     before_sla_unit         ENUM('Menit','Jam','Hari') NULL,
-
-    -- Nilai yang akhirnya ditetapkan (bisa berbeda dari usulan)
     final_urgency           ENUM('Tinggi','Normal','Rendah') NULL,
     final_sla_value         DECIMAL(10,2) NULL,
     final_sla_unit          ENUM('Menit','Jam','Hari') NULL,
@@ -283,15 +283,14 @@ CREATE TABLE forum_proposals (
     reminded_at             DATETIME NULL,
     created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    -- Diisi id CRF selama usulan terbuka dan di-NULL-kan saat ditutup (dikelola
-    -- includes/forum_proposals.php). UNIQUE menjamin maksimal satu usulan
-    -- terbuka per CRF walau ada dua permintaan bersamaan.
+    -- Diisi id CRF selama pembahasan terbuka dan di-NULL-kan saat ditutup.
+    -- UNIQUE menjamin maksimal satu pembahasan terbuka per CRF.
     open_crf_id             INT UNSIGNED NULL,
 
-    UNIQUE KEY uq_forum_proposals_open (open_crf_id),
-    KEY idx_forum_proposals_crf (change_request_id, created_at),
-    KEY idx_forum_proposals_status_due (status, due_at),
-    CONSTRAINT fk_forum_proposals_crf
+    UNIQUE KEY uq_forum_discussions_open (open_crf_id),
+    KEY idx_forum_discussions_crf (change_request_id, created_at),
+    KEY idx_forum_discussions_status_due (status, due_at),
+    CONSTRAINT fk_forum_discussions_crf
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
@@ -464,7 +463,10 @@ CREATE TABLE IF NOT EXISTS crf_categories (
     UNIQUE KEY uq_crf_categories_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS crf_category_handlers (
+-- PIC CRF isian manual (masa transisi). PIC CRF utama diturunkan dari PIC
+-- Kategori Helpdesk lewat crf_category_pic_sources; gabungannya = VIEW
+-- crf_category_handlers (dibuat setelah tabel Helpdesk di bawah).
+CREATE TABLE IF NOT EXISTS crf_category_handlers_manual (
     id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
     crf_category_id INT UNSIGNED NOT NULL,
     user_id         INT UNSIGNED NOT NULL,
@@ -546,6 +548,60 @@ FROM (
     UNION ALL SELECT 'Lainnya', 'Permintaan lain', 'bi-three-dots', 0, NULL, 2, 'Hari', 13
 ) seed
 WHERE NOT EXISTS (SELECT 1 FROM helpdesk_categories existing WHERE existing.name = seed.name);
+
+-- PIC CRF diturunkan dari PIC Kategori Helpdesk (lihat migrasi 017).
+CREATE TABLE IF NOT EXISTS crf_category_pic_sources (
+    id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    crf_category_id         INT UNSIGNED NOT NULL,
+    helpdesk_category_id    INT UNSIGNED NOT NULL,
+    created_by_name         VARCHAR(150) NULL,
+    created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE KEY uq_crf_category_pic_sources (crf_category_id, helpdesk_category_id),
+    KEY idx_crf_category_pic_sources_helpdesk (helpdesk_category_id),
+    CONSTRAINT fk_crf_pic_sources_crf
+        FOREIGN KEY (crf_category_id) REFERENCES crf_categories(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_crf_pic_sources_helpdesk
+        FOREIGN KEY (helpdesk_category_id) REFERENCES helpdesk_categories(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Pemetaan awal dari "Kategori CRF default" kategori Helpdesk yang Butuh CRF.
+INSERT IGNORE INTO crf_category_pic_sources (crf_category_id, helpdesk_category_id, created_by_name)
+SELECT hc.default_crf_category_id, hc.id, 'Migrasi 017'
+FROM helpdesk_categories hc
+WHERE hc.requires_crf = 1
+  AND hc.default_crf_category_id IS NOT NULL
+  AND hc.deleted_at IS NULL;
+
+-- Satu baris per (kategori CRF, user). is_manual = 1 bila (juga) diisi manual;
+-- sources = nama kategori Helpdesk asal PIC tersebut.
+CREATE OR REPLACE SQL SECURITY INVOKER VIEW crf_category_handlers AS
+SELECT
+    MIN(h.id)               AS id,
+    h.crf_category_id       AS crf_category_id,
+    h.user_id               AS user_id,
+    MAX(h.user_name)        AS user_name,
+    MIN(h.created_at)       AS created_at,
+    MAX(h.is_manual)        AS is_manual,
+    GROUP_CONCAT(DISTINCT h.source_name ORDER BY h.source_name SEPARATOR ', ') AS sources
+FROM (
+    SELECT m.id, m.crf_category_id, m.user_id, m.user_name, m.created_at,
+           1 AS is_manual,
+           CAST(NULL AS CHAR(100) CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS source_name
+    FROM crf_category_handlers_manual m
+    UNION ALL
+    SELECT 1000000000 + p.id, s.crf_category_id, p.user_id, p.user_name, p.created_at,
+           0,
+           hc.name
+    FROM crf_category_pic_sources s
+    INNER JOIN helpdesk_categories hc
+        ON hc.id = s.helpdesk_category_id AND hc.deleted_at IS NULL
+    INNER JOIN helpdesk_category_pics p
+        ON p.helpdesk_category_id = s.helpdesk_category_id
+) h
+GROUP BY h.crf_category_id, h.user_id;
 
 -- ------------------------------------------------------------------
 -- 4. Ticket Helpdesk

@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/helpdesk.php';
-require_once __DIR__ . '/../includes/forum_proposals.php';
+require_once __DIR__ . '/../includes/forum_discussions.php';
 
 requireCrfRole(['kadep_operasional']);
 
@@ -92,7 +92,8 @@ try {
             SELECT
                 id,
                 sla_value,
-                sla_unit
+                sla_unit,
+                forum_discussion_open
             FROM change_requests
             WHERE id = :id
               AND workflow_stage = 'kadep_operasional'
@@ -106,35 +107,35 @@ try {
             throw new RuntimeException('CRF sudah tidak tersedia untuk persetujuan.');
         }
 
-        if (
-            $approvalCrf['sla_value'] === null
-            || $approvalCrf['sla_value'] === ''
-            || !is_numeric($approvalCrf['sla_value'])
-            || (float) $approvalCrf['sla_value'] <= 0
-            || !in_array($approvalCrf['sla_unit'], ['Menit', 'Jam', 'Hari'], true)
-        ) {
+        if (!crfHasValidSla($approvalCrf) || !empty($approvalCrf['forum_discussion_open'])) {
             $pdo->rollBack();
             $_SESSION['flash'] = [
                 'type' => 'danger',
-                'message' => 'SLA CRF ini belum tersedia (SLA standar kategori belum diatur). Minta Admin menetapkan Level Urgensi & SLA final di Forum sebelum disetujui.',
+                'message' => !empty($approvalCrf['forum_discussion_open'])
+                    ? 'CRF ini masih menunggu pembahasan Forum sehingga belum dapat disetujui.'
+                    : 'SLA CRF ini belum tersedia, sehingga belum dapat disetujui. Hubungi Admin.',
             ];
             header('Location: ../pak_joko/detail.php?id=' . $id);
             exit;
         }
 
-        /*
-         * Setelah disetujui CRF masuk antrean Otomasi. SLA belum berjalan:
-         * dimulai saat Petugas Otomasi menekan "Mulai Kerjakan".
-         */
+        // SLA mulai dihitung sejak Kepala Departemen Operasional menyetujui,
+        // lalu CRF diserahkan ke PIC CRF untuk dieksekusi.
+        $slaStartedAt = $now;
+        $slaDueAt = slaDueAt($slaStartedAt, $approvalCrf['sla_value'], $approvalCrf['sla_unit']);
+        if ($slaDueAt === null) {
+            throw new RuntimeException('Tenggat SLA tidak dapat dihitung.');
+        }
+
         $stmt = $pdo->prepare("
             UPDATE change_requests
             SET
                 kadep_operasional_approved_by = :approved_by,
                 kadep_operasional_approved_at = :approved_at,
                 kadep_operasional_approval_note = :approval_note,
-                sla_started_at = NULL,
-                sla_due_at = NULL,
-                automation_started_at = NULL,
+                sla_started_at = :sla_started_at,
+                sla_due_at = :sla_due_at,
+                automation_started_at = :automation_started_at,
                 workflow_stage = 'OTOMASI',
                 status = 'Dalam Proses'
             WHERE id = :id
@@ -147,6 +148,9 @@ try {
             'approval_note' => $note !== ''
                 ? $note
                 : null,
+            'sla_started_at' => $slaStartedAt,
+            'sla_due_at' => $slaDueAt,
+            'automation_started_at' => $slaStartedAt,
             'id' => $id,
         ]);
 
@@ -158,36 +162,19 @@ try {
             $pdo,
             $id,
             'Approval Kepala Departemen Operasional',
-            'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. CRF masuk antrean Otomasi; SLA dimulai saat Petugas Otomasi mulai mengerjakan.'
+            'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. SLA ' . slaLabel($approvalCrf['sla_value'], $approvalCrf['sla_unit'])
+                . ' mulai dihitung, batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. CRF diserahkan ke PIC CRF untuk dieksekusi.'
                 . ($note !== '' ? ' Catatan: ' . $note : ''),
             $actor,
             'Menunggu Persetujuan',
-            'Disetujui · Antrean'
-        );
-
-        // Usulan urgensi/SLA yang belum diputuskan ditutup: nilai yang berlaku adalah nilai saat persetujuan.
-        forumCloseOpenProposals(
-            $pdo,
-            $id,
-            'kedaluwarsa',
-            'Ditutup otomatis saat CRF disetujui Kepala Departemen Operasional; nilai yang berlaku mengikuti saat persetujuan.'
+            'Disetujui · Eksekusi'
         );
 
         notifyUsers(
             $pdo,
-            $handlerRecipients ?: crfUserIdsForRole($pdo, 'otomasi'),
-            'CRF masuk antrean: ' . $crfNumber,
-            'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional dan masuk antrean Otomasi. Tekan "Mulai Kerjakan" saat mulai mengerjakan; SLA dihitung sejak saat itu.',
-            $crfLink,
-            $id,
-            null,
-            (int) $user['id']
-        );
-        notifyUsers(
-            $pdo,
-            [(int) $crf['user_id']],
+            array_merge($handlerRecipients ?: crfUserIdsForRole($pdo, 'otomasi'), [(int) $crf['user_id']]),
             'CRF disetujui: ' . $crfNumber,
-            'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional dan masuk antrean pengerjaan Divisi Otomasi.',
+            'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional. SLA mulai dihitung dan batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. PIC CRF dapat mengeksekusi CRF.',
             $crfLink,
             $id,
             null,
@@ -202,7 +189,7 @@ try {
 
         $_SESSION['flash'] = [
             'type' => 'success',
-            'message' => 'CRF berhasil disetujui dan masuk antrean Otomasi.'
+            'message' => 'CRF berhasil disetujui. SLA mulai dihitung dan CRF diserahkan ke PIC CRF.'
         ];
 
 

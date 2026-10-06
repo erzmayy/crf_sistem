@@ -3,7 +3,8 @@
  * admin/master_data.php
  * Satu halaman master data kategori:
  *   - Tab Helpdesk : kategori Helpdesk + PIC (+ penanda "Butuh CRF")
- *   - Tab CRF      : kategori CRF + target SLA + Handler (Handling Kategori)
+ *   - Tab CRF      : kategori CRF + target SLA + PIC CRF (= PIC kategori Helpdesk
+ *                    bertanda "Butuh CRF" dengan kategori CRF tersebut, migrasi 017)
  * Hapus kategori = soft delete; data ticket/CRF lama tetap utuh.
  */
 require_once __DIR__ . '/../includes/auth.php';
@@ -48,11 +49,11 @@ $tabs = [
         'usage_label' => 'ticket',
     ],
     'crf' => [
-        'label' => 'Kategori CRF & Petugas Otomasi',
+        'label' => 'Kategori CRF & PIC CRF',
         'icon' => 'bi-bookmarks',
         'rows' => $crfCategoryRows,
         'members' => $crfMembers,
-        'member_label' => 'Petugas Otomasi',
+        'member_label' => 'PIC CRF',
         'modal' => '#crfCategoryModal',
         'usage_label' => 'CRF',
     ],
@@ -72,11 +73,11 @@ require_once __DIR__ . '/../includes/header.php';
             <div>
                 <span class="crf-helpdesk-eyebrow">MASTER DATA</span>
                 <h1>Kategori &amp; Handling</h1>
-                <p>Kelola kategori Helpdesk beserta PIC, dan kategori CRF beserta Petugas Otomasi, dalam satu halaman.</p>
+                <p>Kelola kategori Helpdesk beserta PIC, dan kategori CRF beserta PIC CRF-nya, dalam satu halaman.</p>
             </div>
             <div class="crf-banner-actions">
                 <span class="crf-banner-pill"><i class="bi bi-headset"></i> <?= count($helpdeskCategoryRows) ?> Kategori Helpdesk · <?= $totalPic ?> PIC</span>
-                <span class="crf-banner-pill"><i class="bi bi-bookmarks"></i> <?= count($crfCategoryRows) ?> Kategori CRF · <?= $totalHandler ?> Petugas Otomasi</span>
+                <span class="crf-banner-pill"><i class="bi bi-bookmarks"></i> <?= count($crfCategoryRows) ?> Kategori CRF · <?= $totalHandler ?> PIC CRF</span>
             </div>
         </div>
 
@@ -87,8 +88,9 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-master-flow">
             <i class="bi bi-info-circle"></i>
             Alur: <strong>Kategori Helpdesk</strong> bertanda <span class="crf-badge badge-stage-otomasi">Butuh CRF</span>
-            meneruskan Permintaan Baru ke Form CRF dengan <strong>Kategori CRF</strong> default, lalu CRF diproses oleh
-            <strong>Petugas Otomasi</strong> kategori tersebut.
+            meneruskan Permintaan Baru ke Form CRF dengan <strong>Kategori CRF</strong> default.
+            Semua PIC kategori Helpdesk tersebut otomatis menjadi <strong>PIC CRF</strong> kategori CRF itu, jadi cukup kelola PIC
+            di tab Kategori Helpdesk. Contoh: PIC <em>Aplikasi SIAP</em> (Butuh CRF · Aplikasi) = PIC CRF kategori <em>Aplikasi</em>.
         </div>
 
         <ul class="nav nav-tabs crf-master-tabs" role="tablist">
@@ -141,7 +143,6 @@ require_once __DIR__ . '/../includes/header.php';
                                 'description' => $category['description'],
                                 'sla_value' => $category['sla_value'] !== null ? (float) $category['sla_value'] : '',
                                 'sla_unit' => $category['sla_unit'],
-                                'sort_order' => (int) $category['sort_order'],
                                 'is_active' => (int) $category['is_active'],
                             ];
                             if ($tabKey === 'crf') {
@@ -306,17 +307,9 @@ require_once __DIR__ . '/../includes/header.php';
                         </select>
                     </div>
                 </div>
-                <div class="row g-2 align-items-end">
-                    <div class="col-6">
-                        <label class="crf-field-label" for="hdCategorySort">Urutan</label>
-                        <input type="number" class="form-control" id="hdCategorySort" name="sort_order" value="0">
-                    </div>
-                    <div class="col-6">
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" role="switch" id="hdCategoryActive" name="is_active" value="1" checked>
-                            <label class="form-check-label" for="hdCategoryActive">Aktif</label>
-                        </div>
-                    </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" role="switch" id="hdCategoryActive" name="is_active" value="1" checked>
+                    <label class="form-check-label" for="hdCategoryActive">Aktif</label>
                 </div>
             </div>
             <div class="modal-footer">
@@ -388,17 +381,9 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                     <?php endforeach; ?>
                 </div>
-                <div class="row g-2 align-items-end">
-                    <div class="col-6">
-                        <label class="crf-field-label" for="crfCategorySort">Urutan</label>
-                        <input type="number" class="form-control" id="crfCategorySort" name="sort_order" value="0">
-                    </div>
-                    <div class="col-6">
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" role="switch" id="crfCategoryActive" name="is_active" value="1" checked>
-                            <label class="form-check-label" for="crfCategoryActive">Aktif</label>
-                        </div>
-                    </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" role="switch" id="crfCategoryActive" name="is_active" value="1" checked>
+                    <label class="form-check-label" for="crfCategoryActive">Aktif</label>
                 </div>
             </div>
             <div class="modal-footer">

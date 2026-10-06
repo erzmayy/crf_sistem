@@ -186,12 +186,13 @@ document.addEventListener('DOMContentLoaded', function () {
   var budgetAmountInput = document.getElementById('budget_amount');
 
   function toggleBudgetAmount() {
-    var anySelected = false;
+    var hasCost = false;
     budgetRadios.forEach(function (radio) {
-      if (radio.checked) { anySelected = true; }
+      if (radio.checked && radio.value !== 'tidak_ada') { hasCost = true; }
     });
     if (budgetAmountInput) {
-      budgetAmountInput.disabled = !anySelected;
+      budgetAmountInput.disabled = !hasCost;
+      if (!hasCost) { budgetAmountInput.value = ''; }
     }
   }
 
@@ -350,8 +351,7 @@ if (fileInput && fileList) {
       'benefit',
       'impact_category',
       'impact',
-      'reason',
-      'alternative_suggestion'
+      'reason'
     ];
     var isComplete = requiredFieldIds.every(function (id) {
       var field = document.getElementById(id);
@@ -376,11 +376,9 @@ if (fileInput && fileList) {
     }
 
     var selectedBudget = document.querySelector('input[name="budget_type"]:checked');
-    if (isComplete && !selectedBudget) {
-      isComplete = false;
-    }
 
-    if (isComplete && selectedBudget) {
+    // Nominal hanya wajib bila ada biaya (bukan "Tidak ada biaya").
+    if (isComplete && selectedBudget && selectedBudget.value !== 'tidak_ada') {
       var budgetAmount = document.getElementById('budget_amount');
       if (!budgetAmount || budgetAmount.value.trim() === ''
         || Number(budgetAmount.value) < 0) {
@@ -429,8 +427,7 @@ if (fileInput && fileList) {
       ['benefit', 'Benefit perubahan wajib diisi.'],
       ['impact_category', 'Dampak jika tidak dilakukan perubahan wajib dipilih.'],
       ['impact', 'Penjelasan dampak wajib diisi.'],
-      ['reason', 'Alasan permohonan perubahan wajib diisi.'],
-      ['alternative_suggestion', 'Saran alternatif wajib diisi.']
+      ['reason', 'Alasan permohonan perubahan wajib diisi.']
     ].forEach(function (item) {
       var field = document.getElementById(item[0]);
       if (field && field.value.trim() === '') {
@@ -456,18 +453,7 @@ if (fileInput && fileList) {
     }
 
     var selectedBudget = document.querySelector('input[name="budget_type"]:checked');
-    if (!selectedBudget) {
-      var budgetOptions = document.getElementById('budgetOptions');
-      var firstBudgetOption = document.querySelector('input[name="budget_type"]');
-      if (budgetOptions && firstBudgetOption) {
-        firstBudgetOption.setAttribute('aria-invalid', 'true');
-        var budgetError = document.createElement('div');
-        budgetError.className = 'invalid-feedback crf-inline-error';
-        budgetError.textContent = 'Biaya / anggaran wajib dipilih.';
-        budgetOptions.insertAdjacentElement('afterend', budgetError);
-        errors.push({ field: firstBudgetOption, message: budgetError.textContent });
-      }
-    } else {
+    if (selectedBudget && selectedBudget.value !== 'tidak_ada') {
       var budgetAmount = document.getElementById('budget_amount');
       if (!budgetAmount || budgetAmount.value.trim() === '') {
         addInlineError(budgetAmount, 'Nominal biaya / anggaran wajib diisi.', errors);

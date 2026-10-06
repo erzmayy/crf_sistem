@@ -70,7 +70,7 @@ $infoDisplayStatus = crfDisplayStatus($crf);
                 <span class="crf-info-value"><?= h(crfCategoryName($crf)) ?></span>
             </div>
             <div class="crf-info-row">
-                <span class="crf-info-label">Petugas Otomasi</span>
+                <span class="crf-info-label">PIC CRF</span>
                 <span class="crf-info-value"><?= h($crf['assigned_handler_name'] ?? '') ?: '<span class="text-muted">Belum ada</span>' ?></span>
             </div>
             <div class="crf-info-row">

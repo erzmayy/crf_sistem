@@ -414,9 +414,14 @@ require_once __DIR__ . '/../includes/header.php';
           <h2>Biaya / Anggaran</h2>
         </div>
         <div class="crf-section-body">
-          <p class="crf-hint">Silakan sampaikan apakah untuk perubahan ini sudah dianggarkan atau perlu diusulkan.<span class="text-danger">*</span></p>
+          <?php $budgetChoice = ($old['budget_type'] ?? '') ?: 'tidak_ada'; ?>
+          <p class="crf-hint">Biarkan <strong>Tidak ada biaya</strong> bila perubahan ini tidak membutuhkan anggaran. Jika ada biaya, pilih sumber anggarannya lalu isi nominal.</p>
 
           <div id="budgetOptions" class="crf-budget-options" role="radiogroup" aria-label="Pilihan biaya atau anggaran">
+            <div class="form-check mb-2 crf-budget-option">
+              <input class="form-check-input" type="radio" name="budget_type" id="budget_none" value="tidak_ada" <?= $budgetChoice === 'tidak_ada' ? 'checked' : '' ?>>
+              <label class="form-check-label" for="budget_none">Tidak ada biaya</label>
+            </div>
             <div class="form-check mb-2 crf-budget-option">
               <input class="form-check-input" type="radio" name="budget_type" id="budget_rkap" value="rkap"<?= ($old['budget_type'] ?? '') === 'rkap' ? 'checked' : '' ?>>
               <label class="form-check-label" for="budget_rkap">RKAP tahun berjalan</label>
@@ -435,7 +440,7 @@ require_once __DIR__ . '/../includes/header.php';
           <div class="input-group crf-budget-amount">
             <span class="input-group-text">Rp</span>
             <input type="number" min="0" step="1000" class="form-control"
-                   id="budget_amount" name="budget_amount" placeholder="0" value="<?= h($old['budget_amount'] ?? '') ?>" disabled>
+                   id="budget_amount" name="budget_amount" placeholder="0" value="<?= h($old['budget_amount'] ?? '') ?>" <?= $budgetChoice === 'tidak_ada' ? 'disabled' : '' ?>>
           </div>
         </div>
       </div>
@@ -465,7 +470,7 @@ require_once __DIR__ . '/../includes/header.php';
           <?php if (!$crfCategoryOptions): ?>
             <div class="text-danger small mb-3">Belum ada Kategori CRF aktif. Hubungi Admin.</div>
           <?php else: ?>
-            <div class="crf-readonly-note mb-3">Kategori menentukan Petugas Otomasi yang akan memproses CRF Anda.</div>
+            <div class="crf-readonly-note mb-3">Kategori menentukan PIC CRF yang akan memproses CRF Anda.</div>
           <?php endif; ?>
 
           <div id="category-detail-wrap" class="d-none">
@@ -490,9 +495,9 @@ require_once __DIR__ . '/../includes/header.php';
           <h2>Change Request Action</h2>
         </div>
         <div class="crf-section-body">
-          <label for="alternative_suggestion" class="crf-field-label">Saran Alternatif<span class="text-danger">*</span></label>
-          <p class="crf-hint">Saran alternatif yang akan dilakukan atas perubahan yang telah disampaikan.</p>
-          <textarea class="form-control" id="alternative_suggestion" name="alternative_suggestion" required><?= h($old['alternative_suggestion'] ?? '') ?></textarea>
+          <label for="alternative_suggestion" class="crf-field-label">Saran Alternatif <small class="text-muted fw-normal">(opsional)</small></label>
+          <p class="crf-hint">Isi bila ada saran alternatif atas perubahan yang disampaikan.</p>
+          <textarea class="form-control" id="alternative_suggestion" name="alternative_suggestion"><?= h($old['alternative_suggestion'] ?? '') ?></textarea>
         </div>
       </div>
 

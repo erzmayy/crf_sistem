@@ -5,7 +5,9 @@
  * Kelola master Kategori CRF dan Kategori Helpdesk (Admin):
  *   type = crf | helpdesk
  *   op   = save | toggle | delete | add_member | remove_member
- * Anggota kategori = Handler (CRF) atau PIC (Helpdesk).
+ * Anggota kategori = PIC CRF atau PIC Helpdesk. PIC CRF = PIC kategori Helpdesk
+ * bertanda "Butuh CRF" dengan Kategori CRF default tersebut; isian manual lama
+ * hanya bisa dihapus, tidak ditambah.
  * Hapus kategori = soft delete (deleted_at), data CRF/ticket lama aman.
  * ---------------------------------------------------------------
  */
@@ -29,9 +31,10 @@ $op = $_POST['op'] ?? '';
 $config = [
     'crf' => [
         'table'    => 'crf_categories',
-        'pivot'    => 'crf_category_handlers',
+        // Penulisan ke tabel manual; crf_category_handlers adalah VIEW gabungan.
+        'pivot'    => 'crf_category_handlers_manual',
         'fk'       => 'crf_category_id',
-        'member'   => 'Petugas Otomasi',
+        'member'   => 'PIC CRF',
         'pages'    => ['master_data.php'],
     ],
     'helpdesk' => [
@@ -73,7 +76,6 @@ try {
             $description = trim($_POST['description'] ?? '');
             $slaValueRaw = trim($_POST['sla_value'] ?? '');
             $slaUnit = $_POST['sla_unit'] ?? '';
-            $sortOrder = (int) ($_POST['sort_order'] ?? 0);
             $isActive = !empty($_POST['is_active']) ? 1 : 0;
             $errors = [];
 
@@ -157,7 +159,6 @@ try {
                 'description' => $description !== '' ? $description : null,
                 'sla_value'   => $slaValue,
                 'sla_unit'    => $slaUnit,
-                'sort_order'  => $sortOrder,
                 'is_active'   => $isActive,
             ], $extra);
 
@@ -170,7 +171,19 @@ try {
                 $cols = implode(', ', array_keys($fields));
                 $vals = implode(', ', array_map(static fn($col) => ':' . $col, array_keys($fields)));
                 $pdo->prepare("INSERT INTO {$table} ({$cols}) VALUES ({$vals})")->execute($fields);
+                $categoryId = (int) $pdo->lastInsertId();
                 $message = 'Kategori "' . $name . '" berhasil ditambahkan.';
+            }
+
+            // Kategori Helpdesk "Butuh CRF": PIC-nya otomatis menjadi PIC CRF kategori CRF default.
+            if ($type === 'helpdesk') {
+                $picCrfCategoryId = $extra['requires_crf'] && $extra['default_crf_category_id']
+                    ? (int) $extra['default_crf_category_id']
+                    : null;
+                syncCrfPicSource($pdo, $categoryId, $picCrfCategoryId, crfActorName(getCurrentUser()));
+                if ($picCrfCategoryId) {
+                    $message .= ' PIC kategori ini menjadi PIC CRF kategori ' . (findCrfCategory($pdo, $picCrfCategoryId)['name'] ?? '') . '.';
+                }
             }
 
             categoryMasterFinish('success', $message, $redirect);
@@ -211,6 +224,15 @@ try {
             $fk = $cfg['fk'];
             $memberName = crfActorName($memberUser);
 
+            if ($type === 'crf' && $op === 'add_member') {
+                categoryMasterFinish(
+                    'warning',
+                    'PIC CRF diambil dari PIC kategori Helpdesk bertanda "Butuh CRF · ' . $category['name'] . '". Tambahkan '
+                        . $memberName . ' sebagai PIC kategori Helpdesk tersebut.',
+                    $redirect
+                );
+            }
+
             if ($op === 'add_member') {
                 $pdo->prepare("
                     INSERT INTO {$pivot} ({$fk}, user_id, user_name)
@@ -222,6 +244,17 @@ try {
                 $pdo->prepare("DELETE FROM {$pivot} WHERE {$fk} = :category_id AND user_id = :user_id")
                     ->execute(['category_id' => $categoryId, 'user_id' => $userId]);
                 $message = $memberName . ' dihapus dari ' . $cfg['member'] . ' kategori ' . $category['name'] . '.';
+
+                // Masih terdaftar lewat kategori Helpdesk sumber -> tetap PIC CRF.
+                if ($type === 'crf') {
+                    $still = $pdo->prepare('SELECT sources FROM crf_category_handlers WHERE crf_category_id = :c AND user_id = :u');
+                    $still->execute(['c' => $categoryId, 'u' => $userId]);
+                    $stillSources = $still->fetchColumn();
+                    if ($stillSources) {
+                        $message = 'Isian manual ' . $memberName . ' dihapus, tetapi ia tetap PIC CRF karena PIC kategori Helpdesk '
+                            . $stillSources . '. Ubah di tab Kategori Helpdesk bila perlu.';
+                    }
+                }
             }
 
             categoryMasterFinish('success', $message, $redirect);
