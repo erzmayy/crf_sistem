@@ -439,15 +439,6 @@ require_once __DIR__ . '/../includes/header.php';
                                 Tandai Selesai
                             </button>
 
-                            <button
-                                name="action"
-                                value="cancel"
-                                class="btn btn-outline-danger"
-                            >
-                                <i class="bi bi-x-circle"></i>
-                                Batalkan
-                            </button>
-
                         </div>
 
                     </form>

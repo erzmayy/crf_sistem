@@ -44,7 +44,8 @@ Selama pembahasan Forum terbuka, CRF di tahap `CMO_FILTER` bertanda
    tercatat sebagai pemegang CRF.
 5. **Pemohon** mengisi Tanggal PIR dan Post Implementation Review.
    Setelah itu CRF diteruskan ke CMO.
-6. **CMO** memfinalisasi dan menandai selesai.
+6. **CMO** memfinalisasi dan menandai selesai. Pada tahap ini CMO tidak dapat membatalkan CRF
+   (pekerjaan sudah dilaksanakan); pembatalan hanya saat verifikasi CMO atau oleh Admin.
 
 Daftar eksekusi PIC CRF diurutkan menurut tenggat SLA terdekat, lalu Level Urgensi
 (Tinggi → Normal → Rendah). Tidak ada fitur "Ambil CRF", "Mulai Kerjakan", penugasan

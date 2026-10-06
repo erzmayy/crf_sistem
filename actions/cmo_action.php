@@ -45,7 +45,7 @@ $allowed = [
     'request_discussion' => 'CMO_FILTER',
     'cancel_discussion' => 'CMO_FILTER',
     'revision' => 'CMO_FILTER',
-    'cancel' => ['CMO_FILTER','CMO_FINAL'],
+    'cancel' => 'CMO_FILTER',
     'complete' => 'CMO_FINAL',
     'remind_pir' => 'PEMOHON_PIR',
 ];
