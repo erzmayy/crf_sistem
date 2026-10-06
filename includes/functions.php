@@ -376,6 +376,15 @@ function formatSlaDuration(int $seconds): string
     return implode(' ', $parts);
 }
 
+/**
+ * Ambang "mendesak": sisa waktu SLA (detik kerja) yang lebih kecil antara
+ * 25% total SLA dan 1 jam. Dipakai badge SLA dan peringatan ke PIC CRF.
+ */
+function crfSlaUrgentSeconds(int $totalSeconds): int
+{
+    return (int) min(3600, floor($totalSeconds * 0.25));
+}
+
 function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
 {
     $now = $now ?? new DateTimeImmutable('now');
@@ -465,7 +474,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
         ? slaWorkingSecondsBetween($now, $dueAt)
         : -slaWorkingSecondsBetween($dueAt, $now);
     if ($now <= $dueAt) {
-        $isApproaching = $remaining <= 3600;
+        $isApproaching = $remaining <= crfSlaUrgentSeconds(slaWorkingSecondsBetween($startedAt, $dueAt));
         return [
             'label' => 'Masih dalam SLA',
             'detail' => 'Sisa waktu ' . formatSlaDuration($remaining) . '.',

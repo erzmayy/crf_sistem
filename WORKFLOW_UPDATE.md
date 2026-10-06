@@ -84,8 +84,8 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
 ## Form pemohon & notifikasi
 
 - **Saran Alternatif** opsional (disimpan kosong bila tidak diisi).
-- **Biaya / Anggaran** bawaan "Tidak ada biaya" (disimpan tanpa jenis dan tanpa nominal);
-  nominal hanya wajib bila memilih RKAP / BOQ PKS / anggaran baru.
+- **Biaya / Anggaran** opsional (tanpa pilihan bawaan; klik pilihan terpilih untuk membatalkan,
+  disimpan tanpa jenis dan tanpa nominal); nominal hanya wajib bila memilih RKAP / BOQ PKS / anggaran baru.
 - Kategori Helpdesk & CRF tidak lagi punya isian Urutan (urutan lama dipertahankan).
 - Notifikasi hanya ke aktor berikutnya: submit → CMO; selesai PIC → pemohon; PIR → CMO
   yang meloloskan; batal → pemohon. Komentar Forum tidak menumpuk selama notifikasi
@@ -99,6 +99,12 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
 - Hanya berjalan pada hari kerja. Sabtu, Minggu, dan tanggal di
   `CRF_SLA_HOLIDAYS` (`config/sla.php`) tidak dihitung.
 - Contoh: SLA 1 Hari yang dimulai Jumat 16:00 jatuh tempo Senin 16:00.
+- **Peringatan ke PIC CRF** (hanya PIC, tidak ke atasan), dihitung dalam waktu kerja:
+  *Pengingat* saat 50% SLA terpakai (dilewati bila SLA < 1 jam), *Mendesak* saat sisa waktu
+  ≤ yang lebih kecil antara 25% SLA dan 1 jam, *Terlambat* saat melewati batas lalu diulang tiap
+  hari kerja hingga PIC menekan Selesaikan. Dikirim oleh `database/maintenance/kirim_peringatan_sla.php`
+  (jadwalkan tiap 5 menit); penanda anti-ganda di tabel `crf_sla_alerts` (migrasi 019).
+
 ## Nomor register
 
 Format `PPU-02.4.NNNN.MM.YY`. Nomor urut direset per tahun dan dibuat atomik

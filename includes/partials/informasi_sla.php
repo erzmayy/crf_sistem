@@ -141,7 +141,7 @@ $slaDueEpoch = !empty($crf['sla_due_at'])
                 data-sla-alert-state="<?= h($slaStatus['alert'] ?? '') ?>"
             >
                 <i class="bi bi-<?= $slaStatus['alert'] === 'overdue' ? 'exclamation-triangle-fill' : 'clock-fill' ?>" data-sla-alert-icon></i>
-                <span data-sla-alert-message><?= $slaStatus['alert'] === 'overdue' ? 'Peringatan: batas SLA telah terlewati.' : 'Perhatian: batas waktu SLA tinggal 1 jam atau kurang.' ?></span>
+                <span data-sla-alert-message><?= $slaStatus['alert'] === 'overdue' ? 'Peringatan: batas SLA telah terlewati.' : 'Perhatian: batas waktu SLA hampir terlewati.' ?></span>
             </div>
         <?php endif; ?>
     </div>
