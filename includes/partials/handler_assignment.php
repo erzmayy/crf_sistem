@@ -1,7 +1,7 @@
 <?php
 /**
  * Kartu penanganan CRF (informasi saja): kategori, target SLA kategori,
- * dan Petugas Otomasi yang memegang CRF. Petugas Otomasi ditetapkan
+ * dan PIC CRF yang memegang CRF. PIC CRF ditetapkan
  * otomatis saat menekan "Mulai Kerjakan".
  *
  * Variabel: $crf, $pdo.
@@ -17,7 +17,7 @@ $assignmentCategory = !empty($crf['crf_category_id']) ? findCrfCategory($pdo, (i
         <?php endif; ?>
     </div>
     <div class="crf-assignment-item">
-        <span class="crf-request-caption">Petugas Otomasi</span>
+        <span class="crf-request-caption">PIC CRF</span>
         <?php if (!empty($crf['assigned_handler_id'])): ?>
             <strong><i class="bi bi-person-check"></i> <?= h($crf['assigned_handler_name'] ?? '-') ?></strong>
             <?php if (!empty($crf['assigned_at'])): ?>

@@ -14,7 +14,7 @@ $activityLabels = [
     'Lolos Filter CMO' => 'Verifikasi CMO',
     'Otomasi - SLA Ditentukan' => 'SLA Ditentukan',
     'SLA Otomatis' => 'SLA Standar Kategori',
-    'SLA Disesuaikan Handler' => 'SLA Disesuaikan Petugas Otomasi',
+    'SLA Disesuaikan Handler' => 'SLA Disesuaikan PIC CRF',
     'Approval Kepala Departemen Operasional' => 'Persetujuan Kepala Departemen Operasional',
     'Mulai Dikerjakan' => 'Mulai Dikerjakan Otomasi',
     'Usulan Urgensi dan SLA' => 'Usulan Urgensi dan SLA',
@@ -31,8 +31,8 @@ $activityLabels = [
     'Solve' => 'CRF Selesai',
     'Cancel' => 'CRF Dibatalkan',
     'Dibuat dari Helpdesk' => 'Draft CRF Dibuat dari Helpdesk',
-    'CRF Diambil Handler' => 'CRF Diterima Petugas Otomasi',
-    'Handler Ditugaskan' => 'Petugas Otomasi Ditugaskan',
+    'CRF Diambil Handler' => 'CRF Diterima PIC CRF',
+    'Handler Ditugaskan' => 'PIC CRF Ditugaskan',
 ];
 
 // Istilah lama pada riwayat yang tersimpan, diseragamkan saat ditampilkan.
@@ -42,8 +42,11 @@ $legacyTerms = [
     'untuk approval' => 'untuk persetujuan',
     'setelah approval' => 'setelah persetujuan',
     'lolos filter CMO' => 'lolos verifikasi CMO',
-    'Handler kategori' => 'Petugas Otomasi',
-    'ke Handler' => 'ke Petugas Otomasi',
+    'Handler kategori' => 'PIC CRF',
+    'ke Handler' => 'ke PIC CRF',
+    // Riwayat lama yang tersimpan sebelum istilah diganti.
+    'Petugas Otomasi' => 'PIC CRF',
+    'Petugas otomasi' => 'PIC CRF',
 ];
 $modernizeTerm = static fn(?string $text): string => strtr((string) $text, $legacyTerms);
 
@@ -63,8 +66,8 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
             break;
         case 'OTOMASI':
             $pendingStep = crfIsQueued($crf)
-                ? ['title' => 'Antrean Otomasi', 'description' => 'CRF sudah disetujui dan menunggu Petugas Otomasi mulai mengerjakan. SLA dihitung sejak "Mulai Kerjakan".']
-                : ['title' => 'Tindak Lanjut Divisi Otomasi', 'description' => 'Menunggu Petugas Otomasi mencatat hasil implementasi.'];
+                ? ['title' => 'Antrean Otomasi', 'description' => 'CRF sudah disetujui dan menunggu PIC CRF mulai mengerjakan. SLA dihitung sejak "Mulai Kerjakan".']
+                : ['title' => 'Tindak Lanjut Divisi Otomasi', 'description' => 'Menunggu PIC CRF mencatat hasil implementasi.'];
             break;
         case 'kadep_operasional':
             $pendingStep = ['title' => 'Persetujuan Kepala Departemen Operasional', 'description' => 'Menunggu persetujuan Kepala Departemen Operasional.'];

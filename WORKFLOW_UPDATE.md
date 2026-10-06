@@ -50,7 +50,7 @@ Antrean Otomasi diurutkan: CRF yang sedang dikerjakan (tenggat terdekat) lebih d
 lalu antrean menurut Level Urgensi (Tinggi → Normal → Rendah) dan waktu persetujuan.
 
 Admin dapat memantau semua CRF dan membatalkan CRF secara administratif.
-Tidak ada fitur "Ambil CRF" maupun penugasan Handler oleh Admin: Petugas Otomasi
+Tidak ada fitur "Ambil CRF" maupun penugasan Handler oleh Admin: PIC CRF
 yang menekan "Mulai Kerjakan" otomatis menjadi pemegang CRF, dan hanya dia yang
 dapat menyelesaikannya. Forum dipakai CMO, Otomasi, Kepala Departemen Operasional,
 dan Admin untuk berdiskusi. Perubahan Level Urgensi dan SLA hanya lewat mekanisme
@@ -63,7 +63,7 @@ diubah, dibahas di Forum dengan alur **usulan → keputusan satu pihak** (tanpa 
 
 | | Siapa |
 |---|---|
-| **Mengajukan** | CMO, Admin, Petugas Otomasi kategori CRF (akun demo untuk presentasi) |
+| **Mengajukan** | CMO, Admin, PIC CRF kategori CRF (akun demo untuk presentasi) |
 | **Memutuskan** | Penentu = `forumDeciderRoles()` di `includes/forum.php` (saat ini hanya **Admin**) |
 | Hanya berkomentar | Kepala Departemen Operasional |
 
@@ -108,6 +108,21 @@ permintaan: Maintenance, Request, Komplain. Pada kategori yang mewajibkan CRF,
 Request diajukan langsung lewat Form CRF. Ticket lama berstatus
 "Diteruskan ke CRF" mengikuti status CRF-nya.
 
+## PIC CRF
+
+PIC CRF (dulu disebut Petugas Otomasi/Handler) **tidak diisi terpisah**. Aturannya satu:
+kategori Helpdesk bertanda **Butuh CRF** dengan *Kategori CRF default* X → semua PIC-nya
+menjadi PIC CRF kategori X. Contoh: PIC **Aplikasi SIAP** (Butuh CRF · Aplikasi) = PIC CRF
+kategori **Aplikasi**.
+
+- PIC cukup dikelola di **Master Data → Kategori Helpdesk** (kelak menu Kategori Helpdesk SIAP).
+- Mengubah atau mematikan *Butuh CRF* / *Kategori CRF default* langsung mengubah PIC CRF-nya.
+- Perubahan PIC di kategori Helpdesk langsung berlaku untuk antrean CRF (tanpa sinkronisasi).
+- PIC CRF yang dulu diisi manual tetap berlaku (ditandai *isian manual lama*) dan hanya bisa dihapus.
+- Secara teknis `crf_category_handlers` adalah VIEW gabungan `crf_category_pic_sources` +
+  `helpdesk_category_pics` + `crf_category_handlers_manual`. Saat integrasi SIAP, view ini cukup
+  diarahkan ke tabel kategori & PIC Helpdesk milik SIAP.
+
 ## Database
 
 - Instalasi baru: jalankan `database/schema.sql`.
@@ -119,6 +134,9 @@ Request diajukan langsung lewat Form CRF. Ticket lama berstatus
 - Usulan Urgensi & SLA Forum: jalankan `016_forum_proposals_migration.sql` (tabel
   `forum_proposals` dan kolom `forum_comments.is_system`). **Wajib** sebelum kode ini
   dipakai: tanpa tabel itu halaman Forum error.
+- PIC CRF dari PIC Helpdesk: jalankan `017_pic_crf_dari_helpdesk_migration.sql`. **Wajib**:
+  tabel `crf_category_handlers` diganti nama menjadi `crf_category_handlers_manual` dan
+  digantikan VIEW. Aman dijalankan ulang.
 
 ## Akun
 

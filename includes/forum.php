@@ -99,7 +99,7 @@ function markForumRead(PDO $pdo, int $crfId, int $userId, int $lastCommentId): v
 
 /**
  * Peran Forum boleh melihat detail (read-only) dan mengunduh lampiran
- * semua CRF yang sedang dibahas di Forum, termasuk Petugas Otomasi di
+ * semua CRF yang sedang dibahas di Forum, termasuk PIC CRF di
  * luar kategorinya. Hak aksi tetap dijaga di halaman proses masing-masing.
  */
 function canViewForumCrf(PDO $pdo, int $crfId): bool

@@ -3,7 +3,7 @@
    - Dialog konfirmasi untuk form ber-atribut data-confirm
    - Loading state tombol submit (data-loading-form / data-confirm)
    - Isi otomatis modal kategori (data-category-form)
-   - Pencarian user untuk Petugas Otomasi / PIC (data-user-picker)
+   - Pencarian user untuk PIC CRF / PIC (data-user-picker)
    - Formulir Helpdesk: alihkan ke Form CRF untuk kategori "Butuh CRF"
    Semua aturan akses tetap divalidasi di server.
    ===================================================================== */
@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   /* -----------------------------------------------------------------
-   * Pencarian user (Petugas Otomasi / PIC)
+   * Pencarian user (PIC CRF / PIC)
    * ----------------------------------------------------------------- */
   var appBase = (document.body.getAttribute('data-app-base') || '');
 

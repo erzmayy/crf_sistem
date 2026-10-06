@@ -2,7 +2,7 @@
 /**
  * actions/forum_proposal.php
  * Aksi usulan Urgensi & SLA di Forum (logika di includes/forum_proposals.php).
- *   op=create  : ajukan usulan (CMO, Admin, Petugas Otomasi kategori).
+ *   op=create  : ajukan usulan (CMO, Admin, PIC CRF kategori).
  *   op=decide  : setujui / tolak usulan (penentu: forumDeciderRoles()).
  *   op=cancel  : batalkan usulan yang menunggu (pengusul atau penentu).
  *   op=direct  : penentu menetapkan langsung tanpa usulan (tetap tercatat).

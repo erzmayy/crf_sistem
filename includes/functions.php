@@ -480,7 +480,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
     if ($startedAt === null || $dueAt === null) {
         return [
             'label' => 'SLA belum dimulai',
-            'detail' => 'SLA dimulai saat Petugas Otomasi menekan "Mulai Kerjakan".',
+            'detail' => 'SLA dimulai saat PIC CRF menekan "Mulai Kerjakan".',
             'class' => 'secondary',
             'alert' => null,
             'elapsed' => null,
@@ -568,7 +568,7 @@ function logCrfActivity(
 
 /**
  * CRF sudah disetujui Kepala Departemen Operasional tetapi belum mulai
- * dikerjakan Petugas Otomasi (antrean). SLA belum berjalan pada kondisi ini.
+ * dikerjakan PIC CRF (antrean). SLA belum berjalan pada kondisi ini.
  * Bila kolom automation_started_at tidak ikut di-SELECT, dianggap sudah berjalan.
  */
 function crfIsQueued(array $crf): bool

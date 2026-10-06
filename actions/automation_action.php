@@ -1,10 +1,10 @@
 <?php
 /**
  * actions/automation_action.php
- * Aksi Petugas Otomasi setelah CRF disetujui Kepala Departemen Operasional:
+ * Aksi PIC CRF setelah CRF disetujui Kepala Departemen Operasional:
  *   - start    : "Mulai Kerjakan" — CRF keluar dari antrean, SLA mulai dihitung.
  *   - complete : "Selesaikan" — catat hasil implementasi, lanjut ke PIR Pemohon.
- * Petugas Otomasi tidak menentukan/mengubah Level Urgensi & SLA (hanya Admin di Forum).
+ * PIC CRF tidak menentukan/mengubah Level Urgensi & SLA (hanya Admin di Forum).
  */
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
@@ -82,7 +82,7 @@ try {
 
     if (!empty($crf['assigned_handler_id']) && !isAssignedCrfHandler($crf)) {
         $failRedirect(
-            'CRF ini sedang ditangani oleh ' . ($crf['assigned_handler_name'] ?? 'Petugas Otomasi lain') . '.',
+            'CRF ini sedang ditangani oleh ' . ($crf['assigned_handler_name'] ?? 'PIC CRF lain') . '.',
             '../otomasi/detail.php?id=' . $id
         );
     }
@@ -104,7 +104,7 @@ try {
             );
         }
 
-        // CRF yang belum punya Petugas Otomasi otomatis dipegang oleh yang memulai.
+        // CRF yang belum punya PIC CRF otomatis dipegang oleh yang memulai.
         if (empty($crf['assigned_handler_id'])) {
             $pdo->prepare('
                 UPDATE change_requests
@@ -147,7 +147,7 @@ try {
             $pdo,
             $id,
             'Mulai Dikerjakan',
-            'Petugas Otomasi mulai mengerjakan CRF. SLA ' . slaLabel($crf['sla_value'], $crf['sla_unit'])
+            'PIC CRF mulai mengerjakan CRF. SLA ' . slaLabel($crf['sla_value'], $crf['sla_unit'])
                 . ' mulai dihitung, batas ' . date('d-m-Y H:i', strtotime($slaDueAt))
                 . '. Waktu tunggu di antrean: ' . formatSlaDuration($waitSeconds) . '.',
             $actor,

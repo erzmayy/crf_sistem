@@ -201,7 +201,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="alert alert-warning crf-alert">
             <i class="bi bi-person-lock"></i>
             CRF ini sedang ditangani oleh <strong><?= h($crf['assigned_handler_name'] ?? '-') ?></strong>.
-            Hanya Petugas Otomasi tersebut yang dapat memprosesnya.
+            Hanya PIC CRF tersebut yang dapat memprosesnya.
         </div>
         <?php else: ?>
         <form

@@ -3,7 +3,8 @@
  * admin/master_data.php
  * Satu halaman master data kategori:
  *   - Tab Helpdesk : kategori Helpdesk + PIC (+ penanda "Butuh CRF")
- *   - Tab CRF      : kategori CRF + target SLA + Handler (Handling Kategori)
+ *   - Tab CRF      : kategori CRF + target SLA + PIC CRF (= PIC kategori Helpdesk
+ *                    bertanda "Butuh CRF" dengan kategori CRF tersebut, migrasi 017)
  * Hapus kategori = soft delete; data ticket/CRF lama tetap utuh.
  */
 require_once __DIR__ . '/../includes/auth.php';
@@ -48,11 +49,11 @@ $tabs = [
         'usage_label' => 'ticket',
     ],
     'crf' => [
-        'label' => 'Kategori CRF & Petugas Otomasi',
+        'label' => 'Kategori CRF & PIC CRF',
         'icon' => 'bi-bookmarks',
         'rows' => $crfCategoryRows,
         'members' => $crfMembers,
-        'member_label' => 'Petugas Otomasi',
+        'member_label' => 'PIC CRF',
         'modal' => '#crfCategoryModal',
         'usage_label' => 'CRF',
     ],
@@ -72,11 +73,11 @@ require_once __DIR__ . '/../includes/header.php';
             <div>
                 <span class="crf-helpdesk-eyebrow">MASTER DATA</span>
                 <h1>Kategori &amp; Handling</h1>
-                <p>Kelola kategori Helpdesk beserta PIC, dan kategori CRF beserta Petugas Otomasi, dalam satu halaman.</p>
+                <p>Kelola kategori Helpdesk beserta PIC, dan kategori CRF beserta PIC CRF-nya, dalam satu halaman.</p>
             </div>
             <div class="crf-banner-actions">
                 <span class="crf-banner-pill"><i class="bi bi-headset"></i> <?= count($helpdeskCategoryRows) ?> Kategori Helpdesk · <?= $totalPic ?> PIC</span>
-                <span class="crf-banner-pill"><i class="bi bi-bookmarks"></i> <?= count($crfCategoryRows) ?> Kategori CRF · <?= $totalHandler ?> Petugas Otomasi</span>
+                <span class="crf-banner-pill"><i class="bi bi-bookmarks"></i> <?= count($crfCategoryRows) ?> Kategori CRF · <?= $totalHandler ?> PIC CRF</span>
             </div>
         </div>
 
@@ -87,8 +88,9 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-master-flow">
             <i class="bi bi-info-circle"></i>
             Alur: <strong>Kategori Helpdesk</strong> bertanda <span class="crf-badge badge-stage-otomasi">Butuh CRF</span>
-            meneruskan Permintaan Baru ke Form CRF dengan <strong>Kategori CRF</strong> default, lalu CRF diproses oleh
-            <strong>Petugas Otomasi</strong> kategori tersebut.
+            meneruskan Permintaan Baru ke Form CRF dengan <strong>Kategori CRF</strong> default.
+            Semua PIC kategori Helpdesk tersebut otomatis menjadi <strong>PIC CRF</strong> kategori CRF itu, jadi cukup kelola PIC
+            di tab Kategori Helpdesk. Contoh: PIC <em>Aplikasi SIAP</em> (Butuh CRF · Aplikasi) = PIC CRF kategori <em>Aplikasi</em>.
         </div>
 
         <ul class="nav nav-tabs crf-master-tabs" role="tablist">

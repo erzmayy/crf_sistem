@@ -124,7 +124,7 @@ try {
 
         /*
          * Setelah disetujui CRF masuk antrean Otomasi. SLA belum berjalan:
-         * dimulai saat Petugas Otomasi menekan "Mulai Kerjakan".
+         * dimulai saat PIC CRF menekan "Mulai Kerjakan".
          */
         $stmt = $pdo->prepare("
             UPDATE change_requests
@@ -158,7 +158,7 @@ try {
             $pdo,
             $id,
             'Approval Kepala Departemen Operasional',
-            'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. CRF masuk antrean Otomasi; SLA dimulai saat Petugas Otomasi mulai mengerjakan.'
+            'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. CRF masuk antrean Otomasi; SLA dimulai saat PIC CRF mulai mengerjakan.'
                 . ($note !== '' ? ' Catatan: ' . $note : ''),
             $actor,
             'Menunggu Persetujuan',

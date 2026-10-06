@@ -9,7 +9,7 @@
  *                        (CRF di tahap Otomasi).
  *
  * Aturan:
- *   - Pengusul : CMO, Admin, Petugas Otomasi kategori CRF (akun demo untuk presentasi).
+ *   - Pengusul : CMO, Admin, PIC CRF kategori CRF (akun demo untuk presentasi).
  *   - Penentu  : forumDeciderRoles() (forum.php) — hanya satu keputusan, bukan voting.
  *   - Satu CRF hanya punya satu usulan terbuka (dijaga UNIQUE open_crf_id).
  *   - Usulan tidak pernah menahan alur CRF; bila tidak diputuskan, nilai yang
@@ -397,7 +397,7 @@ function forumSubmitProposal(PDO $pdo, int $crfId, array $user, ?string $urgency
         logCrfActivity($pdo, $crfId, $title, $description, $actor);
         forumAddSystemComment($pdo, $crfId, $user, $description);
 
-        // Penentu, CMO (bila masih verifikasi), dan Petugas Otomasi (bila perpanjangan) perlu tahu.
+        // Penentu, CMO (bila masih verifikasi), dan PIC CRF (bila perpanjangan) perlu tahu.
         $recipients = forumDeciderUserIds($pdo);
         if ($crf['workflow_stage'] === 'CMO_FILTER') {
             $recipients = array_merge($recipients, crfUserIdsForRole($pdo, 'cmo'));

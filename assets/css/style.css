@@ -5294,6 +5294,30 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
 }
 .crf-member-remove:hover { border-color: #f1b8b3; color: #B3261E; }
 .crf-member-empty { grid-column: 1 / -1; padding: 0.7rem; border: 1px dashed #d5dee8; border-radius: 10px; color: #64748b; font-size: 0.78rem; }
+
+/* Asal PIC CRF pada kartu anggota */
+.crf-member-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+  color: #1d4ed8;
+  font-size: 0.7rem;
+}
+
+.crf-member-manual {
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.crf-member-hint {
+  margin: 0.6rem 0 0;
+  color: #64748b;
+  font-size: 0.75rem;
+}
 .crf-member-add { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.7rem; }
 .crf-member-search { position: relative; flex: 1; max-width: 420px; }
 .crf-member-search > i { position: absolute; top: 50%; left: 0.6rem; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; }

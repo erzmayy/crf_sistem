@@ -238,7 +238,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <p class="text-muted">
                     Periksa detail CRF serta Level Urgensi dan SLA sebelum menyetujui.
                     Setelah disetujui, CRF masuk antrean Divisi Otomasi dan SLA mulai dihitung
-                    saat Petugas Otomasi menekan <strong>Mulai Kerjakan</strong>.
+                    saat PIC CRF menekan <strong>Mulai Kerjakan</strong>.
                 </p>
 
                 <?php $jokoOpenProposal = forumOpenProposal($pdo, (int) $crf['id']); ?>

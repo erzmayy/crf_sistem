@@ -95,7 +95,33 @@ function findHelpdeskCategory(PDO $pdo, int $id): ?array
 }
 
 /**
- * ID user handler untuk satu kategori CRF.
+ * PIC CRF diturunkan dari PIC Kategori Helpdesk (migrasi 017):
+ *   crf_category_pic_sources     : Kategori CRF <- Kategori Helpdesk. Diisi otomatis dari
+ *                                  pengaturan "Butuh CRF + Kategori CRF default" kategori Helpdesk.
+ *   crf_category_handlers_manual : PIC CRF lama yang diisi manual (masa transisi).
+ *   crf_category_handlers (VIEW) : gabungan keduanya — dipakai semua pembacaan PIC CRF.
+ */
+
+/**
+ * Samakan pemetaan PIC CRF sebuah kategori Helpdesk dengan pengaturannya:
+ * "Butuh CRF" + Kategori CRF default -> semua PIC-nya menjadi PIC CRF kategori itu.
+ * $crfCategoryId null = kategori Helpdesk ini tidak memberi PIC CRF.
+ */
+function syncCrfPicSource(PDO $pdo, int $helpdeskCategoryId, ?int $crfCategoryId, string $actorName): void
+{
+    $pdo->prepare('DELETE FROM crf_category_pic_sources WHERE helpdesk_category_id = :helpdesk_id')
+        ->execute(['helpdesk_id' => $helpdeskCategoryId]);
+
+    if ($crfCategoryId) {
+        $pdo->prepare('
+            INSERT INTO crf_category_pic_sources (crf_category_id, helpdesk_category_id, created_by_name)
+            VALUES (:crf_id, :helpdesk_id, :actor)
+        ')->execute(['crf_id' => $crfCategoryId, 'helpdesk_id' => $helpdeskCategoryId, 'actor' => $actorName]);
+    }
+}
+
+/**
+ * ID user PIC CRF untuk satu kategori CRF.
  *
  * @return int[]
  */
@@ -189,9 +215,14 @@ function categoryMembers(PDO $pdo, string $pivotTable, string $categoryColumn): 
     }
 
     $userTable = crfUserTable();
+    // PIC CRF (view) membawa asal PIC: isian manual dan/atau kategori Helpdesk sumber.
+    $extraColumns = $pivotTable === 'crf_category_handlers'
+        ? 'p.is_manual, p.sources'
+        : '0 AS is_manual, NULL AS sources';
     $rows = $pdo->query("
         SELECT p.id AS pivot_id, p.{$categoryColumn} AS category_id, p.user_id,
-               COALESCE(u.nama, p.user_name) AS user_name, u.userid, u.email, u.no_wa
+               COALESCE(u.nama, p.user_name) AS user_name, u.userid, u.email, u.no_wa,
+               {$extraColumns}
         FROM {$pivotTable} p
         LEFT JOIN {$userTable} u ON u.id = p.user_id
         ORDER BY p.id

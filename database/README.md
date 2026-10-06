@@ -32,5 +32,6 @@ migrasi aman dijalankan ulang.
 | 014 | `drop_helpdesk_ticket_number_migration.sql` | Hapus nomor ticket Helpdesk (mengikuti SIAP) |
 | 015 | `alur_antrean_otomasi_migration.sql` | Alur baru: CMO → Kadep → antrean Otomasi; CRF di tahap penetapan SLA Otomasi dipindah ke persetujuan |
 | 016 | `forum_proposals_migration.sql` | Usulan Urgensi & SLA di Forum (tabel `forum_proposals`, kolom `forum_comments.is_system`) |
+| 017 | `pic_crf_dari_helpdesk_migration.sql` | PIC CRF diturunkan dari PIC Kategori Helpdesk (tabel `crf_category_pic_sources`, `crf_category_handlers` menjadi VIEW) |
 
-Migrasi baru berikutnya diberi nomor `017_...`.
+Migrasi baru berikutnya diberi nomor `018_...`.

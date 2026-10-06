@@ -149,7 +149,7 @@ try {
 
         /*
          * Level Urgensi & SLA otomatis dari matriks Kategori x Urgensi.
-         * Petugas Otomasi tidak lagi menentukan SLA; perubahan hanya oleh
+         * PIC CRF tidak lagi menentukan SLA; perubahan hanya oleh
          * Admin di Forum. SLA final yang sudah disepakati di Forum tidak ditimpa.
          */
         $urgency = crfEffectiveUrgency($crf);

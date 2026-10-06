@@ -402,7 +402,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                         <?php if (!empty($selectedCrf['assigned_handler_name'])): ?>
                             <div>
-                                <dt>Handler</dt>
+                                <dt>PIC CRF</dt>
                                 <dd><?= h($selectedCrf['assigned_handler_name']) ?></dd>
                             </div>
                         <?php endif; ?>
@@ -648,9 +648,9 @@ require_once __DIR__ . '/../includes/header.php';
                                         <?php if ($isApproved): ?>
                                             Urgensi dan SLA terkunci sejak disetujui Kepala Departemen Operasional
                                             (<?= h(date('d M Y H:i', strtotime($selectedCrf['kadep_operasional_approved_at']))) ?>).
-                                            Perpanjangan SLA hanya dapat diajukan Petugas Otomasi pemegang CRF atau Admin selama CRF dikerjakan.
+                                            Perpanjangan SLA hanya dapat diajukan PIC CRF pemegang CRF atau Admin selama CRF dikerjakan.
                                         <?php else: ?>
-                                            Usulan urgensi/SLA dapat diajukan oleh CMO, Admin, atau Petugas Otomasi kategori ini sebelum CRF disetujui.
+                                            Usulan urgensi/SLA dapat diajukan oleh CMO, Admin, atau PIC CRF kategori ini sebelum CRF disetujui.
                                             Anda tetap dapat berdiskusi pada kolom komentar.
                                         <?php endif; ?>
                                     </span>
@@ -780,7 +780,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <div class="crf-forum-form-footer">
                             <small>
                                 <span id="forum-comment-count">0</span>/5.000 · Ctrl+Enter untuk kirim ·
-                                Peserta diskusi dan Handler CRF akan mendapat notifikasi.
+                                Peserta diskusi dan PIC CRF akan mendapat notifikasi.
                             </small>
                             <button type="submit" class="btn btn-crf-primary"><i class="bi bi-send"></i> Kirim</button>
                         </div>
