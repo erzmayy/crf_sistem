@@ -10,7 +10,6 @@
 $activityLabels = [
     'Pengajuan Diajukan' => 'Pengajuan CRF Dibuat',
     'Kirim Ulang' => 'Pengajuan CRF Dikirim Ulang',
-    'Dalam Proses' => 'Diperiksa Admin CAB',
     'Lolos Filter CMO' => 'Verifikasi CMO',
     'Otomasi - SLA Ditentukan' => 'SLA Ditentukan',
     'SLA Otomatis' => 'SLA Standar Kategori',
