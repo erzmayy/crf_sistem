@@ -203,6 +203,24 @@ document.addEventListener('DOMContentLoaded', function () {
     toggleBudgetAmount();
   }
 
+  // Klik pilihan yang sudah terpilih untuk membatalkannya (seperti uncheck).
+  budgetRadios.forEach(function (radio) {
+    var wasChecked = false;
+    radio.addEventListener('pointerdown', function () { wasChecked = radio.checked; });
+    radio.addEventListener('keydown', function () { wasChecked = radio.checked; });
+    radio.addEventListener('click', function () {
+      if (wasChecked) {
+        radio.checked = false;
+        toggleBudgetAmount();
+      }
+      wasChecked = false;
+    });
+    var label = document.querySelector('label[for="' + radio.id + '"]');
+    if (label) {
+      label.addEventListener('pointerdown', function () { wasChecked = radio.checked; });
+    }
+  });
+
   /* -----------------------------------------------------------------
    * 3. Tampilkan nama file yang dipilih pada input upload
    * ----------------------------------------------------------------- */
