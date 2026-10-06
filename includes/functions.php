@@ -480,7 +480,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
     if ($startedAt === null || $dueAt === null) {
         return [
             'label' => 'SLA belum dimulai',
-            'detail' => 'SLA dimulai setelah persetujuan Kepala Departemen Operasional.',
+            'detail' => 'SLA dimulai saat Petugas Otomasi menekan "Mulai Kerjakan".',
             'class' => 'secondary',
             'alert' => null,
             'elapsed' => null,
@@ -567,6 +567,19 @@ function logCrfActivity(
 }
 
 /**
+ * CRF sudah disetujui Kepala Departemen Operasional tetapi belum mulai
+ * dikerjakan Petugas Otomasi (antrean). SLA belum berjalan pada kondisi ini.
+ * Bila kolom automation_started_at tidak ikut di-SELECT, dianggap sudah berjalan.
+ */
+function crfIsQueued(array $crf): bool
+{
+    return ($crf['workflow_stage'] ?? '') === 'OTOMASI'
+        && !empty($crf['kadep_operasional_approved_at'])
+        && array_key_exists('automation_started_at', $crf)
+        && empty($crf['automation_started_at']);
+}
+
+/**
  * Status tampilan CRF (label sesuai alur Helpdesk/CRF) yang diturunkan
  * dari kombinasi status + workflow_stage. ENUM database tidak diubah.
  *
@@ -596,10 +609,14 @@ function crfDisplayStatus(array $crf): array
     if ($stage === 'kadep_operasional') {
         return ['key' => 'approval', 'label' => 'Menunggu Persetujuan', 'class' => 'badge-stage-joko'];
     }
+    if ($stage === 'OTOMASI' && $approved && crfIsQueued($crf)) {
+        return ['key' => 'antrean', 'label' => 'Disetujui · Antrean', 'class' => 'badge-stage-joko'];
+    }
     if ($stage === 'OTOMASI' && $approved) {
         return ['key' => 'disetujui', 'label' => 'Disetujui · Eksekusi', 'class' => 'badge-stage-otomasi'];
     }
     if ($stage === 'OTOMASI') {
+        // Data lama sebelum alur antrean (seharusnya sudah dipindah oleh migrasi 015).
         return ['key' => 'diproses', 'label' => 'Diproses', 'class' => 'badge-status-proses'];
     }
     if ($stage === 'PEMOHON_PIR') {
@@ -624,9 +641,9 @@ function crfDisplayStatusConditions(string $alias = 'cr'): array
     return [
         'draft'      => ['label' => 'Draft', 'sql' => "{$a}status = 'Draft'"],
         'review'     => ['label' => 'Menunggu Verifikasi', 'sql' => "{$a}status = 'Belum Ditindak Lanjuti' AND {$a}workflow_stage = 'CMO_FILTER'"],
-        'diproses'   => ['label' => 'Diproses', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage = 'OTOMASI' AND {$a}kadep_operasional_approved_at IS NULL"],
         'approval'   => ['label' => 'Menunggu Persetujuan', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage = 'kadep_operasional'"],
-        'disetujui'  => ['label' => 'Disetujui · Eksekusi', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage IN ('OTOMASI','PEMOHON_PIR','CMO_FINAL') AND {$a}kadep_operasional_approved_at IS NOT NULL"],
+        'antrean'    => ['label' => 'Disetujui · Antrean', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage = 'OTOMASI' AND {$a}kadep_operasional_approved_at IS NOT NULL AND {$a}automation_started_at IS NULL"],
+        'disetujui'  => ['label' => 'Disetujui · Eksekusi', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage IN ('OTOMASI','PEMOHON_PIR','CMO_FINAL') AND {$a}kadep_operasional_approved_at IS NOT NULL AND NOT ({$a}workflow_stage = 'OTOMASI' AND {$a}automation_started_at IS NULL)"],
         'revisi'     => ['label' => 'Ditolak / Perlu Revisi', 'sql' => "{$a}status = 'Perlu Revisi'"],
         'selesai'    => ['label' => 'Selesai', 'sql' => "{$a}status = 'Solve'"],
         'dibatalkan' => ['label' => 'Dibatalkan', 'sql' => "{$a}status = 'Cancel'"],

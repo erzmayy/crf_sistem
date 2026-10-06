@@ -122,7 +122,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div>
                 <span class="crf-helpdesk-eyebrow">PORTAL CRF · PERSETUJUAN PERUBAHAN</span>
                 <h1>Persetujuan Kepala Departemen Operasional</h1>
-                <p>Daftar CRF dengan Level Urgensi dan SLA yang menunggu persetujuan sebelum ditindaklanjuti Divisi Otomasi.</p>
+                <p>Daftar CRF yang lolos verifikasi CMO dan menunggu persetujuan. Setelah disetujui, CRF masuk antrean Divisi Otomasi.</p>
             </div>
         </div>
 

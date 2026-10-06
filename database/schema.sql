@@ -220,6 +220,7 @@ CREATE TABLE forum_comments (
     user_name               VARCHAR(150) NOT NULL,
     user_role               VARCHAR(50) NOT NULL,
     comment                 TEXT NOT NULL,
+    is_system               TINYINT(1) NOT NULL DEFAULT 0,
     reply_to_comment_id     INT UNSIGNED NULL,
     created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -242,6 +243,55 @@ CREATE TABLE forum_read_states (
 
     PRIMARY KEY (user_id, change_request_id),
     CONSTRAINT fk_forum_read_states_crf
+        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- Usulan Urgensi & SLA di Forum: usulan -> keputusan, satu usulan terbuka per CRF.
+CREATE TABLE forum_proposals (
+    id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    change_request_id       INT UNSIGNED NOT NULL,
+    kind                    ENUM('urgensi_sla','perpanjangan_sla') NOT NULL DEFAULT 'urgensi_sla',
+    status                  ENUM('menunggu','disetujui','ditolak','dibatalkan','kedaluwarsa') NOT NULL DEFAULT 'menunggu',
+    -- manual = diajukan user, sistem = dipicu otomatis (SLA kosong), langsung = ditetapkan Admin tanpa usulan
+    trigger_source          ENUM('manual','sistem','langsung') NOT NULL DEFAULT 'manual',
+
+    proposed_by             INT UNSIGNED NULL,
+    proposed_by_name        VARCHAR(150) NOT NULL,
+    proposed_by_role        VARCHAR(50)  NOT NULL,
+    proposed_urgency        ENUM('Tinggi','Normal','Rendah') NULL,
+    proposed_sla_value      DECIMAL(10,2) NULL,
+    proposed_sla_unit       ENUM('Menit','Jam','Hari') NULL,
+    reason                  TEXT NOT NULL,
+
+    -- Nilai yang berlaku saat usulan dibuat
+    before_urgency          ENUM('Tinggi','Normal','Rendah') NULL,
+    before_sla_value        DECIMAL(10,2) NULL,
+    before_sla_unit         ENUM('Menit','Jam','Hari') NULL,
+
+    -- Nilai yang akhirnya ditetapkan (bisa berbeda dari usulan)
+    final_urgency           ENUM('Tinggi','Normal','Rendah') NULL,
+    final_sla_value         DECIMAL(10,2) NULL,
+    final_sla_unit          ENUM('Menit','Jam','Hari') NULL,
+
+    decided_by              INT UNSIGNED NULL,
+    decided_by_name         VARCHAR(150) NULL,
+    decision_note           TEXT NULL,
+    decided_at              DATETIME NULL,
+
+    due_at                  DATETIME NULL,
+    reminded_at             DATETIME NULL,
+    created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    -- Diisi id CRF selama usulan terbuka dan di-NULL-kan saat ditutup (dikelola
+    -- includes/forum_proposals.php). UNIQUE menjamin maksimal satu usulan
+    -- terbuka per CRF walau ada dua permintaan bersamaan.
+    open_crf_id             INT UNSIGNED NULL,
+
+    UNIQUE KEY uq_forum_proposals_open (open_crf_id),
+    KEY idx_forum_proposals_crf (change_request_id, created_at),
+    KEY idx_forum_proposals_status_due (status, due_at),
+    CONSTRAINT fk_forum_proposals_crf
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;

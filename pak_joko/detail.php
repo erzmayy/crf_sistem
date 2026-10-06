@@ -12,6 +12,7 @@
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/forum_proposals.php';
 
 requireCrfRole(['kadep_operasional']);
 
@@ -187,8 +188,9 @@ require_once __DIR__ . '/../includes/header.php';
                 Tahap: <?= h(workflowStageLabel($crf['workflow_stage'] ?? 'kadep_operasional')) ?>
             </span>
 
-            <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>">
-                Level Urgensi: <?= h($crf['level'] ?? 'Belum ditentukan') ?>
+            <?php $approvalUrgency = crfEffectiveUrgency($crf); ?>
+            <span class="crf-badge <?= levelBadgeClass($approvalUrgency) ?>">
+                Level Urgensi: <?= h($approvalUrgency ?? 'Belum ditentukan') ?>
             </span>
 
             <?php if (!empty($crf['sla_value']) && !empty($crf['sla_unit'])): ?>
@@ -234,9 +236,31 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="crf-section-body">
 
                 <p class="text-muted">
-                    Periksa detail CRF serta Level Urgensi dan SLA sebelum
-                    menyetujui tindak lanjut oleh Divisi Otomasi.
+                    Periksa detail CRF serta Level Urgensi dan SLA sebelum menyetujui.
+                    Setelah disetujui, CRF masuk antrean Divisi Otomasi dan SLA mulai dihitung
+                    saat Petugas Otomasi menekan <strong>Mulai Kerjakan</strong>.
                 </p>
+
+                <?php $jokoOpenProposal = forumOpenProposal($pdo, (int) $crf['id']); ?>
+                <?php if ($jokoOpenProposal && slaDueAt(date('Y-m-d H:i:s'), $crf['sla_value'], $crf['sla_unit']) !== null): ?>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-flag-fill"></i>
+                        <strong>Ada pembahasan urgensi/SLA yang belum selesai</strong>
+                        (usulan dari <?= h($jokoOpenProposal['proposed_by_name']) ?>).
+                        Bila Anda menyetujui sekarang, usulan ditutup dan nilai yang tampil di halaman ini yang berlaku.
+                        <a href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>#forum-proposal">Lihat pembahasan di Forum</a>
+                    </div>
+                <?php endif; ?>
+
+                <?php $approvalHasSla = slaDueAt(date('Y-m-d H:i:s'), $crf['sla_value'], $crf['sla_unit']) !== null; ?>
+                <?php if (!$approvalHasSla): ?>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        SLA CRF ini belum tersedia karena SLA standar kategori belum diatur.
+                        Admin perlu menetapkan Level Urgensi &amp; SLA final di
+                        <a href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>">Forum CRF</a> sebelum CRF dapat disetujui.
+                    </div>
+                <?php endif; ?>
 
                 <form action="../actions/pak_joko_approve.php" method="POST">
 
@@ -262,7 +286,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                     </div>
 
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-success" <?= $approvalHasSla ? '' : 'disabled' ?>>
                         <i class="bi bi-check-circle"></i>
                         Setujui
                     </button>

@@ -1,7 +1,15 @@
 <?php
+/**
+ * actions/automation_action.php
+ * Aksi Petugas Otomasi setelah CRF disetujui Kepala Departemen Operasional:
+ *   - start    : "Mulai Kerjakan" — CRF keluar dari antrean, SLA mulai dihitung.
+ *   - complete : "Selesaikan" — catat hasil implementasi, lanjut ke PIR Pemohon.
+ * Petugas Otomasi tidak menentukan/mengubah Level Urgensi & SLA (hanya Admin di Forum).
+ */
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/helpdesk.php';
+require_once __DIR__ . '/../includes/forum_proposals.php';
 
 requireCrfRole(['otomasi']);
 
@@ -15,11 +23,7 @@ verifyCsrf();
 $pdo = getConnection();
 $user = getCurrentUser();
 $id = (int) ($_POST['id'] ?? 0);
-$action = $_POST['action'] ?? 'save';
-$submittedLevel = $_POST['level'] ?? '';
-$slaValue = trim($_POST['sla_value'] ?? '');
-$slaUnit = $_POST['sla_unit'] ?? '';
-$slaReason = trim($_POST['sla_reason'] ?? '');
+$action = $_POST['action'] ?? '';
 $implementation = trim($_POST['implementation'] ?? '');
 $implementationDate = trim($_POST['implementation_date'] ?? '');
 
@@ -29,11 +33,20 @@ if ($id <= 0) {
     exit;
 }
 
-if (!in_array($action, ['save', 'complete'], true)) {
+if (!in_array($action, ['start', 'complete'], true)) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Aksi Otomasi tidak dikenal.'];
     header('Location: ../otomasi/index.php');
     exit;
 }
+
+$failRedirect = static function (string $message, string $location) use ($pdo): void {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    $_SESSION['flash'] = ['type' => 'danger', 'message' => $message];
+    header('Location: ' . $location);
+    exit;
+};
 
 try {
     $pdo->beginTransaction();
@@ -49,9 +62,6 @@ try {
             workflow_stage,
             automation_started_at,
             kadep_operasional_approved_at,
-            level,
-            impact_category,
-            final_urgency_level,
             sla_value,
             sla_unit
         FROM change_requests
@@ -61,219 +71,128 @@ try {
     $stmt->execute(['id' => $id]);
     $crf = $stmt->fetch();
 
-    if (!$crf || $crf['workflow_stage'] !== 'OTOMASI') {
-        $pdo->rollBack();
-        $_SESSION['flash'] = [
-            'type' => 'danger',
-            'message' => 'CRF tidak ditemukan pada tahap Otomasi.'
-        ];
-        header('Location: ../otomasi/index.php');
-        exit;
+    if (!$crf || $crf['workflow_stage'] !== 'OTOMASI' || empty($crf['kadep_operasional_approved_at'])) {
+        $failRedirect('CRF tidak ditemukan pada antrean Otomasi.', '../otomasi/index.php');
     }
 
-    /*
-     * Hanya handler kategori CRF ini. Jika CRF belum diambil, handler
-     * yang memproses pertama kali otomatis menjadi pemegang CRF.
-     */
+    // Hanya handler kategori CRF ini.
     if (!canHandleCrf($pdo, $crf)) {
-        $pdo->rollBack();
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'CRF ini bukan kategori yang Anda tangani.'];
-        header('Location: ../otomasi/index.php');
-        exit;
+        $failRedirect('CRF ini bukan kategori yang Anda tangani.', '../otomasi/index.php');
     }
 
     if (!empty($crf['assigned_handler_id']) && !isAssignedCrfHandler($crf)) {
-        $pdo->rollBack();
-        $_SESSION['flash'] = [
-            'type' => 'danger',
-            'message' => 'CRF ini sedang ditangani oleh ' . ($crf['assigned_handler_name'] ?? 'Petugas Otomasi lain') . '.',
-        ];
-        header('Location: ../otomasi/detail.php?id=' . $id);
-        exit;
-    }
-
-    if (empty($crf['assigned_handler_id'])) {
-        $pdo->prepare('
-            UPDATE change_requests
-            SET assigned_handler_id = :handler_id, assigned_handler_name = :handler_name, assigned_at = NOW()
-            WHERE id = :id
-        ')->execute([
-            'handler_id' => (int) $user['id'],
-            'handler_name' => crfActorName($user),
-            'id' => $id,
-        ]);
-        logCrfActivity($pdo, $id, 'CRF Diambil Handler', 'CRF diterima dan diproses oleh ' . crfActorName($user) . '.', crfActorName($user));
-    }
-
-    $level = $crf['level']
-        ?: crfUrgencyForImpact($crf['impact_category'] ?? null)
-        ?: $submittedLevel;
-    $isExecutionStage = !empty($crf['kadep_operasional_approved_at']);
-    $isSlaLocked = $isExecutionStage || !empty($crf['final_urgency_level']);
-    if ($isSlaLocked) {
-        $slaValue = (string) ($crf['sla_value'] ?? '');
-        $slaUnit = $crf['sla_unit'] ?? '';
-    }
-
-    /*
-     * SLA standar dari matriks Kategori x Urgensi. Handler boleh
-     * menyimpang dari standar asalkan menuliskan alasannya.
-     */
-    $standardSla = $isSlaLocked ? null : crfStandardSla($pdo, (int) ($crf['crf_category_id'] ?? 0), $level);
-    $slaDeviates = $standardSla !== null && !crfSlaEquals($standardSla, $slaValue, $slaUnit);
-
-    if ($slaDeviates && ($slaReason === '' || mb_strlen($slaReason) > 500)) {
-        $pdo->rollBack();
-        $_SESSION['flash'] = [
-            'type' => 'danger',
-            'message' => 'SLA berbeda dari standar kategori (' . slaLabel($standardSla['value'], $standardSla['unit'])
-                . '). Alasan perubahan SLA wajib diisi (maks. 500 karakter).',
-        ];
-        header('Location: ../otomasi/detail.php?id=' . $id);
-        exit;
-    }
-
-    $slaChanged = !crfSlaEquals(
-        $crf['sla_value'] !== null ? ['value' => (float) $crf['sla_value'], 'unit' => (string) $crf['sla_unit']] : null,
-        $slaValue,
-        $slaUnit
-    );
-    if ($slaDeviates && ($slaChanged || $action === 'complete')) {
-        logCrfActivity(
-            $pdo,
-            $id,
-            'SLA Disesuaikan Handler',
-            'SLA ' . slaLabel($slaValue, $slaUnit) . ' (standar kategori ' . slaLabel($standardSla['value'], $standardSla['unit'])
-                . '). Alasan: ' . $slaReason,
-            crfActorName($user)
+        $failRedirect(
+            'CRF ini sedang ditangani oleh ' . ($crf['assigned_handler_name'] ?? 'Petugas Otomasi lain') . '.',
+            '../otomasi/detail.php?id=' . $id
         );
-    }
-
-    if (
-        !in_array($level, ['Tinggi', 'Normal', 'Rendah'], true)
-        || $slaValue === ''
-        || !is_numeric($slaValue)
-        || (float) $slaValue <= 0
-        || !in_array($slaUnit, ['Menit', 'Jam', 'Hari'], true)
-    ) {
-        $pdo->rollBack();
-        $_SESSION['flash'] = [
-            'type' => 'danger',
-            'message' => 'Level Urgensi dan SLA wajib diisi dengan benar.'
-        ];
-        header('Location: ../otomasi/detail.php?id=' . $id);
-        exit;
-    }
-
-    $parsedImplementationDate = DateTime::createFromFormat('!Y-m-d', $implementationDate);
-    $implementationDateErrors = DateTime::getLastErrors();
-    $isValidImplementationDate = $parsedImplementationDate !== false
-        && $parsedImplementationDate->format('Y-m-d') === $implementationDate
-        && (
-            $implementationDateErrors === false
-            || (
-                $implementationDateErrors['warning_count'] === 0
-                && $implementationDateErrors['error_count'] === 0
-            )
-        );
-    // PIR tidak lagi diisi Otomasi; Pemohon mengisinya setelah implementasi.
-    $hasMissingExecutionDetails = !$isValidImplementationDate
-        || $implementation === '';
-
-    if (
-        $action === 'complete'
-        && $isExecutionStage
-        && $hasMissingExecutionDetails
-    ) {
-        $pdo->rollBack();
-        $_SESSION['flash'] = [
-            'type' => 'danger',
-            'message' => 'Tanggal Implementasi dan Implementasi / Hasil Perubahan wajib diisi dengan benar sebelum eksekusi diselesaikan.'
-        ];
-        header('Location: ../otomasi/detail.php?id=' . $id);
-        exit;
     }
 
     $now = date('Y-m-d H:i:s');
-    $actor = !empty($user['nama']) ? $user['nama'] : $user['userid'];
+    $actor = crfActorName($user);
+    $isStarted = !empty($crf['automation_started_at']);
 
-    if ($action === 'save') {
+    if ($action === 'start') {
+        if ($isStarted) {
+            $failRedirect('CRF ini sudah mulai dikerjakan.', '../otomasi/detail.php?id=' . $id);
+        }
+
+        $slaDueAt = slaDueAt($now, $crf['sla_value'], $crf['sla_unit']);
+        if ($slaDueAt === null) {
+            $failRedirect(
+                'SLA CRF ini belum valid. Hubungi Admin untuk menetapkan SLA di Forum.',
+                '../otomasi/detail.php?id=' . $id
+            );
+        }
+
+        // CRF yang belum punya Petugas Otomasi otomatis dipegang oleh yang memulai.
+        if (empty($crf['assigned_handler_id'])) {
+            $pdo->prepare('
+                UPDATE change_requests
+                SET assigned_handler_id = :handler_id, assigned_handler_name = :handler_name, assigned_at = NOW()
+                WHERE id = :id
+            ')->execute([
+                'handler_id' => (int) $user['id'],
+                'handler_name' => $actor,
+                'id' => $id,
+            ]);
+            logCrfActivity($pdo, $id, 'CRF Diambil Handler', 'CRF diterima dan diproses oleh ' . $actor . '.', $actor);
+        }
+
         $stmt = $pdo->prepare("
             UPDATE change_requests
             SET
-                level = :level,
-                sla_value = :sla_value,
-                sla_unit = :sla_unit,
-                sla_started_at = NULL,
-                sla_due_at = NULL
+                automation_started_at = :started_at,
+                sla_started_at = :sla_started_at,
+                sla_due_at = :sla_due_at
             WHERE id = :id
               AND workflow_stage = 'OTOMASI'
+              AND automation_started_at IS NULL
         ");
         $stmt->execute([
-            'level' => $level,
-            'sla_value' => (float) $slaValue,
-            'sla_unit' => $slaUnit,
-            'id' => $id,
-        ]);
-
-        logCrfActivity(
-            $pdo,
-            $id,
-            'Proses Otomasi Diperbarui',
-            'Level Urgensi dan SLA diperbarui oleh Otomasi.',
-            $actor
-        );
-        $message = 'Data Level Urgensi dan SLA berhasil disimpan.';
-        $redirect = '../otomasi/detail.php?id=' . $id;
-    } elseif (!$isExecutionStage) {
-        $stmt = $pdo->prepare("
-            UPDATE change_requests
-            SET
-                level = :level,
-                sla_value = :sla_value,
-                sla_unit = :sla_unit,
-                sla_started_at = NULL,
-                sla_due_at = NULL,
-                automation_started_at = NULL,
-                workflow_stage = 'kadep_operasional',
-                status = 'Dalam Proses'
-            WHERE id = :id
-              AND workflow_stage = 'OTOMASI'
-              AND kadep_operasional_approved_at IS NULL
-        ");
-        $stmt->execute([
-            'level' => $level,
-            'sla_value' => (float) $slaValue,
-            'sla_unit' => $slaUnit,
+            'started_at' => $now,
+            'sla_started_at' => $now,
+            'sla_due_at' => $slaDueAt,
             'id' => $id,
         ]);
 
         if ($stmt->rowCount() !== 1) {
-            throw new RuntimeException('CRF sudah tidak tersedia untuk persetujuan.');
+            throw new RuntimeException('CRF sudah tidak tersedia untuk dikerjakan.');
         }
 
+        $waitSeconds = slaWorkingSecondsBetween(
+            new DateTimeImmutable($crf['kadep_operasional_approved_at']),
+            new DateTimeImmutable($now)
+        );
         logCrfActivity(
             $pdo,
             $id,
-            'Otomasi - SLA Ditentukan',
-            'Otomasi menentukan Level Urgensi dan SLA. CRF diteruskan ke Kepala Departemen Operasional untuk persetujuan.',
+            'Mulai Dikerjakan',
+            'Petugas Otomasi mulai mengerjakan CRF. SLA ' . slaLabel($crf['sla_value'], $crf['sla_unit'])
+                . ' mulai dihitung, batas ' . date('d-m-Y H:i', strtotime($slaDueAt))
+                . '. Waktu tunggu di antrean: ' . formatSlaDuration($waitSeconds) . '.',
             $actor,
-            'Diproses',
-            'Menunggu Persetujuan'
+            'Disetujui · Antrean',
+            'Disetujui · Eksekusi'
         );
         notifyUsers(
             $pdo,
-            crfUserIdsForRole($pdo, 'kadep_operasional'),
-            'Persetujuan CRF: ' . $crf['request_number'],
-            'CRF ' . $crf['request_number'] . ' menunggu persetujuan Anda (SLA ' . slaLabel($slaValue, $slaUnit) . ').',
+            [(int) $crf['user_id']],
+            'CRF mulai dikerjakan: ' . $crf['request_number'],
+            'CRF ' . $crf['request_number'] . ' mulai dikerjakan oleh ' . $actor . '. Target selesai '
+                . date('d-m-Y H:i', strtotime($slaDueAt)) . '.',
             'crf/open.php?id=' . $id,
             $id,
             null,
             (int) $user['id']
         );
-        $message = 'Level Urgensi dan SLA berhasil ditentukan. CRF menunggu persetujuan Kepala Departemen Operasional.';
-        $redirect = isDemoUser() ? '../pak_joko/index.php' : '../otomasi/index.php';
+
+        $message = 'CRF mulai dikerjakan. SLA mulai dihitung sejak sekarang.';
+        $redirect = '../otomasi/detail.php?id=' . $id;
     } else {
+        if (!$isStarted) {
+            $failRedirect('Tekan "Mulai Kerjakan" terlebih dahulu sebelum menyelesaikan CRF.', '../otomasi/detail.php?id=' . $id);
+        }
+
+        $parsedImplementationDate = DateTime::createFromFormat('!Y-m-d', $implementationDate);
+        $implementationDateErrors = DateTime::getLastErrors();
+        $isValidImplementationDate = $parsedImplementationDate !== false
+            && $parsedImplementationDate->format('Y-m-d') === $implementationDate
+            && (
+                $implementationDateErrors === false
+                || (
+                    $implementationDateErrors['warning_count'] === 0
+                    && $implementationDateErrors['error_count'] === 0
+                )
+            );
+
+        // PIR tidak diisi Otomasi; Pemohon mengisinya setelah implementasi.
+        if (!$isValidImplementationDate || $implementation === '') {
+            $failRedirect(
+                'Tanggal Implementasi dan Implementasi / Hasil Perubahan wajib diisi dengan benar sebelum eksekusi diselesaikan.',
+                '../otomasi/detail.php?id=' . $id
+            );
+        }
+
         $stmt = $pdo->prepare("
             UPDATE change_requests
             SET
@@ -284,7 +203,7 @@ try {
                 status = 'Dalam Proses'
             WHERE id = :id
               AND workflow_stage = 'OTOMASI'
-              AND kadep_operasional_approved_at IS NOT NULL
+              AND automation_started_at IS NOT NULL
         ");
         $stmt->execute([
             'automation_completed_at' => $now,
@@ -307,6 +226,7 @@ try {
             'Menunggu PIR Pemohon'
         );
         finalizeCrfSla($pdo, $id);
+        forumCloseOpenProposals($pdo, $id, 'kedaluwarsa', 'CRF selesai dikerjakan.');
         notifyUsers(
             $pdo,
             [(int) $crf['user_id']],
