@@ -114,13 +114,16 @@ if ($replyAuthorId > 0) {
     );
 }
 
+$newCommentTitle = 'Komentar baru di Forum: ' . $crfNumber;
 notifyForumUsers(
     $pdo,
-    array_diff(
-        forumParticipantIds($pdo, $crfId),
-        [$replyAuthorId]
+    filterUsersWithoutUnread(
+        $pdo,
+        array_diff(forumParticipantIds($pdo, $crfId), [$replyAuthorId]),
+        $crfId,
+        $newCommentTitle
     ),
-    'Komentar baru di Forum: ' . $crfNumber,
+    $newCommentTitle,
     $actorName . ' menulis di Forum ' . $crfNumber . ': ' . $preview,
     $crfId,
     $commentId,

@@ -107,7 +107,7 @@ try {
     );
     notifyUsers(
         $pdo,
-        crfUserIdsForRole($pdo, 'cmo'),
+        crfCmoRecipients($pdo, $id),
         'Finalisasi CRF: ' . $crf['request_number'],
         'Pemohon sudah mengisi PIR untuk CRF ' . $crf['request_number'] . '. CRF menunggu finalisasi CMO.',
         'crf/open.php?id=' . $id,

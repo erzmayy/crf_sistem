@@ -52,6 +52,9 @@ $impactCategory    = trim($_POST['impact_category'] ?? '');
 $reason            = trim($_POST['reason'] ?? '');
 
 $budgetType = $_POST['budget_type'] ?? null;
+if ($budgetType === 'tidak_ada') {
+    $budgetType = null;
+}
 
 $budgetAmountRaw = trim($_POST['budget_amount'] ?? '');
 
@@ -110,6 +113,11 @@ if (
     !in_array($budgetType, $allowedBudgetTypes, true)
 ) {
     $budgetType = null;
+}
+
+// Tanpa jenis biaya berarti tanpa nominal.
+if ($budgetType === null || $budgetType === '') {
+    $budgetAmount = null;
 }
 
 if (
@@ -241,7 +249,7 @@ try {
             'crf_category_id' => $crfCategoryId,
             'requester_position' => $requesterPosition !== '' ? $requesterPosition : null,
             'change_category_detail' => $changeCategoryDetail,
-            'alternative_suggestion' => $alternativeSuggestion,
+            'alternative_suggestion' => $alternativeSuggestion !== '' ? $alternativeSuggestion : null,
             'id' => $id,
             'user_id' => $user['id']
         ]);
@@ -350,7 +358,7 @@ try {
                 'crf_category_id' => $crfCategoryId,
                 'requester_position' => $requesterPosition !== '' ? $requesterPosition : null,
                 'change_category_detail' => $changeCategoryDetail,
-                'alternative_suggestion' => $alternativeSuggestion
+                'alternative_suggestion' => $alternativeSuggestion !== '' ? $alternativeSuggestion : null
             ]);
 
             $draftId = (int) $pdo->lastInsertId();

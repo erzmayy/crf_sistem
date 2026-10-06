@@ -143,7 +143,6 @@ require_once __DIR__ . '/../includes/header.php';
                                 'description' => $category['description'],
                                 'sla_value' => $category['sla_value'] !== null ? (float) $category['sla_value'] : '',
                                 'sla_unit' => $category['sla_unit'],
-                                'sort_order' => (int) $category['sort_order'],
                                 'is_active' => (int) $category['is_active'],
                             ];
                             if ($tabKey === 'crf') {
@@ -308,17 +307,9 @@ require_once __DIR__ . '/../includes/header.php';
                         </select>
                     </div>
                 </div>
-                <div class="row g-2 align-items-end">
-                    <div class="col-6">
-                        <label class="crf-field-label" for="hdCategorySort">Urutan</label>
-                        <input type="number" class="form-control" id="hdCategorySort" name="sort_order" value="0">
-                    </div>
-                    <div class="col-6">
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" role="switch" id="hdCategoryActive" name="is_active" value="1" checked>
-                            <label class="form-check-label" for="hdCategoryActive">Aktif</label>
-                        </div>
-                    </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" role="switch" id="hdCategoryActive" name="is_active" value="1" checked>
+                    <label class="form-check-label" for="hdCategoryActive">Aktif</label>
                 </div>
             </div>
             <div class="modal-footer">
@@ -390,17 +381,9 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                     <?php endforeach; ?>
                 </div>
-                <div class="row g-2 align-items-end">
-                    <div class="col-6">
-                        <label class="crf-field-label" for="crfCategorySort">Urutan</label>
-                        <input type="number" class="form-control" id="crfCategorySort" name="sort_order" value="0">
-                    </div>
-                    <div class="col-6">
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" role="switch" id="crfCategoryActive" name="is_active" value="1" checked>
-                            <label class="form-check-label" for="crfCategoryActive">Aktif</label>
-                        </div>
-                    </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" role="switch" id="crfCategoryActive" name="is_active" value="1" checked>
+                    <label class="form-check-label" for="crfCategoryActive">Aktif</label>
                 </div>
             </div>
             <div class="modal-footer">

@@ -549,12 +549,14 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
         forumAddSystemComment($pdo, $crfId, $user, $description);
 
         $crfNumber = $crf['request_number'] ?: 'CRF #' . $crfId;
-        $recipients = array_merge(
-            forumParticipantIds($pdo, $crfId),
-            crfUserIdsForRole($pdo, 'cmo')
-        );
+        // Hanya yang terlibat: pengaju (atau seluruh CMO bila dibuka sistem) dan pemberi komentar.
+        $commenters = $pdo->prepare('SELECT DISTINCT user_id FROM forum_comments WHERE change_request_id = :id AND is_system = 0');
+        $commenters->execute(['id' => $crfId]);
+        $recipients = array_map('intval', $commenters->fetchAll(PDO::FETCH_COLUMN));
         if (!empty($discussion['opened_by'])) {
             $recipients[] = (int) $discussion['opened_by'];
+        } else {
+            $recipients = array_merge($recipients, crfUserIdsForRole($pdo, 'cmo'));
         }
         forumNotify(
             $pdo,

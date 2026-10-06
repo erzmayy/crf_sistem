@@ -82,7 +82,7 @@ try {
 
     notifyUsers(
         $pdo,
-        [(int) $crf['user_id'], (int) $crf['assigned_handler_id']],
+        [(int) $crf['user_id']],
         'CRF dibatalkan: ' . $crf['request_number'],
         'CRF ' . $crf['request_number'] . ' dibatalkan oleh Admin. Alasan: ' . $reason,
         'crf/open.php?id=' . $id,

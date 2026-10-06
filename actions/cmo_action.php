@@ -249,7 +249,7 @@ try {
         $stmt->execute(['tanggapan' => $tanggapan, 'now' => $now, 'id' => $id]);
         forumCloseOpenDiscussions($pdo, $id, 'CRF dibatalkan oleh CMO.');
         logCrfActivity($pdo, $id, 'Cancel', $tanggapan, $actor, $oldDisplayStatus, 'Dibatalkan');
-        notifyUsers($pdo, [(int) $crf['user_id'], (int) $crf['assigned_handler_id']], 'CRF dibatalkan: ' . $crfNumber,
+        notifyUsers($pdo, [(int) $crf['user_id']], 'CRF dibatalkan: ' . $crfNumber,
             'CRF ' . $crfNumber . ' dibatalkan oleh CMO: ' . $tanggapan, $crfLink, $id, null, (int) $user['id']);
         $message = 'CRF berhasil dibatalkan.';
     } else {

@@ -76,7 +76,6 @@ try {
             $description = trim($_POST['description'] ?? '');
             $slaValueRaw = trim($_POST['sla_value'] ?? '');
             $slaUnit = $_POST['sla_unit'] ?? '';
-            $sortOrder = (int) ($_POST['sort_order'] ?? 0);
             $isActive = !empty($_POST['is_active']) ? 1 : 0;
             $errors = [];
 
@@ -160,7 +159,6 @@ try {
                 'description' => $description !== '' ? $description : null,
                 'sla_value'   => $slaValue,
                 'sla_unit'    => $slaUnit,
-                'sort_order'  => $sortOrder,
                 'is_active'   => $isActive,
             ], $extra);
 

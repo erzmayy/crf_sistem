@@ -78,8 +78,18 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
 - **Target hasil** 2 hari kerja (`FORUM_DISCUSSION_DECISION_DAYS`). Lewat target,
   Admin mendapat satu pengingat (dikirim saat Forum dibuka).
 - Level/SLA tidak dapat diubah lagi setelah Kepala Departemen Operasional menyetujui.
-- **Notifikasi:** Admin dan PIC CRF kategori saat pembahasan diajukan; CMO, pengaju, dan
-  peserta diskusi saat hasil dicatat.
+- **Notifikasi:** Admin dan PIC CRF kategori saat pembahasan diajukan; pengaju (CMO) dan
+  pemberi komentar saat hasil dicatat.
+
+## Form pemohon & notifikasi
+
+- **Saran Alternatif** opsional (disimpan kosong bila tidak diisi).
+- **Biaya / Anggaran** bawaan "Tidak ada biaya" (disimpan tanpa jenis dan tanpa nominal);
+  nominal hanya wajib bila memilih RKAP / BOQ PKS / anggaran baru.
+- Kategori Helpdesk & CRF tidak lagi punya isian Urutan (urutan lama dipertahankan).
+- Notifikasi hanya ke aktor berikutnya: submit → CMO; selesai PIC → pemohon; PIR → CMO
+  yang meloloskan; batal → pemohon. Komentar Forum tidak menumpuk selama notifikasi
+  sebelumnya belum dibaca.
 
 ## SLA
 

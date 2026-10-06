@@ -165,7 +165,8 @@ function budgetTypeLabel(?string $key): string
         case 'anggaran_baru':
             return 'Akan diajukan anggaran baru';
         default:
-            return '-';
+            // Kosong / tidak_ada = perubahan tanpa biaya.
+            return 'Tidak ada biaya';
     }
 }
 
