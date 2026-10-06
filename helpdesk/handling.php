@@ -88,8 +88,8 @@ if ($canCrf) {
     $crfCards = $pdo->query("
         SELECT c.id, c.name, c.description, c.is_active, c.sla_value, c.sla_unit,
             COALESCE(SUM(cr.status <> 'Draft'), 0) AS masuk,
-            COALESCE(SUM(CASE WHEN {$conditions['review']['sql']} THEN 1 ELSE 0 END), 0) AS review,
-            COALESCE(SUM(CASE WHEN ({$conditions['antrean']['sql']}) OR ({$conditions['disetujui']['sql']}) THEN 1 ELSE 0 END), 0) AS diproses,
+            COALESCE(SUM(CASE WHEN ({$conditions['review']['sql']}) OR ({$conditions['pembahasan']['sql']}) THEN 1 ELSE 0 END), 0) AS review,
+            COALESCE(SUM(CASE WHEN {$conditions['disetujui']['sql']} THEN 1 ELSE 0 END), 0) AS diproses,
             COALESCE(SUM(CASE WHEN {$conditions['approval']['sql']} THEN 1 ELSE 0 END), 0) AS approval,
             COALESCE(SUM(CASE WHEN {$conditions['selesai']['sql']} THEN 1 ELSE 0 END), 0) AS selesai,
             COALESCE(SUM(cr.sla_result = 'Melebihi SLA'), 0) AS lewat_sla,
@@ -253,7 +253,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <i class="bi bi-collection"></i>
                             <p>
                                 <?= $role === 'otomasi'
-                                    ? 'Anda belum terdaftar sebagai Petugas Otomasi kategori CRF mana pun.'
+                                    ? 'Anda belum terdaftar sebagai PIC CRF kategori CRF mana pun.'
                                     : 'Belum ada kategori CRF.' ?>
                             </p>
                         </div>
@@ -279,7 +279,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     <li class="is-success"><span><i class="bi bi-check-circle"></i> Selesai</span><strong><?= (int) $card['selesai'] ?></strong></li>
                                 </ul>
                                 <div class="crf-category-note">
-                                    <i class="bi bi-people"></i> <?= (int) $card['handler_count'] ?> Petugas Otomasi
+                                    <i class="bi bi-people"></i> <?= (int) $card['handler_count'] ?> PIC CRF
                                     · <i class="bi bi-stopwatch"></i> SLA <?= h(slaLabel($card['sla_value'], $card['sla_unit'])) ?>
                                     <?php if ((int) $card['lewat_sla'] > 0): ?>
                                         · <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> <?= (int) $card['lewat_sla'] ?> melebihi SLA</span>

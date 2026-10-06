@@ -8,7 +8,7 @@ $pdo = getConnection();
 $queue = $_GET['queue'] ?? 'all';
 $search = $_GET['q'] ?? '';
 
-if (!in_array($queue, ['all', 'queue', 'execution', 'history'], true)) {
+if (!in_array($queue, ['all', 'history'], true)) {
     $queue = 'all';
 }
 
@@ -27,9 +27,6 @@ if ($queue === 'history') {
         FROM crf_activity_logs activity_log
         WHERE activity_log.change_request_id = cr.id
           AND activity_log.activity IN (
-              'Proses Otomasi Diperbarui',
-              'Otomasi - SLA Ditentukan',
-              'Mulai Dikerjakan',
               'Otomasi Selesai'
           )
     )";
@@ -37,12 +34,6 @@ if ($queue === 'history') {
     // Hanya CRF yang sudah disetujui Kepala Departemen Operasional.
     $where[] = "cr.workflow_stage = 'OTOMASI'";
     $where[] = 'cr.kadep_operasional_approved_at IS NOT NULL';
-}
-
-if ($queue === 'queue') {
-    $where[] = 'cr.automation_started_at IS NULL';
-} elseif ($queue === 'execution') {
-    $where[] = 'cr.automation_started_at IS NOT NULL';
 }
 
 $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
@@ -99,9 +90,8 @@ $sql = "
     WHERE " . implode(' AND ', $where) . "
     ORDER BY " . ($queue === 'history'
         ? 'cr.updated_at DESC'
-        // Sedang dikerjakan dulu (tenggat terdekat), lalu antrean menurut urgensi dan waktu persetujuan.
-        : "CASE WHEN cr.automation_started_at IS NOT NULL THEN 0 ELSE 1 END,
-        cr.sla_due_at ASC,
+        // Tenggat SLA terdekat dulu, lalu urgensi (Tinggi lebih dulu) dan waktu persetujuan.
+        : "cr.sla_due_at ASC,
         FIELD(COALESCE(cr.final_urgency_level, cr.level), 'Tinggi', 'Normal', 'Rendah') = 0,
         FIELD(COALESCE(cr.final_urgency_level, cr.level), 'Tinggi', 'Normal', 'Rendah'),
         cr.kadep_operasional_approved_at ASC,
@@ -119,25 +109,18 @@ $requests = $stmt->fetchAll();
 
 $summaryStmt = $pdo->query("
     SELECT
-        SUM(CASE WHEN automation_started_at IS NULL THEN 1 ELSE 0 END) AS waiting_queue,
-        SUM(CASE WHEN automation_started_at IS NOT NULL THEN 1 ELSE 0 END) AS in_progress
+        COUNT(*) AS in_execution,
+        SUM(CASE WHEN sla_due_at IS NOT NULL AND sla_due_at < NOW() THEN 1 ELSE 0 END) AS overdue
     FROM change_requests cr
     WHERE cr.workflow_stage = 'OTOMASI'
       AND cr.kadep_operasional_approved_at IS NOT NULL
       AND cr.status <> 'Draft'
       AND {$handlerScopeSql}
 ");
-$myQueueStmt = $pdo->prepare("
-    SELECT COUNT(*) FROM change_requests cr
-    WHERE cr.workflow_stage = 'OTOMASI' AND cr.assigned_handler_id = :user_id
-");
-$myQueueStmt->execute(['user_id' => (int) $_SESSION['user_id']]);
-$myQueue = (int) $myQueueStmt->fetchColumn();
-
 $summary = $summaryStmt->fetch() ?: [];
 
-$waitingQueue = (int) ($summary['waiting_queue'] ?? 0);
-$inProgress = (int) ($summary['in_progress'] ?? 0);
+$inExecution = (int) ($summary['in_execution'] ?? 0);
+$overdueCount = (int) ($summary['overdue'] ?? 0);
 
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
@@ -175,7 +158,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div>
                 <span class="crf-helpdesk-eyebrow">PORTAL CRF · TINDAK LANJUT OTOMASI</span>
                 <h1>Tindak Lanjut Permohonan Perubahan</h1>
-                <p>CRF yang sudah disetujui Kepala Departemen Operasional pada kategori yang Anda tangani. Tekan <strong>Mulai Kerjakan</strong> saat mulai mengerjakan (SLA dihitung sejak saat itu), lalu isi hasil implementasi.</p>
+                <p>CRF yang sudah disetujui Kepala Departemen Operasional pada kategori yang Anda tangani. SLA mulai dihitung sejak persetujuan; isi hasil implementasi untuk menyelesaikan CRF.</p>
             </div>
         </div>
 
@@ -190,25 +173,20 @@ require_once __DIR__ . '/../includes/header.php';
              ===================================================== -->
         <div class="crf-stat-grid crf-helpdesk-summary mb-4">
             <div class="crf-stat-card">
-                <span><i class="bi bi-inboxes"></i> Antrean (Belum Dikerjakan)</span>
-                <strong><?= $waitingQueue ?></strong>
+                <span><i class="bi bi-gear-wide-connected"></i> Menunggu Eksekusi</span>
+                <strong><?= $inExecution ?></strong>
             </div>
 
             <div class="crf-stat-card">
-                <span><i class="bi bi-gear-wide-connected"></i> Sedang Dikerjakan</span>
-                <strong><?= $inProgress ?></strong>
-            </div>
-
-            <div class="crf-stat-card">
-                <span><i class="bi bi-person-check"></i> Ditangani Saya</span>
-                <strong><?= $myQueue ?></strong>
+                <span><i class="bi bi-exclamation-triangle"></i> SLA Terlewati</span>
+                <strong><?= $overdueCount ?></strong>
             </div>
         </div>
 
         <div class="crf-table-card crf-list-table-card">
 
             <div class="crf-table-heading">
-                <h2><?= $queue === 'history' ? 'Riwayat Tindak Lanjut' : 'Antrean Tindak Lanjut' ?></h2>
+                <h2><?= $queue === 'history' ? 'Riwayat Tindak Lanjut' : 'Eksekusi CRF' ?></h2>
 
                 <!-- FILTER ANTREAN -->
                 <div class="btn-group">
@@ -222,25 +200,6 @@ require_once __DIR__ . '/../includes/header.php';
                         Semua
                     </a>
 
-                    <a
-                        href="?<?= h(http_build_query(array_filter([
-                            'q' => $search,
-                            'queue' => 'queue'
-                        ], static fn($value) => $value !== ''))) ?>"
-                        class="btn btn-sm <?= $queue === 'queue' ? 'btn-crf-primary' : 'btn-crf-outline' ?>"
-                    >
-                        Antrean
-                    </a>
-
-                    <a
-                        href="?<?= h(http_build_query(array_filter([
-                            'q' => $search,
-                            'queue' => 'execution'
-                        ], static fn($value) => $value !== ''))) ?>"
-                        class="btn btn-sm <?= $queue === 'execution' ? 'btn-crf-primary' : 'btn-crf-outline' ?>"
-                    >
-                        Sedang Dikerjakan
-                    </a>
                     <a
                         href="?<?= h(http_build_query(array_filter([
                             'q' => $search,
@@ -337,10 +296,10 @@ require_once __DIR__ . '/../includes/header.php';
                                         <?php if ($queue !== 'history'): ?>
                                             <a
                                                 href="detail.php?id=<?= (int) $row['id'] ?>"
-                                                class="btn btn-sm <?= crfIsQueued($row) ? 'btn-crf-primary' : 'btn-danger' ?>"
+                                                class="btn btn-sm btn-danger"
                                             >
-                                                <i class="bi <?= crfIsQueued($row) ? 'bi-play-circle' : 'bi-gear' ?>"></i>
-                                                <?= crfIsQueued($row) ? 'Mulai' : 'Eksekusi' ?>
+                                                <i class="bi bi-play-circle"></i>
+                                                Eksekusi
                                             </a>
                                         <?php endif; ?>
                                     </div>

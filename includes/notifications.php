@@ -60,6 +60,51 @@ function notifyUsers(
 }
 
 /**
+ * CMO yang meloloskan CRF (penerima notifikasi finalisasi). Bila tidak
+ * tercatat atau sudah bukan CMO, kembali ke seluruh CMO.
+ *
+ * @return int[]
+ */
+function crfCmoRecipients(PDO $pdo, int $crfId): array
+{
+    $allCmo = crfUserIdsForRole($pdo, 'cmo');
+
+    $stmt = $pdo->prepare("
+        SELECT user_id FROM crf_activity_logs
+        WHERE change_request_id = :id AND activity = 'Lolos Filter CMO' AND user_id IS NOT NULL
+        ORDER BY id DESC LIMIT 1
+    ");
+    $stmt->execute(['id' => $crfId]);
+    $screenerId = (int) $stmt->fetchColumn();
+
+    return $screenerId > 0 && in_array($screenerId, $allCmo, true) ? [$screenerId] : $allCmo;
+}
+
+/**
+ * Buang user yang masih punya notifikasi belum dibaca dengan judul sama
+ * untuk CRF yang sama (hindari tumpukan notifikasi komentar).
+ *
+ * @param int[] $userIds
+ * @return int[]
+ */
+function filterUsersWithoutUnread(PDO $pdo, array $userIds, int $crfId, string $title): array
+{
+    $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
+    if (!$userIds) {
+        return [];
+    }
+
+    $in = implode(',', $userIds);
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT user_id FROM notifications
+        WHERE change_request_id = :crf AND title = :title AND read_at IS NULL AND user_id IN ($in)
+    ");
+    $stmt->execute(['crf' => $crfId, 'title' => mb_substr($title, 0, 150)]);
+
+    return array_values(array_diff($userIds, array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN))));
+}
+
+/**
  * ID user untuk role workflow CRF (mengikuti aturan resolver atau tabel role).
  *
  * @return int[]

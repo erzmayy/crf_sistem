@@ -171,8 +171,8 @@ function canHandleCrf(PDO $pdo, array $crf): bool
 }
 
 /**
- * Petugas Otomasi yang memegang CRF (akun demo selalu boleh). Pemegang
- * ditetapkan otomatis saat Petugas Otomasi menekan "Mulai Kerjakan".
+ * PIC CRF yang memegang CRF (akun demo selalu boleh). Pemegang
+ * tercatat saat PIC CRF menyelesaikan eksekusi.
  */
 function isAssignedCrfHandler(array $crf): bool
 {
@@ -279,7 +279,7 @@ function crfRoleLabel(string $role): string
         case 'cmo':
             return 'CMO';
         case 'otomasi':
-            return 'Petugas Otomasi';
+            return 'PIC CRF';
         case 'kadep_operasional':
             return 'Kepala Departemen Operasional';
         case 'admin':
