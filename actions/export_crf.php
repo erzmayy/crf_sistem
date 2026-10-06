@@ -235,18 +235,12 @@ $firstActivityDate = static function (array $rows, array $activities): ?string {
     return null;
 };
 
-// tambahkan di dekat $slaDeterminedAt
 $cmoFilterAt = $firstActivityDate($activityRows, ['Lolos Filter CMO']);
 $cmoFilterDate = $cmoFilterAt
     ? formatTanggalIndonesia(new DateTime($cmoFilterAt))
     : null;
 
-$slaDeterminedAt = $firstActivityDate($activityRows, ['Otomasi - SLA Ditentukan']);
 $implementationPirAt = $firstActivityDate($activityRows, ['Otomasi Selesai']);
-
-$slaDeterminedDate = $slaDeterminedAt
-    ? formatTanggalIndonesia(new DateTime($slaDeterminedAt))
-    : null;
 
 $implementationPirDate = $implementationPirAt
     ? formatTanggalIndonesia(new DateTime($implementationPirAt))
@@ -715,7 +709,7 @@ $html = '
                 </div>
 
                 <div class="process-table-label">
-                    Diteruskan ke Divisi Otomasi
+                    Diteruskan ke Kepala Departemen Operasional
                 </div>
 
                 <div class="process-table-date">
@@ -724,31 +718,7 @@ $html = '
             </td>
 
 
-            <!-- 3. OTOMASI SLA -->
-            <td>
-                <div class="process-table-title">
-                    Otomasi
-                </div>
-
-                <div class="process-table-role">
-                    Penetapan SLA
-                </div>
-
-                <div class="process-table-label">
-                    SLA Ditentukan
-                </div>
-
-                <div class="process-table-date">
-                    ' . (
-                        !empty($slaDeterminedDate)
-                            ? $slaDeterminedDate
-                            : '-'
-                    ) . '
-                </div>
-            </td>
-
-
-            <!-- 4. APPROVAL -->
+            <!-- 3. APPROVAL -->
             <td>
                 <div class="process-table-title">
                     Kepala Departemen Operasional
@@ -775,6 +745,33 @@ $html = '
                 </div>
             </td>
 
+
+            <!-- 4. OTOMASI MULAI KERJAKAN -->
+            <td>
+                <div class="process-table-title">
+                    Otomasi
+                </div>
+
+                <div class="process-table-role">
+                    Mulai Kerjakan
+                </div>
+
+                <div class="process-table-label">
+                    SLA Mulai Dihitung
+                </div>
+
+                <div class="process-table-date">
+                    ' . (
+                        !empty($crf['automation_started_at'])
+                            ? formatTanggalIndonesia(
+                                new DateTime(
+                                    $crf['automation_started_at']
+                                )
+                            )
+                            : '-'
+                    ) . '
+                </div>
+            </td>
 
             <!-- 5. OTOMASI EKSEKUSI -->
             <td>

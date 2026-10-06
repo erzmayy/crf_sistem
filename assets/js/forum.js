@@ -112,38 +112,129 @@ document.addEventListener('DOMContentLoaded', function () {
     button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Mengirim...';
   });
 
-  /* 6. Petunjuk SLA standar kategori untuk urgensi yang dipilih. */
-  var urgency = document.getElementById('final-urgency-level');
-  var standardBox = document.getElementById('forum-standard-sla');
-  if (urgency && standardBox) {
-    var slaValue = document.getElementById('final-sla-value');
-    var slaUnit = document.getElementById('final-sla-unit');
-    var useStandard = document.getElementById('forum-use-standard-sla');
+  /* 6. Form usulan/keputusan: petunjuk SLA standar kategori + perilaku tombol Tolak. */
+  document.querySelectorAll('form[data-sla-form]').forEach(function (sla) {
+    var urgency = sla.querySelector('select[name="urgency"]');
+    var valueInput = sla.querySelector('input[name="sla_value"]');
+    var unitSelect = sla.querySelector('select[name="sla_unit"]');
+    var hint = sla.querySelector('[data-standard-hint]');
+    var useButton = sla.querySelector('[data-use-standard]');
 
-    var showStandard = function () {
-      var option = urgency.options[urgency.selectedIndex];
-      var value = option && option.dataset.slaValue;
-      var unit = option && option.dataset.slaUnit;
+    if (urgency && valueInput && unitSelect && hint && useButton) {
+      var showStandard = function () {
+        var option = urgency.options[urgency.selectedIndex];
+        var value = option && option.dataset.slaValue;
+        var unit = option && option.dataset.slaUnit;
 
-      if (!value || !unit) {
-        standardBox.hidden = true;
+        if (!value || !unit) {
+          hint.hidden = true;
+          return;
+        }
+        hint.querySelector('span').textContent =
+          'SLA standar kategori untuk urgensi ' + option.value + ': ' + value + ' ' + unit + ' (hari kerja).';
+        useButton.hidden = valueInput.value === value && unitSelect.value === unit;
+        hint.hidden = false;
+      };
+
+      urgency.addEventListener('change', showStandard);
+      valueInput.addEventListener('input', showStandard);
+      unitSelect.addEventListener('change', showStandard);
+      useButton.addEventListener('click', function () {
+        var option = urgency.options[urgency.selectedIndex];
+        valueInput.value = option.dataset.slaValue;
+        unitSelect.value = option.dataset.slaUnit;
+        showStandard();
+      });
+      showStandard();
+    }
+
+    // Tolak: catatan wajib; Setujui: catatan opsional.
+    var note = sla.querySelector('textarea[name="note"]');
+    var reject = sla.querySelector('[data-reject]');
+    if (note && reject) {
+      reject.addEventListener('click', function (event) {
+        note.required = true;
+        if (!note.value.trim()) {
+          event.preventDefault();
+          note.reportValidity();
+        }
+      });
+      sla.querySelectorAll('button[value="approve"]').forEach(function (button) {
+        button.addEventListener('click', function () { note.required = false; });
+      });
+    }
+  });
+
+  /* 7. Cegah kirim ganda pada form usulan/keputusan. */
+  document.querySelectorAll('form[action*="forum_proposal.php"]').forEach(function (proposalForm) {
+    if (proposalForm.hasAttribute('data-confirm')) { return; }
+    proposalForm.addEventListener('submit', function (event) {
+      if (event.defaultPrevented || proposalForm.dataset.submitting === '1') {
+        if (proposalForm.dataset.submitting === '1') { event.preventDefault(); }
         return;
       }
-      standardBox.querySelector('span').textContent =
-        'SLA standar kategori untuk urgensi ' + option.value + ': ' + value + ' ' + unit + ' (hari kerja).';
-      useStandard.hidden = slaValue.value === value && slaUnit.value === unit;
-      standardBox.hidden = false;
-    };
-
-    urgency.addEventListener('change', showStandard);
-    slaValue.addEventListener('input', showStandard);
-    slaUnit.addEventListener('change', showStandard);
-    useStandard.addEventListener('click', function () {
-      var option = urgency.options[urgency.selectedIndex];
-      slaValue.value = option.dataset.slaValue;
-      slaUnit.value = option.dataset.slaUnit;
-      showStandard();
+      proposalForm.dataset.submitting = '1';
+      window.setTimeout(function () {
+        proposalForm.querySelectorAll('button[type="submit"]').forEach(function (button) { button.disabled = true; });
+      }, 0);
     });
-    showStandard();
+  });
+
+  /* 8. Dibuka dari tautan #forum-proposal / ?propose=1: gulir ke seksi usulan. */
+  if (location.hash === '#forum-proposal' || /[?&]propose=1/.test(location.search)) {
+    var proposal = document.getElementById('forum-proposal');
+    if (proposal) {
+      window.setTimeout(function () { proposal.scrollIntoView({ block: 'start' }); }, 50);
+    }
   }
+});
+
+/**
+ * Panel "Detail CRF" (read-only) di samping diskusi. Isi dimuat saat tombol
+ * diklik dari forum/detail.php?partial=1; tanpa JavaScript tombol membuka
+ * halaman detail penuh.
+ */
+document.addEventListener('DOMContentLoaded', function () {
+  'use strict';
+
+  var panelEl = document.getElementById('forum-detail-panel');
+  var body = document.getElementById('forum-detail-panel-body');
+  if (!panelEl || !body || typeof bootstrap === 'undefined') {
+    return;
+  }
+
+  var panel = bootstrap.Offcanvas.getOrCreateInstance(panelEl);
+  var loadedUrl = null;
+
+  document.querySelectorAll('[data-forum-detail]').forEach(function (trigger) {
+    trigger.addEventListener('click', function (event) {
+      event.preventDefault();
+      var url = trigger.getAttribute('data-forum-detail');
+      panel.show();
+
+      if (loadedUrl === url) {
+        return;
+      }
+
+      body.innerHTML = '<div class="crf-forum-detail-loading"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Memuat detail CRF...</div>';
+      fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch' } })
+        .then(function (response) {
+          return response.text().then(function (html) {
+            if (!response.ok && html.indexOf('alert') === -1) {
+              throw new Error('HTTP ' + response.status);
+            }
+            return html;
+          });
+        })
+        .then(function (html) {
+          body.innerHTML = html;
+          loadedUrl = url;
+        })
+        .catch(function () {
+          loadedUrl = null;
+          body.innerHTML = '<div class="alert alert-danger m-3">Detail CRF gagal dimuat. '
+            + '<a href="' + trigger.getAttribute('href') + '">Buka di halaman penuh</a>.</div>';
+        });
+    });
+  });
 });

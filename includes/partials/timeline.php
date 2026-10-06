@@ -16,6 +16,15 @@ $activityLabels = [
     'SLA Otomatis' => 'SLA Standar Kategori',
     'SLA Disesuaikan Handler' => 'SLA Disesuaikan Petugas Otomasi',
     'Approval Kepala Departemen Operasional' => 'Persetujuan Kepala Departemen Operasional',
+    'Mulai Dikerjakan' => 'Mulai Dikerjakan Otomasi',
+    'Usulan Urgensi dan SLA' => 'Usulan Urgensi dan SLA',
+    'Usulan Perpanjangan SLA' => 'Usulan Perpanjangan SLA',
+    'Kesepakatan Urgensi dan SLA Forum' => 'Kesepakatan Urgensi dan SLA',
+    'Perpanjangan SLA' => 'Perpanjangan SLA Disetujui',
+    'Usulan Ditolak' => 'Usulan Ditolak',
+    'Usulan Dibatalkan' => 'Usulan Dibatalkan',
+    'Usulan Ditutup' => 'Usulan Ditutup',
+    'Penyesuaian Alur' => 'Penyesuaian Alur Sistem',
     'Otomasi Selesai' => 'Implementasi Selesai',
     'PIR Diisi Pemohon' => 'Post Implementation Review',
     'Pengingat PIR' => 'Pengingat PIR ke Pemohon',
@@ -53,12 +62,8 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
             $pendingStep = ['title' => 'Verifikasi CMO', 'description' => 'Menunggu verifikasi permohonan oleh CMO.'];
             break;
         case 'OTOMASI':
-            if (array_key_exists('assigned_handler_id', $crf) && empty($crf['assigned_handler_id'])) {
-                $pendingStep = ['title' => 'Menunggu Petugas Otomasi', 'description' => 'Menunggu Petugas Otomasi kategori mengambil CRF.'];
-                break;
-            }
-            $pendingStep = empty($crf['kadep_operasional_approved_at'])
-                ? ['title' => 'Penetapan SLA', 'description' => 'Menunggu Petugas Otomasi menentukan level urgensi dan SLA.']
+            $pendingStep = crfIsQueued($crf)
+                ? ['title' => 'Antrean Otomasi', 'description' => 'CRF sudah disetujui dan menunggu Petugas Otomasi mulai mengerjakan. SLA dihitung sejak "Mulai Kerjakan".']
                 : ['title' => 'Tindak Lanjut Divisi Otomasi', 'description' => 'Menunggu Petugas Otomasi mencatat hasil implementasi.'];
             break;
         case 'kadep_operasional':

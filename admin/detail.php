@@ -69,10 +69,7 @@ $timeline = $timelineStmt->fetchAll();
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-// Admin: penugasan ulang handler (tahap Handler) & pembatalan administratif.
-$categoryHandlers = !empty($crf['crf_category_id'])
-    ? (categoryMembers($pdo, 'crf_category_handlers', 'crf_category_id')[(int) $crf['crf_category_id']] ?? [])
-    : [];
+// Admin: pembatalan administratif.
 $canAdminCancel = !in_array($crf['status'], ['Solve', 'Cancel'], true) && !isOwnHandledCrf($crf);
 
 $pageTitle = 'Detail CRF - ' . $crf['request_number'];
@@ -120,7 +117,7 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 
     <?php if ($crf['workflow_stage'] === 'OTOMASI'): ?>
-      <?php $assignmentReturn = 'admin'; require __DIR__ . '/../includes/partials/handler_assignment.php'; ?>
+      <?php require __DIR__ . '/../includes/partials/handler_assignment.php'; ?>
     <?php endif; ?>
 
     <div class="crf-detail-layout">

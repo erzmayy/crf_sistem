@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/helpdesk.php';
+require_once __DIR__ . '/../includes/forum_proposals.php';
 requireCrfRole(['cmo']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -40,7 +41,7 @@ if (!$crf) {
 }
 
 $allowed = [
-    'to_automation' => 'CMO_FILTER',
+    'to_approval' => 'CMO_FILTER',
     'revision' => 'CMO_FILTER',
     'cancel' => ['CMO_FILTER','CMO_FINAL'],
     'complete' => 'CMO_FINAL',
@@ -119,12 +120,12 @@ try {
     $crfLink = 'crf/open.php?id=' . $id;
     $crfNumber = (string) $crf['request_number'];
 
-    if ($action === 'to_automation') {
+    if ($action === 'to_approval') {
         $stmt = $pdo->prepare("
             UPDATE change_requests
             SET
                 status = 'Dalam Proses',
-                workflow_stage = 'OTOMASI',
+                workflow_stage = 'kadep_operasional',
                 automation_started_at = NULL,
                 sla_started_at = NULL,
                 sla_due_at = NULL
@@ -140,27 +141,31 @@ try {
             $pdo,
             $id,
             'Lolos Filter CMO',
-            'CRF lolos verifikasi CMO dan diteruskan ke Divisi Otomasi.',
+            'CRF lolos verifikasi CMO dan diteruskan ke Kepala Departemen Operasional untuk persetujuan.',
             $actor,
             $oldDisplayStatus,
-            'Diproses'
+            'Menunggu Persetujuan'
         );
 
         /*
-         * SLA otomatis dari matriks Kategori x Urgensi. SLA final yang
-         * sudah disepakati di Forum tidak ditimpa.
+         * Level Urgensi & SLA otomatis dari matriks Kategori x Urgensi.
+         * Petugas Otomasi tidak lagi menentukan SLA; perubahan hanya oleh
+         * Admin di Forum. SLA final yang sudah disepakati di Forum tidak ditimpa.
          */
         $urgency = crfEffectiveUrgency($crf);
         $standardSla = empty($crf['final_urgency_level'])
             ? crfStandardSla($pdo, (int) ($crf['crf_category_id'] ?? 0), $urgency)
             : null;
+        if (in_array($urgency, ['Tinggi', 'Normal', 'Rendah'], true)) {
+            $pdo->prepare('UPDATE change_requests SET level = :level WHERE id = :id')
+                ->execute(['level' => $urgency, 'id' => $id]);
+        }
         if ($standardSla !== null) {
             $pdo->prepare('
                 UPDATE change_requests
-                SET level = :level, sla_value = :sla_value, sla_unit = :sla_unit
+                SET sla_value = :sla_value, sla_unit = :sla_unit
                 WHERE id = :id
             ')->execute([
-                'level' => $urgency,
                 'sla_value' => $standardSla['value'],
                 'sla_unit' => $standardSla['unit'],
                 'id' => $id,
@@ -172,24 +177,29 @@ try {
                 'SLA standar kategori untuk urgensi ' . $urgency . ': ' . slaLabel($standardSla['value'], $standardSla['unit']) . ' (hari kerja).',
                 'Sistem'
             );
+        } elseif ($crf['sla_value'] === null) {
+            // Kategori belum punya matriks SLA: buka pembahasan otomatis di Forum agar
+            // penentu menetapkan Level Urgensi & SLA (Kepala Departemen belum bisa menyetujui tanpa SLA).
+            forumRaiseSystemProposal(
+                $pdo,
+                array_merge($crf, ['workflow_stage' => 'kadep_operasional']),
+                $user,
+                'SLA standar kategori belum diatur sehingga CRF belum memiliki SLA.'
+            );
         }
 
-        // Handler kategori; bila kategori belum punya handler, tim Otomasi lama.
-        $handlerIds = !empty($crf['crf_category_id'])
-            ? crfCategoryHandlerIds($pdo, (int) $crf['crf_category_id'])
-            : [];
         notifyUsers(
             $pdo,
-            $handlerIds ?: crfUserIdsForRole($pdo, 'otomasi'),
-            'CRF masuk: ' . $crfNumber,
-            'CRF ' . $crfNumber . ' lolos verifikasi CMO dan siap ditindaklanjuti Petugas Otomasi.',
+            crfUserIdsForRole($pdo, 'kadep_operasional'),
+            'Persetujuan CRF: ' . $crfNumber,
+            'CRF ' . $crfNumber . ' lolos verifikasi CMO dan menunggu persetujuan Anda.',
             $crfLink,
             $id,
             null,
             (int) $user['id']
         );
 
-        $message = 'CRF berhasil diteruskan ke Divisi Otomasi.';
+        $message = 'CRF berhasil diteruskan ke Kepala Departemen Operasional untuk persetujuan.';
     } elseif ($action === 'revision') {
         $stmt = $pdo->prepare("UPDATE change_requests SET status = 'Perlu Revisi', workflow_stage = 'PEMOHON', tanggapan_tindak_lanjut = :tanggapan WHERE id = :id AND workflow_stage = 'CMO_FILTER'");
         $stmt->execute(['tanggapan' => $tanggapan, 'id' => $id]);
@@ -200,6 +210,7 @@ try {
     } elseif ($action === 'cancel') {
         $stmt = $pdo->prepare("UPDATE change_requests SET status = 'Cancel', workflow_stage = 'SELESAI', tanggapan_tindak_lanjut = :tanggapan, cancelled_at = :now, solved_at = NULL WHERE id = :id");
         $stmt->execute(['tanggapan' => $tanggapan, 'now' => $now, 'id' => $id]);
+        forumCloseOpenProposals($pdo, $id, 'dibatalkan', 'CRF dibatalkan oleh CMO.');
         logCrfActivity($pdo, $id, 'Cancel', $tanggapan, $actor, $oldDisplayStatus, 'Dibatalkan');
         notifyUsers($pdo, [(int) $crf['user_id'], (int) $crf['assigned_handler_id']], 'CRF dibatalkan: ' . $crfNumber,
             'CRF ' . $crfNumber . ' dibatalkan oleh CMO: ' . $tanggapan, $crfLink, $id, null, (int) $user['id']);
@@ -224,8 +235,8 @@ try {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Terjadi kesalahan saat memproses CRF.'];
 }
 
-if ($action === 'to_automation' && isDemoUser()) {
-    header('Location: ../otomasi/index.php');
+if ($action === 'to_approval' && isDemoUser()) {
+    header('Location: ../pak_joko/index.php');
 } else {
     header('Location: ../cmo/index.php');
 }

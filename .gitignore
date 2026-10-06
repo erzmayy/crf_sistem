@@ -2,3 +2,4 @@
 /config/wasabi.php
 /config/mail.php
 /config/dev_login.php
+/backups/

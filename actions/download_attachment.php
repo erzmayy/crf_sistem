@@ -1,12 +1,13 @@
 <?php
 /**
  * actions/download_attachment.php
- * Download lampiran CRF. Hanya untuk pemilik CRF atau admin
- * (untuk CRF yang sudah diajukan, bukan Draft).
+ * Download lampiran CRF. Untuk user yang boleh mengakses CRF (lihat
+ * canAccessCrf) dan peran Forum selama CRF masih dibahas di Forum.
  */
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/forum.php';
 
 requireLogin();
 
@@ -34,7 +35,10 @@ if (!$file) {
     exit('File tidak ditemukan.');
 }
 
-if (!canAccessCrf($pdo, (int) $file['change_request_id'])) {
+if (
+    !canAccessCrf($pdo, (int) $file['change_request_id'])
+    && !canViewForumCrf($pdo, (int) $file['change_request_id'])
+) {
     http_response_code(403);
     exit('Anda tidak memiliki akses ke file ini.');
 }

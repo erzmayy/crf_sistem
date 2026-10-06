@@ -171,8 +171,8 @@ function canHandleCrf(PDO $pdo, array $crf): bool
 }
 
 /**
- * Handler yang memegang CRF (atau admin). CRF yang belum di-assign
- * harus "diambil" terlebih dahulu sebelum diproses.
+ * Petugas Otomasi yang memegang CRF (akun demo selalu boleh). Pemegang
+ * ditetapkan otomatis saat Petugas Otomasi menekan "Mulai Kerjakan".
  */
 function isAssignedCrfHandler(array $crf): bool
 {
@@ -286,6 +286,8 @@ function crfRoleLabel(string $role): string
             return 'Admin';
         case 'demo':
             return 'Demo (Semua Peran)';
+        case 'sistem':
+            return 'Sistem';
         default:
             return 'Pemohon';
     }

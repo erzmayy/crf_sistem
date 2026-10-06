@@ -13,6 +13,7 @@ $stmt = $pdo->prepare("
     FROM change_requests cr
     WHERE cr.id = :id
       AND cr.workflow_stage = 'OTOMASI'
+      AND cr.kadep_operasional_approved_at IS NOT NULL
     LIMIT 1
 ");
 
@@ -71,18 +72,16 @@ $timelineStmt = $pdo->prepare("
 $timelineStmt->execute(['id' => $id]);
 $timeline = $timelineStmt->fetchAll();
 
-$isExecutionStage = !empty($crf['kadep_operasional_approved_at']);
+// Disetujui tetapi belum "Mulai Kerjakan": CRF masih di antrean, SLA belum berjalan.
+$isQueued = crfIsQueued($crf);
 $isAssignedToOther = !empty($crf['assigned_handler_id']) && !isAssignedCrfHandler($crf);
-$categoryHandlers = !empty($crf['crf_category_id']) && isAdmin()
-    ? (categoryMembers($pdo, 'crf_category_handlers', 'crf_category_id')[(int) $crf['crf_category_id']] ?? [])
-    : [];
 
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$pageTitle = $isExecutionStage
-    ? 'Otomasi - Eksekusi CRF'
-    : 'Otomasi - Tentukan SLA';
+$pageTitle = $isQueued
+    ? 'Otomasi - Antrean CRF'
+    : 'Otomasi - Eksekusi CRF';
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -96,9 +95,9 @@ require_once __DIR__ . '/../includes/header.php';
             <div>
 
                 <h1>
-                    <?= $isExecutionStage
-                        ? 'Tindak Lanjut Otomasi · Implementasi'
-                        : 'Tindak Lanjut Otomasi · Penetapan SLA'
+                    <?= $isQueued
+                        ? 'Tindak Lanjut Otomasi · Antrean'
+                        : 'Tindak Lanjut Otomasi · Implementasi'
                     ?>
                 </h1>
 
@@ -133,7 +132,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
         <div class="d-flex gap-2 flex-wrap mb-4">
-            <?php $resolvedUrgencyLevel = crfUrgencyForImpact($crf['impact_category'] ?? null) ?: ($crf['level'] ?? null); ?>
+            <?php $resolvedUrgencyLevel = crfEffectiveUrgency($crf); ?>
 
             <span class="crf-badge <?= workflowStageBadgeClass($crf['workflow_stage']) ?>">
                 Tahap:
@@ -142,7 +141,7 @@ require_once __DIR__ . '/../includes/header.php';
 
             <?php if ($resolvedUrgencyLevel !== null): ?>
                 <span class="crf-badge <?= levelBadgeClass($resolvedUrgencyLevel) ?>">
-                    Level Urgensi Sistem: <?= h($resolvedUrgencyLevel) ?>
+                    Level Urgensi: <?= h($resolvedUrgencyLevel) ?>
                 </span>
             <?php endif; ?>
 
@@ -202,13 +201,17 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="alert alert-warning crf-alert">
             <i class="bi bi-person-lock"></i>
             CRF ini sedang ditangani oleh <strong><?= h($crf['assigned_handler_name'] ?? '-') ?></strong>.
-            Hanya Petugas Otomasi tersebut atau Admin yang dapat memprosesnya.
+            Hanya Petugas Otomasi tersebut yang dapat memprosesnya.
         </div>
         <?php else: ?>
         <form
             action="../actions/automation_action.php"
             method="POST"
-            data-loading-form
+            <?php if ($isQueued): ?>
+                data-confirm="Mulai kerjakan CRF <?= h($crf['request_number']) ?>? SLA akan mulai dihitung sejak sekarang."
+            <?php else: ?>
+                data-loading-form
+            <?php endif; ?>
         >
 
             <?= csrfField() ?>
@@ -220,22 +223,30 @@ require_once __DIR__ . '/../includes/header.php';
             >
 
 
-            <?php if (!$isExecutionStage): ?>
+            <?php if ($isQueued): ?>
 
                 <!-- =================================================
-                     2. MENENTUKAN LEVEL & SLA
+                     2. ANTREAN · MULAI KERJAKAN
                      ================================================= -->
+
+                <?php
+                $queueWaitSeconds = slaWorkingSecondsBetween(
+                    new DateTimeImmutable($crf['kadep_operasional_approved_at']),
+                    new DateTimeImmutable()
+                );
+                $hasValidSla = slaDueAt(date('Y-m-d H:i:s'), $crf['sla_value'], $crf['sla_unit']) !== null;
+                ?>
 
                 <div class="crf-section mb-4">
 
                     <div class="crf-section-header">
 
                         <span class="crf-section-number">
-                            <i class="bi bi-sliders"></i>
+                            <i class="bi bi-inboxes"></i>
                         </span>
 
                         <h2>
-                            Menentukan Level Urgensi & SLA
+                            Antrean · Mulai Kerjakan
                         </h2>
 
                     </div>
@@ -243,153 +254,44 @@ require_once __DIR__ . '/../includes/header.php';
 
                     <div class="crf-section-body">
 
-                        <?php
-                        // SLA standar dari matriks Kategori x Urgensi (master kategori CRF).
-                        $standardSla = empty($crf['final_urgency_level'])
-                            ? crfStandardSla($pdo, (int) ($crf['crf_category_id'] ?? 0), crfEffectiveUrgency($crf))
-                            : null;
-                        $slaFormValue = $crf['sla_value'] !== null && $crf['sla_value'] !== ''
-                            ? rtrim(rtrim(number_format((float) $crf['sla_value'], 2, '.', ''), '0'), '.')
-                            : ($standardSla !== null ? rtrim(rtrim(number_format($standardSla['value'], 2, '.', ''), '0'), '.') : '');
-                        $slaFormUnit = $crf['sla_unit'] ?: ($standardSla['unit'] ?? 'Hari');
-                        ?>
-
                         <div class="alert alert-info">
-                            Periksa Level Urgensi dan SLA sebelum CRF diteruskan ke
-                            Kepala Departemen Operasional untuk persetujuan.
-                            <?php if ($standardSla !== null): ?>
-                                SLA sudah terisi otomatis dari standar kategori
-                                (<strong><?= h(slaLabel($standardSla['value'], $standardSla['unit'])) ?></strong>, hari kerja).
-                                Jika diubah, alasan wajib diisi.
-                            <?php endif; ?>
+                            CRF sudah disetujui Kepala Departemen Operasional pada
+                            <strong><?= h(date('d-m-Y H:i', strtotime($crf['kadep_operasional_approved_at']))) ?></strong>
+                            dan berada di antrean
+                            selama <?= h(formatSlaDuration($queueWaitSeconds)) ?> (dihitung pada hari kerja).
+                            SLA <strong>belum berjalan</strong> dan baru dihitung saat Anda menekan
+                            <strong>Mulai Kerjakan</strong>.
                         </div>
 
-
-                        <div
-                            class="row g-3"
-                            <?php if ($standardSla !== null): ?>
-                                data-sla-standard-value="<?= h((string) $standardSla['value']) ?>"
-                                data-sla-standard-unit="<?= h($standardSla['unit']) ?>"
-                            <?php endif; ?>
-                        >
-
-                            <div class="col-md-4">
-
-                                <label class="form-label fw-semibold">
-                                    Level Urgensi Sistem
-                                    <span class="text-danger">*</span>
-                                </label>
-
-                                <?php if (
-                                    !empty($crf['level'])
-                                    || crfUrgencyForImpact($crf['impact_category'] ?? null) !== null
-                                ): ?>
-                                    <div class="otomasi-urgency-field-value">
-                                        <span class="crf-badge otomasi-urgency-badge <?= h(levelBadgeClass($resolvedUrgencyLevel)) ?>">
-                                            <?= h($resolvedUrgencyLevel) ?>
-                                        </span>
-                                    </div>
-                                <?php else: ?>
-                                    <select name="level" class="form-select" required>
-                                        <option value="">Pilih untuk CRF lama</option>
-                                        <?php foreach (['Tinggi', 'Normal', 'Rendah'] as $legacyLevel): ?>
-                                            <option
-                                                value="<?= h($legacyLevel) ?>"
-                                                <?= ($crf['level'] ?? '') === $legacyLevel ? 'selected' : '' ?>
-                                            ><?= h($legacyLevel) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <div class="crf-readonly-note mt-2">
-                                        Level belum tersedia untuk CRF lama ini.
-                                    </div>
-                                <?php endif; ?>
-
-                            </div>
-
-                            <div class="col-md-4">
-
-                                <label class="form-label fw-semibold">
-                                    Nilai SLA
-                                    <span class="text-danger">*</span>
-                                </label>
-
-                                <input
-                                    type="number"
-                                    min="0.01"
-                                    step="0.01"
-                                    name="sla_value"
-                                    class="form-control"
-                                    <?= !empty($crf['final_urgency_level']) ? 'readonly' : '' ?>
-                                    value="<?= h($slaFormValue) ?>"
-                                    required
-                                >
-                                <?php if ($standardSla !== null): ?>
-                                    <div class="crf-readonly-note mt-2">
-                                        Standar kategori: <?= h(slaLabel($standardSla['value'], $standardSla['unit'])) ?>
-                                    </div>
-                                <?php endif; ?>
-                                <?php if (!empty($crf['final_urgency_level'])): ?>
-                                    <div class="crf-readonly-note mt-2">
-                                        SLA final sudah disepakati di Forum dan hanya dapat diperbarui oleh Admin atau CMO.
-                                    </div>
-                                <?php endif; ?>
-
-                            </div>
-
-
-                            <div class="col-md-4">
-
-                                <label class="form-label fw-semibold">
-                                    Satuan SLA
-                                    <span class="text-danger">*</span>
-                                </label>
-
-                                <select
-                                    name="sla_unit"
-                                    class="form-select"
-                                    <?= !empty($crf['final_urgency_level']) ? 'disabled' : '' ?>
-                                    required
-                                >
-
-                                    <?php foreach (
-                                        ['Menit', 'Jam', 'Hari']
-                                        as $unit
-                                    ): ?>
-
-                                        <option
-                                            value="<?= h($unit) ?>"
-                                            <?= $slaFormUnit === $unit
-                                                ? 'selected'
-                                                : '' ?>
-                                        >
-                                            <?= h($unit) ?>
-                                        </option>
-
-                                    <?php endforeach; ?>
-
-                                </select>
-
-                            </div>
-
-                        </div>
-
-                        <?php if ($standardSla !== null): ?>
-                            <div class="mt-3 <?= crfSlaEquals($standardSla, $slaFormValue, $slaFormUnit) ? 'd-none' : '' ?>" data-sla-reason>
-                                <label for="sla_reason" class="form-label fw-semibold">
-                                    Alasan Perubahan SLA
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <textarea
-                                    id="sla_reason"
-                                    name="sla_reason"
-                                    class="form-control"
-                                    rows="3"
-                                    maxlength="500"
-                                    placeholder="Contoh: butuh koordinasi vendor, menunggu pengadaan perangkat..."
-                                ></textarea>
-                                <div class="crf-readonly-note mt-1">
-                                    SLA berbeda dari standar kategori. Alasan dicatat di timeline dan terlihat oleh Kepala Departemen Operasional.
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="crf-detail-label">LEVEL URGENSI</div>
+                                <div class="crf-detail-value">
+                                    <?php if ($resolvedUrgencyLevel !== null): ?>
+                                        <span class="crf-badge <?= h(levelBadgeClass($resolvedUrgencyLevel)) ?>"><?= h($resolvedUrgencyLevel) ?></span>
+                                    <?php else: ?>
+                                        <span class="crf-sla-empty">Belum ditentukan</span>
+                                    <?php endif; ?>
                                 </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="crf-detail-label">SLA</div>
+                                <div class="crf-detail-value">
+                                    <?= h(slaLabel($crf['sla_value'], $crf['sla_unit'])) ?>
+                                    <small class="text-muted">(hari kerja)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="crf-readonly-note mt-3">
+                            <i class="bi bi-info-circle"></i>
+                            Level Urgensi dan SLA ditetapkan sistem dan hanya dapat diubah Admin melalui Forum.
+                            Jika ada kendala, sampaikan di <a href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>">Forum CRF</a>.
+                        </div>
+
+                        <?php if (!$hasValidSla): ?>
+                            <div class="alert alert-warning mt-3 mb-0">
+                                SLA CRF ini belum valid sehingga belum dapat dikerjakan. Hubungi Admin untuk menetapkan SLA di Forum.
                             </div>
                         <?php endif; ?>
 
@@ -398,26 +300,17 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
 
 
-                <div class="d-flex justify-content-end gap-2">
+                <input type="hidden" name="action" value="start">
+
+                <div class="d-flex justify-content-end">
 
                     <button
                         type="submit"
-                        name="action"
-                        value="save"
-                        class="btn btn-crf-outline"
-                    >
-                        <i class="bi bi-save"></i>
-                        Simpan
-                    </button>
-
-                    <button
-                        type="submit"
-                        name="action"
-                        value="complete"
                         class="btn btn-crf-primary"
+                        <?= $hasValidSla ? '' : 'disabled' ?>
                     >
-                        <i class="bi bi-send"></i>
-                        Submit
+                        <i class="bi bi-play-circle"></i>
+                        Mulai Kerjakan
                     </button>
 
                 </div>

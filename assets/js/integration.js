@@ -203,32 +203,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   /* -----------------------------------------------------------------
-   * Petugas Otomasi: alasan wajib bila SLA berbeda dari standar kategori
-   * ----------------------------------------------------------------- */
-  document.querySelectorAll('[data-sla-standard-value]').forEach(function (row) {
-    var form = row.closest('form');
-    var reasonBox = form ? form.querySelector('[data-sla-reason]') : null;
-    var valueInput = row.querySelector('[name="sla_value"]');
-    var unitSelect = row.querySelector('[name="sla_unit"]');
-    if (!reasonBox || !valueInput || !unitSelect) { return; }
-    var reason = reasonBox.querySelector('textarea');
-    var standardValue = parseFloat(row.getAttribute('data-sla-standard-value'));
-    var standardUnit = row.getAttribute('data-sla-standard-unit');
-
-    function sync() {
-      var deviates = Math.abs(parseFloat(valueInput.value) - standardValue) >= 0.001
-        || isNaN(parseFloat(valueInput.value))
-        || unitSelect.value !== standardUnit;
-      reasonBox.classList.toggle('d-none', !deviates);
-      reason.required = deviates;
-    }
-
-    valueInput.addEventListener('input', sync);
-    unitSelect.addEventListener('change', sync);
-    sync();
-  });
-
-  /* -----------------------------------------------------------------
    * Modal kategori: isi field dari data-category-form
    * ----------------------------------------------------------------- */
   document.querySelectorAll('[data-category-form]').forEach(function (button) {
