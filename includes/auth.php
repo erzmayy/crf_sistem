@@ -224,11 +224,6 @@ function isDemoUser(): bool
     return getCrfRole() === 'demo';
 }
 
-function isCrfRole(string $role): bool
-{
-    return getCrfRole() === $role;
-}
-
 /**
  * Membatasi halaman untuk role tertentu.
  * - Akun 'demo' selalu diizinkan (satu akun untuk presentasi semua peran).
@@ -353,30 +348,6 @@ function canAccessCrf(PDO $pdo, int $crfId): bool
     }
 
     return in_array($role, ['admin', 'demo', 'cmo', 'kadep_operasional'], true);
-}
-
-/**
- * Halaman khusus Handler: role otomasi + CRF berada pada kategorinya.
- * Mengembalikan baris CRF jika lolos.
- */
-function requireCrfHandlerAccess(PDO $pdo, int $crfId, string $redirect): array
-{
-    requireCrfRole(['otomasi']);
-
-    $stmt = $pdo->prepare('SELECT * FROM change_requests WHERE id = :id LIMIT 1');
-    $stmt->execute(['id' => $crfId]);
-    $crf = $stmt->fetch();
-
-    if (!$crf || !canHandleCrf($pdo, $crf)) {
-        $_SESSION['flash'] = [
-            'type' => 'danger',
-            'message' => 'CRF tidak ditemukan atau bukan kategori yang Anda tangani.',
-        ];
-        header('Location: ' . $redirect);
-        exit;
-    }
-
-    return $crf;
 }
 
 /**

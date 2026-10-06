@@ -190,37 +190,6 @@ function statusLabel(string $status): string
     }
 }
 
-/**
- * Aturan perpindahan status yang boleh dilakukan admin.
- * Kunci = status sekarang, nilai = status tujuan yang diizinkan.
- * Mau mengubah aturan? Cukup edit daftar di bawah ini.
- */
-function statusTransitions(): array
-{
-    return [
-        'Belum Ditindak Lanjuti' => ['Perlu Revisi', 'Dalam Proses', 'Cancel'],
-        'Perlu Revisi'           => ['Cancel'],
-        'Dalam Proses'           => ['Perlu Revisi', 'Solve', 'Cancel'],
-        'Solve'                  => [],
-        'Cancel'                 => [],
-    ];
-}
-
-/**
- * Apakah perpindahan status dari $from ke $to diperbolehkan?
- * Status yang sama selalu boleh (hanya mengubah Level / Tanggapan).
- */
-function canChangeStatus(string $from, string $to): bool
-{
-    if ($from === $to) {
-        return true;
-    }
-
-    $map = statusTransitions();
-
-    return in_array($to, $map[$from] ?? [], true);
-}
-
 function statusBadgeClass(string $status): string
 {
     switch ($status) {
@@ -1180,26 +1149,4 @@ function uploadAttachmentsToStorage(array $filesInput, string $storedPrefix, PDO
     }
 
     return $errors;
-}
-
-/**
- * Daftar kategori perubahan beserta contoh placeholder untuk field
- * "Detail Kategori" (lihat brief butir 14).
- */
-function categoryPlaceholder(string $category): string
-{
-    switch ($category) {
-        case 'Aplikasi':
-            return 'Contoh: Modul CL / PKS / PKWT / Absensi';
-        case 'Infrastruktur':
-            return 'Contoh: Jaringan Lokal (LAN) / Jaringan Internet Publik (WAN)';
-        case 'Proses':
-            return 'Contoh: Modul Payroll - perubahan proses pembuatan Payroll';
-        case 'Security':
-            return 'Contoh: Perubahan Kewenangan Menu / User ID / Password';
-        case 'Lainnya':
-            return 'Jelaskan kategori perubahan yang dimaksud';
-        default:
-            return '';
-    }
 }
