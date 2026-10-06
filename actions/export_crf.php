@@ -746,34 +746,7 @@ $html = '
             </td>
 
 
-            <!-- 4. OTOMASI MULAI KERJAKAN -->
-            <td>
-                <div class="process-table-title">
-                    Otomasi
-                </div>
-
-                <div class="process-table-role">
-                    Mulai Kerjakan
-                </div>
-
-                <div class="process-table-label">
-                    SLA Mulai Dihitung
-                </div>
-
-                <div class="process-table-date">
-                    ' . (
-                        !empty($crf['automation_started_at'])
-                            ? formatTanggalIndonesia(
-                                new DateTime(
-                                    $crf['automation_started_at']
-                                )
-                            )
-                            : '-'
-                    ) . '
-                </div>
-            </td>
-
-            <!-- 5. OTOMASI EKSEKUSI -->
+            <!-- 4. OTOMASI EKSEKUSI -->
             <td>
                 <div class="process-table-title">
                     Otomasi

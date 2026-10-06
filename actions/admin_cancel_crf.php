@@ -10,7 +10,7 @@
  */
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/forum_proposals.php';
+require_once __DIR__ . '/../includes/forum_discussions.php';
 require_once __DIR__ . '/../includes/helpdesk.php';
 
 requireAdmin();
@@ -91,7 +91,7 @@ try {
         (int) $user['id']
     );
 
-    forumCloseOpenProposals($pdo, $id, 'dibatalkan', 'CRF dibatalkan oleh Admin.');
+    forumCloseOpenDiscussions($pdo, $id, 'CRF dibatalkan oleh Admin.');
     syncHelpdeskTicketFromCrf($pdo, $id, $actor);
 
     $pdo->commit();

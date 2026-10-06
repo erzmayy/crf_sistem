@@ -14,7 +14,7 @@
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/forum_proposals.php';
+require_once __DIR__ . '/../includes/forum_discussions.php';
 
 requireCrfRole(['cmo']);
 
@@ -297,15 +297,28 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <div class="crf-section-body">
 
-                    <?php $cmoOpenProposal = forumOpenProposal($pdo, (int) $crf['id']); ?>
-                    <?php if ($cmoOpenProposal): ?>
+                    <?php
+                    $cmoDiscussion = forumOpenDiscussion($pdo, (int) $crf['id']);
+                    $cmoSlaMissing = !crfHasValidSla($crf);
+                    // Pembahasan dari sistem (SLA kosong) wajib diselesaikan Admin, tidak boleh dibatalkan.
+                    $cmoCanCancelDiscussion = $cmoDiscussion && !($cmoDiscussion['trigger_source'] === 'sistem' && $cmoSlaMissing);
+                    ?>
+                    <?php if ($cmoDiscussion): ?>
                         <div class="alert alert-warning">
                             <i class="bi bi-flag-fill"></i>
-                            Ada <strong>usulan <?= h(strtolower(forumProposalKindLabel($cmoOpenProposal['kind']))) ?></strong>
-                            dari <?= h($cmoOpenProposal['proposed_by_name']) ?> yang menunggu keputusan
-                            <?= !empty($cmoOpenProposal['due_at']) ? '(batas ' . h(date('d-m-Y H:i', strtotime($cmoOpenProposal['due_at']))) . ')' : '' ?>.
-                            CRF tetap dapat diteruskan; bila belum diputuskan, nilai yang berlaku adalah SLA standar kategori.
-                            <a href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>#forum-proposal">Lihat pembahasan di Forum</a>
+                            <strong>Menunggu Pembahasan Forum.</strong>
+                            <?= $cmoDiscussion['trigger_source'] === 'sistem'
+                                ? 'SLA default belum tersedia, sehingga Admin perlu menetapkannya lewat pembahasan Forum.'
+                                : 'Anda mengajukan pembahasan Level Urgensi dan SLA.' ?>
+                            CRF dapat diteruskan ke Kepala Departemen Operasional setelah hasil pembahasan dicatat Admin
+                            <?= !empty($cmoDiscussion['due_at']) ? '(target ' . h(date('d-m-Y H:i', strtotime($cmoDiscussion['due_at']))) . ')' : '' ?>.
+                            <a href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>#forum-pembahasan">Buka pembahasan di Forum</a>
+                        </div>
+                    <?php elseif ($cmoSlaMissing): ?>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            SLA default belum tersedia karena SLA standar kategori belum diatur. Saat Anda menekan
+                            <strong>Teruskan</strong>, pembahasan Forum dibuka otomatis agar Admin menetapkan SLA.
                         </div>
                     <?php endif; ?>
 
@@ -324,7 +337,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 name="tanggapan"
                                 class="form-control"
                                 rows="4"
-                                placeholder="Wajib diisi jika dikembalikan untuk perbaikan atau dibatalkan."
+                                placeholder="Wajib diisi jika dikembalikan untuk perbaikan, dibatalkan, atau diajukan untuk pembahasan Forum (tuliskan alasannya)."
                             ><?= h($crf['tanggapan_tindak_lanjut'] ?? '') ?></textarea>
                         </div>
 
@@ -334,19 +347,33 @@ require_once __DIR__ . '/../includes/header.php';
                                 name="action"
                                 value="to_approval"
                                 class="btn btn-crf-primary"
+                                <?= $cmoDiscussion ? 'disabled title="Menunggu hasil pembahasan Forum"' : '' ?>
                             >
                                 <i class="bi bi-arrow-right-circle"></i>
                                 Teruskan ke Kepala Departemen Operasional
                             </button>
 
-                            <a
-                                href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>&amp;propose=1#forum-proposal"
-                                class="btn btn-outline-secondary"
-                                title="Usulkan perubahan Level Urgensi/SLA untuk dibahas dan diputuskan di Forum"
-                            >
-                                <i class="bi bi-flag"></i>
-                                <?= $cmoOpenProposal ? 'Lihat Pembahasan Urgensi/SLA' : 'Ajukan Pembahasan Urgensi/SLA' ?>
-                            </a>
+                            <?php if (!$cmoDiscussion): ?>
+                                <button
+                                    name="action"
+                                    value="request_discussion"
+                                    class="btn btn-outline-secondary"
+                                    title="Bahas di Forum apakah Level Urgensi dan SLA default tetap atau perlu diubah"
+                                >
+                                    <i class="bi bi-flag"></i>
+                                    Ajukan Pembahasan Forum
+                                </button>
+                            <?php elseif ($cmoCanCancelDiscussion): ?>
+                                <button
+                                    name="action"
+                                    value="cancel_discussion"
+                                    class="btn btn-outline-secondary"
+                                    formnovalidate
+                                >
+                                    <i class="bi bi-flag"></i>
+                                    Batalkan Pembahasan Forum
+                                </button>
+                            <?php endif; ?>
 
                             <button
                                 name="action"

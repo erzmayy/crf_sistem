@@ -1,10 +1,11 @@
 <?php
-require_once __DIR__ . '/../includes/forum_proposals.php';
+require_once __DIR__ . '/../includes/forum_discussions.php';
 requireForumAccess();
 
 $pdo = getConnection();
 $user = getCurrentUser();
-$canDecide = canDecideForumProposal();
+$canRecord = canRecordForumResult();
+$canOpenDiscussion = canOpenForumDiscussion();
 $userId = (int) $user['id'];
 $crfId = filter_input(INPUT_GET, 'crf_id', FILTER_VALIDATE_INT) ?: 0;
 $search = is_string($_GET['q'] ?? null) ? trim($_GET['q']) : '';
@@ -13,22 +14,22 @@ $filterParam = in_array($_GET['filter'] ?? '', ['all', 'unread', 'discuss'], tru
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-// Pengingat usulan yang melewati batas keputusan (dijalankan saat Forum dibuka).
+// Pengingat pembahasan yang melewati target hasil (dijalankan saat Forum dibuka).
 forumSendDueReminders($pdo);
 
 $activeCondition = forumActiveCrfCondition('cr');
 $crfSql = "SELECT cr.id, cr.request_number, cr.full_name, cr.status, cr.workflow_stage,
-            cr.kadep_operasional_approved_at, cr.automation_started_at,
+            cr.kadep_operasional_approved_at, cr.forum_discussion_open,
             COALESCE(stats.comment_count, 0) AS comment_count,
             last_comment.user_name AS last_user_name,
             last_comment.comment AS last_comment,
             COALESCE(last_comment.created_at, cr.updated_at) AS last_activity_at,
-            (open_proposal.change_request_id IS NOT NULL) AS has_open_proposal,
-            open_proposal.due_at AS open_proposal_due_at,
+            (open_discussion.change_request_id IS NOT NULL) AS has_open_discussion,
+            open_discussion.due_at AS open_discussion_due_at,
             EXISTS (
-                SELECT 1 FROM forum_proposals agreed
-                WHERE agreed.change_request_id = cr.id AND agreed.status = 'disetujui'
-            ) AS has_agreement
+                SELECT 1 FROM forum_discussions agreed
+                WHERE agreed.change_request_id = cr.id AND agreed.status = 'selesai'
+            ) AS has_result
      FROM change_requests cr
      LEFT JOIN (
         SELECT change_request_id, COUNT(*) AS comment_count, MAX(id) AS last_comment_id
@@ -38,10 +39,10 @@ $crfSql = "SELECT cr.id, cr.request_number, cr.full_name, cr.status, cr.workflow
      LEFT JOIN forum_comments last_comment ON last_comment.id = stats.last_comment_id
      LEFT JOIN (
         SELECT change_request_id, MIN(due_at) AS due_at
-        FROM forum_proposals
+        FROM forum_discussions
         WHERE status = 'menunggu'
         GROUP BY change_request_id
-     ) open_proposal ON open_proposal.change_request_id = cr.id
+     ) open_discussion ON open_discussion.change_request_id = cr.id
      WHERE {$activeCondition}";
 $searchParams = [];
 if ($search !== '') {
@@ -66,16 +67,15 @@ $replyTo = null;
 $errorMessage = null;
 $lastReadCommentId = 0;
 $standardSlaMatrix = [];
-$openProposal = null;
-$proposalHistory = [];
-$proposalKind = null;
+$openDiscussion = null;
+$discussionHistory = [];
 
 if ($crfId > 0) {
     $selectedStmt = $pdo->prepare(
         "SELECT cr.id, cr.request_number, cr.full_name, cr.status, cr.workflow_stage,
                 cr.level, cr.impact_category, cr.final_urgency_level,
                 cr.sla_value, cr.sla_unit, cr.sla_started_at, cr.sla_due_at,
-                cr.kadep_operasional_approved_at, cr.automation_started_at, cr.automation_completed_at,
+                cr.kadep_operasional_approved_at, cr.automation_completed_at, cr.forum_discussion_open,
                 cr.assigned_handler_name, cr.assigned_handler_id, cr.crf_category_id,
                 cr.request_type, cr.from_department, cr.change_description
          FROM change_requests cr
@@ -143,16 +143,15 @@ if ($crfId > 0) {
             $standardSlaMatrix = $category ? crfCategorySlaMatrix($category) : [];
         }
 
-        $openProposal = forumOpenProposal($pdo, $crfId);
-        $proposalHistory = forumProposalHistory($pdo, $crfId);
-        $proposalKind = forumProposalKindFor($pdo, $selectedCrf);
+        $openDiscussion = forumOpenDiscussion($pdo, $crfId);
+        $discussionHistory = forumDiscussionHistory($pdo, $crfId);
     }
 }
 
-// Ruang "Perlu dibahas" (ada usulan terbuka) dan yang punya komentar belum dibaca tampil paling atas.
+// Ruang yang menunggu pembahasan Forum dan yang punya komentar belum dibaca tampil paling atas.
 usort($activeCrfs, static function (array $a, array $b) use ($unreadCounts): int {
-    return [(int) $b['has_open_proposal'], (int) !empty($unreadCounts[(int) $b['id']])]
-        <=> [(int) $a['has_open_proposal'], (int) !empty($unreadCounts[(int) $a['id']])];
+    return [(int) $b['has_open_discussion'], (int) !empty($unreadCounts[(int) $b['id']])]
+        <=> [(int) $a['has_open_discussion'], (int) !empty($unreadCounts[(int) $a['id']])];
 });
 $unreadRoomCount = count(array_filter(
     $activeCrfs,
@@ -160,10 +159,10 @@ $unreadRoomCount = count(array_filter(
 ));
 $discussRoomCount = count(array_filter(
     $activeCrfs,
-    static fn (array $room): bool => (int) $room['has_open_proposal'] === 1
+    static fn (array $room): bool => (int) $room['has_open_discussion'] === 1
 ));
 
-// Bawaan: "Perlu dibahas" bila ada, selain itu "Semua".
+// Bawaan: "Menunggu pembahasan" bila ada, selain itu "Semua".
 $filter = $filterParam ?? ($discussRoomCount > 0 ? 'discuss' : 'all');
 if ($filter === 'unread') {
     $activeCrfs = array_values(array_filter(
@@ -173,7 +172,7 @@ if ($filter === 'unread') {
 } elseif ($filter === 'discuss') {
     $activeCrfs = array_values(array_filter(
         $activeCrfs,
-        static fn (array $room): bool => (int) $room['has_open_proposal'] === 1 || (int) $room['id'] === $crfId
+        static fn (array $room): bool => (int) $room['has_open_discussion'] === 1 || (int) $room['id'] === $crfId
     ));
 }
 
@@ -238,8 +237,8 @@ require_once __DIR__ . '/../includes/header.php';
                     </form>
                 </div>
                 <nav class="crf-forum-filter" aria-label="Filter ruang">
-                    <a class="<?= $filter === 'discuss' ? 'active' : '' ?>" href="<?= h($forumUrl(['filter' => 'discuss', 'crf_id' => $crfId])) ?>" title="Ruang dengan usulan urgensi/SLA yang menunggu keputusan">
-                        Perlu dibahas
+                    <a class="<?= $filter === 'discuss' ? 'active' : '' ?>" href="<?= h($forumUrl(['filter' => 'discuss', 'crf_id' => $crfId])) ?>" title="Ruang yang menunggu hasil pembahasan Level Urgensi dan SLA">
+                        Menunggu pembahasan
                         <?php if ($discussRoomCount > 0): ?>
                             <span class="crf-forum-filter-badge is-amber"><?= $discussRoomCount ?></span>
                         <?php endif; ?>
@@ -260,7 +259,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <?php elseif ($filter === 'unread'): ?>
                             Semua komentar sudah dibaca.
                         <?php elseif ($filter === 'discuss'): ?>
-                            Tidak ada usulan urgensi/SLA yang menunggu keputusan.
+                            Tidak ada CRF yang menunggu pembahasan Forum.
                         <?php else: ?>
                             Belum ada CRF yang sedang dalam proses.
                         <?php endif; ?>
@@ -272,8 +271,8 @@ require_once __DIR__ . '/../includes/header.php';
                             $roomId = (int) $room['id'];
                             $roomUnread = (int) ($unreadCounts[$roomId] ?? 0);
                             $roomStatus = crfDisplayStatus($room);
-                            $roomHasOpen = (int) $room['has_open_proposal'] === 1;
-                            $roomOverdue = $roomHasOpen && !empty($room['open_proposal_due_at']) && strtotime($room['open_proposal_due_at']) < time();
+                            $roomHasOpen = (int) $room['has_open_discussion'] === 1;
+                            $roomOverdue = $roomHasOpen && !empty($room['open_discussion_due_at']) && strtotime($room['open_discussion_due_at']) < time();
                             ?>
                             <a class="crf-forum-room <?= $roomId === $crfId ? 'active' : '' ?> <?= $roomUnread > 0 ? 'is-unread' : '' ?> <?= $roomHasOpen ? 'has-proposal' : '' ?>"
                                href="<?= h($forumUrl(['crf_id' => $roomId])) ?>"
@@ -297,9 +296,9 @@ require_once __DIR__ . '/../includes/header.php';
                                     <span class="crf-badge <?= h($roomStatus['class']) ?>"><?= h($roomStatus['label']) ?></span>
                                     <span class="crf-forum-room-stats">
                                         <?php if ($roomHasOpen): ?>
-                                            <span class="crf-forum-room-flag <?= $roomOverdue ? 'is-overdue' : '' ?>" title="<?= $roomOverdue ? 'Usulan melewati batas keputusan' : 'Ada usulan urgensi/SLA yang menunggu keputusan' ?>"><i class="bi bi-flag-fill" aria-hidden="true"></i> Perlu dibahas</span>
-                                        <?php elseif (!empty($room['has_agreement'])): ?>
-                                            <span class="crf-forum-room-agreed" title="Urgensi/SLA sudah disepakati di Forum"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
+                                            <span class="crf-forum-room-flag <?= $roomOverdue ? 'is-overdue' : '' ?>" title="<?= $roomOverdue ? 'Pembahasan melewati target hasil' : 'Menunggu pembahasan Forum' ?>"><i class="bi bi-flag-fill" aria-hidden="true"></i> Pembahasan</span>
+                                        <?php elseif (!empty($room['has_result'])): ?>
+                                            <span class="crf-forum-room-agreed" title="Level/SLA sudah dibahas di Forum"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
                                         <?php endif; ?>
                                         <?php if ((int) $room['comment_count'] > 0): ?>
                                             <span title="Jumlah komentar"><i class="bi bi-chat" aria-hidden="true"></i> <?= (int) $room['comment_count'] ?></span>
@@ -324,7 +323,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <h2>Pilih ruang CRF</h2>
                         <p>Pilih CRF di daftar untuk melihat riwayat pembahasan atau menambahkan tanggapan.</p>
                         <?php if ($discussRoomCount > 0): ?>
-                            <p class="crf-forum-empty-hint is-amber"><strong><?= $discussRoomCount ?></strong> ruang memiliki usulan urgensi/SLA yang menunggu keputusan.</p>
+                            <p class="crf-forum-empty-hint is-amber"><strong><?= $discussRoomCount ?></strong> ruang menunggu pembahasan Level Urgensi dan SLA.</p>
                         <?php endif; ?>
                         <?php if ($unreadRoomCount > 0): ?>
                             <p class="crf-forum-empty-hint"><strong><?= $unreadRoomCount ?></strong> ruang memiliki komentar yang belum Anda baca.</p>
@@ -337,7 +336,6 @@ require_once __DIR__ . '/../includes/header.php';
                         ?: ($selectedCrf['level'] ?? null);
                     $finalUrgency = $selectedCrf['final_urgency_level'] ?: $systemUrgency;
                     $slaStatus = getCrfSlaStatus($selectedCrf);
-                    $isSlaLocked = isForumFinalSlaLocked($selectedCrf);
                     ?>
                     <header class="crf-forum-discussion-header">
                         <a class="crf-forum-back" href="<?= h($forumUrl()) ?>">
@@ -388,9 +386,6 @@ require_once __DIR__ . '/../includes/header.php';
                             <dt>SLA</dt>
                             <dd title="Dihitung pada hari kerja">
                                 <?= h(slaLabel($selectedCrf['sla_value'], $selectedCrf['sla_unit'])) ?>
-                                <?php if ($isSlaLocked): ?>
-                                    <i class="bi bi-lock-fill crf-forum-lock" title="Terkunci sejak disetujui; perpanjangan lewat usulan" aria-label="Terkunci"></i>
-                                <?php endif; ?>
                             </dd>
                         </div>
                         <div>
@@ -418,273 +413,201 @@ require_once __DIR__ . '/../includes/header.php';
                     <?php
                     $fmtNum = static fn ($v): string => $v === null || $v === '' ? '' : rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
                     $matrix = $standardSlaMatrix;
-                    $stdFor = static fn (?string $u): ?array => $u !== null ? ($matrix[$u] ?? null) : null;
-                    $valuesText = static fn (?string $u, $v, ?string $unit, bool $withU = true): string => forumValuesText($u, $v, $unit, $withU);
-                    $isApproved = !empty($selectedCrf['kadep_operasional_approved_at']);
-                    $lastAgreed = null;
-                    foreach ($proposalHistory as $historyItem) {
-                        if ($historyItem['status'] === 'disetujui') {
-                            $lastAgreed = $historyItem;
+                    $lastResult = null;
+                    foreach ($discussionHistory as $historyItem) {
+                        if ($historyItem['status'] === 'selesai') {
+                            $lastResult = $historyItem;
                             break;
                         }
                     }
-                    $proposeOpen = ($_GET['propose'] ?? '') === '1';
-                    $deciderLabel = implode(' / ', array_map('crfRoleLabel', forumDeciderRoles()));
-
-                    // Kolom nilai (urgensi, nilai SLA, satuan). Opsi urgensi membawa SLA standar untuk petunjuk.
-                    $slaFields = static function (bool $withUrgency, ?string $urgency, $value, ?string $unit) use ($matrix, $fmtNum): void {
-                        ?>
-                        <div class="crf-forum-final-sla-fields <?= $withUrgency ? '' : 'no-urgency' ?>">
-                            <?php if ($withUrgency): ?>
-                                <div>
-                                    <label class="form-label">Level Urgensi</label>
-                                    <select class="form-select" name="urgency" required>
-                                        <?php foreach (FORUM_URGENCIES as $option): ?>
-                                            <?php $standard = $matrix[$option] ?? null; ?>
-                                            <option value="<?= h($option) ?>" <?= $urgency === $option ? 'selected' : '' ?>
-                                                <?php if ($standard): ?>
-                                                    data-sla-value="<?= h($fmtNum($standard['value'])) ?>"
-                                                    data-sla-unit="<?= h($standard['unit']) ?>"
-                                                <?php endif; ?>><?= h($option) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                            <?php endif; ?>
-                            <div>
-                                <label class="form-label"><?= $withUrgency ? 'Nilai SLA' : 'SLA baru (total)' ?></label>
-                                <input class="form-control" type="number" name="sla_value" min="0.01" max="99999999.99" step="0.01" value="<?= h($fmtNum($value)) ?>" required>
-                            </div>
-                            <div>
-                                <label class="form-label">Satuan SLA</label>
-                                <select class="form-select" name="sla_unit" required>
-                                    <?php foreach (FORUM_SLA_UNITS as $option): ?>
-                                        <option value="<?= h($option) ?>" <?= $unit === $option ? 'selected' : '' ?>><?= h($option) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-                        <p class="crf-forum-standard-sla" data-standard-hint hidden>
-                            <i class="bi bi-info-circle" aria-hidden="true"></i>
-                            <span></span>
-                            <button type="button" class="btn btn-link btn-sm p-0" data-use-standard>Pakai SLA standar</button>
-                        </p>
-                        <?php
-                    };
+                    $resultRoleLabel = implode(' / ', array_map('crfRoleLabel', forumResultRoles()));
+                    $currentValuesText = forumValuesText($finalUrgency, $selectedCrf['sla_value'], $selectedCrf['sla_unit']);
+                    $slaMissing = !crfHasValidSla($selectedCrf);
                     ?>
 
-                    <section class="crf-forum-proposal" id="forum-proposal" aria-label="Usulan urgensi dan SLA">
-                        <?php if ($openProposal): ?>
+                    <section class="crf-forum-pembahasan" id="forum-pembahasan" aria-label="Pembahasan Level Urgensi dan SLA">
+                        <?php if ($openDiscussion): ?>
                             <?php
-                            $pKind = $openProposal['kind'];
-                            $withUrg = $pKind === 'urgensi_sla';
-                            $overdue = forumProposalIsOverdue($openProposal);
-                            $isAutoProposal = $openProposal['trigger_source'] === 'sistem';
-                            $isProposer = !empty($openProposal['proposed_by']) && (int) $openProposal['proposed_by'] === $userId;
-                            $sysSla = $stdFor($systemUrgency);
-                            $curSla = $selectedCrf['sla_value'] !== null ? ['value' => $selectedCrf['sla_value'], 'unit' => $selectedCrf['sla_unit']] : null;
-                            $defaultUrgency = $openProposal['proposed_urgency'] ?: $finalUrgency;
-                            $defaultValue = $openProposal['proposed_sla_value'] ?? $selectedCrf['sla_value'];
-                            $defaultUnit = $openProposal['proposed_sla_unit'] ?? ($selectedCrf['sla_unit'] ?: 'Hari');
-                            if ($isAutoProposal && $selectedCrf['sla_value'] === null && $defaultUrgency && $stdFor($defaultUrgency)) {
-                                $defaultValue = $stdFor($defaultUrgency)['value'];
-                                $defaultUnit = $stdFor($defaultUrgency)['unit'];
-                            }
+                            $overdue = forumDiscussionIsOverdue($openDiscussion);
+                            $isSystemDiscussion = $openDiscussion['trigger_source'] === 'sistem';
+                            $canCancelDiscussion = ($canOpenDiscussion || $canRecord) && !($isSystemDiscussion && $slaMissing);
                             ?>
-                            <article class="crf-forum-proposal-card is-open <?= $overdue ? 'is-overdue' : '' ?>">
-                                <header class="crf-forum-proposal-head">
-                                    <div class="crf-forum-proposal-title">
-                                        <span class="crf-forum-proposal-icon" aria-hidden="true"><i class="bi bi-flag-fill"></i></span>
+                            <article class="crf-forum-pembahasan-card is-open <?= $overdue ? 'is-overdue' : '' ?>">
+                                <header class="crf-forum-pembahasan-head">
+                                    <div class="crf-forum-pembahasan-title">
+                                        <span class="crf-forum-pembahasan-icon" aria-hidden="true"><i class="bi bi-flag-fill"></i></span>
                                         <div>
-                                            <strong><?= $isAutoProposal ? 'SLA perlu ditetapkan' : 'Usulan ' . h(forumProposalKindLabel($pKind)) ?></strong>
+                                            <strong>Menunggu Pembahasan Forum</strong>
                                             <small>
-                                                <?= $isAutoProposal ? 'Dibuka otomatis oleh sistem' : 'Diajukan oleh ' . h($openProposal['proposed_by_name']) . ' (' . h(forumRoleName($openProposal['proposed_by_role'])) . ')' ?>
-                                                · <?= h(date('d M Y H:i', strtotime($openProposal['created_at']))) ?>
+                                                <?= $isSystemDiscussion
+                                                    ? 'Dibuka otomatis oleh sistem'
+                                                    : 'Diajukan oleh ' . h($openDiscussion['opened_by_name']) . ' (' . h(forumRoleName($openDiscussion['opened_by_role'])) . ')' ?>
+                                                · <?= h(date('d M Y H:i', strtotime($openDiscussion['created_at']))) ?>
                                             </small>
                                         </div>
                                     </div>
-                                    <div class="crf-forum-proposal-meta">
-                                        <span class="crf-forum-tone crf-forum-tone-<?= $overdue ? 'danger' : 'warning' ?>">Menunggu keputusan</span>
-                                        <?php if (!empty($openProposal['due_at'])): ?>
-                                            <small class="crf-forum-due <?= $overdue ? 'is-overdue' : '' ?>">Batas keputusan <?= h(date('d M Y H:i', strtotime($openProposal['due_at']))) ?><?= $overdue ? ' · terlewat' : '' ?></small>
+                                    <div class="crf-forum-pembahasan-meta">
+                                        <span class="crf-forum-tone crf-forum-tone-<?= $overdue ? 'danger' : 'warning' ?>">Menunggu hasil</span>
+                                        <?php if (!empty($openDiscussion['due_at'])): ?>
+                                            <small class="crf-forum-due <?= $overdue ? 'is-overdue' : '' ?>">Target hasil <?= h(date('d M Y H:i', strtotime($openDiscussion['due_at']))) ?><?= $overdue ? ' · terlewat' : '' ?></small>
                                         <?php endif; ?>
                                     </div>
                                 </header>
 
-                                <div class="crf-forum-compare-wrap">
-                                    <table class="crf-forum-compare">
-                                        <thead>
-                                            <tr><th></th><th>Standar sistem</th><th>Berlaku saat ini</th><th>Usulan</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php if ($withUrg): ?>
-                                                <tr>
-                                                    <th>Urgensi</th>
-                                                    <td><?= h($systemUrgency ?? '-') ?></td>
-                                                    <td><?= h($finalUrgency ?? '-') ?></td>
-                                                    <td class="is-proposed"><?= h($openProposal['proposed_urgency'] ?? '-') ?></td>
-                                                </tr>
-                                            <?php endif; ?>
-                                            <tr>
-                                                <th>SLA</th>
-                                                <td><?= h($sysSla ? slaLabel($sysSla['value'], $sysSla['unit']) : '-') ?></td>
-                                                <td>
-                                                    <?php if ($curSla): ?>
-                                                        <?= h(slaLabel($curSla['value'], $curSla['unit'])) ?>
-                                                    <?php elseif ($stdFor($finalUrgency)): ?>
-                                                        <span class="text-muted">Belum diisi · standar <?= h(slaLabel($stdFor($finalUrgency)['value'], $stdFor($finalUrgency)['unit'])) ?></span>
-                                                    <?php else: ?>
-                                                        -
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td class="is-proposed"><?= h($openProposal['proposed_sla_value'] !== null ? slaLabel($openProposal['proposed_sla_value'], $openProposal['proposed_sla_unit']) : '-') ?></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <dl class="crf-forum-current">
+                                    <div>
+                                        <dt>Level Urgensi (sistem)</dt>
+                                        <dd><span class="crf-badge <?= h(levelBadgeClass($finalUrgency)) ?>"><?= h($finalUrgency ?? 'Belum ada') ?></span></dd>
+                                    </div>
+                                    <div>
+                                        <dt>SLA (sistem)</dt>
+                                        <dd><?= $slaMissing ? '<span class="text-danger">Belum tersedia</span>' : h(slaLabel($selectedCrf['sla_value'], $selectedCrf['sla_unit'])) ?></dd>
+                                    </div>
+                                </dl>
 
-                                <p class="crf-forum-proposal-reason"><strong>Alasan:</strong> <?= nl2br(h($openProposal['reason'])) ?></p>
-                                <p class="crf-forum-proposal-hint">
+                                <p class="crf-forum-pembahasan-reason"><strong>Alasan pembahasan:</strong> <?= nl2br(h($openDiscussion['reason'])) ?></p>
+                                <p class="crf-forum-pembahasan-hint">
                                     <i class="bi bi-info-circle" aria-hidden="true"></i>
-                                    Usulan tidak menahan proses CRF. Selama belum diputuskan, nilai yang berlaku tidak berubah.
-                                    <?php if ($selectedCrf['workflow_stage'] === 'kadep_operasional'): ?>
-                                        Usulan ditutup otomatis saat Kepala Departemen Operasional menyetujui.
-                                    <?php endif; ?>
+                                    Berikan pertimbangan lewat kolom komentar di bawah. Level Urgensi dan SLA tidak diubah dari kolom diskusi;
+                                    hanya <?= h($resultRoleLabel) ?> yang mencatat dan menerapkan hasil pembahasan.
+                                    CMO belum dapat meneruskan CRF ke Kepala Departemen Operasional sebelum hasilnya dicatat.
                                 </p>
 
-                                <?php if ($canDecide): ?>
-                                    <form method="post" action="../actions/forum_proposal.php" class="crf-forum-proposal-decide" data-sla-form data-decide-form>
+                                <?php if ($canRecord): ?>
+                                    <form method="post" action="../actions/forum_discussion.php" class="crf-forum-pembahasan-decide" data-result-form data-sla-form>
                                         <?= csrfField() ?>
-                                        <input type="hidden" name="op" value="decide">
+                                        <input type="hidden" name="op" value="result">
                                         <input type="hidden" name="crf_id" value="<?= $crfId ?>">
-                                        <input type="hidden" name="proposal_id" value="<?= (int) $openProposal['id'] ?>">
-                                        <h3>Keputusan <?= h($deciderLabel) ?></h3>
-                                        <p class="crf-forum-final-sla-note">Nilai di bawah terisi dari usulan dan boleh disesuaikan sebelum disetujui.</p>
-                                        <?php $slaFields($withUrg, $defaultUrgency, $defaultValue, $defaultUnit); ?>
-                                        <label class="form-label mt-2" for="forum-decision-note">Catatan keputusan <small class="text-muted">(wajib bila menolak)</small></label>
-                                        <textarea class="form-control" id="forum-decision-note" name="note" rows="2" maxlength="1000" placeholder="Alasan persetujuan atau penolakan..."></textarea>
-                                        <div class="crf-forum-proposal-actions">
-                                            <button type="submit" name="decision" value="approve" class="btn btn-crf-primary"><i class="bi bi-check2-circle"></i> Setujui</button>
-                                            <button type="submit" name="decision" value="reject" class="btn btn-outline-danger" formnovalidate data-reject><i class="bi bi-x-circle"></i> Tolak</button>
+                                        <input type="hidden" name="discussion_id" value="<?= (int) $openDiscussion['id'] ?>">
+                                        <h3>Catat Hasil Pembahasan</h3>
+
+                                        <div class="crf-forum-result-options" role="radiogroup" aria-label="Hasil pembahasan">
+                                            <label class="crf-forum-result-option <?= $slaMissing ? 'is-disabled' : '' ?>">
+                                                <input type="radio" name="outcome" value="tetap" <?= $slaMissing ? 'disabled' : 'checked' ?> required>
+                                                <span>
+                                                    <strong>Tetap</strong>
+                                                    <small>Level Urgensi dan SLA tetap memakai nilai sistem (<?= h($currentValuesText) ?>).</small>
+                                                </span>
+                                            </label>
+                                            <label class="crf-forum-result-option">
+                                                <input type="radio" name="outcome" value="diubah" <?= $slaMissing ? 'checked' : '' ?> required>
+                                                <span>
+                                                    <strong>Diubah</strong>
+                                                    <small>Terapkan Level Urgensi dan SLA hasil kesepakatan Forum.</small>
+                                                </span>
+                                            </label>
+                                        </div>
+
+                                        <div class="crf-forum-result-values" data-result-values>
+                                            <div class="crf-forum-final-sla-fields">
+                                                <div>
+                                                    <label class="form-label" for="result-urgency">Level Urgensi baru</label>
+                                                    <select class="form-select" id="result-urgency" name="urgency">
+                                                        <?php foreach (FORUM_URGENCIES as $option): ?>
+                                                            <?php $standard = $matrix[$option] ?? null; ?>
+                                                            <option value="<?= h($option) ?>" <?= $finalUrgency === $option ? 'selected' : '' ?>
+                                                                <?php if ($standard): ?>
+                                                                    data-sla-value="<?= h($fmtNum($standard['value'])) ?>"
+                                                                    data-sla-unit="<?= h($standard['unit']) ?>"
+                                                                <?php endif; ?>><?= h($option) ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="form-label" for="result-sla-value">Nilai SLA baru</label>
+                                                    <input class="form-control" type="number" id="result-sla-value" name="sla_value" min="0.01" max="99999999.99" step="0.01" value="<?= h($fmtNum($selectedCrf['sla_value'])) ?>">
+                                                </div>
+                                                <div>
+                                                    <label class="form-label" for="result-sla-unit">Satuan SLA</label>
+                                                    <select class="form-select" id="result-sla-unit" name="sla_unit">
+                                                        <?php foreach (FORUM_SLA_UNITS as $option): ?>
+                                                            <option value="<?= h($option) ?>" <?= ($selectedCrf['sla_unit'] ?: 'Hari') === $option ? 'selected' : '' ?>><?= h($option) ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <p class="crf-forum-standard-sla" data-standard-hint hidden>
+                                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                                <span></span>
+                                                <button type="button" class="btn btn-link btn-sm p-0" data-use-standard>Pakai SLA standar</button>
+                                            </p>
+                                        </div>
+
+                                        <label class="form-label mt-2" for="result-note">Alasan / ringkasan kesepakatan <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="result-note" name="note" rows="2" maxlength="1000" required placeholder="Ringkas kesepakatan Forum yang mendasari hasil ini..."></textarea>
+                                        <p class="crf-forum-final-sla-note mt-2">Nilai sebelum dan sesudah, alasan, waktu, dan pelaksana dicatat di riwayat CRF.</p>
+                                        <div class="crf-forum-pembahasan-actions">
+                                            <button type="submit" class="btn btn-crf-primary"><i class="bi bi-check2-circle"></i> Catat Hasil &amp; Terapkan</button>
                                         </div>
                                     </form>
                                 <?php else: ?>
-                                    <p class="crf-forum-proposal-wait"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Menunggu keputusan <?= h($deciderLabel) ?>. Anda dapat menambahkan pertimbangan pada kolom komentar di bawah.</p>
+                                    <p class="crf-forum-pembahasan-wait"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Menunggu <?= h($resultRoleLabel) ?> mencatat hasil pembahasan.</p>
                                 <?php endif; ?>
 
-                                <?php if ($isProposer || $canDecide): ?>
-                                    <form method="post" action="../actions/forum_proposal.php" class="crf-forum-proposal-cancel" data-confirm="Batalkan usulan ini?">
+                                <?php if ($canCancelDiscussion): ?>
+                                    <form method="post" action="../actions/forum_discussion.php" class="crf-forum-pembahasan-cancel" data-confirm="Batalkan pembahasan ini? Level Urgensi dan SLA tetap memakai nilai sistem dan CMO dapat meneruskan CRF.">
                                         <?= csrfField() ?>
                                         <input type="hidden" name="op" value="cancel">
                                         <input type="hidden" name="crf_id" value="<?= $crfId ?>">
-                                        <input type="hidden" name="proposal_id" value="<?= (int) $openProposal['id'] ?>">
-                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0"><i class="bi bi-x-lg"></i> Batalkan usulan</button>
+                                        <input type="hidden" name="discussion_id" value="<?= (int) $openDiscussion['id'] ?>">
+                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0"><i class="bi bi-x-lg"></i> Batalkan pembahasan</button>
                                     </form>
                                 <?php endif; ?>
                             </article>
                         <?php else: ?>
-                            <div class="crf-forum-proposal-bar">
-                                <?php if ($lastAgreed): ?>
+                            <div class="crf-forum-pembahasan-bar">
+                                <?php if ($lastResult): ?>
+                                    <?php $lastMeta = forumOutcomeMeta($lastResult['outcome']); ?>
                                     <i class="bi bi-check2-circle text-success" aria-hidden="true"></i>
                                     <span>
-                                        <strong>Kesepakatan terakhir:</strong>
-                                        <?= h($valuesText($lastAgreed['final_urgency'], $lastAgreed['final_sla_value'], $lastAgreed['final_sla_unit'], $lastAgreed['kind'] === 'urgensi_sla')) ?>
-                                        · <?= h($lastAgreed['decided_by_name'] ?? '-') ?>
-                                        · <?= h(date('d M Y H:i', strtotime($lastAgreed['decided_at'] ?? $lastAgreed['created_at']))) ?>
+                                        <strong>Hasil Forum terakhir:</strong>
+                                        <span class="crf-forum-tone crf-forum-tone-<?= h($lastMeta['class']) ?>"><?= h($lastMeta['label']) ?></span>
+                                        <?= h(forumValuesText($lastResult['final_urgency'], $lastResult['final_sla_value'], $lastResult['final_sla_unit'])) ?>
+                                        · <?= h($lastResult['decided_by_name'] ?? '-') ?>
+                                        · <?= h(date('d M Y H:i', strtotime($lastResult['decided_at'] ?? $lastResult['created_at']))) ?>
                                     </span>
-                                <?php elseif (!empty($selectedCrf['final_urgency_level'])): ?>
-                                    <i class="bi bi-check2-circle text-success" aria-hidden="true"></i>
-                                    <span><strong>Urgensi final:</strong> <?= h($selectedCrf['final_urgency_level']) ?> · SLA <?= h(slaLabel($selectedCrf['sla_value'], $selectedCrf['sla_unit'])) ?></span>
                                 <?php else: ?>
                                     <i class="bi bi-info-circle" aria-hidden="true"></i>
-                                    <span>Belum ada pembahasan urgensi/SLA. Nilai yang berlaku mengikuti standar sistem.</span>
-                                <?php endif; ?>
-                            </div>
-
-                            <?php if ($proposalKind !== null && $canDecide): ?>
-                                <details class="crf-forum-propose" <?= $proposeOpen ? 'open' : '' ?>>
-                                    <summary><i class="bi bi-sliders" aria-hidden="true"></i> <?= $proposalKind === 'urgensi_sla' ? 'Tetapkan Urgensi &amp; SLA' : 'Perpanjang SLA' ?></summary>
-                                    <form method="post" action="../actions/forum_proposal.php" data-sla-form>
-                                        <?= csrfField() ?>
-                                        <input type="hidden" name="op" value="direct">
-                                        <input type="hidden" name="crf_id" value="<?= $crfId ?>">
-                                        <p class="crf-forum-final-sla-note">
-                                            Anda dapat menetapkan nilai langsung. Tetap tercatat di riwayat usulan dan peserta diskusi diberi tahu.
-                                            <?= $proposalKind === 'urgensi_sla'
-                                                ? 'Nilai terkunci setelah Kepala Departemen Operasional menyetujui.'
-                                                : 'SLA baru adalah total sejak SLA dimulai dan harus lebih lama dari SLA saat ini; batas SLA dihitung ulang.' ?>
-                                        </p>
-                                        <?php $slaFields($proposalKind === 'urgensi_sla', $finalUrgency, $selectedCrf['sla_value'], $selectedCrf['sla_unit'] ?: 'Hari'); ?>
-                                        <label class="form-label mt-2">Alasan <span class="text-danger">*</span></label>
-                                        <textarea class="form-control" name="reason" rows="2" maxlength="1000" required placeholder="Dasar penetapan nilai..."></textarea>
-                                        <div class="crf-forum-proposal-actions">
-                                            <button type="submit" class="btn btn-crf-primary"><i class="bi bi-check2-circle"></i> Simpan</button>
-                                        </div>
-                                    </form>
-                                </details>
-                            <?php elseif ($proposalKind !== null): ?>
-                                <details class="crf-forum-propose" <?= $proposeOpen ? 'open' : '' ?>>
-                                    <summary><i class="bi bi-flag" aria-hidden="true"></i> <?= $proposalKind === 'urgensi_sla' ? 'Ajukan Pembahasan Urgensi &amp; SLA' : 'Ajukan Perpanjangan SLA' ?></summary>
-                                    <form method="post" action="../actions/forum_proposal.php" data-sla-form>
-                                        <?= csrfField() ?>
-                                        <input type="hidden" name="op" value="create">
-                                        <input type="hidden" name="crf_id" value="<?= $crfId ?>">
-                                        <p class="crf-forum-final-sla-note">
-                                            Usulan dikirim ke <?= h($deciderLabel) ?> untuk diputuskan paling lambat
-                                            <?= (int) FORUM_PROPOSAL_DECISION_DAYS ?> hari kerja. Usulan tidak menahan proses CRF.
-                                            <?= $proposalKind === 'perpanjangan_sla' ? 'SLA baru adalah total sejak SLA dimulai dan harus lebih lama dari SLA saat ini.' : '' ?>
-                                        </p>
-                                        <?php $slaFields($proposalKind === 'urgensi_sla', $finalUrgency, $selectedCrf['sla_value'], $selectedCrf['sla_unit'] ?: 'Hari'); ?>
-                                        <label class="form-label mt-2">Alasan <span class="text-danger">*</span></label>
-                                        <textarea class="form-control" name="reason" rows="3" maxlength="1000" required placeholder="Jelaskan mengapa nilai perlu diubah..."></textarea>
-                                        <div class="crf-forum-proposal-actions">
-                                            <button type="submit" class="btn btn-crf-primary"><i class="bi bi-send"></i> Kirim Usulan</button>
-                                        </div>
-                                    </form>
-                                </details>
-                            <?php else: ?>
-                                <p class="crf-forum-locked">
-                                    <i class="bi bi-lock" aria-hidden="true"></i>
                                     <span>
-                                        <?php if ($isApproved): ?>
-                                            Urgensi dan SLA terkunci sejak disetujui Kepala Departemen Operasional
-                                            (<?= h(date('d M Y H:i', strtotime($selectedCrf['kadep_operasional_approved_at']))) ?>).
-                                            Perpanjangan SLA hanya dapat diajukan PIC CRF pemegang CRF atau Admin selama CRF dikerjakan.
-                                        <?php else: ?>
-                                            Usulan urgensi/SLA dapat diajukan oleh CMO, Admin, atau PIC CRF kategori ini sebelum CRF disetujui.
-                                            Anda tetap dapat berdiskusi pada kolom komentar.
+                                        Belum ada pembahasan. Level Urgensi dan SLA memakai nilai sistem (<?= h($currentValuesText) ?>).
+                                        <?php if ($selectedCrf['workflow_stage'] === 'CMO_FILTER'): ?>
+                                            CMO dapat mengajukan pembahasan dari
+                                            <?php if ($canOpenDiscussion): ?>
+                                                <a href="../cmo/detail.php?id=<?= $crfId ?>">halaman verifikasi CMO</a>.
+                                            <?php else: ?>
+                                                halaman verifikasi CMO.
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                     </span>
-                                </p>
-                            <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
                         <?php endif; ?>
 
-                        <?php if ($proposalHistory): ?>
-                            <details class="crf-forum-proposal-history">
-                                <summary>Riwayat usulan <span class="crf-forum-detail-count"><?= count($proposalHistory) ?></span></summary>
+                        <?php if ($discussionHistory): ?>
+                            <details class="crf-forum-pembahasan-history">
+                                <summary>Riwayat pembahasan <span class="crf-forum-detail-count"><?= count($discussionHistory) ?></span></summary>
                                 <ul>
-                                    <?php foreach ($proposalHistory as $item): ?>
-                                        <?php
-                                        $hMeta = forumProposalStatusMeta($item['status']);
-                                        $hWithUrg = $item['kind'] === 'urgensi_sla';
-                                        ?>
+                                    <?php foreach ($discussionHistory as $item): ?>
+                                        <?php $hMeta = forumOutcomeMeta($item['status'] === 'selesai' ? $item['outcome'] : null); ?>
                                         <li>
                                             <div class="crf-forum-history-top">
                                                 <span class="crf-forum-tone crf-forum-tone-<?= h($hMeta['class']) ?>"><?= h($hMeta['label']) ?></span>
-                                                <strong><?= h(forumProposalKindLabel($item['kind'])) ?></strong>
-                                                <?php if ($item['trigger_source'] === 'langsung'): ?><small>(ditetapkan langsung)</small><?php endif; ?>
+                                                <strong>Pembahasan Level Urgensi &amp; SLA</strong>
                                                 <time><?= h(date('d M Y H:i', strtotime($item['decided_at'] ?? $item['created_at']))) ?></time>
                                             </div>
                                             <div class="crf-forum-history-values">
-                                                <?php if ($item['proposed_sla_value'] !== null): ?>
-                                                    Usulan: <?= h($valuesText($item['proposed_urgency'], $item['proposed_sla_value'], $item['proposed_sla_unit'], $hWithUrg)) ?>
-                                                <?php endif; ?>
-                                                <?php if ($item['status'] === 'disetujui' && $item['final_sla_value'] !== null): ?>
-                                                    · <strong>Ditetapkan: <?= h($valuesText($item['final_urgency'], $item['final_sla_value'], $item['final_sla_unit'], $hWithUrg)) ?></strong>
+                                                <?php if ($item['status'] === 'selesai'): ?>
+                                                    <?php if ($item['outcome'] === 'diubah'): ?>
+                                                        Sebelum: <?= h(forumValuesText($item['before_urgency'], $item['before_sla_value'], $item['before_sla_unit'])) ?>
+                                                        → <strong>Sesudah: <?= h(forumValuesText($item['final_urgency'], $item['final_sla_value'], $item['final_sla_unit'])) ?></strong>
+                                                    <?php else: ?>
+                                                        Tetap: <strong><?= h(forumValuesText($item['final_urgency'], $item['final_sla_value'], $item['final_sla_unit'])) ?></strong>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
                                             </div>
                                             <small>
-                                                <?= h($item['proposed_by_name']) ?>
-                                                <?php if (!empty($item['decided_by_name'])): ?> → <?= h($item['decided_by_name']) ?><?php endif; ?>
+                                                Diajukan <?= h($item['opened_by_name']) ?>: <?= h(mb_strimwidth((string) $item['reason'], 0, 140, '...')) ?>
+                                                <?php if (!empty($item['decided_by_name'])): ?><br>Dicatat <?= h($item['decided_by_name']) ?><?php endif; ?>
                                                 <?php if (!empty($item['decision_note'])): ?> · <?= h($item['decision_note']) ?><?php endif; ?>
                                             </small>
                                         </li>
@@ -710,7 +633,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 $itemId = (int) $item['id'];
                                 $itemDate = date('Y-m-d', strtotime($item['created_at']));
                                 $isOwn = (int) $item['user_id'] === $userId;
-                                $isSystem = !empty($item['is_system']) || isForumSystemComment((string) $item['comment']);
+                                $isSystem = !empty($item['is_system']);
                                 $isNew = !$isOwn && $itemId > $lastReadCommentId;
                                 ?>
                                 <?php if ($itemDate !== $previousDate): ?>

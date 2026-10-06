@@ -15,6 +15,7 @@
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/helpdesk.php';
+require_once __DIR__ . '/../includes/forum_discussions.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../user/form_crf.php');
@@ -452,6 +453,9 @@ try {
         $isResubmission ? 'Perlu Revisi' : 'Draft',
         'Menunggu Verifikasi'
     );
+
+    // SLA default terisi sejak submit, jadi CMO dan Forum langsung melihat nilai yang sama.
+    forumApplyDefaultSla($pdo, $crfId, $user);
 
     /* ------------------------------------------------------------------
      * 6B. Ticket Helpdesk ikut diperbarui + notifikasi CMO & Handler

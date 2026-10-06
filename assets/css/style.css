@@ -1753,6 +1753,11 @@ textarea.form-control {
     color: #6D28D9;
 }
 
+.badge-status-pembahasan {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
 /* ---------- Badges: Workflow Stage ---------- */
 .badge-stage-pemohon { background-color: #E0F2FE; color: #0369A1; }
 .badge-stage-cmo { background-color: #DBEAFE; color: #1D4ED8; }
@@ -4529,7 +4534,7 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   color: #b91c1c;
 }
 
-/* Usulan Urgensi & SLA */
+/* Pembahasan Level Urgensi & SLA */
 .crf-forum-filter {
   flex-wrap: wrap;
   gap: 0.3rem;
@@ -4576,12 +4581,12 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   color: #92400e;
 }
 
-.crf-forum-proposal {
+.crf-forum-pembahasan {
   border-bottom: 1px solid #e2e8f0;
   background: #fff;
 }
 
-.crf-forum-proposal-bar {
+.crf-forum-pembahasan-bar {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
@@ -4591,16 +4596,16 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   font-size: 0.78rem;
 }
 
-.crf-forum-proposal-bar i {
+.crf-forum-pembahasan-bar i {
   margin-top: 0.1rem;
 }
 
-.crf-forum-proposal .crf-forum-locked {
+.crf-forum-pembahasan .crf-forum-locked {
   margin: 0;
   border-bottom: 0;
 }
 
-.crf-forum-proposal-card {
+.crf-forum-pembahasan-card {
   margin: 0.9rem 1.1rem;
   padding: 0.9rem 1rem;
   border: 1px solid #fcd34d;
@@ -4609,12 +4614,12 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   background: #fffdf5;
 }
 
-.crf-forum-proposal-card.is-overdue {
+.crf-forum-pembahasan-card.is-overdue {
   border-color: #fca5a5;
   background: #fff8f8;
 }
 
-.crf-forum-proposal-head {
+.crf-forum-pembahasan-head {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -4622,25 +4627,25 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   gap: 0.5rem 1rem;
 }
 
-.crf-forum-proposal-title {
+.crf-forum-pembahasan-title {
   display: flex;
   align-items: flex-start;
   gap: 0.6rem;
   min-width: 0;
 }
 
-.crf-forum-proposal-title strong {
+.crf-forum-pembahasan-title strong {
   display: block;
   color: #1e293b;
   font-size: 0.92rem;
 }
 
-.crf-forum-proposal-title small {
+.crf-forum-pembahasan-title small {
   color: #64748b;
   font-size: 0.72rem;
 }
 
-.crf-forum-proposal-icon {
+.crf-forum-pembahasan-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4652,12 +4657,12 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   color: #b45309;
 }
 
-.crf-forum-proposal-card.is-overdue .crf-forum-proposal-icon {
+.crf-forum-pembahasan-card.is-overdue .crf-forum-pembahasan-icon {
   background: #fee2e2;
   color: #b91c1c;
 }
 
-.crf-forum-proposal-meta {
+.crf-forum-pembahasan-meta {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -4674,62 +4679,102 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   font-weight: 700;
 }
 
-.crf-forum-compare-wrap {
-  margin-top: 0.75rem;
-  overflow-x: auto;
+.crf-forum-current {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
 }
 
-.crf-forum-compare {
-  width: 100%;
-  border-collapse: collapse;
+.crf-forum-current > div {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
   background: #fff;
-  font-size: 0.78rem;
 }
 
-.crf-forum-compare th,
-.crf-forum-compare td {
-  padding: 0.45rem 0.7rem;
-  border: 1px solid #e2e8f0;
-  text-align: left;
-}
-
-.crf-forum-compare thead th {
-  background: #f8fafc;
-  color: #64748b;
-  font-size: 0.68rem;
+.crf-forum-current dt {
+  color: #92400e;
+  font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
-.crf-forum-compare tbody th {
-  width: 20%;
-  background: #f8fafc;
-  color: #475569;
-  font-weight: 600;
-}
-
-.crf-forum-compare td.is-proposed {
-  background: #fef9c3;
-  color: #713f12;
+.crf-forum-current dd {
+  margin: 0.15rem 0 0;
+  color: #1e293b;
+  font-size: 0.85rem;
   font-weight: 700;
 }
 
-.crf-forum-proposal-reason {
+.crf-forum-result-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.5rem;
+  margin: 0.6rem 0;
+}
+
+.crf-forum-result-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.crf-forum-result-option:has(input:checked) {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.crf-forum-result-option.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.crf-forum-result-option input {
+  margin-top: 0.2rem;
+}
+
+.crf-forum-result-option strong {
+  display: block;
+  color: #1e293b;
+  font-size: 0.85rem;
+}
+
+.crf-forum-result-option small {
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.crf-forum-result-values {
+  margin-top: 0.4rem;
+}
+
+.crf-forum-result-values[hidden] {
+  display: none;
+}
+
+.crf-forum-pembahasan-reason {
   margin: 0.7rem 0 0.3rem;
   color: #334155;
   font-size: 0.8rem;
   overflow-wrap: anywhere;
 }
 
-.crf-forum-proposal-hint,
-.crf-forum-proposal-wait {
+.crf-forum-pembahasan-hint,
+.crf-forum-pembahasan-wait {
   margin: 0.3rem 0 0;
   color: #64748b;
   font-size: 0.72rem;
 }
 
-.crf-forum-proposal-wait {
+.crf-forum-pembahasan-wait {
   margin-top: 0.7rem;
   padding: 0.5rem 0.7rem;
   border-radius: 8px;
@@ -4738,77 +4783,49 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   color: #92400e;
 }
 
-.crf-forum-proposal-decide {
+.crf-forum-pembahasan-decide {
   margin-top: 0.8rem;
   padding-top: 0.8rem;
   border-top: 1px dashed #fcd34d;
 }
 
-.crf-forum-proposal-decide h3 {
+.crf-forum-pembahasan-decide h3 {
   margin: 0 0 0.2rem;
   color: #1e293b;
   font-size: 0.85rem;
   font-weight: 700;
 }
 
-.crf-forum-proposal-actions {
+.crf-forum-pembahasan-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
 
-.crf-forum-proposal-cancel {
+.crf-forum-pembahasan-cancel {
   margin-top: 0.6rem;
 }
 
-.crf-forum-final-sla-fields.no-urgency {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.crf-forum-propose {
-  border-top: 1px solid #eef2f7;
-}
-
-.crf-forum-propose > summary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.7rem 1.1rem;
-  color: #1d4ed8;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.crf-forum-propose[open] > summary {
-  border-bottom: 1px solid #eef2f7;
-}
-
-.crf-forum-propose > form {
-  padding: 0.9rem 1.1rem 1rem;
-  background: #f8fbff;
-}
-
-.crf-forum-proposal-history {
+.crf-forum-pembahasan-history {
   border-top: 1px solid #eef2f7;
   font-size: 0.78rem;
 }
 
-.crf-forum-proposal-history > summary {
+.crf-forum-pembahasan-history > summary {
   padding: 0.55rem 1.1rem;
   color: #64748b;
   font-weight: 600;
   cursor: pointer;
 }
 
-.crf-forum-proposal-history ul {
+.crf-forum-pembahasan-history ul {
   margin: 0;
   padding: 0 1.1rem 0.8rem;
   list-style: none;
 }
 
-.crf-forum-proposal-history li {
+.crf-forum-pembahasan-history li {
   padding: 0.55rem 0;
   border-top: 1px solid #f1f5f9;
 }
@@ -4827,20 +4844,16 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
 }
 
 @media (max-width: 575px) {
-  .crf-forum-proposal-meta {
+  .crf-forum-pembahasan-meta {
     align-items: flex-start;
   }
 
-  .crf-forum-proposal-card {
+  .crf-forum-pembahasan-card {
     margin: 0.7rem 0.6rem;
     padding: 0.8rem;
   }
 
-  .crf-forum-final-sla-fields.no-urgency {
-    grid-template-columns: 1fr;
-  }
-
-  .crf-forum-proposal-actions .btn {
+    .crf-forum-pembahasan-actions .btn {
     flex: 1 1 100%;
   }
 }
@@ -4850,7 +4863,7 @@ table.crf-table.crf-helpdesk-table tbody td[data-label="Level Urgensi"] .crf-bad
   color: #334155;
 }
 
-.crf-forum-proposal-history small {
+.crf-forum-pembahasan-history small {
   color: #64748b;
 }
 
@@ -6074,7 +6087,7 @@ body .crf-app-shell .pengajuan-stat-cancelled { border-left-color: #64748b; }
 /* Warna aksen kartu status CRF mengikuti arti status (Dashboard Admin) */
 body .crf-app-shell .crf-stat-grid .crf-stat-tone-draft { border-left-color: #94a3b8; }
 body .crf-app-shell .crf-stat-grid .crf-stat-tone-review { border-left-color: #7c3aed; }
-body .crf-app-shell .crf-stat-grid .crf-stat-tone-antrean { border-left-color: #d97706; }
+body .crf-app-shell .crf-stat-grid .crf-stat-tone-pembahasan { border-left-color: #d97706; }
 body .crf-app-shell .crf-stat-grid .crf-stat-tone-approval { border-left-color: #0891b2; }
 body .crf-app-shell .crf-stat-grid .crf-stat-tone-disetujui { border-left-color: #2563eb; }
 body .crf-app-shell .crf-stat-grid .crf-stat-tone-revisi { border-left-color: #dc2626; }

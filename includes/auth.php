@@ -172,7 +172,7 @@ function canHandleCrf(PDO $pdo, array $crf): bool
 
 /**
  * PIC CRF yang memegang CRF (akun demo selalu boleh). Pemegang
- * ditetapkan otomatis saat PIC CRF menekan "Mulai Kerjakan".
+ * tercatat saat PIC CRF menyelesaikan eksekusi.
  */
 function isAssignedCrfHandler(array $crf): bool
 {

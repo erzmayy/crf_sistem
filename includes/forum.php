@@ -12,25 +12,22 @@ function requireForumAccess(): void
     requireCrfRole(forumRoles());
 }
 
-function forumDeciderRoles(): array
+/**
+ * Peran yang mencatat hasil pembahasan Forum dan menerapkannya ke data CRF.
+ * Ubah di sini untuk mengganti penentu (mis. ['cmo'] atau ['admin', 'cmo']).
+ */
+function forumResultRoles(): array
 {
     return ['admin'];
 }
 
 /**
- * Penentu usulan Urgensi & SLA di Forum. Sengaja memakai getCrfRole() (bukan
- * isAdmin()): akun demo dan hak Admin tambahan pada role lain tidak termasuk.
- * Ubah forumDeciderRoles() untuk mengganti penentu (mis. ['cmo'] atau ['admin', 'cmo']).
+ * Sengaja memakai getCrfRole() (bukan isAdmin()): akun demo dan hak Admin
+ * tambahan pada role lain tidak termasuk.
  */
-function canDecideForumProposal(): bool
+function canRecordForumResult(): bool
 {
-    return in_array(getCrfRole(), forumDeciderRoles(), true);
-}
-
-/** Nama lama, dipertahankan agar pemanggil lain tetap bekerja. */
-function canManageForumFinalSla(): bool
-{
-    return canDecideForumProposal();
+    return in_array(getCrfRole(), forumResultRoles(), true);
 }
 
 function forumActiveCrfCondition(string $alias = 'cr'): string
@@ -157,40 +154,24 @@ function forumProcessLink(PDO $pdo, array $crf): ?array
 }
 
 /**
- * SLA final Forum dikunci setelah Kadep Operasional menyetujui (tahap eksekusi),
- * sama seperti aturan SLA di sisi Handler.
- */
-function isForumFinalSlaLocked(array $crf): bool
-{
-    return !empty($crf['kadep_operasional_approved_at']);
-}
-
-/**
- * Komentar otomatis dari penyimpanan kesepakatan urgensi & SLA.
- */
-function forumSystemCommentPrefix(): string
-{
-    return 'Kesepakatan Forum diperbarui oleh ';
-}
-
-function isForumSystemComment(string $comment): bool
-{
-    return str_starts_with($comment, forumSystemCommentPrefix());
-}
-
-/**
- * Peserta ruang Forum: semua yang pernah berkomentar ditambah Handler yang memegang CRF.
+ * Peserta ruang Forum: semua yang pernah berkomentar ditambah PIC CRF
+ * (pemegang CRF, atau seluruh PIC CRF kategori bila belum ada pemegang).
  *
  * @return int[]
  */
-function forumParticipantIds(PDO $pdo, int $crfId, ?int $assignedHandlerId = null): array
+function forumParticipantIds(PDO $pdo, int $crfId): array
 {
     $stmt = $pdo->prepare('SELECT DISTINCT user_id FROM forum_comments WHERE change_request_id = :crf_id');
     $stmt->execute(['crf_id' => $crfId]);
     $ids = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
 
-    if ($assignedHandlerId) {
-        $ids[] = $assignedHandlerId;
+    $crf = $pdo->prepare('SELECT assigned_handler_id, crf_category_id FROM change_requests WHERE id = :id');
+    $crf->execute(['id' => $crfId]);
+    $row = $crf->fetch();
+    if ($row && !empty($row['assigned_handler_id'])) {
+        $ids[] = (int) $row['assigned_handler_id'];
+    } elseif ($row && !empty($row['crf_category_id'])) {
+        $ids = array_merge($ids, crfCategoryHandlerIds($pdo, (int) $row['crf_category_id']));
     }
 
     return array_values(array_unique($ids));

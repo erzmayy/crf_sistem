@@ -88,8 +88,8 @@ if ($canCrf) {
     $crfCards = $pdo->query("
         SELECT c.id, c.name, c.description, c.is_active, c.sla_value, c.sla_unit,
             COALESCE(SUM(cr.status <> 'Draft'), 0) AS masuk,
-            COALESCE(SUM(CASE WHEN {$conditions['review']['sql']} THEN 1 ELSE 0 END), 0) AS review,
-            COALESCE(SUM(CASE WHEN ({$conditions['antrean']['sql']}) OR ({$conditions['disetujui']['sql']}) THEN 1 ELSE 0 END), 0) AS diproses,
+            COALESCE(SUM(CASE WHEN ({$conditions['review']['sql']}) OR ({$conditions['pembahasan']['sql']}) THEN 1 ELSE 0 END), 0) AS review,
+            COALESCE(SUM(CASE WHEN {$conditions['disetujui']['sql']} THEN 1 ELSE 0 END), 0) AS diproses,
             COALESCE(SUM(CASE WHEN {$conditions['approval']['sql']} THEN 1 ELSE 0 END), 0) AS approval,
             COALESCE(SUM(CASE WHEN {$conditions['selesai']['sql']} THEN 1 ELSE 0 END), 0) AS selesai,
             COALESCE(SUM(cr.sla_result = 'Melebihi SLA'), 0) AS lewat_sla,

@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/helpdesk.php';
-require_once __DIR__ . '/../includes/forum_proposals.php';
+require_once __DIR__ . '/../includes/forum_discussions.php';
 requireCrfRole(['cmo']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -26,7 +26,7 @@ if ($id <= 0) {
 $stmt = $pdo->prepare('
     SELECT id, user_id, request_number, crf_category_id, assigned_handler_id,
            status, workflow_stage, kadep_operasional_approved_at, automation_completed_at,
-           level, impact_category, final_urgency_level, sla_value, sla_unit
+           level, impact_category, final_urgency_level, sla_value, sla_unit, forum_discussion_open
     FROM change_requests
     WHERE id = :id
     LIMIT 1
@@ -42,6 +42,8 @@ if (!$crf) {
 
 $allowed = [
     'to_approval' => 'CMO_FILTER',
+    'request_discussion' => 'CMO_FILTER',
+    'cancel_discussion' => 'CMO_FILTER',
     'revision' => 'CMO_FILTER',
     'cancel' => ['CMO_FILTER','CMO_FINAL'],
     'complete' => 'CMO_FINAL',
@@ -55,7 +57,7 @@ if ($expected === null || (is_array($expected) ? !in_array($crf['workflow_stage'
     exit;
 }
 
-if (in_array($action, ['revision','cancel'], true) && $tanggapan === '') {
+if (in_array($action, ['revision','cancel','request_discussion'], true) && $tanggapan === '') {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Tanggapan / Tindak Lanjut wajib diisi untuk aksi ini.'];
     header('Location: ../cmo/detail.php?id=' . $id);
     exit;
@@ -112,6 +114,80 @@ if ($action === 'remind_pir') {
     exit;
 }
 
+/*
+ * Screening CMO: "Ajukan Pembahasan Forum" / batalkan pembahasan.
+ * Selama pembahasan terbuka, CRF tidak dapat diteruskan ke Kepala Departemen.
+ */
+if (in_array($action, ['request_discussion', 'cancel_discussion'], true)) {
+    try {
+        if ($action === 'request_discussion') {
+            forumRequestDiscussion($pdo, $id, $user, $tanggapan);
+            $_SESSION['flash'] = [
+                'type' => 'success',
+                'message' => 'Pembahasan Forum diajukan. CRF menunggu hasil pembahasan sebelum dapat diteruskan ke Kepala Departemen Operasional.',
+            ];
+        } else {
+            $openDiscussion = forumOpenDiscussion($pdo, $id);
+            if (!$openDiscussion) {
+                throw new DomainException('Tidak ada pembahasan Forum yang sedang terbuka.');
+            }
+            forumCancelDiscussion($pdo, (int) $openDiscussion['id'], $user);
+            $_SESSION['flash'] = [
+                'type' => 'success',
+                'message' => 'Pembahasan Forum dibatalkan. Level Urgensi dan SLA tetap memakai nilai sistem.',
+            ];
+        }
+        dispatchPendingNotificationEmails($pdo);
+    } catch (DomainException $e) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getMessage()];
+    } catch (Throwable $e) {
+        error_log('cmo_action ' . $action . ' error: ' . $e->getMessage());
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Terjadi kesalahan saat memproses pembahasan Forum.'];
+    }
+
+    header('Location: ../cmo/detail.php?id=' . $id);
+    exit;
+}
+
+if ($action === 'to_approval') {
+    if (!empty($crf['forum_discussion_open'])) {
+        $_SESSION['flash'] = [
+            'type' => 'warning',
+            'message' => 'CRF ini menunggu pembahasan Forum. Teruskan ke Kepala Departemen setelah hasil pembahasan dicatat Admin.',
+        ];
+        header('Location: ../cmo/detail.php?id=' . $id);
+        exit;
+    }
+
+    if (!crfHasValidSla($crf)) {
+        // SLA default belum ada (mis. matriks kategori baru diisi): coba isi, atau buka pembahasan Forum otomatis.
+        try {
+            $pdo->beginTransaction();
+            forumApplyDefaultSla($pdo, $id, $user);
+            $pdo->commit();
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log('cmo_action default SLA error: ' . $e->getMessage());
+        }
+
+        $freshStmt = $pdo->prepare('SELECT sla_value, sla_unit, forum_discussion_open FROM change_requests WHERE id = :id');
+        $freshStmt->execute(['id' => $id]);
+        $fresh = $freshStmt->fetch() ?: [];
+        if (!crfHasValidSla($fresh)) {
+            dispatchPendingNotificationEmails($pdo);
+            $_SESSION['flash'] = [
+                'type' => 'warning',
+                'message' => 'SLA CRF ini belum tersedia karena SLA standar kategori belum diatur. Pembahasan Forum dibuka otomatis; Admin akan menetapkan SLA sebelum CRF dapat diteruskan.',
+            ];
+            header('Location: ../cmo/detail.php?id=' . $id);
+            exit;
+        }
+        $crf = array_merge($crf, $fresh);
+    }
+}
+
 try {
     $pdo->beginTransaction();
     $now = date('Y-m-d H:i:s');
@@ -121,6 +197,7 @@ try {
     $crfNumber = (string) $crf['request_number'];
 
     if ($action === 'to_approval') {
+        // SLA belum berjalan: dimulai saat Kepala Departemen Operasional menyetujui.
         $stmt = $pdo->prepare("
             UPDATE change_requests
             SET
@@ -131,6 +208,7 @@ try {
                 sla_due_at = NULL
             WHERE id = :id
             AND workflow_stage = 'CMO_FILTER'
+            AND forum_discussion_open = 0
         ");
 
         $stmt->execute([
@@ -146,47 +224,6 @@ try {
             $oldDisplayStatus,
             'Menunggu Persetujuan'
         );
-
-        /*
-         * Level Urgensi & SLA otomatis dari matriks Kategori x Urgensi.
-         * PIC CRF tidak lagi menentukan SLA; perubahan hanya oleh
-         * Admin di Forum. SLA final yang sudah disepakati di Forum tidak ditimpa.
-         */
-        $urgency = crfEffectiveUrgency($crf);
-        $standardSla = empty($crf['final_urgency_level'])
-            ? crfStandardSla($pdo, (int) ($crf['crf_category_id'] ?? 0), $urgency)
-            : null;
-        if (in_array($urgency, ['Tinggi', 'Normal', 'Rendah'], true)) {
-            $pdo->prepare('UPDATE change_requests SET level = :level WHERE id = :id')
-                ->execute(['level' => $urgency, 'id' => $id]);
-        }
-        if ($standardSla !== null) {
-            $pdo->prepare('
-                UPDATE change_requests
-                SET sla_value = :sla_value, sla_unit = :sla_unit
-                WHERE id = :id
-            ')->execute([
-                'sla_value' => $standardSla['value'],
-                'sla_unit' => $standardSla['unit'],
-                'id' => $id,
-            ]);
-            logCrfActivity(
-                $pdo,
-                $id,
-                'SLA Otomatis',
-                'SLA standar kategori untuk urgensi ' . $urgency . ': ' . slaLabel($standardSla['value'], $standardSla['unit']) . ' (hari kerja).',
-                'Sistem'
-            );
-        } elseif ($crf['sla_value'] === null) {
-            // Kategori belum punya matriks SLA: buka pembahasan otomatis di Forum agar
-            // penentu menetapkan Level Urgensi & SLA (Kepala Departemen belum bisa menyetujui tanpa SLA).
-            forumRaiseSystemProposal(
-                $pdo,
-                array_merge($crf, ['workflow_stage' => 'kadep_operasional']),
-                $user,
-                'SLA standar kategori belum diatur sehingga CRF belum memiliki SLA.'
-            );
-        }
 
         notifyUsers(
             $pdo,
@@ -210,7 +247,7 @@ try {
     } elseif ($action === 'cancel') {
         $stmt = $pdo->prepare("UPDATE change_requests SET status = 'Cancel', workflow_stage = 'SELESAI', tanggapan_tindak_lanjut = :tanggapan, cancelled_at = :now, solved_at = NULL WHERE id = :id");
         $stmt->execute(['tanggapan' => $tanggapan, 'now' => $now, 'id' => $id]);
-        forumCloseOpenProposals($pdo, $id, 'dibatalkan', 'CRF dibatalkan oleh CMO.');
+        forumCloseOpenDiscussions($pdo, $id, 'CRF dibatalkan oleh CMO.');
         logCrfActivity($pdo, $id, 'Cancel', $tanggapan, $actor, $oldDisplayStatus, 'Dibatalkan');
         notifyUsers($pdo, [(int) $crf['user_id'], (int) $crf['assigned_handler_id']], 'CRF dibatalkan: ' . $crfNumber,
             'CRF ' . $crfNumber . ' dibatalkan oleh CMO: ' . $tanggapan, $crfLink, $id, null, (int) $user['id']);

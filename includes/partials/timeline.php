@@ -16,14 +16,8 @@ $activityLabels = [
     'SLA Otomatis' => 'SLA Standar Kategori',
     'SLA Disesuaikan Handler' => 'SLA Disesuaikan PIC CRF',
     'Approval Kepala Departemen Operasional' => 'Persetujuan Kepala Departemen Operasional',
-    'Mulai Dikerjakan' => 'Mulai Dikerjakan Otomasi',
-    'Usulan Urgensi dan SLA' => 'Usulan Urgensi dan SLA',
-    'Usulan Perpanjangan SLA' => 'Usulan Perpanjangan SLA',
-    'Kesepakatan Urgensi dan SLA Forum' => 'Kesepakatan Urgensi dan SLA',
-    'Perpanjangan SLA' => 'Perpanjangan SLA Disetujui',
-    'Usulan Ditolak' => 'Usulan Ditolak',
-    'Usulan Dibatalkan' => 'Usulan Dibatalkan',
-    'Usulan Ditutup' => 'Usulan Ditutup',
+    // Istilah riwayat lama sebelum alur Forum diperbarui.
+    'Kesepakatan Urgensi dan SLA Forum' => 'Hasil Pembahasan Forum',
     'Penyesuaian Alur' => 'Penyesuaian Alur Sistem',
     'Otomasi Selesai' => 'Implementasi Selesai',
     'PIR Diisi Pemohon' => 'Post Implementation Review',
@@ -62,12 +56,12 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
                 : ['title' => 'Perbaikan oleh Pemohon', 'description' => 'Menunggu pemohon memperbaiki dan mengirim ulang CRF.'];
             break;
         case 'CMO_FILTER':
-            $pendingStep = ['title' => 'Verifikasi CMO', 'description' => 'Menunggu verifikasi permohonan oleh CMO.'];
+            $pendingStep = !empty($crf['forum_discussion_open'])
+                ? ['title' => 'Menunggu Pembahasan Forum', 'description' => 'CMO mengajukan pembahasan Level Urgensi dan SLA. CRF diteruskan setelah hasil pembahasan dicatat Admin.']
+                : ['title' => 'Verifikasi CMO', 'description' => 'Menunggu verifikasi permohonan oleh CMO.'];
             break;
         case 'OTOMASI':
-            $pendingStep = crfIsQueued($crf)
-                ? ['title' => 'Antrean Otomasi', 'description' => 'CRF sudah disetujui dan menunggu PIC CRF mulai mengerjakan. SLA dihitung sejak "Mulai Kerjakan".']
-                : ['title' => 'Tindak Lanjut Divisi Otomasi', 'description' => 'Menunggu PIC CRF mencatat hasil implementasi.'];
+            $pendingStep = ['title' => 'Tindak Lanjut Divisi Otomasi', 'description' => 'SLA berjalan sejak persetujuan. Menunggu PIC CRF mencatat hasil implementasi.'];
             break;
         case 'kadep_operasional':
             $pendingStep = ['title' => 'Persetujuan Kepala Departemen Operasional', 'description' => 'Menunggu persetujuan Kepala Departemen Operasional.'];

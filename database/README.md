@@ -33,5 +33,10 @@ migrasi aman dijalankan ulang.
 | 015 | `alur_antrean_otomasi_migration.sql` | Alur baru: CMO → Kadep → antrean Otomasi; CRF di tahap penetapan SLA Otomasi dipindah ke persetujuan |
 | 016 | `forum_proposals_migration.sql` | Usulan Urgensi & SLA di Forum (tabel `forum_proposals`, kolom `forum_comments.is_system`) |
 | 017 | `pic_crf_dari_helpdesk_migration.sql` | PIC CRF diturunkan dari PIC Kategori Helpdesk (tabel `crf_category_pic_sources`, `crf_category_handlers` menjadi VIEW) |
+| 018 | `forum_hasil_pembahasan_migration.sql` | Forum: pembahasan Level/SLA dengan hasil Tetap/Diubah (`forum_proposals` → `forum_discussions`), penanda `forum_discussion_open`, SLA default saat submit |
 
-Migrasi baru berikutnya diberi nomor `018_...`.
+Skrip pemeliharaan (jalankan dari terminal, bukan browser):
+
+- `maintenance/hitung_tenggat_sla.php` — menghitung `sla_due_at` untuk CRF yang SLA-nya sudah dimulai tetapi tenggatnya kosong.
+
+Migrasi baru berikutnya diberi nomor `019_...`.

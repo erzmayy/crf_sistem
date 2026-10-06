@@ -117,6 +117,9 @@ CREATE TABLE change_requests (
                                     'SELESAI'
                                 ) NOT NULL DEFAULT 'PEMOHON',
 
+    -- 1 selama CRF menunggu pembahasan Forum (CMO belum boleh meneruskan ke Kadep).
+    forum_discussion_open       TINYINT(1)      NOT NULL DEFAULT 0,
+
     sla_value                   DECIMAL(10,2) NULL,
     sla_unit                    ENUM('Menit','Jam','Hari') NULL,
     sla_started_at              DATETIME NULL,
@@ -247,29 +250,26 @@ CREATE TABLE forum_read_states (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- Usulan Urgensi & SLA di Forum: usulan -> keputusan, satu usulan terbuka per CRF.
-CREATE TABLE forum_proposals (
+-- Pembahasan Level Urgensi & SLA di Forum: CMO mengajukan, Admin mencatat hasil
+-- (Tetap / Diubah). Satu pembahasan terbuka per CRF.
+CREATE TABLE forum_discussions (
     id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     change_request_id       INT UNSIGNED NOT NULL,
-    kind                    ENUM('urgensi_sla','perpanjangan_sla') NOT NULL DEFAULT 'urgensi_sla',
-    status                  ENUM('menunggu','disetujui','ditolak','dibatalkan','kedaluwarsa') NOT NULL DEFAULT 'menunggu',
-    -- manual = diajukan user, sistem = dipicu otomatis (SLA kosong), langsung = ditetapkan Admin tanpa usulan
-    trigger_source          ENUM('manual','sistem','langsung') NOT NULL DEFAULT 'manual',
+    status                  ENUM('menunggu','selesai','dibatalkan') NOT NULL DEFAULT 'menunggu',
+    -- Hasil pembahasan: tetap = nilai sistem dipakai, diubah = nilai kesepakatan.
+    outcome                 ENUM('tetap','diubah') NULL,
+    -- cmo = diajukan CMO saat screening, sistem = dibuka otomatis (SLA default kosong)
+    trigger_source          ENUM('cmo','sistem') NOT NULL DEFAULT 'cmo',
 
-    proposed_by             INT UNSIGNED NULL,
-    proposed_by_name        VARCHAR(150) NOT NULL,
-    proposed_by_role        VARCHAR(50)  NOT NULL,
-    proposed_urgency        ENUM('Tinggi','Normal','Rendah') NULL,
-    proposed_sla_value      DECIMAL(10,2) NULL,
-    proposed_sla_unit       ENUM('Menit','Jam','Hari') NULL,
+    opened_by               INT UNSIGNED NULL,
+    opened_by_name          VARCHAR(150) NOT NULL,
+    opened_by_role          VARCHAR(50)  NOT NULL,
     reason                  TEXT NOT NULL,
 
-    -- Nilai yang berlaku saat usulan dibuat
+    -- Nilai sebelum dan sesudah hasil pembahasan
     before_urgency          ENUM('Tinggi','Normal','Rendah') NULL,
     before_sla_value        DECIMAL(10,2) NULL,
     before_sla_unit         ENUM('Menit','Jam','Hari') NULL,
-
-    -- Nilai yang akhirnya ditetapkan (bisa berbeda dari usulan)
     final_urgency           ENUM('Tinggi','Normal','Rendah') NULL,
     final_sla_value         DECIMAL(10,2) NULL,
     final_sla_unit          ENUM('Menit','Jam','Hari') NULL,
@@ -283,15 +283,14 @@ CREATE TABLE forum_proposals (
     reminded_at             DATETIME NULL,
     created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    -- Diisi id CRF selama usulan terbuka dan di-NULL-kan saat ditutup (dikelola
-    -- includes/forum_proposals.php). UNIQUE menjamin maksimal satu usulan
-    -- terbuka per CRF walau ada dua permintaan bersamaan.
+    -- Diisi id CRF selama pembahasan terbuka dan di-NULL-kan saat ditutup.
+    -- UNIQUE menjamin maksimal satu pembahasan terbuka per CRF.
     open_crf_id             INT UNSIGNED NULL,
 
-    UNIQUE KEY uq_forum_proposals_open (open_crf_id),
-    KEY idx_forum_proposals_crf (change_request_id, created_at),
-    KEY idx_forum_proposals_status_due (status, due_at),
-    CONSTRAINT fk_forum_proposals_crf
+    UNIQUE KEY uq_forum_discussions_open (open_crf_id),
+    KEY idx_forum_discussions_crf (change_request_id, created_at),
+    KEY idx_forum_discussions_status_due (status, due_at),
+    CONSTRAINT fk_forum_discussions_crf
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;

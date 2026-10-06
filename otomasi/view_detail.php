@@ -37,7 +37,6 @@ $stmt = $pdo->prepare("
                 AND activity_log.activity IN (
                     'Proses Otomasi Diperbarui',
                     'Otomasi - SLA Ditentukan',
-                    'Mulai Dikerjakan',
                     'Otomasi Selesai'
                 )
           )

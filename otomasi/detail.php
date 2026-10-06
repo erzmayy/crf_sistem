@@ -72,16 +72,12 @@ $timelineStmt = $pdo->prepare("
 $timelineStmt->execute(['id' => $id]);
 $timeline = $timelineStmt->fetchAll();
 
-// Disetujui tetapi belum "Mulai Kerjakan": CRF masih di antrean, SLA belum berjalan.
-$isQueued = crfIsQueued($crf);
 $isAssignedToOther = !empty($crf['assigned_handler_id']) && !isAssignedCrfHandler($crf);
 
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$pageTitle = $isQueued
-    ? 'Otomasi - Antrean CRF'
-    : 'Otomasi - Eksekusi CRF';
+$pageTitle = 'Otomasi - Eksekusi CRF';
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -94,12 +90,7 @@ require_once __DIR__ . '/../includes/header.php';
 
             <div>
 
-                <h1>
-                    <?= $isQueued
-                        ? 'Tindak Lanjut Otomasi · Antrean'
-                        : 'Tindak Lanjut Otomasi · Implementasi'
-                    ?>
-                </h1>
+                <h1>Tindak Lanjut Otomasi · Implementasi</h1>
 
                 <p>
                     Nomor Register:
@@ -207,11 +198,7 @@ require_once __DIR__ . '/../includes/header.php';
         <form
             action="../actions/automation_action.php"
             method="POST"
-            <?php if ($isQueued): ?>
-                data-confirm="Mulai kerjakan CRF <?= h($crf['request_number']) ?>? SLA akan mulai dihitung sejak sekarang."
-            <?php else: ?>
-                data-loading-form
-            <?php endif; ?>
+            data-loading-form
         >
 
             <?= csrfField() ?>
@@ -223,100 +210,6 @@ require_once __DIR__ . '/../includes/header.php';
             >
 
 
-            <?php if ($isQueued): ?>
-
-                <!-- =================================================
-                     2. ANTREAN · MULAI KERJAKAN
-                     ================================================= -->
-
-                <?php
-                $queueWaitSeconds = slaWorkingSecondsBetween(
-                    new DateTimeImmutable($crf['kadep_operasional_approved_at']),
-                    new DateTimeImmutable()
-                );
-                $hasValidSla = slaDueAt(date('Y-m-d H:i:s'), $crf['sla_value'], $crf['sla_unit']) !== null;
-                ?>
-
-                <div class="crf-section mb-4">
-
-                    <div class="crf-section-header">
-
-                        <span class="crf-section-number">
-                            <i class="bi bi-inboxes"></i>
-                        </span>
-
-                        <h2>
-                            Antrean · Mulai Kerjakan
-                        </h2>
-
-                    </div>
-
-
-                    <div class="crf-section-body">
-
-                        <div class="alert alert-info">
-                            CRF sudah disetujui Kepala Departemen Operasional pada
-                            <strong><?= h(date('d-m-Y H:i', strtotime($crf['kadep_operasional_approved_at']))) ?></strong>
-                            dan berada di antrean
-                            selama <?= h(formatSlaDuration($queueWaitSeconds)) ?> (dihitung pada hari kerja).
-                            SLA <strong>belum berjalan</strong> dan baru dihitung saat Anda menekan
-                            <strong>Mulai Kerjakan</strong>.
-                        </div>
-
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="crf-detail-label">LEVEL URGENSI</div>
-                                <div class="crf-detail-value">
-                                    <?php if ($resolvedUrgencyLevel !== null): ?>
-                                        <span class="crf-badge <?= h(levelBadgeClass($resolvedUrgencyLevel)) ?>"><?= h($resolvedUrgencyLevel) ?></span>
-                                    <?php else: ?>
-                                        <span class="crf-sla-empty">Belum ditentukan</span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="crf-detail-label">SLA</div>
-                                <div class="crf-detail-value">
-                                    <?= h(slaLabel($crf['sla_value'], $crf['sla_unit'])) ?>
-                                    <small class="text-muted">(hari kerja)</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="crf-readonly-note mt-3">
-                            <i class="bi bi-info-circle"></i>
-                            Level Urgensi dan SLA ditetapkan sistem dan hanya dapat diubah Admin melalui Forum.
-                            Jika ada kendala, sampaikan di <a href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>">Forum CRF</a>.
-                        </div>
-
-                        <?php if (!$hasValidSla): ?>
-                            <div class="alert alert-warning mt-3 mb-0">
-                                SLA CRF ini belum valid sehingga belum dapat dikerjakan. Hubungi Admin untuk menetapkan SLA di Forum.
-                            </div>
-                        <?php endif; ?>
-
-                    </div>
-
-                </div>
-
-
-                <input type="hidden" name="action" value="start">
-
-                <div class="d-flex justify-content-end">
-
-                    <button
-                        type="submit"
-                        class="btn btn-crf-primary"
-                        <?= $hasValidSla ? '' : 'disabled' ?>
-                    >
-                        <i class="bi bi-play-circle"></i>
-                        Mulai Kerjakan
-                    </button>
-
-                </div>
-
-
-            <?php else: ?>
 
 
                 <!-- =================================================
@@ -423,8 +316,6 @@ require_once __DIR__ . '/../includes/header.php';
                     </button>
 
                 </div>
-
-            <?php endif; ?>
 
         </form>
         <?php endif; ?>

@@ -12,7 +12,6 @@
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/forum_proposals.php';
 
 requireCrfRole(['kadep_operasional']);
 
@@ -237,28 +236,14 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <p class="text-muted">
                     Periksa detail CRF serta Level Urgensi dan SLA sebelum menyetujui.
-                    Setelah disetujui, CRF masuk antrean Divisi Otomasi dan SLA mulai dihitung
-                    saat PIC CRF menekan <strong>Mulai Kerjakan</strong>.
+                    SLA mulai dihitung sejak Anda menyetujui, lalu CRF diserahkan ke PIC CRF untuk dieksekusi.
                 </p>
-
-                <?php $jokoOpenProposal = forumOpenProposal($pdo, (int) $crf['id']); ?>
-                <?php if ($jokoOpenProposal && slaDueAt(date('Y-m-d H:i:s'), $crf['sla_value'], $crf['sla_unit']) !== null): ?>
-                    <div class="alert alert-warning">
-                        <i class="bi bi-flag-fill"></i>
-                        <strong>Ada pembahasan urgensi/SLA yang belum selesai</strong>
-                        (usulan dari <?= h($jokoOpenProposal['proposed_by_name']) ?>).
-                        Bila Anda menyetujui sekarang, usulan ditutup dan nilai yang tampil di halaman ini yang berlaku.
-                        <a href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>#forum-proposal">Lihat pembahasan di Forum</a>
-                    </div>
-                <?php endif; ?>
 
                 <?php $approvalHasSla = slaDueAt(date('Y-m-d H:i:s'), $crf['sla_value'], $crf['sla_unit']) !== null; ?>
                 <?php if (!$approvalHasSla): ?>
                     <div class="alert alert-warning">
                         <i class="bi bi-exclamation-triangle"></i>
-                        SLA CRF ini belum tersedia karena SLA standar kategori belum diatur.
-                        Admin perlu menetapkan Level Urgensi &amp; SLA final di
-                        <a href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>">Forum CRF</a> sebelum CRF dapat disetujui.
+                        SLA CRF ini belum tersedia sehingga belum dapat disetujui. Hubungi Admin.
                     </div>
                 <?php endif; ?>
 

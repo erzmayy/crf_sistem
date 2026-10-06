@@ -117,7 +117,7 @@ if ($replyAuthorId > 0) {
 notifyForumUsers(
     $pdo,
     array_diff(
-        forumParticipantIds($pdo, $crfId, (int) $crf['assigned_handler_id'] ?: null),
+        forumParticipantIds($pdo, $crfId),
         [$replyAuthorId]
     ),
     'Komentar baru di Forum: ' . $crfNumber,
