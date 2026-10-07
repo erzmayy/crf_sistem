@@ -13,6 +13,9 @@ $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
         <input type="hidden" name="<?= h($listContextName) ?>" value="<?= h($listContextValue ?? '') ?>">
     <?php endif; ?>
     <input type="hidden" name="per_page" value="<?= (int) ($perPage ?? 6) ?>">
+    <?php foreach (($listCarryParams ?? []) as $carryName => $carryValue): ?>
+        <input type="hidden" name="<?= h((string) $carryName) ?>" value="<?= h((string) $carryValue) ?>">
+    <?php endforeach; ?>
 
     <label class="crf-list-filter-field crf-list-search">
         <span>Cari Pengajuan</span>

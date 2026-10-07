@@ -49,6 +49,40 @@ $levelFilter = $listFilters['level'];
 $dateFrom = $listFilters['date_from'];
 $dateTo = $listFilters['date_to'];
 
+/*
+ * Rentang tanggal laporan = satu filter periode untuk kartu ringkasan,
+ * grafik, daftar pengajuan, dan ekspor. Tanggal pengajuan memakai
+ * submission_date (cadangan: tanggal dibuat), sama dengan laporan.
+ * Tanpa parameter tanggal, kartu dan daftar menampilkan semua data.
+ */
+$reportRangeError = '';
+$reportFilterActive = false;
+$reportDateFromInput = is_string($_GET['report_date_from'] ?? null) ? trim($_GET['report_date_from']) : null;
+$reportDateToInput = is_string($_GET['report_date_to'] ?? null) ? trim($_GET['report_date_to']) : null;
+$reportDateFromInput = $reportDateFromInput === '' ? null : $reportDateFromInput;
+$reportDateToInput = $reportDateToInput === '' ? null : $reportDateToInput;
+try {
+    $reportDateRange = normalizeAdminCrfReportDateRange($reportDateFromInput, $reportDateToInput);
+    $reportFilterActive = $reportDateFromInput !== null || $reportDateToInput !== null;
+} catch (InvalidArgumentException $exception) {
+    $reportRangeError = 'Rentang tanggal tidak valid. Isi kedua tanggal dan pastikan Tanggal Awal tidak melewati Tanggal Akhir. Menampilkan periode bawaan.';
+    $reportDateRange = normalizeAdminCrfReportDateRange(null, null);
+}
+$reportCarry = $reportFilterActive
+    ? ['report_date_from' => $reportDateRange['from'], 'report_date_to' => $reportDateRange['to']]
+    : [];
+$submittedDateSql = 'COALESCE(cr.submission_date, DATE(cr.created_at))';
+$summaryDateSql = '';
+$summaryDateParams = [];
+if ($reportFilterActive) {
+    $where[] = "{$submittedDateSql} >= :report_from";
+    $where[] = "{$submittedDateSql} <= :report_to";
+    $params['report_from'] = $reportDateRange['from'];
+    $params['report_to'] = $reportDateRange['to'];
+    $summaryDateSql = "WHERE {$submittedDateSql} >= :report_from AND {$submittedDateSql} <= :report_to";
+    $summaryDateParams = ['report_from' => $reportDateRange['from'], 'report_to' => $reportDateRange['to']];
+}
+
 // Daftar handler untuk filter (pernah memegang CRF atau terdaftar di kategori).
 $listHandlers = $pdo->query("
     SELECT DISTINCT user_id AS id, user_name AS name FROM (
@@ -142,37 +176,18 @@ $displaySumSql = implode(",\n", array_map(
     array_keys($displayConditions),
     $displayConditions
 ));
-$displaySummary = array_map('intval', $pdo->query("
+$displaySummaryStmt = $pdo->prepare("
     SELECT {$displaySumSql}, SUM(cr.status <> 'Draft') AS total
     FROM change_requests cr
-")->fetch() ?: []);
+    {$summaryDateSql}
+");
+$displaySummaryStmt->execute($summaryDateParams);
+$displaySummary = array_map('intval', $displaySummaryStmt->fetch() ?: []);
 $displayIcons = [
     'draft' => 'bi-pencil', 'review' => 'bi-hourglass-split', 'pembahasan' => 'bi-flag-fill',
     'approval' => 'bi-person-check', 'disetujui' => 'bi-check2-square', 'revisi' => 'bi-arrow-counterclockwise',
     'selesai' => 'bi-check-circle-fill', 'dibatalkan' => 'bi-slash-circle-fill',
 ];
-if (
-    (array_key_exists('report_date_from', $_GET) && !is_string($_GET['report_date_from']))
-    || (array_key_exists('report_date_to', $_GET) && !is_string($_GET['report_date_to']))
-) {
-    http_response_code(400);
-    exit('Rentang tanggal tidak valid.');
-}
-$reportDateFromInput = is_string($_GET['report_date_from'] ?? null)
-    ? $_GET['report_date_from']
-    : null;
-$reportDateToInput = is_string($_GET['report_date_to'] ?? null)
-    ? $_GET['report_date_to']
-    : null;
-try {
-    $reportDateRange = normalizeAdminCrfReportDateRange(
-        $reportDateFromInput,
-        $reportDateToInput
-    );
-} catch (InvalidArgumentException $exception) {
-    http_response_code(400);
-    exit(h($exception->getMessage()));
-}
 $report = getAdminCrfReport($pdo, $reportDateRange['from'], $reportDateRange['to']);
 $reportExportQuery = http_build_query([
     'report_date_from' => $reportDateRange['from'],
@@ -879,7 +894,7 @@ require_once __DIR__ . '/../includes/header.php';
 
         <div class="crf-stat-grid crf-helpdesk-summary dashboard-summary-grid">
 
-            <a class="crf-stat-card text-decoration-none <?= $listFilters['display_status'] === '' ? 'is-active' : '' ?>" href="dashboard.php#crf-table">
+            <a class="crf-stat-card text-decoration-none <?= $listFilters['display_status'] === '' ? 'is-active' : '' ?>" href="<?= h('?' . http_build_query($reportCarry)) ?>#crf-table">
                 <span><i class="bi bi-inboxes-fill"></i> Total CRF</span>
                 <strong><?= (int) ($displaySummary['total'] ?? 0) ?></strong>
             </a>
@@ -888,7 +903,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php if (in_array($displayKey, ['draft', 'revisi', 'dibatalkan'], true)) { continue; } // Disembunyikan dari ringkasan; tetap bisa difilter di tabel. ?>
                 <a
                     class="crf-stat-card crf-stat-tone-<?= h($displayKey) ?> text-decoration-none <?= $listFilters['display_status'] === $displayKey ? 'is-active' : '' ?>"
-                    href="?display_status=<?= h($displayKey) ?>#crf-table"
+                    href="<?= h('?' . http_build_query(['display_status' => $displayKey] + $reportCarry)) ?>#crf-table"
                 >
                     <span><i class="bi <?= h($displayIcons[$displayKey] ?? 'bi-circle') ?>"></i> <?= h($displayCondition['label']) ?></span>
                     <strong><?= (int) ($displaySummary[$displayKey] ?? 0) ?></strong>
@@ -901,19 +916,51 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="admin-report-heading">
                 <div>
                     <h2 id="admin-report-title">Laporan &amp; Statistik Change Request</h2>
-                    <p>Analisis pengajuan CRF <?= h(date('d-m-Y', strtotime($report['date_from']))) ?> sampai <?= h(date('d-m-Y', strtotime($report['date_to']))) ?>.</p>
+                    <p>Analisis pengajuan CRF <?= h(date('d-m-Y', strtotime($report['date_from']))) ?> sampai <?= h(date('d-m-Y', strtotime($report['date_to']))) ?>.<?php if ($reportFilterActive): ?> Kartu ringkasan, grafik, daftar pengajuan, dan ekspor mengikuti periode ini.<?php endif; ?></p>
                 </div>
                 <div class="admin-report-exports">
-                    <a class="btn btn-sm btn-outline-danger" href="../actions/export_admin_report.php?format=pdf&amp;<?= h($reportExportQuery) ?>">
+                    <?php /* Tombol ekspor mengirim isi kolom tanggal saat ini (form=adminReportFilter), bukan rentang saat halaman dimuat. */ ?>
+                    <button type="submit" form="adminReportFilter" formaction="../actions/export_admin_report.php" formmethod="get" name="format" value="pdf" class="btn btn-sm btn-outline-danger">
                         <i class="bi bi-file-earmark-pdf"></i> Ekspor PDF
-                    </a>
-                    <a class="btn btn-sm btn-outline-success" href="../actions/export_admin_report.php?format=xlsx&amp;<?= h($reportExportQuery) ?>">
+                    </button>
+                    <button type="submit" form="adminReportFilter" formaction="../actions/export_admin_report.php" formmethod="get" name="format" value="xlsx" class="btn btn-sm btn-outline-success">
                         <i class="bi bi-file-earmark-spreadsheet"></i> Ekspor Excel (.xlsx)
-                    </a>
+                    </button>
                 </div>
             </div>
 
-            <form class="admin-report-date-filter" method="get" action="dashboard.php">
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var form = document.getElementById('adminReportFilter');
+                var from = document.getElementById('reportDateFrom');
+                var to = document.getElementById('reportDateTo');
+                if (!form || !from || !to) { return; }
+
+                var initial = from.value + '|' + to.value;
+                var timer = null;
+                var isFullDate = function (value) { return /^(19|20)\d{2}-\d{2}-\d{2}$/.test(value); };
+
+                // Periode langsung diterapkan saat tanggal dipilih (tombol Terapkan tetap bisa dipakai).
+                function schedule(changed) {
+                    if (!isFullDate(from.value) || !isFullDate(to.value)) { return; }
+                    // Bila terbalik, tanggal lainnya ikut disamakan agar rentang selalu valid.
+                    if (from.value > to.value) {
+                        if (changed === from) { to.value = from.value; } else { from.value = to.value; }
+                    }
+                    if (from.value + '|' + to.value === initial) { return; }
+                    clearTimeout(timer);
+                    timer = setTimeout(function () { form.requestSubmit(); }, 600);
+                }
+
+                from.addEventListener('change', function () { schedule(from); });
+                to.addEventListener('change', function () { schedule(to); });
+            });
+            </script>
+            <?php if ($reportRangeError !== ''): ?>
+                <div class="alert alert-warning py-2 mb-2" role="alert"><?= h($reportRangeError) ?></div>
+            <?php endif; ?>
+
+            <form id="adminReportFilter" class="admin-report-date-filter" method="get" action="dashboard.php">
                 <?php foreach ([
                     'q' => $search,
                     'status' => $statusFilter,
@@ -926,17 +973,16 @@ require_once __DIR__ . '/../includes/header.php';
                     'date_from' => $dateFrom,
                     'date_to' => $dateTo,
                     'per_page' => $perPage,
-                    'page' => $page,
                 ] as $filterName => $filterValue): ?>
                     <input type="hidden" name="<?= h($filterName) ?>" value="<?= h((string) $filterValue) ?>">
                 <?php endforeach; ?>
                 <label>
                     Tanggal Awal
-                    <input type="date" name="report_date_from" value="<?= h($report['date_from']) ?>" required>
+                    <input type="date" id="reportDateFrom" name="report_date_from" value="<?= h($report['date_from']) ?>" required>
                 </label>
                 <label>
                     Tanggal Akhir
-                    <input type="date" name="report_date_to" value="<?= h($report['date_to']) ?>" required>
+                    <input type="date" id="reportDateTo" name="report_date_to" value="<?= h($report['date_to']) ?>" required>
                 </label>
                 <button type="submit" class="btn btn-sm btn-primary">
                     <i class="bi bi-funnel"></i> Terapkan
@@ -1036,6 +1082,13 @@ require_once __DIR__ . '/../includes/header.php';
                 <h2>
                     Daftar Pengajuan Change Request
                 </h2>
+                <?php if ($reportFilterActive): ?>
+                    <p class="mb-0 text-muted small">
+                        Periode pengajuan <strong><?= h(date('d-m-Y', strtotime($reportDateRange['from']))) ?></strong> s.d. <strong><?= h(date('d-m-Y', strtotime($reportDateRange['to']))) ?></strong>
+                        · <?= number_format($totalRows, 0, ',', '.') ?> CRF
+                        · <a href="dashboard.php">Hapus filter periode</a>
+                    </p>
+                <?php endif; ?>
 
             </div>
 
@@ -1045,8 +1098,9 @@ require_once __DIR__ . '/../includes/header.php';
             $listContextName = $listFilters['display_status'] !== '' ? 'display_status' : '';
             $listContextValue = $listFilters['display_status'];
             $listResetUrl = 'dashboard.php';
+            $listCarryParams = $reportCarry;
             require __DIR__ . '/../includes/partials/crf_list_filters.php';
-            unset($listContextName, $listContextValue, $listResetUrl);
+            unset($listContextName, $listContextValue, $listResetUrl, $listCarryParams);
             ?>
 
 
