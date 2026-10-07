@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS forum_comments (
     CONSTRAINT fk_forum_comments_reply
         FOREIGN KEY (reply_to_comment_id) REFERENCES forum_comments(id)
         ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS forum_read_states (
     user_id                     INT UNSIGNED NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS forum_read_states (
     CONSTRAINT fk_forum_read_states_crf
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
         ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP PROCEDURE IF EXISTS remove_forum_local_user_constraints;
 

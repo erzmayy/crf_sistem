@@ -91,14 +91,24 @@ SELECT
     MAX(h.is_manual)        AS is_manual,
     GROUP_CONCAT(DISTINCT h.source_name ORDER BY h.source_name SEPARATOR ', ') AS sources
 FROM (
-    SELECT m.id, m.crf_category_id, m.user_id, m.user_name, m.created_at,
-           1 AS is_manual,
-           CAST(NULL AS CHAR(100) CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS source_name
+    SELECT m.id                      AS id,
+           m.crf_category_id         AS crf_category_id,
+           m.user_id                 AS user_id,
+           m.user_name               AS user_name,
+           m.created_at              AS created_at,
+           1                         AS is_manual,
+           -- NULL bertipe teks tanpa CAST ... CHARACTER SET (tidak dikenal MariaDB);
+           -- NULLIF(x, x) selalu NULL dan mewarisi collation kolom.
+           NULLIF(m.user_name, m.user_name) AS source_name
     FROM crf_category_handlers_manual m
     UNION ALL
-    SELECT 1000000000 + p.id, s.crf_category_id, p.user_id, p.user_name, p.created_at,
-           0,
-           hc.name
+    SELECT 1000000000 + p.id         AS id,
+           s.crf_category_id         AS crf_category_id,
+           p.user_id                 AS user_id,
+           p.user_name               AS user_name,
+           p.created_at              AS created_at,
+           0                         AS is_manual,
+           hc.name                   AS source_name
     FROM crf_category_pic_sources s
     INNER JOIN helpdesk_categories hc
         ON hc.id = s.helpdesk_category_id AND hc.deleted_at IS NULL

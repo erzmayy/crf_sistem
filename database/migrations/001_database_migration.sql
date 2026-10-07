@@ -35,7 +35,7 @@ ALTER TABLE change_requests
 CREATE TABLE IF NOT EXISTS crf_sequence (
     id          TINYINT UNSIGNED PRIMARY KEY,
     last_number SMALLINT UNSIGNED NOT NULL DEFAULT 0
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO crf_sequence (id, last_number)
 SELECT 1, COALESCE(MAX(
@@ -82,4 +82,4 @@ CREATE TABLE IF NOT EXISTS crf_activity_logs (
     CONSTRAINT fk_activity_crf
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
         ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
