@@ -310,7 +310,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <?= $cmoDiscussion['trigger_source'] === 'sistem'
                                 ? 'SLA default belum tersedia, sehingga Admin perlu menetapkannya lewat pembahasan Forum.'
                                 : 'Anda mengajukan pembahasan Level Urgensi dan SLA.' ?>
-                            CRF dapat diteruskan ke Kepala Departemen Operasional setelah hasil pembahasan dicatat Admin
+                            Setelah hasil pembahasan dicatat Admin, CRF langsung diteruskan ke Kepala Departemen Operasional
                             <?= !empty($cmoDiscussion['due_at']) ? '(target ' . h(date('d-m-Y H:i', strtotime($cmoDiscussion['due_at']))) . ')' : '' ?>.
                             <a href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>#forum-pembahasan">Buka pembahasan di Forum</a>
                         </div>

@@ -470,7 +470,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     <i class="bi bi-info-circle" aria-hidden="true"></i>
                                     Berikan pertimbangan lewat kolom komentar di bawah. Level Urgensi dan SLA tidak diubah dari kolom diskusi;
                                     hanya <?= h($resultRoleLabel) ?> yang mencatat dan menerapkan hasil pembahasan.
-                                    CMO belum dapat meneruskan CRF ke Kepala Departemen Operasional sebelum hasilnya dicatat.
+                                    Setelah hasilnya dicatat, CRF langsung diteruskan ke Kepala Departemen Operasional untuk persetujuan.
                                 </p>
 
                                 <?php if ($canRecord): ?>

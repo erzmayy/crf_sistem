@@ -2,7 +2,7 @@
 
 ```
 Pemohon → CMO (screening) ─┬→ Kepala Departemen Operasional (approve; SLA mulai)
-                           └→ Pembahasan Forum → hasil Tetap/Diubah (Admin) → kembali ke CMO
+                           └→ Pembahasan Forum → hasil Tetap/Diubah (Admin) → langsung ke Kepala Departemen Operasional
   → PIC CRF: Selesaikan (implementasi)
   → Pemohon (Post Implementation Review)
   → CMO (Finalisasi) → Selesai
@@ -35,6 +35,8 @@ Selama pembahasan Forum terbuka, CRF di tahap `CMO_FILTER` bertanda
    - **Teruskan ke Kepala Departemen Operasional** bila Level/SLA default tidak perlu dibahas.
    - **Ajukan Pembahasan Forum** (alasan wajib) bila perlu dibahas. CRF bertanda
      *Menunggu Pembahasan Forum* dan **tidak dapat diteruskan** sampai hasil dicatat.
+     Setelah Admin mencatat hasil (Tetap atau Diubah), CRF **otomatis diteruskan ke Kepala
+     Departemen Operasional** tanpa kembali ke verifikasi CMO.
    - Kembalikan untuk perbaikan atau batalkan.
 3. **Kepala Departemen Operasional** menyetujui (tidak ada jalur tolak). **SLA mulai
    dihitung sejak persetujuan ini**, lalu CRF diserahkan ke PIC CRF. Persetujuan butuh
@@ -78,7 +80,8 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
 - **Target hasil** 2 hari kerja (`FORUM_DISCUSSION_DECISION_DAYS`). Lewat target,
   Admin mendapat satu pengingat (dikirim saat Forum dibuka).
 - Level/SLA tidak dapat diubah lagi setelah Kepala Departemen Operasional menyetujui.
-- **Notifikasi:** Admin dan PIC CRF kategori saat pembahasan diajukan; pengaju (CMO) dan
+- **Notifikasi:** Admin dan PIC CRF kategori saat pembahasan diajukan; Kepala Departemen Operasional
+  saat hasil dicatat (CRF menunggu persetujuannya); pengaju (CMO) dan
   pemberi komentar saat hasil dicatat.
 
 ## Form pemohon & notifikasi

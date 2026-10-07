@@ -56,7 +56,7 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
             break;
         case 'CMO_FILTER':
             $pendingStep = !empty($crf['forum_discussion_open'])
-                ? ['title' => 'Menunggu Pembahasan Forum', 'description' => 'CMO mengajukan pembahasan Level Urgensi dan SLA. CRF diteruskan setelah hasil pembahasan dicatat Admin.']
+                ? ['title' => 'Menunggu Pembahasan Forum', 'description' => 'CMO mengajukan pembahasan Level Urgensi dan SLA. Setelah hasil dicatat Admin, CRF langsung diteruskan ke Kepala Departemen Operasional.']
                 : ['title' => 'Verifikasi CMO', 'description' => 'Menunggu verifikasi permohonan oleh CMO.'];
             break;
         case 'OTOMASI':
