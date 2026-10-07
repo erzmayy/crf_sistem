@@ -124,7 +124,7 @@ if (in_array($action, ['request_discussion', 'cancel_discussion'], true)) {
             forumRequestDiscussion($pdo, $id, $user, $tanggapan);
             $_SESSION['flash'] = [
                 'type' => 'success',
-                'message' => 'Pembahasan Forum diajukan. CRF menunggu hasil pembahasan sebelum dapat diteruskan ke Kepala Departemen Operasional.',
+                'message' => 'Pembahasan Forum diajukan. Setelah Admin mencatat hasil pembahasan, CRF langsung diteruskan ke Kepala Departemen Operasional.',
             ];
         } else {
             $openDiscussion = forumOpenDiscussion($pdo, $id);
@@ -153,7 +153,7 @@ if ($action === 'to_approval') {
     if (!empty($crf['forum_discussion_open'])) {
         $_SESSION['flash'] = [
             'type' => 'warning',
-            'message' => 'CRF ini menunggu pembahasan Forum. Teruskan ke Kepala Departemen setelah hasil pembahasan dicatat Admin.',
+            'message' => 'CRF ini menunggu pembahasan Forum. Setelah hasil pembahasan dicatat Admin, CRF otomatis diteruskan ke Kepala Departemen.',
         ];
         header('Location: ../cmo/detail.php?id=' . $id);
         exit;

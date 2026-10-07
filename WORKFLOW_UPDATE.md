@@ -2,7 +2,7 @@
 
 ```
 Pemohon → CMO (screening) ─┬→ Kepala Departemen Operasional (approve; SLA mulai)
-                           └→ Pembahasan Forum → hasil Tetap/Diubah (Admin) → kembali ke CMO
+                           └→ Pembahasan Forum → hasil Tetap/Diubah (Admin) → langsung ke Kepala Departemen Operasional
   → PIC CRF: Selesaikan (implementasi)
   → Pemohon (Post Implementation Review)
   → CMO (Finalisasi) → Selesai
@@ -35,6 +35,8 @@ Selama pembahasan Forum terbuka, CRF di tahap `CMO_FILTER` bertanda
    - **Teruskan ke Kepala Departemen Operasional** bila Level/SLA default tidak perlu dibahas.
    - **Ajukan Pembahasan Forum** (alasan wajib) bila perlu dibahas. CRF bertanda
      *Menunggu Pembahasan Forum* dan **tidak dapat diteruskan** sampai hasil dicatat.
+     Setelah Admin mencatat hasil (Tetap atau Diubah), CRF **otomatis diteruskan ke Kepala
+     Departemen Operasional** tanpa kembali ke verifikasi CMO.
    - Kembalikan untuk perbaikan atau batalkan.
 3. **Kepala Departemen Operasional** menyetujui (tidak ada jalur tolak). **SLA mulai
    dihitung sejak persetujuan ini**, lalu CRF diserahkan ke PIC CRF. Persetujuan butuh
@@ -78,14 +80,15 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
 - **Target hasil** 2 hari kerja (`FORUM_DISCUSSION_DECISION_DAYS`). Lewat target,
   Admin mendapat satu pengingat (dikirim saat Forum dibuka).
 - Level/SLA tidak dapat diubah lagi setelah Kepala Departemen Operasional menyetujui.
-- **Notifikasi:** Admin dan PIC CRF kategori saat pembahasan diajukan; pengaju (CMO) dan
+- **Notifikasi:** Admin dan PIC CRF kategori saat pembahasan diajukan; Kepala Departemen Operasional
+  saat hasil dicatat (CRF menunggu persetujuannya); pengaju (CMO) dan
   pemberi komentar saat hasil dicatat.
 
 ## Form pemohon & notifikasi
 
 - **Saran Alternatif** opsional (disimpan kosong bila tidak diisi).
-- **Biaya / Anggaran** bawaan "Tidak ada biaya" (disimpan tanpa jenis dan tanpa nominal);
-  nominal hanya wajib bila memilih RKAP / BOQ PKS / anggaran baru.
+- **Biaya / Anggaran** opsional (tanpa pilihan bawaan; klik pilihan terpilih untuk membatalkan,
+  disimpan tanpa jenis dan tanpa nominal); nominal hanya wajib bila memilih RKAP / BOQ PKS / anggaran baru.
 - Kategori Helpdesk & CRF tidak lagi punya isian Urutan (urutan lama dipertahankan).
 - Notifikasi hanya ke aktor berikutnya: submit → CMO; selesai PIC → pemohon; PIR → CMO
   yang meloloskan; batal → pemohon. Komentar Forum tidak menumpuk selama notifikasi
@@ -99,6 +102,12 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
 - Hanya berjalan pada hari kerja. Sabtu, Minggu, dan tanggal di
   `CRF_SLA_HOLIDAYS` (`config/sla.php`) tidak dihitung.
 - Contoh: SLA 1 Hari yang dimulai Jumat 16:00 jatuh tempo Senin 16:00.
+- **Peringatan ke PIC CRF** (hanya PIC, tidak ke atasan), dihitung dalam waktu kerja:
+  *Pengingat* saat 50% SLA terpakai (dilewati bila SLA < 1 jam), *Mendesak* saat sisa waktu
+  ≤ yang lebih kecil antara 25% SLA dan 1 jam, *Terlambat* saat melewati batas lalu diulang tiap
+  hari kerja hingga PIC menekan Selesaikan. Dikirim oleh `database/maintenance/kirim_peringatan_sla.php`
+  (jadwalkan tiap 5 menit); penanda anti-ganda di tabel `crf_sla_alerts` (migrasi 019).
+
 ## Nomor register
 
 Format `PPU-02.4.NNNN.MM.YY`. Nomor urut direset per tahun dan dibuat atomik

@@ -10,7 +10,9 @@
  *      Forum" dan CMO tidak dapat meneruskannya.
  *   3. Pengguna Forum hanya berkomentar. Level/SLA tidak diubah dari form diskusi.
  *   4. Hasil pembahasan: TETAP (nilai sistem dipakai) atau DIUBAH (nilai kesepakatan).
- *   5. Hanya penentu (forumResultRoles(), saat ini Admin) yang mencatat hasil dan
+ *   5. Setelah hasil dicatat, CRF langsung diteruskan ke Kepala Departemen
+ *      Operasional untuk persetujuan (tanpa kembali ke verifikasi CMO).
+ *   6. Hanya penentu (forumResultRoles(), saat ini Admin) yang mencatat hasil dan
  *      menerapkannya ke data CRF, lengkap nilai sebelum/sesudah, alasan, waktu, actor.
  *
  * Satu CRF hanya punya satu pembahasan terbuka (UNIQUE open_crf_id).
@@ -18,6 +20,7 @@
  */
 require_once __DIR__ . '/forum.php';
 require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/helpdesk.php';
 
 /** Target waktu pembahasan (hari kerja). Hanya target proses, bukan SLA CRF. */
 const FORUM_DISCUSSION_DECISION_DAYS = 2;
@@ -355,7 +358,7 @@ function forumRequestDiscussion(PDO $pdo, int $crfId, array $user, string $reaso
         $crfNumber = $crf['request_number'] ?: 'CRF #' . $crfId;
         $current = forumValuesText($before['urgency'], $before['sla_value'], $before['sla_unit']);
         $description = sprintf(
-            '%s (%s) mengajukan pembahasan Forum untuk Level Urgensi dan SLA (nilai sistem saat ini: %s). CRF menunggu hasil pembahasan sebelum diteruskan ke Kepala Departemen Operasional. Alasan: %s',
+            '%s (%s) mengajukan pembahasan Forum untuk Level Urgensi dan SLA (nilai sistem saat ini: %s). CRF menunggu hasil pembahasan, lalu langsung diteruskan ke Kepala Departemen Operasional. Alasan: %s',
             $actor,
             forumRoleName($actorRole),
             $current,
@@ -432,7 +435,7 @@ function forumRaiseSystemDiscussion(PDO $pdo, array $crf, array $actingUser, str
         $pdo,
         forumDiscussionAudience($pdo, $crf),
         'SLA perlu ditetapkan: ' . $crfNumber,
-        $reason . ' Admin mencatat hasil pembahasan di Forum sebelum CRF dapat diteruskan. Target hasil '
+        $reason . ' Admin mencatat hasil pembahasan di Forum, lalu CRF langsung diteruskan ke Kepala Departemen. Target hasil '
             . date('d-m-Y H:i', strtotime($dueAt)) . '.',
         $crfId,
         (int) $actingUser['id']
@@ -533,6 +536,19 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
         ]);
         forumSetOpenFlag($pdo, $crfId, false);
 
+        // Hasil sudah dicatat: langsung ke Kepala Departemen (SLA belum berjalan sampai disetujui).
+        $forwarded = false;
+        if ($crf['workflow_stage'] === 'CMO_FILTER') {
+            $advance = $pdo->prepare("
+                UPDATE change_requests
+                SET status = 'Dalam Proses', workflow_stage = 'kadep_operasional',
+                    automation_started_at = NULL, sla_started_at = NULL, sla_due_at = NULL
+                WHERE id = :id AND workflow_stage = 'CMO_FILTER' AND forum_discussion_open = 0
+            ");
+            $advance->execute(['id' => $crfId]);
+            $forwarded = $advance->rowCount() === 1;
+        }
+
         $outcomeLabel = forumOutcomeMeta($outcome)['label'];
         $note = rtrim($note, ". 	
 ");
@@ -549,6 +565,28 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
         forumAddSystemComment($pdo, $crfId, $user, $description);
 
         $crfNumber = $crf['request_number'] ?: 'CRF #' . $crfId;
+        if ($forwarded) {
+            logCrfActivity(
+                $pdo,
+                $crfId,
+                'Diteruskan ke Kepala Departemen',
+                'Setelah hasil pembahasan Forum dicatat, CRF langsung diteruskan ke Kepala Departemen Operasional untuk persetujuan.',
+                $actor,
+                'Pembahasan Forum selesai: ' . $outcomeLabel,
+                'Menunggu Persetujuan'
+            );
+            notifyUsers(
+                $pdo,
+                crfUserIdsForRole($pdo, 'kadep_operasional'),
+                'Persetujuan CRF: ' . $crfNumber,
+                'CRF ' . $crfNumber . ' selesai dibahas di Forum (' . $outcomeLabel . ': ' . $afterText . ') dan menunggu persetujuan Anda.',
+                'crf/open.php?id=' . $crfId,
+                $crfId,
+                null,
+                (int) $user['id']
+            );
+            syncHelpdeskTicketFromCrf($pdo, $crfId, $actor);
+        }
         // Hanya yang terlibat: pengaju (atau seluruh CMO bila dibuka sistem) dan pemberi komentar.
         $commenters = $pdo->prepare('SELECT DISTINCT user_id FROM forum_comments WHERE change_request_id = :id AND is_system = 0');
         $commenters->execute(['id' => $crfId]);
@@ -563,7 +601,9 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
             $recipients,
             'Hasil pembahasan Forum: ' . $crfNumber,
             'Hasil: ' . $outcomeLabel . ' (' . $afterText . ')' . ($outcome === 'diubah' ? ', sebelumnya ' . $beforeText : '')
-                . '. CMO dapat meneruskan CRF ke Kepala Departemen Operasional.',
+                . ($forwarded
+                    ? '. CRF diteruskan ke Kepala Departemen Operasional untuk persetujuan.'
+                    : '. CMO dapat meneruskan CRF ke Kepala Departemen Operasional.'),
             $crfId,
             (int) $user['id']
         );
@@ -572,9 +612,10 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
 
         return [
             'crf_id' => $crfId,
-            'message' => $outcome === 'tetap'
-                ? 'Hasil dicatat: Level Urgensi dan SLA tetap. CMO dapat meneruskan CRF.'
-                : 'Hasil dicatat: Level Urgensi dan SLA diubah dan diterapkan ke CRF. CMO dapat meneruskan CRF.',
+            'message' => ($outcome === 'tetap'
+                ? 'Hasil dicatat: Level Urgensi dan SLA tetap.'
+                : 'Hasil dicatat: Level Urgensi dan SLA diubah dan diterapkan ke CRF.')
+                . ($forwarded ? ' CRF langsung diteruskan ke Kepala Departemen Operasional untuk persetujuan.' : ' CMO dapat meneruskan CRF.'),
         ];
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) {
@@ -701,7 +742,7 @@ function forumSendDueReminders(PDO $pdo): void
                 'Pembahasan Forum melewati target: ' . ($row['request_number'] ?: 'CRF #' . $crfId),
                 'Pembahasan yang diajukan ' . $row['opened_by_name'] . ' belum dicatat hasilnya sejak target '
                     . date('d-m-Y H:i', strtotime($row['due_at']))
-                    . '. CRF belum dapat diteruskan CMO ke Kepala Departemen Operasional.',
+                    . '. CRF belum dapat diteruskan ke Kepala Departemen Operasional.',
                 $crfId,
                 0
             );

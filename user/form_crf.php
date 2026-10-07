@@ -411,17 +411,13 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="crf-section">
         <div class="crf-section-header">
           <span class="crf-section-number">4</span>
-          <h2>Biaya / Anggaran</h2>
+          <h2>Biaya / Anggaran <small class="text-muted fw-normal">(opsional)</small></h2>
         </div>
         <div class="crf-section-body">
-          <?php $budgetChoice = ($old['budget_type'] ?? '') ?: 'tidak_ada'; ?>
-          <p class="crf-hint">Biarkan <strong>Tidak ada biaya</strong> bila perubahan ini tidak membutuhkan anggaran. Jika ada biaya, pilih sumber anggarannya lalu isi nominal.</p>
+          <?php $budgetChoice = $old['budget_type'] ?? ''; ?>
+          <p class="crf-hint">Bagian ini opsional. Kosongkan bila perubahan ini tidak membutuhkan anggaran. Jika ada biaya, pilih sumber anggarannya lalu isi nominal.</p>
 
           <div id="budgetOptions" class="crf-budget-options" role="radiogroup" aria-label="Pilihan biaya atau anggaran">
-            <div class="form-check mb-2 crf-budget-option">
-              <input class="form-check-input" type="radio" name="budget_type" id="budget_none" value="tidak_ada" <?= $budgetChoice === 'tidak_ada' ? 'checked' : '' ?>>
-              <label class="form-check-label" for="budget_none">Tidak ada biaya</label>
-            </div>
             <div class="form-check mb-2 crf-budget-option">
               <input class="form-check-input" type="radio" name="budget_type" id="budget_rkap" value="rkap"<?= ($old['budget_type'] ?? '') === 'rkap' ? 'checked' : '' ?>>
               <label class="form-check-label" for="budget_rkap">RKAP tahun berjalan</label>
@@ -440,7 +436,7 @@ require_once __DIR__ . '/../includes/header.php';
           <div class="input-group crf-budget-amount">
             <span class="input-group-text">Rp</span>
             <input type="number" min="0" step="1000" class="form-control"
-                   id="budget_amount" name="budget_amount" placeholder="0" value="<?= h($old['budget_amount'] ?? '') ?>" <?= $budgetChoice === 'tidak_ada' ? 'disabled' : '' ?>>
+                   id="budget_amount" name="budget_amount" placeholder="0" value="<?= h($old['budget_amount'] ?? '') ?>" <?= $budgetChoice === '' ? 'disabled' : '' ?>>
           </div>
         </div>
       </div>

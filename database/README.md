@@ -34,9 +34,12 @@ migrasi aman dijalankan ulang.
 | 016 | `forum_proposals_migration.sql` | Usulan Urgensi & SLA di Forum (tabel `forum_proposals`, kolom `forum_comments.is_system`) |
 | 017 | `pic_crf_dari_helpdesk_migration.sql` | PIC CRF diturunkan dari PIC Kategori Helpdesk (tabel `crf_category_pic_sources`, `crf_category_handlers` menjadi VIEW) |
 | 018 | `forum_hasil_pembahasan_migration.sql` | Forum: pembahasan Level/SLA dengan hasil Tetap/Diubah (`forum_proposals` → `forum_discussions`), penanda `forum_discussion_open`, SLA default saat submit |
+| 019 | `peringatan_sla_migration.sql` | Tabel `crf_sla_alerts` (penanda peringatan SLA ke PIC CRF agar tidak terkirim ganda) |
 
 Skrip pemeliharaan (jalankan dari terminal, bukan browser):
 
 - `maintenance/hitung_tenggat_sla.php` — menghitung `sla_due_at` untuk CRF yang SLA-nya sudah dimulai tetapi tenggatnya kosong.
 
-Migrasi baru berikutnya diberi nomor `019_...`.
+- `maintenance/kirim_peringatan_sla.php` — mengirim peringatan SLA ke PIC CRF. **Jadwalkan tiap 5 menit** (Windows Task Scheduler atau cron), mis. `php C:\path\crf_sistem\database\maintenance\kirim_peringatan_sla.php`.
+
+Migrasi baru berikutnya diberi nomor `020_...`.

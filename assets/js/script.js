@@ -56,6 +56,14 @@ document.addEventListener('DOMContentLoaded', function () {
     return Math.round(total);
   }
 
+  // Ambang mendesak: yang lebih kecil antara 25% total SLA dan 1 jam (sama dengan server).
+  function slaUrgentSeconds(el, dueAt) {
+    var startedAt = Number(el.getAttribute('data-sla-started-at'));
+    if (!Number.isFinite(startedAt) || !startedAt) { return 3600; }
+    var total = slaWorkingSecondsBetween(startedAt, dueAt);
+    return Math.min(3600, Math.floor(total * 0.25));
+  }
+
   function updateLiveSlaStatus() {
     document.querySelectorAll('[data-sla-live="true"]').forEach(function (slaGrid) {
       var dueAt = Number(slaGrid.getAttribute('data-sla-due-at'));
@@ -70,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!Number.isFinite(dueAt) || !statusBadge || !statusDetail) { return; }
 
       if (remaining >= 0) {
-        var approaching = remaining <= 3600;
+        var approaching = remaining <= slaUrgentSeconds(slaGrid, dueAt);
         statusBadge.textContent = 'Masih dalam SLA';
         statusDetail.textContent = 'Sisa waktu ' + formatSlaDuration(remaining) + '.';
         statusBadge.className = 'badge text-bg-' + (approaching ? 'warning' : 'success');
@@ -99,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (alertMessage) {
         alertMessage.textContent = state === 'overdue'
           ? 'Peringatan: batas SLA telah terlewati.'
-          : 'Perhatian: batas waktu SLA tinggal 1 jam atau kurang.';
+          : 'Perhatian: batas waktu SLA hampir terlewati.';
       }
     });
 
@@ -112,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!Number.isFinite(dueAt) || !statusBadge || !statusDetail) { return; }
 
       if (remaining >= 0) {
-        var approaching = remaining <= 3600;
+        var approaching = remaining <= slaUrgentSeconds(slaCell, dueAt);
         statusBadge.textContent = 'Masih dalam SLA';
         statusBadge.className = 'badge text-bg-' + (approaching ? 'warning' : 'success');
         statusDetail.textContent = 'Sisa waktu ' + formatSlaDuration(remaining) + '.';
@@ -202,6 +210,24 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     toggleBudgetAmount();
   }
+
+  // Klik pilihan yang sudah terpilih untuk membatalkannya (seperti uncheck).
+  budgetRadios.forEach(function (radio) {
+    var wasChecked = false;
+    radio.addEventListener('pointerdown', function () { wasChecked = radio.checked; });
+    radio.addEventListener('keydown', function () { wasChecked = radio.checked; });
+    radio.addEventListener('click', function () {
+      if (wasChecked) {
+        radio.checked = false;
+        toggleBudgetAmount();
+      }
+      wasChecked = false;
+    });
+    var label = document.querySelector('label[for="' + radio.id + '"]');
+    if (label) {
+      label.addEventListener('pointerdown', function () { wasChecked = radio.checked; });
+    }
+  });
 
   /* -----------------------------------------------------------------
    * 3. Tampilkan nama file yang dipilih pada input upload

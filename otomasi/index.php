@@ -267,7 +267,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         <div
                                             class="automation-sla-status"
                                             <?= $rowSlaStatus['live'] && !empty($row['sla_due_at'])
-                                                ? 'data-sla-countdown="true" data-sla-due-at="' . (int) strtotime($row['sla_due_at']) . '"'
+                                                ? 'data-sla-countdown="true" data-sla-started-at="' . (int) strtotime((string) ($row['sla_started_at'] ?? '')) . '" data-sla-due-at="' . (int) strtotime($row['sla_due_at']) . '"'
                                                 : '' ?>
                                         >
                                             <span class="badge text-bg-<?= h($rowSlaStatus['class']) ?>" data-sla-status-label>
