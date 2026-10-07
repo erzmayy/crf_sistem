@@ -776,20 +776,6 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
         $categoryId = 0;
     }
 
-    $handlerId = (int) $filterString($filters['handler_id'] ?? '');
-    if ($handlerId > 0) {
-        $where[] = 'cr.assigned_handler_id = :list_handler_id';
-        $params['list_handler_id'] = $handlerId;
-    } else {
-        $handlerId = 0;
-    }
-
-    $requester = $filterString($filters['requester'] ?? '');
-    if ($requester !== '') {
-        $where[] = 'cr.full_name LIKE :list_requester';
-        $params['list_requester'] = '%' . $requester . '%';
-    }
-
     $displayStatus = $filterString($filters['display_status'] ?? '');
     $displayConditions = crfDisplayStatusConditions('cr');
     if (isset($displayConditions[$displayStatus])) {
@@ -826,8 +812,6 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
         'date_from' => $dateFrom,
         'date_to' => $dateTo,
         'category_id' => $categoryId,
-        'handler_id' => $handlerId,
-        'requester' => $requester,
         'display_status' => $displayStatus,
         'departments' => $departmentStmt->fetchAll(PDO::FETCH_COLUMN),
         'categories' => $categories,

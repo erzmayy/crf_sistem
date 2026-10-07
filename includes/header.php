@@ -80,7 +80,7 @@ if ($crfEmbedded) {
   ?>
   <aside class="crf-sidebar siap-sidebar">
     <a class="crf-sidebar-brand" href="<?= h($appBasePath . $homePath) ?>">
-      <span class="crf-sidebar-mark crf-sidebar-logo"><img src="<?= h($appBasePath) ?>/assets/img/logo-ppu-header.png" alt="PT Persona Prima Utama"></span>
+      <span class="crf-sidebar-mark crf-sidebar-logo"><img src="<?= h($appBasePath) ?>/assets/img/logo-header.png" alt="Logo PT Persona Prima Utama"></span>
       <span class="ppu-brand-text">Home / Dashboard</span>
     </a>
 

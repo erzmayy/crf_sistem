@@ -38,8 +38,6 @@ $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
     'date_from' => $dateFrom,
     'date_to' => $dateTo,
     'category_id' => $_GET['category_id'] ?? '',
-    'handler_id' => $_GET['handler_id'] ?? '',
-    'requester' => $_GET['requester'] ?? '',
     'display_status' => $_GET['display_status'] ?? '',
 ]);
 $search = $listFilters['search'];
@@ -49,17 +47,40 @@ $levelFilter = $listFilters['level'];
 $dateFrom = $listFilters['date_from'];
 $dateTo = $listFilters['date_to'];
 
-// Daftar handler untuk filter (pernah memegang CRF atau terdaftar di kategori).
-$listHandlers = $pdo->query("
-    SELECT DISTINCT user_id AS id, user_name AS name FROM (
-        SELECT assigned_handler_id AS user_id, assigned_handler_name AS user_name
-        FROM change_requests WHERE assigned_handler_id IS NOT NULL
-        UNION
-        SELECT user_id, user_name FROM crf_category_handlers
-    ) handlers
-    WHERE user_name IS NOT NULL
-    ORDER BY name
-")->fetchAll();
+/*
+ * Rentang tanggal laporan = satu filter periode untuk kartu ringkasan,
+ * grafik, daftar pengajuan, dan ekspor. Tanggal pengajuan memakai
+ * submission_date (cadangan: tanggal dibuat), sama dengan laporan.
+ * Tanpa parameter tanggal, kartu dan daftar menampilkan semua data.
+ */
+$reportRangeError = '';
+$reportFilterActive = false;
+$reportDateFromInput = is_string($_GET['report_date_from'] ?? null) ? trim($_GET['report_date_from']) : null;
+$reportDateToInput = is_string($_GET['report_date_to'] ?? null) ? trim($_GET['report_date_to']) : null;
+$reportDateFromInput = $reportDateFromInput === '' ? null : $reportDateFromInput;
+$reportDateToInput = $reportDateToInput === '' ? null : $reportDateToInput;
+try {
+    $reportDateRange = normalizeAdminCrfReportDateRange($reportDateFromInput, $reportDateToInput);
+    $reportFilterActive = $reportDateFromInput !== null || $reportDateToInput !== null;
+} catch (InvalidArgumentException $exception) {
+    $reportRangeError = 'Rentang tanggal tidak valid. Isi kedua tanggal dan pastikan Tanggal Awal tidak melewati Tanggal Akhir. Menampilkan periode bawaan.';
+    $reportDateRange = normalizeAdminCrfReportDateRange(null, null);
+}
+$reportCarry = $reportFilterActive
+    ? ['report_date_from' => $reportDateRange['from'], 'report_date_to' => $reportDateRange['to']]
+    : [];
+$submittedDateSql = 'COALESCE(cr.submission_date, DATE(cr.created_at))';
+$summaryDateSql = '';
+$summaryDateParams = [];
+if ($reportFilterActive) {
+    $where[] = "{$submittedDateSql} >= :report_from";
+    $where[] = "{$submittedDateSql} <= :report_to";
+    $params['report_from'] = $reportDateRange['from'];
+    $params['report_to'] = $reportDateRange['to'];
+    $summaryDateSql = "WHERE {$submittedDateSql} >= :report_from AND {$submittedDateSql} <= :report_to";
+    $summaryDateParams = ['report_from' => $reportDateRange['from'], 'report_to' => $reportDateRange['to']];
+}
+
 /* =========================================================
  * PAGINATION
  * ========================================================= */
@@ -142,37 +163,18 @@ $displaySumSql = implode(",\n", array_map(
     array_keys($displayConditions),
     $displayConditions
 ));
-$displaySummary = array_map('intval', $pdo->query("
+$displaySummaryStmt = $pdo->prepare("
     SELECT {$displaySumSql}, SUM(cr.status <> 'Draft') AS total
     FROM change_requests cr
-")->fetch() ?: []);
+    {$summaryDateSql}
+");
+$displaySummaryStmt->execute($summaryDateParams);
+$displaySummary = array_map('intval', $displaySummaryStmt->fetch() ?: []);
 $displayIcons = [
     'draft' => 'bi-pencil', 'review' => 'bi-hourglass-split', 'pembahasan' => 'bi-flag-fill',
     'approval' => 'bi-person-check', 'disetujui' => 'bi-check2-square', 'revisi' => 'bi-arrow-counterclockwise',
     'selesai' => 'bi-check-circle-fill', 'dibatalkan' => 'bi-slash-circle-fill',
 ];
-if (
-    (array_key_exists('report_date_from', $_GET) && !is_string($_GET['report_date_from']))
-    || (array_key_exists('report_date_to', $_GET) && !is_string($_GET['report_date_to']))
-) {
-    http_response_code(400);
-    exit('Rentang tanggal tidak valid.');
-}
-$reportDateFromInput = is_string($_GET['report_date_from'] ?? null)
-    ? $_GET['report_date_from']
-    : null;
-$reportDateToInput = is_string($_GET['report_date_to'] ?? null)
-    ? $_GET['report_date_to']
-    : null;
-try {
-    $reportDateRange = normalizeAdminCrfReportDateRange(
-        $reportDateFromInput,
-        $reportDateToInput
-    );
-} catch (InvalidArgumentException $exception) {
-    http_response_code(400);
-    exit(h($exception->getMessage()));
-}
 $report = getAdminCrfReport($pdo, $reportDateRange['from'], $reportDateRange['to']);
 $reportExportQuery = http_build_query([
     'report_date_from' => $reportDateRange['from'],
@@ -192,6 +194,21 @@ foreach ($report['statuses'] as $reportStatus) {
 }
 $statusDonutStyle = $donutStops
     ? 'background: conic-gradient(' . implode(', ', $donutStops) . ');'
+    : 'background: #e2e8f0;';
+
+$urgencyStops = [];
+$urgencyOffset = 0;
+foreach ($report['urgencies'] as $urgencyItem) {
+    if ($urgencyItem['percentage'] <= 0) {
+        continue;
+    }
+
+    $urgencyEnd = $urgencyOffset + ($urgencyItem['percentage'] * 3.6);
+    $urgencyStops[] = $urgencyItem['color'] . ' ' . $urgencyOffset . 'deg ' . $urgencyEnd . 'deg';
+    $urgencyOffset = $urgencyEnd;
+}
+$urgencyDonutStyle = $urgencyStops
+    ? 'background: conic-gradient(' . implode(', ', $urgencyStops) . ');'
     : 'background: #e2e8f0;';
 
 
@@ -506,14 +523,6 @@ require_once __DIR__ . '/../includes/header.php';
             overflow-wrap: anywhere;
         }
 
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .dashboard-actions {
-            justify-content: flex-end;
-            flex-wrap: nowrap !important;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .dashboard-actions .btn {
-            width: auto;
-        }
     }
 
     /* Filter bar */
@@ -611,8 +620,42 @@ require_once __DIR__ . '/../includes/header.php';
 
     .admin-report-grid {
         display: grid;
-        grid-template-columns: minmax(0, 2fr) minmax(245px, 1fr);
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
         gap: 0.8rem;
+    }
+
+    /* Tiga kartu dalam satu baris: donut di kiri, legenda di kanan (sama di Status dan Urgensi). */
+    .admin-report-grid .admin-report-distribution {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 0.8rem;
+    }
+
+    .admin-report-grid .admin-report-donut {
+        width: 100px;
+        height: 100px;
+        flex: 0 0 100px;
+    }
+
+    .admin-report-grid .admin-report-donut-hole {
+        width: 64px;
+        height: 64px;
+    }
+
+    .admin-report-grid .admin-report-legend {
+        flex: 1 1 0;
+        min-width: 0;
+        gap: 0.5rem;
+    }
+
+    .admin-report-grid .admin-report-legend li {
+        grid-template-columns: 9px minmax(0, 1fr) auto;
+        align-items: start;
+        line-height: 1.25;
+    }
+
+    .admin-report-grid .admin-report-legend-swatch {
+        margin-top: 0.22rem;
     }
 
     .admin-report-card {
@@ -758,6 +801,16 @@ require_once __DIR__ . '/../includes/header.php';
         white-space: nowrap;
     }
 
+    @media (max-width: 1280px) {
+        .admin-report-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-report-grid > .admin-report-card:first-child {
+            grid-column: 1 / -1;
+        }
+    }
+
     @media (max-width: 900px) {
         .dashboard-summary-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -765,6 +818,10 @@ require_once __DIR__ . '/../includes/header.php';
 
         .admin-report-grid {
             grid-template-columns: 1fr;
+        }
+
+        .admin-report-grid > .admin-report-card:first-child {
+            grid-column: auto;
         }
     }
 
@@ -816,7 +873,7 @@ require_once __DIR__ . '/../includes/header.php';
 
         <div class="crf-stat-grid crf-helpdesk-summary dashboard-summary-grid">
 
-            <a class="crf-stat-card text-decoration-none <?= $listFilters['display_status'] === '' ? 'is-active' : '' ?>" href="dashboard.php#crf-table">
+            <a class="crf-stat-card text-decoration-none <?= $listFilters['display_status'] === '' ? 'is-active' : '' ?>" href="<?= h('?' . http_build_query($reportCarry)) ?>#crf-table">
                 <span><i class="bi bi-inboxes-fill"></i> Total CRF</span>
                 <strong><?= (int) ($displaySummary['total'] ?? 0) ?></strong>
             </a>
@@ -825,7 +882,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php if (in_array($displayKey, ['draft', 'revisi', 'dibatalkan'], true)) { continue; } // Disembunyikan dari ringkasan; tetap bisa difilter di tabel. ?>
                 <a
                     class="crf-stat-card crf-stat-tone-<?= h($displayKey) ?> text-decoration-none <?= $listFilters['display_status'] === $displayKey ? 'is-active' : '' ?>"
-                    href="?display_status=<?= h($displayKey) ?>#crf-table"
+                    href="<?= h('?' . http_build_query(['display_status' => $displayKey] + $reportCarry)) ?>#crf-table"
                 >
                     <span><i class="bi <?= h($displayIcons[$displayKey] ?? 'bi-circle') ?>"></i> <?= h($displayCondition['label']) ?></span>
                     <strong><?= (int) ($displaySummary[$displayKey] ?? 0) ?></strong>
@@ -838,42 +895,71 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="admin-report-heading">
                 <div>
                     <h2 id="admin-report-title">Laporan &amp; Statistik Change Request</h2>
-                    <p>Analisis pengajuan CRF <?= h(date('d-m-Y', strtotime($report['date_from']))) ?> sampai <?= h(date('d-m-Y', strtotime($report['date_to']))) ?>.</p>
+                    <p>Analisis pengajuan CRF <?= h(date('d-m-Y', strtotime($report['date_from']))) ?> sampai <?= h(date('d-m-Y', strtotime($report['date_to']))) ?>.<?php if ($reportFilterActive): ?> Kartu ringkasan, grafik, daftar pengajuan, dan ekspor mengikuti periode ini.<?php endif; ?></p>
                 </div>
                 <div class="admin-report-exports">
-                    <a class="btn btn-sm btn-outline-danger" href="../actions/export_admin_report.php?format=pdf&amp;<?= h($reportExportQuery) ?>">
+                    <?php /* Tombol ekspor mengirim isi kolom tanggal saat ini (form=adminReportFilter), bukan rentang saat halaman dimuat. */ ?>
+                    <button type="submit" form="adminReportFilter" formaction="../actions/export_admin_report.php" formmethod="get" name="format" value="pdf" class="btn btn-sm btn-outline-danger">
                         <i class="bi bi-file-earmark-pdf"></i> Ekspor PDF
-                    </a>
-                    <a class="btn btn-sm btn-outline-success" href="../actions/export_admin_report.php?format=xlsx&amp;<?= h($reportExportQuery) ?>">
+                    </button>
+                    <button type="submit" form="adminReportFilter" formaction="../actions/export_admin_report.php" formmethod="get" name="format" value="xlsx" class="btn btn-sm btn-outline-success">
                         <i class="bi bi-file-earmark-spreadsheet"></i> Ekspor Excel (.xlsx)
-                    </a>
+                    </button>
                 </div>
             </div>
 
-            <form class="admin-report-date-filter" method="get" action="dashboard.php">
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var form = document.getElementById('adminReportFilter');
+                var from = document.getElementById('reportDateFrom');
+                var to = document.getElementById('reportDateTo');
+                if (!form || !from || !to) { return; }
+
+                var initial = from.value + '|' + to.value;
+                var timer = null;
+                var isFullDate = function (value) { return /^(19|20)\d{2}-\d{2}-\d{2}$/.test(value); };
+
+                // Periode langsung diterapkan saat tanggal dipilih (tombol Terapkan tetap bisa dipakai).
+                function schedule(changed) {
+                    if (!isFullDate(from.value) || !isFullDate(to.value)) { return; }
+                    // Bila terbalik, tanggal lainnya ikut disamakan agar rentang selalu valid.
+                    if (from.value > to.value) {
+                        if (changed === from) { to.value = from.value; } else { from.value = to.value; }
+                    }
+                    if (from.value + '|' + to.value === initial) { return; }
+                    clearTimeout(timer);
+                    timer = setTimeout(function () { form.requestSubmit(); }, 600);
+                }
+
+                from.addEventListener('change', function () { schedule(from); });
+                to.addEventListener('change', function () { schedule(to); });
+            });
+            </script>
+            <?php if ($reportRangeError !== ''): ?>
+                <div class="alert alert-warning py-2 mb-2" role="alert"><?= h($reportRangeError) ?></div>
+            <?php endif; ?>
+
+            <form id="adminReportFilter" class="admin-report-date-filter" method="get" action="dashboard.php">
                 <?php foreach ([
                     'q' => $search,
                     'status' => $statusFilter,
                     'category_id' => $listFilters['category_id'] ?: '',
-                    'handler_id' => $listFilters['handler_id'] ?: '',
-                    'requester' => $listFilters['requester'],
                     'display_status' => $listFilters['display_status'],
                     'department' => $departmentFilter,
                     'level' => $levelFilter,
                     'date_from' => $dateFrom,
                     'date_to' => $dateTo,
                     'per_page' => $perPage,
-                    'page' => $page,
                 ] as $filterName => $filterValue): ?>
                     <input type="hidden" name="<?= h($filterName) ?>" value="<?= h((string) $filterValue) ?>">
                 <?php endforeach; ?>
                 <label>
                     Tanggal Awal
-                    <input type="date" name="report_date_from" value="<?= h($report['date_from']) ?>" required>
+                    <input type="date" id="reportDateFrom" name="report_date_from" value="<?= h($report['date_from']) ?>" required>
                 </label>
                 <label>
                     Tanggal Akhir
-                    <input type="date" name="report_date_to" value="<?= h($report['date_to']) ?>" required>
+                    <input type="date" id="reportDateTo" name="report_date_to" value="<?= h($report['date_to']) ?>" required>
                 </label>
                 <button type="submit" class="btn btn-sm btn-primary">
                     <i class="bi bi-funnel"></i> Terapkan
@@ -926,6 +1012,27 @@ require_once __DIR__ . '/../includes/header.php';
                         </ul>
                     </div>
                 </section>
+
+                <section class="admin-report-card" aria-labelledby="urgency-percentage-title">
+                    <h3 id="urgency-percentage-title">Persentase Tingkat Urgensi</h3>
+                    <div class="admin-report-distribution">
+                        <div class="admin-report-donut" style="<?= h($urgencyDonutStyle) ?>" role="img" aria-label="Persentase tingkat urgensi dari <?= (int) $report['total'] ?> CRF">
+                            <div class="admin-report-donut-hole">
+                                <strong><?= (int) $report['total'] ?></strong>
+                                <span>Total CRF</span>
+                            </div>
+                        </div>
+                        <ul class="admin-report-legend">
+                            <?php foreach ($report['urgencies'] as $urgencyItem): ?>
+                                <li>
+                                    <span class="admin-report-legend-swatch" style="background: <?= h($urgencyItem['color']) ?>;"></span>
+                                    <span><?= h($urgencyItem['label']) ?></span>
+                                    <strong><?= (int) $urgencyItem['count'] ?> (<?= number_format($urgencyItem['percentage'], 1, ',', '.') ?>%)</strong>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </section>
             </div>
         </section>
 
@@ -952,6 +1059,13 @@ require_once __DIR__ . '/../includes/header.php';
                 <h2>
                     Daftar Pengajuan Change Request
                 </h2>
+                <?php if ($reportFilterActive): ?>
+                    <p class="mb-0 text-muted small">
+                        Periode pengajuan <strong><?= h(date('d-m-Y', strtotime($reportDateRange['from']))) ?></strong> s.d. <strong><?= h(date('d-m-Y', strtotime($reportDateRange['to']))) ?></strong>
+                        · <?= number_format($totalRows, 0, ',', '.') ?> CRF
+                        · <a href="dashboard.php">Hapus filter periode</a>
+                    </p>
+                <?php endif; ?>
 
             </div>
 
@@ -961,8 +1075,9 @@ require_once __DIR__ . '/../includes/header.php';
             $listContextName = $listFilters['display_status'] !== '' ? 'display_status' : '';
             $listContextValue = $listFilters['display_status'];
             $listResetUrl = 'dashboard.php';
+            $listCarryParams = $reportCarry;
             require __DIR__ . '/../includes/partials/crf_list_filters.php';
-            unset($listContextName, $listContextValue, $listResetUrl);
+            unset($listContextName, $listContextValue, $listResetUrl, $listCarryParams);
             ?>
 
 

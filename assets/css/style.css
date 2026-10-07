@@ -2906,6 +2906,103 @@ body.crf-module {
     font-size: 0.7rem;
     white-space: nowrap;
   }
+
+  /* ---- Kartu daftar CRF (mobile): header ringkas, isi, dua kotak badge, aksi ---- */
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody tr {
+    position: relative;
+    gap: 0.5rem 0.6rem;
+    padding: 0.85rem 0.85rem 0.8rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(15, 35, 60, 0.05);
+  }
+
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Pengajuan"]::before,
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Isi Pengajuan"]::before,
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="No"]::before,
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"]::before {
+    display: none;
+  }
+
+  /* Nomor urut: lencana kecil di sudut kiri atas kartu. */
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="No"] {
+    position: absolute;
+    top: 0.85rem;
+    left: 0.85rem;
+    display: grid;
+    width: 26px;
+    height: 26px;
+    place-items: center;
+    padding: 0 !important;
+    border: 0;
+    border-radius: 8px;
+    background: #eaf2fb;
+    color: #1f568f;
+    font-size: 0.72rem !important;
+    font-weight: 700;
+  }
+
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody tr:has(> td[data-label="No"]) td[data-label="Pengajuan"] {
+    padding-left: 2.2rem !important;
+  }
+
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Pengajuan"] {
+    padding-bottom: 0 !important;
+    border-bottom: 0;
+  }
+
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Isi Pengajuan"] {
+    padding-top: 0.6rem !important;
+    border-top: 1px solid #eef2f7;
+    border-bottom: 0;
+  }
+
+  /* Urgensi dan Status: dua kotak sejajar dengan label kecil di atas. */
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Urgensi"],
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Status"] {
+    align-content: start;
+    padding: 0.5rem 0.6rem !important;
+    border: 0;
+    border-radius: 8px;
+    background: #f6f8fb;
+  }
+
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] {
+    padding-top: 0.65rem !important;
+    border-top: 1px solid #eef2f7;
+  }
+
+  /* Tombol aksi sama lebar dan memenuhi baris. */
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .d-flex,
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .dashboard-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .d-flex > a,
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .d-flex > form,
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .dashboard-actions > a,
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .dashboard-actions > form {
+    display: flex !important;
+    flex: 1 1 88px !important;
+    width: auto !important;
+    margin: 0;
+  }
+
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .d-flex .btn,
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .dashboard-actions .btn {
+    display: inline-flex !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+
+  /* Tombol di dalam <form> memenuhi kotak form-nya. */
+  .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] form > .btn {
+    width: 100% !important;
+  }
 }
 
 @media (max-width: 640px) {
@@ -5629,18 +5726,21 @@ body.crf-module {
 .crf-module .pengajuan-stat-solved { border-left-color: #15803d; }
 .crf-module .pengajuan-stat-cancelled { border-left-color: #64748b; }
 
-/* Logo perusahaan (PPU) di pojok kiri header */
+/* Logo perusahaan di pojok kiri header: ikon persegi, tinggi mengikuti header */
 .crf-app-shell .siap-sidebar .crf-sidebar-mark.crf-sidebar-logo {
-  width: auto;
-  height: 20px;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
   padding: 0;
-  border-radius: 0;
+  overflow: hidden;
+  border-radius: 9px;
   background: transparent;
 }
 .crf-sidebar-logo img {
   display: block;
-  width: auto;
+  width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 /* Warna aksen kartu status CRF mengikuti arti status (Dashboard Admin) */

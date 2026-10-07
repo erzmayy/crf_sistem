@@ -8,11 +8,14 @@
 
 $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
 ?>
-<form method="GET" class="crf-list-filters <?= !empty($listHandlers) ? 'crf-list-filters-advanced' : (!empty($listFilters['categories']) ? 'crf-list-filters-with-category' : '') ?>">
+<form method="GET" class="crf-list-filters <?= !empty($listFilters['categories']) ? 'crf-list-filters-with-category' : '' ?>">
     <?php if (!empty($listContextName)): ?>
         <input type="hidden" name="<?= h($listContextName) ?>" value="<?= h($listContextValue ?? '') ?>">
     <?php endif; ?>
     <input type="hidden" name="per_page" value="<?= (int) ($perPage ?? 6) ?>">
+    <?php foreach (($listCarryParams ?? []) as $carryName => $carryValue): ?>
+        <input type="hidden" name="<?= h((string) $carryName) ?>" value="<?= h((string) $carryValue) ?>">
+    <?php endforeach; ?>
 
     <label class="crf-list-filter-field crf-list-search">
         <span>Cari Pengajuan</span>
@@ -61,24 +64,6 @@ $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
                     </option>
                 <?php endforeach; ?>
             </select>
-        </label>
-    <?php endif; ?>
-
-    <?php if (!empty($listHandlers)): ?>
-        <label class="crf-list-filter-field">
-            <span>PIC CRF</span>
-            <select name="handler_id" class="form-select" aria-label="Filter PIC CRF">
-                <option value="">Semua PIC CRF</option>
-                <?php foreach ($listHandlers as $handlerOption): ?>
-                    <option value="<?= (int) $handlerOption['id'] ?>" <?= (int) ($listFilters['handler_id'] ?? 0) === (int) $handlerOption['id'] ? 'selected' : '' ?>>
-                        <?= h($handlerOption['name']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </label>
-        <label class="crf-list-filter-field">
-            <span>Pemohon</span>
-            <input type="search" name="requester" class="form-control" placeholder="Nama pemohon" value="<?= h($listFilters['requester'] ?? '') ?>">
         </label>
     <?php endif; ?>
 
