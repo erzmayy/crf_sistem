@@ -2,7 +2,7 @@
 /**
  * actions/forum_discussion.php
  * Aksi pembahasan Level Urgensi & SLA di Forum (logika di includes/forum_discussions.php).
- *   op=result : penentu (Admin) mencatat hasil — Tetap atau Diubah — dan menerapkannya ke CRF.
+ *   op=result : penentu (CMO atau Admin) mencatat hasil — Tetap atau Diubah — dan menerapkannya ke CRF.
  *   op=cancel : batalkan pembahasan yang masih terbuka (CMO atau Admin).
  * Pembahasan diajukan CMO dari halaman verifikasi CMO (actions/cmo_action.php).
  * Level/SLA tidak dapat diubah dari form diskusi Forum.

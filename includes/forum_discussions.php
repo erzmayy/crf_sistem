@@ -12,7 +12,7 @@
  *   4. Hasil pembahasan: TETAP (nilai sistem dipakai) atau DIUBAH (nilai kesepakatan).
  *   5. Setelah hasil dicatat, CRF langsung diteruskan ke Kepala Departemen
  *      Operasional untuk persetujuan (tanpa kembali ke verifikasi CMO).
- *   6. Hanya penentu (forumResultRoles(), saat ini Admin) yang mencatat hasil dan
+ *   6. Hanya penentu (forumResultRoles(), saat ini CMO dan Admin) yang mencatat hasil dan
  *      menerapkannya ke data CRF, lengkap nilai sebelum/sesudah, alasan, waktu, actor.
  *
  * Satu CRF hanya punya satu pembahasan terbuka (UNIQUE open_crf_id).
@@ -435,7 +435,7 @@ function forumRaiseSystemDiscussion(PDO $pdo, array $crf, array $actingUser, str
         $pdo,
         forumDiscussionAudience($pdo, $crf),
         'SLA perlu ditetapkan: ' . $crfNumber,
-        $reason . ' Admin mencatat hasil pembahasan di Forum, lalu CRF langsung diteruskan ke Kepala Departemen. Target hasil '
+        $reason . ' CMO atau Admin mencatat hasil pembahasan di Forum, lalu CRF langsung diteruskan ke Kepala Departemen. Target hasil '
             . date('d-m-Y H:i', strtotime($dueAt)) . '.',
         $crfId,
         (int) $actingUser['id']
@@ -648,7 +648,7 @@ function forumCancelDiscussion(PDO $pdo, int $discussionId, array $user): int
         $crfId = (int) $discussion['change_request_id'];
         $crf = forumLockCrf($pdo, $crfId);
         if ($discussion['trigger_source'] === 'sistem' && $crf && !crfHasValidSla($crf)) {
-            throw new DomainException('Pembahasan ini tidak dapat dibatalkan karena SLA CRF belum tersedia. Admin perlu mencatat hasilnya (Diubah) dengan nilai SLA.');
+            throw new DomainException('Pembahasan ini tidak dapat dibatalkan karena SLA CRF belum tersedia. CMO atau Admin perlu mencatat hasilnya (Diubah) dengan nilai SLA.');
         }
 
         $actor = crfActorName($user);
@@ -764,7 +764,7 @@ function forumSendDueReminders(PDO $pdo): void
 /**
  * Isi Level/SLA default CRF dari matriks Kategori x Urgensi (saat pemohon submit,
  * atau saat CMO meneruskan bila matriks baru diisi belakangan). Bila tetap tidak
- * ada SLA standar, buka pembahasan Forum otomatis agar Admin menetapkannya.
+ * ada SLA standar, buka pembahasan Forum otomatis agar CMO atau Admin menetapkannya.
  * CRF yang sudah punya hasil Forum "Diubah" (final_urgency_level) tidak ditimpa.
  * Dipanggil DI DALAM transaksi pemanggil.
  */
