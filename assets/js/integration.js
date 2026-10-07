@@ -9,12 +9,17 @@
    ===================================================================== */
 
 document.addEventListener('DOMContentLoaded', function () {
+  // Cakupan modul: semua pencarian elemen dibatasi ke area CRF (.crf-module),
+  // supaya aman dipasang di halaman SIAP.
+  var crfRoot = document.querySelector('.crf-module') || document;
+  var crfDataEl = crfRoot.getAttribute ? crfRoot : document.body;
+
 
   /* -----------------------------------------------------------------
    * Sidebar gaya SIAP: flyout (desktop) / akordeon (mobile)
    * ----------------------------------------------------------------- */
   var isMobileNav = function () { return window.matchMedia('(max-width: 768px)').matches; };
-  var siapItems = document.querySelectorAll('.siap-menu-item');
+  var siapItems = crfRoot.querySelectorAll('.siap-menu-item');
 
   function placeFlyout(item) {
     var submenu = item.querySelector('.siap-submenu');
@@ -57,13 +62,13 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') { closeFlyouts(null); }
   });
-  var siapSidebar = document.querySelector('.siap-sidebar');
+  var siapSidebar = crfRoot.querySelector('.siap-sidebar');
   if (siapSidebar) {
     siapSidebar.addEventListener('scroll', function () { closeFlyouts(null); });
   }
-  document.querySelectorAll('.siap-submenu a, .siap-menu-main a').forEach(function (link) {
+  crfRoot.querySelectorAll('.siap-submenu a, .siap-menu-main a').forEach(function (link) {
     link.addEventListener('click', function () {
-      var shell = document.querySelector('.crf-app-shell');
+      var shell = crfRoot.querySelector('.crf-app-shell');
       if (shell) { shell.classList.remove('crf-sidebar-open'); }
     });
   });
@@ -83,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  document.querySelectorAll('form[data-loading-form]').forEach(function (form) {
+  crfRoot.querySelectorAll('form[data-loading-form]').forEach(function (form) {
     form.addEventListener('submit', function (event) {
       if (form.dataset.submitting === '1') {
         event.preventDefault();
@@ -123,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
           '</div>' +
         '</div>' +
       '</div>';
-    document.body.appendChild(confirmModalEl);
+    crfDataEl.appendChild(confirmModalEl);
     confirmModalEl.querySelector('[data-confirm-ok]').addEventListener('click', function () {
       var form = confirmTarget;
       bootstrap.Modal.getInstance(confirmModalEl).hide();
@@ -174,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
    *   revision : perlu revisi, belum dikirim ulang
    *   dirty    : ada perubahan yang belum disimpan
    * ----------------------------------------------------------------- */
-  document.querySelectorAll('form[data-unsaved-guard]').forEach(function (form) {
+  crfRoot.querySelectorAll('form[data-unsaved-guard]').forEach(function (form) {
     var initialState = form.getAttribute('data-save-state') || 'new';
     var status = form.querySelector('[data-save-status]');
     var statusText = status ? status.querySelector('[data-save-status-text]') : null;
@@ -205,9 +210,9 @@ document.addEventListener('DOMContentLoaded', function () {
   /* -----------------------------------------------------------------
    * Modal kategori: isi field dari data-category-form
    * ----------------------------------------------------------------- */
-  document.querySelectorAll('[data-category-form]').forEach(function (button) {
+  crfRoot.querySelectorAll('[data-category-form]').forEach(function (button) {
     button.addEventListener('click', function () {
-      var modal = document.querySelector(button.getAttribute('data-bs-target'));
+      var modal = crfRoot.querySelector(button.getAttribute('data-bs-target'));
       if (!modal) { return; }
       var form = modal.querySelector('form');
       var data = {};
@@ -239,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function () {
   /* -----------------------------------------------------------------
    * Master data: tab tersimpan di URL + pencarian kategori
    * ----------------------------------------------------------------- */
-  document.querySelectorAll('.crf-master-tabs [data-bs-toggle="tab"]').forEach(function (tabLink) {
+  crfRoot.querySelectorAll('.crf-master-tabs [data-bs-toggle="tab"]').forEach(function (tabLink) {
     tabLink.addEventListener('shown.bs.tab', function () {
       var url = new URL(window.location.href);
       url.searchParams.set('tab', tabLink.getAttribute('data-bs-target').replace('#tab-', ''));
@@ -248,8 +253,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  document.querySelectorAll('[data-master-filter]').forEach(function (input) {
-    var pane = document.querySelector(input.getAttribute('data-master-filter'));
+  crfRoot.querySelectorAll('[data-master-filter]').forEach(function (input) {
+    var pane = crfRoot.querySelector(input.getAttribute('data-master-filter'));
     if (!pane) { return; }
     input.addEventListener('input', function () {
       var query = input.value.trim().toLowerCase();
@@ -267,9 +272,9 @@ document.addEventListener('DOMContentLoaded', function () {
   /* -----------------------------------------------------------------
    * Pencarian user (PIC CRF / PIC)
    * ----------------------------------------------------------------- */
-  var appBase = (document.body.getAttribute('data-app-base') || '');
+  var appBase = (crfDataEl.getAttribute('data-app-base') || '');
 
-  document.querySelectorAll('[data-user-picker]').forEach(function (form) {
+  crfRoot.querySelectorAll('[data-user-picker]').forEach(function (form) {
     var input = form.querySelector('[data-user-picker-input]');
     var hidden = form.querySelector('[data-user-picker-id]');
     var results = form.querySelector('[data-user-picker-results]');

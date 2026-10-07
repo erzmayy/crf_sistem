@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var replyingText = document.getElementById('forum-replying-text');
   var replyCancel = document.getElementById('forum-reply-cancel');
 
-  document.querySelectorAll('.crf-forum-reply-link[data-reply-id]').forEach(function (link) {
+  (document.querySelector('.crf-module') || document).querySelectorAll('.crf-forum-reply-link[data-reply-id]').forEach(function (link) {
     link.addEventListener('click', function (event) {
       event.preventDefault();
       replyId.value = link.dataset.replyId;
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   /* 6. Form hasil pembahasan (Admin): Tetap / Diubah + petunjuk SLA standar. */
-  document.querySelectorAll('form[data-result-form]').forEach(function (form) {
+  (document.querySelector('.crf-module') || document).querySelectorAll('form[data-result-form]').forEach(function (form) {
     var radios = form.querySelectorAll('input[name="outcome"]');
     var values = form.querySelector('[data-result-values]');
     var urgency = form.querySelector('select[name="urgency"]');
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   /* 7. Cegah kirim ganda pada form pembahasan. */
-  document.querySelectorAll('form[action*="forum_discussion.php"]').forEach(function (discussionForm) {
+  (document.querySelector('.crf-module') || document).querySelectorAll('form[action*="forum_discussion.php"]').forEach(function (discussionForm) {
     if (discussionForm.hasAttribute('data-confirm')) { return; }
     discussionForm.addEventListener('submit', function (event) {
       if (event.defaultPrevented || discussionForm.dataset.submitting === '1') {
@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var panel = bootstrap.Offcanvas.getOrCreateInstance(panelEl);
   var loadedUrl = null;
 
-  document.querySelectorAll('[data-forum-detail]').forEach(function (trigger) {
+  (document.querySelector('.crf-module') || document).querySelectorAll('[data-forum-detail]').forEach(function (trigger) {
     trigger.addEventListener('click', function (event) {
       event.preventDefault();
       var url = trigger.getAttribute('data-forum-detail');

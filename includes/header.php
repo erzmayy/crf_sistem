@@ -5,6 +5,7 @@
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/forum.php';
 require_once __DIR__ . '/notifications.php';
+require_once __DIR__ . '/crf_nav.php';
 require_once __DIR__ . '/../config/sla.php';
 
 if (!isset($pageTitle)) {
@@ -20,26 +21,44 @@ $currentPath = basename($_SERVER['PHP_SELF'] ?? '');
 $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
 $currentFolder = basename(dirname($scriptPath));
 
-$isNav = static function (string $folder, ?string $file = null) use ($currentFolder, $currentPath): bool {
-    return $currentFolder === $folder && ($file === null || $currentPath === $file);
-};
-
-$isForum = $currentFolder === 'forum';
-$forumUnreadTotal = in_array($crfRole, forumRoles(), true)
-    ? forumUnreadTotal(getConnection(), (int) ($currentUser['id'] ?? 0))
-    : 0;
+$crfEmbedded = crfLayoutIsModule();
 
 $navUserId = (int) ($currentUser['id'] ?? 0);
-$isPicUser = $isAdminUser || isHelpdeskPic(getConnection(), $navUserId);
 $notificationUnread = unreadNotificationCount(getConnection(), $navUserId);
-$notificationItems = recentNotifications(getConnection(), $navUserId, 6);
+$notificationItems = $crfEmbedded ? [] : recentNotifications(getConnection(), $navUserId, 6);
 
 $appBasePath = preg_replace('#/(?:admin|user|cmo|otomasi|pak_joko|forum|helpdesk|crf|notifications)/[^/]+$#', '', $scriptPath) ?: '';
 $appBasePath = rtrim($appBasePath, '/');
+// Di dalam SIAP, awalan URL modul diatur dari config/siap.php.
+if (defined('CRF_BASE_URL') && CRF_BASE_URL !== '') {
+    $appBasePath = rtrim((string) CRF_BASE_URL, '/');
+}
 
 $homePath = $isAdminUser
     ? '/admin/dashboard.php'
     : '/index.php';
+
+$styleUrl = $appBasePath . '/assets/css/style.css?v=' . (int) filemtime(__DIR__ . '/../assets/css/style.css');
+
+/*
+ * Mode "module": SIAP yang memegang <html>, <head>, header, sidebar, dan
+ * menu. CRF hanya mengeluarkan area kontennya (dibungkus .crf-module).
+ * Penutupnya ada di includes/footer.php.
+ */
+if ($crfEmbedded) {
+    if (defined('CRF_LOAD_BOOTSTRAP') && CRF_LOAD_BOOTSTRAP) {
+        echo '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">' . "\n";
+    }
+    if (!defined('CRF_LOAD_ICONS') || CRF_LOAD_ICONS) {
+        echo '<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">' . "\n";
+    }
+    ?>
+<link href="<?= h($styleUrl) ?>" rel="stylesheet">
+<div class="crf-module crf-module--embedded" data-app-base="<?= h($appBasePath) ?>" data-sla-holidays="<?= h(json_encode(CRF_SLA_HOLIDAYS)) ?>">
+<div class="crf-content-shell">
+<?php
+    return;
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -49,51 +68,15 @@ $homePath = $isAdminUser
 <title><?= h($pageTitle) ?> · Helpdesk & CRF PPU</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-<link href="<?= h($appBasePath) ?>/assets/css/style.css?v=<?= (int) filemtime(__DIR__ . '/../assets/css/style.css') ?>" rel="stylesheet">
+<link href="<?= h($styleUrl) ?>" rel="stylesheet">
 </head>
-<body data-app-base="<?= h($appBasePath) ?>" data-sla-holidays="<?= h(json_encode(CRF_SLA_HOLIDAYS)) ?>">
+<body class="crf-module" data-app-base="<?= h($appBasePath) ?>" data-sla-holidays="<?= h(json_encode(CRF_SLA_HOLIDAYS)) ?>">
 <div class="crf-app-shell">
     <div class="crf-sidebar-overlay"></div>
 
   <?php
-  /*
-   * Menu sidebar gaya SIAP: grup "Menu Saya" dengan submenu melayang
-   * (flyout) dan link utama tebal di bagian bawah. Item difilter per role.
-   */
-  $navGroups = [
-      [
-          'label' => 'Dashboard',
-          'icon' => 'bi-grid',
-          'items' => [
-              // Satu halaman master Kategori & Handling (tab Helpdesk / CRF).
-              ['label' => 'Kategori & Handling', 'url' => '/admin/master_data.php', 'show' => $isAdminUser, 'active' => $isNav('admin', 'master_data.php')],
-              // Satu dashboard kategori untuk Helpdesk & CRF (tab per jenis).
-              ['label' => 'Dashboard Handling Kategori', 'url' => '/helpdesk/handling.php', 'show' => $isPicUser || in_array($crfRole, ['cmo', 'otomasi', 'kadep_operasional', 'demo'], true), 'active' => $isNav('helpdesk', 'handling.php') || $isNav('helpdesk', 'kategori.php')],
-          ],
-      ],
-      [
-          'label' => 'Help Desk',
-          'icon' => 'bi-headset',
-          'items' => [
-              ['label' => 'Dashboard Help Desk', 'url' => '/helpdesk/dashboard.php', 'show' => $isPicUser, 'active' => $isNav('helpdesk', 'dashboard.php')],
-              ['label' => 'Formulir Help Desk', 'url' => '/helpdesk/form.php', 'show' => true, 'active' => $isNav('helpdesk', 'form.php')],
-              ['label' => 'Tiket Saya', 'url' => '/helpdesk/saya.php', 'show' => true, 'active' => $isNav('helpdesk', 'saya.php') || $isNav('helpdesk', 'detail.php')],
-          ],
-      ],
-      [
-          'label' => 'Change Request (CRF)',
-          'icon' => 'bi-file-earmark-diff',
-          'items' => [
-              ['label' => 'Dashboard CRF', 'url' => '/admin/dashboard.php', 'show' => $isAdminUser, 'active' => $isNav('admin', 'dashboard.php') || $isNav('admin', 'detail.php') || $isNav('admin', 'edit.php')],
-              ['label' => 'Verifikasi CMO', 'url' => '/cmo/index.php', 'show' => $canRole('cmo'), 'active' => $currentFolder === 'cmo'],
-              ['label' => 'Tindak Lanjut Otomasi', 'url' => '/otomasi/index.php', 'show' => $canRole('otomasi'), 'active' => $currentFolder === 'otomasi'],
-              ['label' => 'Persetujuan Kepala Departemen Operasional', 'url' => '/pak_joko/index.php', 'show' => $canRole('kadep_operasional'), 'active' => $currentFolder === 'pak_joko'],
-              ['label' => 'Form CRF', 'url' => '/user/form_crf.php', 'show' => true, 'active' => $isNav('user', 'form_crf.php')],
-              ['label' => 'Pengajuan CRF Saya', 'url' => '/user/pengajuan_saya.php', 'show' => in_array($crfRole, ['pemohon', 'demo'], true), 'active' => $isNav('user', 'pengajuan_saya.php') || $isNav('user', 'detail.php')],
-              ['label' => 'Forum', 'url' => '/forum/index.php', 'show' => in_array($crfRole, forumRoles(), true), 'active' => $isForum, 'badge' => $forumUnreadTotal],
-          ],
-      ],
-  ];
+  /* Menu sebagai data: lihat includes/crf_nav.php (juga dipakai SIAP pada mode module). */
+  $navGroups = crfNavGroups();
   ?>
   <aside class="crf-sidebar siap-sidebar">
     <a class="crf-sidebar-brand" href="<?= h($appBasePath . $homePath) ?>">

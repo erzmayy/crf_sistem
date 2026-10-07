@@ -5,6 +5,11 @@
    ===================================================================== */
 
 document.addEventListener('DOMContentLoaded', function () {
+  // Cakupan modul: semua pencarian elemen dibatasi ke area CRF (.crf-module),
+  // supaya aman dipasang di halaman SIAP.
+  var crfRoot = document.querySelector('.crf-module') || document;
+  var crfDataEl = crfRoot.getAttribute ? crfRoot : document.body;
+
 
   function formatSlaDuration(totalSeconds) {
     var totalMinutes = Math.max(0, Math.floor(totalSeconds / 60));
@@ -25,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
    */
   var slaHolidays = [];
   try {
-    slaHolidays = JSON.parse(document.body.getAttribute('data-sla-holidays') || '[]');
+    slaHolidays = JSON.parse(crfDataEl.getAttribute('data-sla-holidays') || '[]');
   } catch (e) { slaHolidays = []; }
 
   function slaDateKey(date) {
@@ -65,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function updateLiveSlaStatus() {
-    document.querySelectorAll('[data-sla-live="true"]').forEach(function (slaGrid) {
+    crfRoot.querySelectorAll('[data-sla-live="true"]').forEach(function (slaGrid) {
       var dueAt = Number(slaGrid.getAttribute('data-sla-due-at'));
       var remaining = slaWorkingSecondsBetween(Math.floor(Date.now() / 1000), dueAt);
       var statusBadge = slaGrid.querySelector('[data-sla-status-label]');
@@ -111,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    document.querySelectorAll('[data-sla-countdown="true"]').forEach(function (slaCell) {
+    crfRoot.querySelectorAll('[data-sla-countdown="true"]').forEach(function (slaCell) {
       var dueAt = Number(slaCell.getAttribute('data-sla-due-at'));
       var remaining = slaWorkingSecondsBetween(Math.floor(Date.now() / 1000), dueAt);
       var statusBadge = slaCell.querySelector('[data-sla-status-label]');
@@ -136,8 +141,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   updateLiveSlaStatus();
   if (
-    document.querySelector('[data-sla-live="true"]')
-    || document.querySelector('[data-sla-countdown="true"]')
+    crfRoot.querySelector('[data-sla-live="true"]')
+    || crfRoot.querySelector('[data-sla-countdown="true"]')
   ) {
     window.setInterval(updateLiveSlaStatus, 60000);
   }
@@ -190,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function () {
   /* -----------------------------------------------------------------
    * 2. Nominal anggaran hanya wajib jika salah satu pilihan biaya dipilih
    * ----------------------------------------------------------------- */
-  var budgetRadios = document.querySelectorAll('input[name="budget_type"]');
+  var budgetRadios = crfRoot.querySelectorAll('input[name="budget_type"]');
   var budgetAmountInput = document.getElementById('budget_amount');
 
   function toggleBudgetAmount() {
@@ -223,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       wasChecked = false;
     });
-    var label = document.querySelector('label[for="' + radio.id + '"]');
+    var label = crfRoot.querySelector('label[for="' + radio.id + '"]');
     if (label) {
       label.addEventListener('pointerdown', function () { wasChecked = radio.checked; });
     }
@@ -309,7 +314,7 @@ if (fileInput && fileList) {
   /* -----------------------------------------------------------------
    * 4. Validasi Bootstrap standar untuk form yang butuh validasi
    * ----------------------------------------------------------------- */
-  var formsToValidate = document.querySelectorAll('.needs-validation');
+  var formsToValidate = crfRoot.querySelectorAll('.needs-validation');
 
   formsToValidate.forEach(function (form) {
     form.addEventListener('submit', function (event) {
@@ -401,7 +406,7 @@ if (fileInput && fileList) {
       isComplete = false;
     }
 
-    var selectedBudget = document.querySelector('input[name="budget_type"]:checked');
+    var selectedBudget = crfRoot.querySelector('input[name="budget_type"]:checked');
 
     // Nominal hanya wajib bila ada biaya (bukan "Tidak ada biaya").
     if (isComplete && selectedBudget && selectedBudget.value !== 'tidak_ada') {
@@ -478,7 +483,7 @@ if (fileInput && fileList) {
       addInlineError(categoryDetail, 'Detail kategori wajib diisi.', errors);
     }
 
-    var selectedBudget = document.querySelector('input[name="budget_type"]:checked');
+    var selectedBudget = crfRoot.querySelector('input[name="budget_type"]:checked');
     if (selectedBudget && selectedBudget.value !== 'tidak_ada') {
       var budgetAmount = document.getElementById('budget_amount');
       if (!budgetAmount || budgetAmount.value.trim() === '') {
@@ -553,9 +558,9 @@ if (fileInput && fileList) {
   /* -----------------------------------------------------------------
    * 8. Toggle sidebar mobile (hamburger + overlay)
    * ----------------------------------------------------------------- */
-  var appShell = document.querySelector('.crf-app-shell');
-  var sidebarToggle = document.querySelector('.crf-sidebar-toggle');
-  var sidebarOverlay = document.querySelector('.crf-sidebar-overlay');
+  var appShell = crfRoot.querySelector('.crf-app-shell');
+  var sidebarToggle = crfRoot.querySelector('.crf-sidebar-toggle');
+  var sidebarOverlay = crfRoot.querySelector('.crf-sidebar-overlay');
 
   function closeSidebar() {
     if (appShell) { appShell.classList.remove('crf-sidebar-open'); }
@@ -572,7 +577,7 @@ if (fileInput && fileList) {
   }
 
   // Tutup sidebar otomatis kalau salah satu link menu diklik (mobile)
-  document.querySelectorAll('.crf-sidebar-nav a, .crf-sidebar-footer a').forEach(function (link) {
+  crfRoot.querySelectorAll('.crf-sidebar-nav a, .crf-sidebar-footer a').forEach(function (link) {
     link.addEventListener('click', closeSidebar);
   });
 
