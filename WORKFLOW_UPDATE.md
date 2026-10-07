@@ -157,3 +157,29 @@ kategori **Aplikasi**.
 Login memakai user SIAP (`siap.tbl_user`); peran ditentukan oleh `config/siap.php`.
 Akun demo `CRFDEMO` (aktif bila `CRF_DEMO_MODE = true`) dapat menjalankan semua
 peran. Nonaktifkan mode demo di production.
+
+## Integrasi sebagai modul SIAP
+
+CRF dapat berjalan sendiri (`standalone`, bawaan) atau dipasang di layout SIAP (`module`).
+Pengaturan ada di `config/siap.php`:
+
+| Konstanta | Fungsi |
+|---|---|
+| `CRF_LAYOUT_MODE` | `'standalone'` (header/sidebar CRF sendiri) atau `'module'` (hanya area konten). Bisa dioverride lewat env `CRF_LAYOUT_MODE=module`. |
+| `CRF_BASE_URL` | Awalan URL modul di SIAP, mis. `'/modules/crf'`. Kosong = otomatis. |
+| `CRF_LOAD_BOOTSTRAP` | Mode module: muat Bootstrap sendiri bila SIAP belum memuatnya (bawaan `false`). |
+| `CRF_LOAD_ICONS` | Mode module: muat Bootstrap Icons sendiri (bawaan `true`). |
+
+Cara kerja mode `module`:
+- `includes/header.php` dan `includes/footer.php` tidak mengeluarkan `<html>`, sidebar, topbar,
+  atau footer. Isi halaman dibungkus `<div class="crf-module crf-module--embedded">`.
+  Halaman CRF tidak perlu diubah: tetap memanggil `include header` / `include footer`.
+- Menu tersedia sebagai data dari `crfNavGroups()` (`includes/crf_nav.php`) agar SIAP dapat
+  menampilkannya di menunya sendiri (label, url relatif, show, active, badge).
+- CSS: aturan umum (`body`, `:root`, `a`, `button`, `.btn`, `.card`, `.badge`, dst.) dibatasi di
+  `.crf-module`, sehingga tidak menimpa gaya SIAP. Variabel warna memakai awalan `--crf-`.
+- JavaScript: pencarian elemen dibatasi ke `.crf-module`; modal konfirmasi ditempel di dalamnya.
+- Mode module tidak memuat Bootstrap JS. Dialog, dropdown, dan modal CRF memerlukan Bootstrap 5.3
+  bundle (JS) dari SIAP, atau aktifkan `CRF_LOAD_BOOTSTRAP`.
+- Tetap perlu dihapus/diganti saat integrasi: `login.php`, `logout.php`, `actions/login.php`
+  (login memakai sesi SIAP).

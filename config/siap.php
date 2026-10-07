@@ -39,3 +39,22 @@ const CRF_DEMO_USERIDS = ['CRFDEMO'];
 const CRF_OTOMASI_USERIDS = ['N75392', 'N76559'];
 const CRF_KADEP_OPERASIONAL_USERIDS = ['3736'];
 const CRF_CMO_DEPTS = ['CMO'];
+
+/*
+ * Tampilan modul.
+ *
+ * 'standalone' : CRF memakai header, sidebar, dan <html> sendiri (default).
+ * 'module'     : CRF dipasang di layout SIAP; hanya area konten yang
+ *                dikeluarkan (dibungkus .crf-module). Menu untuk SIAP
+ *                tersedia dari crfNavGroups() di includes/crf_nav.php.
+ *
+ * Dapat dioverride lewat variabel lingkungan CRF_LAYOUT_MODE=module.
+ */
+const CRF_LAYOUT_MODE = 'standalone';
+
+/* Awalan URL modul CRF di dalam SIAP, mis. '/modules/crf'. Kosong = otomatis. */
+const CRF_BASE_URL = '';
+
+/* Mode module: muat Bootstrap / Bootstrap Icons sendiri bila SIAP belum memuatnya. */
+const CRF_LOAD_BOOTSTRAP = false;
+const CRF_LOAD_ICONS = true;
