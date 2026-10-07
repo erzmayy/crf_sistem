@@ -523,14 +523,6 @@ require_once __DIR__ . '/../includes/header.php';
             overflow-wrap: anywhere;
         }
 
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .dashboard-actions {
-            justify-content: flex-end;
-            flex-wrap: nowrap !important;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .dashboard-actions .btn {
-            width: auto;
-        }
     }
 
     /* Filter bar */
