@@ -38,8 +38,6 @@ $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
     'date_from' => $dateFrom,
     'date_to' => $dateTo,
     'category_id' => $_GET['category_id'] ?? '',
-    'handler_id' => $_GET['handler_id'] ?? '',
-    'requester' => $_GET['requester'] ?? '',
     'display_status' => $_GET['display_status'] ?? '',
 ]);
 $search = $listFilters['search'];
@@ -83,17 +81,6 @@ if ($reportFilterActive) {
     $summaryDateParams = ['report_from' => $reportDateRange['from'], 'report_to' => $reportDateRange['to']];
 }
 
-// Daftar handler untuk filter (pernah memegang CRF atau terdaftar di kategori).
-$listHandlers = $pdo->query("
-    SELECT DISTINCT user_id AS id, user_name AS name FROM (
-        SELECT assigned_handler_id AS user_id, assigned_handler_name AS user_name
-        FROM change_requests WHERE assigned_handler_id IS NOT NULL
-        UNION
-        SELECT user_id, user_name FROM crf_category_handlers
-    ) handlers
-    WHERE user_name IS NOT NULL
-    ORDER BY name
-")->fetchAll();
 /* =========================================================
  * PAGINATION
  * ========================================================= */
@@ -965,8 +952,6 @@ require_once __DIR__ . '/../includes/header.php';
                     'q' => $search,
                     'status' => $statusFilter,
                     'category_id' => $listFilters['category_id'] ?: '',
-                    'handler_id' => $listFilters['handler_id'] ?: '',
-                    'requester' => $listFilters['requester'],
                     'display_status' => $listFilters['display_status'],
                     'department' => $departmentFilter,
                     'level' => $levelFilter,
