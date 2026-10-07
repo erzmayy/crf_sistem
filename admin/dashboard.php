@@ -14,8 +14,6 @@ require_once __DIR__ . '/../includes/forum_discussions.php';
 requireAdmin();
 
 $pdo = getConnection();
-$forumUnread = forumUnreadTotal($pdo, (int) getCurrentUser()['id']);
-$forumDiscussionsOpen = forumOpenDiscussionTotal($pdo);
 
 $search         = $_GET['q'] ?? '';
 $statusFilter   = $_GET['status'] ?? '';
@@ -824,6 +822,7 @@ require_once __DIR__ . '/../includes/header.php';
             </a>
 
             <?php foreach ($displayConditions as $displayKey => $displayCondition): ?>
+                <?php if (in_array($displayKey, ['draft', 'revisi', 'dibatalkan'], true)) { continue; } // Disembunyikan dari ringkasan; tetap bisa difilter di tabel. ?>
                 <a
                     class="crf-stat-card crf-stat-tone-<?= h($displayKey) ?> text-decoration-none <?= $listFilters['display_status'] === $displayKey ? 'is-active' : '' ?>"
                     href="?display_status=<?= h($displayKey) ?>#crf-table"
@@ -832,16 +831,6 @@ require_once __DIR__ . '/../includes/header.php';
                     <strong><?= (int) ($displaySummary[$displayKey] ?? 0) ?></strong>
                 </a>
             <?php endforeach; ?>
-
-            <a class="crf-stat-card crf-forum-stat text-decoration-none" href="../forum/index.php">
-                <span><i class="bi bi-chat-square-text"></i> Komentar Baru di Forum</span>
-                <strong><?= $forumUnread ?></strong>
-            </a>
-
-            <a class="crf-stat-card crf-forum-stat text-decoration-none" href="../forum/index.php?filter=discuss">
-                <span><i class="bi bi-flag-fill"></i> Menunggu Pembahasan Forum</span>
-                <strong><?= $forumDiscussionsOpen ?></strong>
-            </a>
 
         </div>
 
