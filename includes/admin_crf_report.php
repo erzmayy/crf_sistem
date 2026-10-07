@@ -102,6 +102,39 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
         ];
     }
 
+    // Persentase Tingkat Urgensi: memakai rumus yang sudah berjalan
+    // (final Forum > level tersimpan > otomatis dari kategori dampak).
+    $urgencyMeta = [
+        'Tinggi' => ['label' => 'Tinggi', 'color' => '#ef4444'],
+        'Normal' => ['label' => 'Normal', 'color' => '#f59e0b'],
+        'Rendah' => ['label' => 'Rendah', 'color' => '#22a45a'],
+        'Belum' => ['label' => 'Belum ditetapkan', 'color' => '#94a3b8'],
+    ];
+    $urgencyCounts = array_fill_keys(array_keys($urgencyMeta), 0);
+    $urgencyStmt = $pdo->prepare(
+        "SELECT final_urgency_level, level, impact_category
+         FROM change_requests
+         WHERE {$baseWhere}"
+    );
+    $urgencyStmt->execute($params);
+    foreach ($urgencyStmt->fetchAll() as $urgencyRow) {
+        $effective = crfEffectiveUrgency($urgencyRow);
+        $urgencyKey = isset($urgencyCounts[$effective]) && $effective !== 'Belum' ? $effective : 'Belum';
+        $urgencyCounts[$urgencyKey]++;
+    }
+    $urgencyTotal = array_sum($urgencyCounts);
+    $urgencies = [];
+    foreach ($urgencyMeta as $urgencyKey => $meta) {
+        $count = $urgencyCounts[$urgencyKey];
+        $urgencies[] = [
+            'key' => $urgencyKey,
+            'label' => $meta['label'],
+            'count' => $count,
+            'percentage' => $urgencyTotal > 0 ? ($count / $urgencyTotal) * 100 : 0,
+            'color' => $meta['color'],
+        ];
+    }
+
     $monthNames = [
         1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
         'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
@@ -146,5 +179,6 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
         'total' => $total,
         'months' => $months,
         'statuses' => $statuses,
+        'urgencies' => $urgencies,
     ];
 }

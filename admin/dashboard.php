@@ -194,6 +194,21 @@ $statusDonutStyle = $donutStops
     ? 'background: conic-gradient(' . implode(', ', $donutStops) . ');'
     : 'background: #e2e8f0;';
 
+$urgencyStops = [];
+$urgencyOffset = 0;
+foreach ($report['urgencies'] as $urgencyItem) {
+    if ($urgencyItem['percentage'] <= 0) {
+        continue;
+    }
+
+    $urgencyEnd = $urgencyOffset + ($urgencyItem['percentage'] * 3.6);
+    $urgencyStops[] = $urgencyItem['color'] . ' ' . $urgencyOffset . 'deg ' . $urgencyEnd . 'deg';
+    $urgencyOffset = $urgencyEnd;
+}
+$urgencyDonutStyle = $urgencyStops
+    ? 'background: conic-gradient(' . implode(', ', $urgencyStops) . ');'
+    : 'background: #e2e8f0;';
+
 
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
@@ -611,8 +626,42 @@ require_once __DIR__ . '/../includes/header.php';
 
     .admin-report-grid {
         display: grid;
-        grid-template-columns: minmax(0, 2fr) minmax(245px, 1fr);
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
         gap: 0.8rem;
+    }
+
+    /* Tiga kartu dalam satu baris: donut di kiri, legenda di kanan (sama di Status dan Urgensi). */
+    .admin-report-grid .admin-report-distribution {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 0.8rem;
+    }
+
+    .admin-report-grid .admin-report-donut {
+        width: 100px;
+        height: 100px;
+        flex: 0 0 100px;
+    }
+
+    .admin-report-grid .admin-report-donut-hole {
+        width: 64px;
+        height: 64px;
+    }
+
+    .admin-report-grid .admin-report-legend {
+        flex: 1 1 0;
+        min-width: 0;
+        gap: 0.5rem;
+    }
+
+    .admin-report-grid .admin-report-legend li {
+        grid-template-columns: 9px minmax(0, 1fr) auto;
+        align-items: start;
+        line-height: 1.25;
+    }
+
+    .admin-report-grid .admin-report-legend-swatch {
+        margin-top: 0.22rem;
     }
 
     .admin-report-card {
@@ -758,6 +807,16 @@ require_once __DIR__ . '/../includes/header.php';
         white-space: nowrap;
     }
 
+    @media (max-width: 1280px) {
+        .admin-report-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-report-grid > .admin-report-card:first-child {
+            grid-column: 1 / -1;
+        }
+    }
+
     @media (max-width: 900px) {
         .dashboard-summary-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -765,6 +824,10 @@ require_once __DIR__ . '/../includes/header.php';
 
         .admin-report-grid {
             grid-template-columns: 1fr;
+        }
+
+        .admin-report-grid > .admin-report-card:first-child {
+            grid-column: auto;
         }
     }
 
@@ -921,6 +984,27 @@ require_once __DIR__ . '/../includes/header.php';
                                     <span class="admin-report-legend-swatch" style="background: <?= h($reportStatus['color']) ?>;"></span>
                                     <span><?= h($reportStatus['label']) ?></span>
                                     <strong><?= (int) $reportStatus['count'] ?> (<?= number_format($reportStatus['percentage'], 1, ',', '.') ?>%)</strong>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="admin-report-card" aria-labelledby="urgency-percentage-title">
+                    <h3 id="urgency-percentage-title">Persentase Tingkat Urgensi</h3>
+                    <div class="admin-report-distribution">
+                        <div class="admin-report-donut" style="<?= h($urgencyDonutStyle) ?>" role="img" aria-label="Persentase tingkat urgensi dari <?= (int) $report['total'] ?> CRF">
+                            <div class="admin-report-donut-hole">
+                                <strong><?= (int) $report['total'] ?></strong>
+                                <span>Total CRF</span>
+                            </div>
+                        </div>
+                        <ul class="admin-report-legend">
+                            <?php foreach ($report['urgencies'] as $urgencyItem): ?>
+                                <li>
+                                    <span class="admin-report-legend-swatch" style="background: <?= h($urgencyItem['color']) ?>;"></span>
+                                    <span><?= h($urgencyItem['label']) ?></span>
+                                    <strong><?= (int) $urgencyItem['count'] ?> (<?= number_format($urgencyItem['percentage'], 1, ',', '.') ?>%)</strong>
                                 </li>
                             <?php endforeach; ?>
                         </ul>
