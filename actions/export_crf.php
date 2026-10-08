@@ -113,10 +113,11 @@ $watermarkText = [
     'Solve' => '',
     'Cancel' => 'DIBATALKAN',
 ][$crf['status'] ?? ''] ?? 'BELUM FINAL';
+// Pita peringatan di atas dokumen (tidak menutupi isi seperti watermark diagonal).
 $watermarkHtml = $watermarkText === '' ? '' : '
-    <div class="watermark">' . htmlspecialchars($watermarkText, ENT_QUOTES, 'UTF-8') . '</div>
     <div class="draft-note">
-        Dokumen ' . ($watermarkText === 'DIBATALKAN' ? 'CRF yang dibatalkan' : 'belum final') . ' · status saat dicetak: '
+        <strong>' . htmlspecialchars($watermarkText, ENT_QUOTES, 'UTF-8') . '</strong>
+        &nbsp;·&nbsp; Dokumen ' . ($watermarkText === 'DIBATALKAN' ? 'CRF yang dibatalkan' : 'belum final') . ' · status saat dicetak: '
         . htmlspecialchars($statusDisplay, ENT_QUOTES, 'UTF-8') . ' · dicetak ' . date('d-m-Y H:i') . '
     </div>';
 
@@ -235,7 +236,7 @@ $firstActivityDate = static function (array $rows, array $activities): ?string {
     return null;
 };
 
-$cmoFilterAt = $firstActivityDate($activityRows, ['Lolos Filter CMO']);
+$cmoFilterAt = $firstActivityDate($activityRows, ['Lolos Filter CMO', 'Diteruskan ke Kepala Departemen']);
 $cmoFilterDate = $cmoFilterAt
     ? formatTanggalIndonesia(new DateTime($cmoFilterAt))
     : null;
@@ -247,569 +248,221 @@ $implementationPirDate = $implementationPirAt
     : null;
 
 /* ---------------------------------------------------------------
+ * Data tambahan untuk tampilan
+ * --------------------------------------------------------------- */
+$dateOnly = static function (?string $value): ?string {
+    return !empty($value) ? formatTanggalIndonesia(new DateTime($value)) : null;
+};
+
+$shortDate = static fn(?string $value): ?string => !empty($value) ? date('d-m-Y', strtotime($value)) : null;
+
+$implementationDateText = $dateOnly($crf['implementation_date'] ?? null) ?? '-';
+$pirDateText = $dateOnly($crf['pir_date'] ?? null) ?? '-';
+
+// Langkah proses pengajuan (tanggal kosong = belum dilalui).
+$processSteps = [
+    ['role' => 'Pemohon',    'action' => 'Mengajukan CRF', 'name' => $crf['full_name'] ?? '',             'date' => $shortDate($crf['submission_date'] ?? null)],
+    ['role' => 'CMO',        'action' => 'Verifikasi',     'name' => '',                                  'date' => $shortDate($cmoFilterAt ?? null)],
+    ['role' => 'Kadep Ops.', 'action' => 'Persetujuan',    'name' => '',                                  'date' => $shortDate($crf['kadep_operasional_approved_at'] ?? null)],
+    ['role' => 'PIC CRF',    'action' => 'Eksekusi',       'name' => $crf['assigned_handler_name'] ?? '', 'date' => $shortDate($crf['automation_completed_at'] ?? null)],
+    ['role' => 'CMO',        'action' => 'UAT lulus',      'name' => '',                                  'date' => $shortDate($crf['uat_passed_at'] ?? null)],
+    ['role' => 'Pemohon',    'action' => 'PIR',            'name' => '',                                  'date' => $shortDate($crf['pir_date'] ?? null)],
+    ['role' => 'CMO',        'action' => 'Penutupan',      'name' => '',                                  'date' => $shortDate($crf['solved_at'] ?? null)],
+];
+
+$esc = static fn($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+
+$levelColors = [
+    'Tinggi' => ['#fde8e6', '#a8362d'],
+    'Normal' => ['#fff4dc', '#8a6410'],
+    'Rendah' => ['#e1f3e6', '#2d7a4a'],
+];
+[$levelBg, $levelFg] = $levelColors[$levelDisplay] ?? ['#eef1f5', '#475467'];
+
+$statusColors = [
+    'Solve'  => ['#e1f3e6', '#2d7a4a'],
+    'Cancel' => ['#fde8e6', '#a8362d'],
+    'Draft'  => ['#eef1f5', '#475467'],
+];
+[$statusBg, $statusFg] = $statusColors[$crf['status'] ?? ''] ?? ['#e6eff9', '#3c6396'];
+
+$processDateText = '';
+if (($crf['status'] ?? '') === 'Solve' && !empty($crf['solved_at'])) {
+    $processDateText = 'Diselesaikan pada ' . date('d-m-Y H:i', strtotime($crf['solved_at']));
+} elseif (($crf['status'] ?? '') === 'Cancel' && !empty($crf['cancelled_at'])) {
+    $processDateText = 'Dibatalkan pada ' . date('d-m-Y H:i', strtotime($crf['cancelled_at']));
+}
+
+/* ---------------------------------------------------------------
  * HTML PDF
  * --------------------------------------------------------------- */
-$html = '
+ob_start();
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
+<style>
+    @page { margin: 28px 32px 40px 32px; }
 
-    <style>
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #1f2937; margin: 0; padding: 0; line-height: 1.4; }
+    table { border-collapse: collapse; width: 100%; }
 
-        @page {
-            margin: 25px 28px 25px 28px;
-        }
+    /* Kepala dokumen */
+    .head { background: #dce8f6; color: #1f3a5f; border: 1px solid #c4d6ec; }
+    .head td { padding: 12px 14px; vertical-align: middle; }
+    .head .doc-title { font-size: 17px; font-weight: bold; letter-spacing: 1px; }
+    .head .doc-sub { font-size: 9px; color: #5a7699; margin-top: 2px; }
+    .head .reg-label { font-size: 8px; color: #5a7699; text-transform: uppercase; letter-spacing: 1px; text-align: right; }
+    .head .reg-number { font-size: 13px; font-weight: bold; text-align: right; margin-top: 2px; }
 
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 10px;
-            color: #000;
-            margin: 0;
-            padding: 0;
-        }
+    /* Ringkasan status */
+    .chips { margin-top: 8px; }
+    .chips td { width: 25%; padding: 6px 8px; border: 1px solid #d5dbe3; background: #f8fafc; vertical-align: top; }
+    .chip-label { font-size: 8px; color: #667085; text-transform: uppercase; letter-spacing: 0.5px; }
+    .chip-value { margin-top: 3px; font-size: 11px; font-weight: bold; }
+    .pill { padding: 2px 8px; font-size: 10px; font-weight: bold; }
 
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
+    /* Bagian */
+    .section-bar { margin-top: 12px; background: #eef2f7; border-left: 4px solid #9db8dc; padding: 5px 9px; font-size: 11px; font-weight: bold; color: #35557f; }
 
-        .title {
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
+    .grid { border: 1px solid #d5dbe3; border-top: 0; }
+    .grid td { border-bottom: 1px solid #e3e8ef; padding: 6px 9px; vertical-align: top; }
+    .grid .lbl { width: 27%; background: #f6f8fb; font-weight: bold; color: #344054; border-right: 1px solid #e3e8ef; }
+    .grid .val { width: 73%; }
+    .grid .lbl4 { width: 16%; background: #f6f8fb; font-weight: bold; color: #344054; }
+    .grid .val4 { width: 34%; }
+    .muted { color: #667085; }
 
-        .info-table td {
-            border: 1px solid #000;
-            padding: 7px;
-            vertical-align: top;
-        }
+    /* Proses pengajuan */
+    .steps { border: 1px solid #d5dbe3; border-top: 0; table-layout: fixed; }
+    .steps td { width: 14.2857%; vertical-align: top; text-align: center; border-right: 1px solid #e3e8ef; padding: 0; }
+    .steps td.last { border-right: 0; }
+    .step-head { padding: 5px 3px; font-size: 8px; font-weight: bold; }
+    .step-done .step-head { background: #d5eedc; color: #1c6b3a; }
+    .step-todo .step-head { background: #e8ecf2; color: #7b8798; }
+    .step-body { padding: 7px 4px 8px 4px; }
+    .step-action { font-size: 9px; font-weight: bold; color: #1f2937; }
+    .step-name { font-size: 8px; color: #667085; margin-top: 2px; }
+    .step-date { margin-top: 5px; font-size: 8.5px; font-weight: bold; color: #35557f; }
+    .step-todo .step-date { color: #a3adbb; font-weight: normal; }
 
-        .info-label {
-            width: 24%;
-            font-weight: bold;
-        }
+    .footer-note { margin-top: 14px; font-size: 8px; color: #667085; text-align: center; border-top: 1px solid #e3e8ef; padding-top: 6px; }
 
-        .info-value {
-            width: 76%;
-        }
-
-        .section-title {
-            margin-top: 7px;
-            margin-bottom: 0;
-            font-weight: bold;
-            font-size: 11px;
-        }
-
-        .form-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        .form-table td {
-            border: 1px solid #000;
-            padding: 7px;
-            vertical-align: top;
-        }
-
-        .form-label {
-            width: 24%;
-            font-weight: bold;
-        }
-
-        .form-content {
-            width: 76%;
-            min-height: 45px;
-        }
-
-        .large-content {
-            min-height: 70px;
-        }
-
-        .attachment {
-            line-height: 1.5;
-        }
-
-        .muted {
-            color: #555;
-        }
-
-        .budget-row td {
-            padding: 5px 7px;
-        }
-
-        .check {
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 11px;
-        }
-
-        .status-box {
-            margin-top: 10px;
-            border: 1px solid #000;
-            padding: 7px;
-        }
-
-        .watermark {
-            position: fixed;
-            top: 42%;
-            left: 0;
-            right: 0;
-            z-index: -1;
-            color: #c8102e;
-            font-size: 72px;
-            font-weight: bold;
-            letter-spacing: 6px;
-            text-align: center;
-            opacity: 0.12;
-            transform: rotate(-30deg);
-        }
-
-        .draft-note {
-            margin-bottom: 8px;
-            padding: 4px 7px;
-            border: 1px solid #c8102e;
-            color: #c8102e;
-            font-size: 9px;
-            text-align: center;
-        }
-
-        .process-date {
-            margin-top: 4px;
-            font-size: 9px;
-        }
-
-        .process-table {
-            margin-top: 12px;
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        .process-table td {
-            border: 1px solid #000;
-            padding: 8px;
-            vertical-align: top;
-            text-align: center;
-            height: 95px;
-            width: 16.6667%;
-        }
-
-        .process-table .process-table-label {
-            margin-top: 12px;
-            font-size: 9px;
-        }
-
-        .process-table .process-table-date {
-            margin-top: 3px;
-            font-weight: bold;
-            font-size: 10px;
-        }
-
-        .process-table .process-table-title {
-            font-weight: bold;
-            font-size: 10px;
-        }
-
-        .process-table .process-table-person,
-        .process-table .process-table-role {
-            font-size: 9px;
-            color: #333;
-            margin-top: 2px;
-        }
-
-        .footer-note {
-            margin-top: 15px;
-            font-size: 8px;
-            color: #444;
-        }
-
-        .category-table td {
-            border: 1px solid #000;
-            padding: 6px;
-            vertical-align: top;
-        }
-
-    </style>
+    .draft-note { margin-bottom: 8px; padding: 6px 10px; background: #fdeceb; border: 1px solid #f3c6c2; color: #a8362d; font-size: 9px; text-align: center; letter-spacing: 0.3px; }
+</style>
 </head>
-
 <body>
-    ' . $watermarkHtml . '
+<?= $watermarkHtml ?>
 
-    <!-- =========================================================
-         HALAMAN 1
-         ========================================================= -->
+<table class="head">
+    <tr>
+        <td>
+            <div class="doc-title">CHANGE REQUEST FORM</div>
+            <div class="doc-sub">PT Persona Prima Utama</div>
+        </td>
+        <td style="width: 38%;">
+            <div class="reg-label">Nomor Register</div>
+            <div class="reg-number"><?= pdfValue($crf['request_number']) ?></div>
+        </td>
+    </tr>
+</table>
 
-    <div class="title">
-        CHANGE REQUEST FORM
-    </div>
+<table class="chips">
+    <tr>
+        <td>
+            <div class="chip-label">Level Urgensi</div>
+            <div class="chip-value"><span class="pill" style="background: <?= $levelBg ?>; color: <?= $levelFg ?>;"><?= $esc($levelDisplay) ?></span></div>
+        </td>
+        <td>
+            <div class="chip-label">SLA</div>
+            <div class="chip-value"><?= $esc($slaDisplay) ?></div>
+        </td>
+        <td>
+            <div class="chip-label">Status</div>
+            <div class="chip-value"><span class="pill" style="background: <?= $statusBg ?>; color: <?= $statusFg ?>;"><?= $esc($statusDisplay) ?></span></div>
+        </td>
+        <td>
+            <div class="chip-label">Tahap</div>
+            <div class="chip-value"><?= $esc($workflowStageDisplay) ?></div>
+        </td>
+    </tr>
+</table>
+<?php if ($processDateText !== ''): ?>
+    <div class="muted" style="margin-top: 4px; font-size: 9px;"><?= $esc($processDateText) ?></div>
+<?php endif; ?>
 
-    <table class="info-table">
+<div class="section-bar">Informasi Pengajuan</div>
+<table class="grid">
+    <tr>
+        <td class="lbl4">Hari/Tanggal</td>
+        <td class="val4"><?= pdfValue($submissionDate) ?></td>
+        <td class="lbl4">Nama Lengkap</td>
+        <td class="val4"><?= pdfValue($crf['full_name']) ?></td>
+    </tr>
+    <tr>
+        <td class="lbl4">Kepada</td>
+        <td class="val4"><?= pdfValue($toValue) ?></td>
+        <td class="lbl4">No. HP / WA</td>
+        <td class="val4"><?= pdfValue($crf['phone']) ?></td>
+    </tr>
+    <tr>
+        <td class="lbl4">Dari</td>
+        <td class="val4"><?= pdfValue($fromValue) ?></td>
+        <td class="lbl4">Email</td>
+        <td class="val4"><?= pdfValue($crf['email']) ?></td>
+    </tr>
+</table>
 
-        <tr>
-            <td class="info-label">Hari/Tanggal</td>
-            <td class="info-value">
-                ' . pdfValue($submissionDate) . '
-            </td>
-        </tr>
+<div class="section-bar">Change Request Description</div>
+<table class="grid">
+    <tr><td class="lbl">Tipe Pengajuan</td><td class="val"><?= pdfValue($crf['request_type'] ?? '') ?></td></tr>
+    <tr><td class="lbl">Rincian Permohonan Perubahan</td><td class="val"><?= pdfValue($crf['change_description']) ?></td></tr>
+    <tr><td class="lbl">Benefit dari Perubahan yang Diharapkan</td><td class="val"><?= pdfValue($crf['benefit']) ?></td></tr>
+    <tr><td class="lbl">Kategori Dampak</td><td class="val"><?= pdfValue(crfImpactLabel($crf['impact_category'] ?? null)) ?></td></tr>
+    <tr><td class="lbl">Dampak Jika Tidak Dilakukan Perubahan</td><td class="val"><?= pdfValue($crf['impact']) ?></td></tr>
+    <tr><td class="lbl">Alasan Permohonan Perubahan</td><td class="val"><?= pdfValue($crf['reason']) ?></td></tr>
+    <tr><td class="lbl">Bukti dan Informasi Pendukung</td><td class="val"><?= $attachmentHtml ?></td></tr>
+    <tr><td class="lbl">Biaya / Anggaran</td><td class="val"><?= pdfValue($budgetDisplay) ?></td></tr>
+    <tr><td class="lbl">Kategori Perubahan</td><td class="val"><?= pdfValue($categoryDisplay) ?></td></tr>
+</table>
 
-        <tr>
-            <td class="info-label">Kepada</td>
-            <td class="info-value">
-                ' . pdfValue($toValue) . '
-            </td>
-        </tr>
+<div class="section-bar">Change Request Action</div>
+<table class="grid">
+    <tr><td class="lbl">Saran Alternatif</td><td class="val"><?= pdfValue($crf['alternative_suggestion']) ?></td></tr>
+    <tr><td class="lbl">Tanggal Implementasi</td><td class="val"><?= $esc($implementationDateText) ?></td></tr>
+    <tr><td class="lbl">Implementasi</td><td class="val"><?= pdfValue($crf['implementation']) ?></td></tr>
+    <tr><td class="lbl">Tanggal PIR</td><td class="val"><?= $esc($pirDateText) ?></td></tr>
+    <tr><td class="lbl">Post Implementation Review</td><td class="val"><?= pdfValue($crf['post_implementation_review']) ?></td></tr>
+</table>
 
-        <tr>
-            <td class="info-label">Dari</td>
-            <td class="info-value">
-                ' . pdfValue($fromValue) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="info-label">Nomor Register</td>
-            <td class="info-value">
-                ' . pdfValue($crf['request_number']) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="info-label">Nama Lengkap</td>
-            <td class="info-value">
-                ' . pdfValue($crf['full_name']) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="info-label">No. Handphone / WA</td>
-            <td class="info-value">
-                ' . pdfValue($crf['phone']) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="info-label">Email</td>
-            <td class="info-value">
-                ' . pdfValue($crf['email']) . '
-            </td>
-        </tr>
-
-    </table>
-
-    <div class="section-title">
-        Change Request Description
-    </div>
-
-    <table class="form-table">
-
-        <tr>
-            <td class="form-label">
-                Tipe Pengajuan
-            </td>
-            <td class="form-content">
-                ' . pdfValue($crf['request_type'] ?? '') . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
-                Rincian Permohonan Perubahan
-            </td>
-            <td class="form-content large-content">
-                ' . pdfValue($crf['change_description']) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
-                Benefit dari Perubahan yang Diharapkan
-            </td>
-            <td class="form-content large-content">
-                ' . pdfValue($crf['benefit']) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
-                Kategori Dampak
-            </td>
-            <td class="form-content">
-                ' . pdfValue(crfImpactLabel($crf['impact_category'] ?? null)) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
-                Dampak Jika Tidak Dilakukan Perubahan
-            </td>
-            <td class="form-content large-content">
-                ' . pdfValue($crf['impact']) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
-                Alasan Permohonan Perubahan
-            </td>
-            <td class="form-content large-content">
-                ' . pdfValue($crf['reason']) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
-                Bukti dan Informasi Pendukung
-            </td>
-            <td class="form-content attachment">
-                ' . $attachmentHtml . '
-            </td>
-        </tr>
-        
-        <tr>
-            <td class="form-label">
-                Biaya / Anggaran
-            </td>
-
-            <td class="form-content">
-                ' . pdfValue($budgetDisplay) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
-                Kategori Perubahan
-            </td>
-
-            <td class="form-content">
-                ' . pdfValue($categoryDisplay) . '
-            </td>
-        </tr>
-
-    </table>
-
-    <div class="section-title">
-        Change Request Action
-    </div>
-
-    <table class="form-table">
-
-        <tr>
-            <td class="form-label">
-                Saran Alternatif
-            </td>
-
-            <td class="form-content large-content">
-                ' . pdfValue($crf['alternative_suggestion']) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
-                Tanggal Implementasi
-            </td>
-
-            <td class="form-content">
-                ' . (
-                    !empty($crf['implementation_date'])
-                        ? formatTanggalIndonesia(new DateTime($crf['implementation_date']))
-                        : '-'
-                ) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
-                Implementasi
-            </td>
-
-            <td class="form-content large-content">
-                ' . pdfValue($crf['implementation']) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
-                Tanggal PIR
-            </td>
-
-            <td class="form-content">
-                ' . (
-                    !empty($crf['pir_date'])
-                        ? formatTanggalIndonesia(new DateTime($crf['pir_date']))
-                        : '-'
-                ) . '
-            </td>
-        </tr>
-
-        <tr>
-            <td class="form-label">
-                Post Implementation Review
-            </td>
-
-            <td class="form-content large-content">
-                ' . pdfValue($crf['post_implementation_review']) . '
-            </td>
-        </tr>
-
-    </table>
-
-    <div class="status-box">
-        <strong>Level Urgensi:</strong>
-        ' . pdfValue($levelDisplay) . '
-        &nbsp;&nbsp;&nbsp;
-        <strong>SLA:</strong>
-        ' . pdfValue($slaDisplay) . '
-        &nbsp;&nbsp;&nbsp;
-        <strong>Status:</strong>
-        ' . pdfValue($statusDisplay) . '
-        &nbsp;&nbsp;&nbsp;
-        <strong>Tahap:</strong>
-        ' . pdfValue($workflowStageDisplay) . '
-        ' . $processDateHtml . '
-    </div>
-
-    <div class="section-title" style="margin-top: 12px;">
-        PROSES PENGAJUAN
-    </div>
-
-    <table class="process-table">
-        <tr>
-
-            <!-- 1. PEMOHON -->
-            <td>
-                <div class="process-table-title">
-                    Pemohon
-                </div>
-
-                <div class="process-table-person">
-                    ' . pdfValue($crf['full_name']) . '
-                </div>
-
-                <div class="process-table-label">
-                    Mengajukan CRF
-                </div>
-
-                <div class="process-table-date">
-                    ' . $submissionDate . '
+<div class="section-bar">Proses Pengajuan</div>
+<table class="steps">
+    <tr>
+        <?php foreach ($processSteps as $index => $step): ?>
+            <?php $done = $step['date'] !== null; ?>
+            <td class="<?= $done ? 'step-done' : 'step-todo' ?><?= $index === count($processSteps) - 1 ? ' last' : '' ?>">
+                <div class="step-head"><?= ($index + 1) . '. ' . $esc($step['role']) ?></div>
+                <div class="step-body">
+                    <div class="step-action"><?= $esc($step['action']) ?></div>
+                    <?php if (trim((string) $step['name']) !== ''): ?>
+                        <div class="step-name"><?= $esc($step['name']) ?></div>
+                    <?php endif; ?>
+                    <div class="step-date"><?= $done ? $esc($step['date']) : 'Belum' ?></div>
                 </div>
             </td>
+        <?php endforeach; ?>
+    </tr>
+</table>
 
-
-            <!-- 2. VERIFIKASI CMO -->
-            <td>
-                <div class="process-table-title">
-                    CMO
-                </div>
-
-                <div class="process-table-role">
-                    Verifikasi
-                </div>
-
-                <div class="process-table-label">
-                    Diteruskan ke Kepala Departemen Operasional
-                </div>
-
-                <div class="process-table-date">
-                    ' . ($cmoFilterDate ?? '-') . '
-                </div>
-            </td>
-
-
-            <!-- 3. APPROVAL -->
-            <td>
-                <div class="process-table-title">
-                    Kepala Departemen Operasional
-                </div>
-
-                <div class="process-table-role">
-                    Persetujuan
-                </div>
-
-                <div class="process-table-label">
-                    Tanggal Persetujuan
-                </div>
-
-                <div class="process-table-date">
-                    ' . (
-                        !empty($crf['kadep_operasional_approved_at'])
-                            ? formatTanggalIndonesia(
-                                new DateTime(
-                                    $crf['kadep_operasional_approved_at']
-                                )
-                            )
-                            : '-'
-                    ) . '
-                </div>
-            </td>
-
-
-            <!-- 4. OTOMASI EKSEKUSI -->
-            <td>
-                <div class="process-table-title">
-                    Otomasi
-                </div>
-
-                <div class="process-table-role">
-                    Implementasi
-                </div>
-
-                <div class="process-table-label">
-                    Implementasi Selesai
-                </div>
-
-                <div class="process-table-date">
-                    ' . (
-                        !empty($crf['automation_completed_at'])
-                            ? formatTanggalIndonesia(
-                                new DateTime(
-                                    $crf['automation_completed_at']
-                                )
-                            )
-                            : '-'
-                    ) . '
-                </div>
-            </td>
-
-            <!-- 7. CMO PENUTUPAN -->
-            <td>
-                <div class="process-table-title">
-                    CMO
-                </div>
-
-                <div class="process-table-role">
-                    Penutupan CRF
-                </div>
-
-                <div class="process-table-label">
-                    Tanggal Selesai
-                </div>
-
-                <div class="process-table-date">
-                    ' . (
-                        !empty($crf['solved_at'])
-                            ? formatTanggalIndonesia(
-                                new DateTime(
-                                    $crf['solved_at']
-                                )
-                            )
-                            : '-'
-                    ) . '
-                </div>
-            </td>
-
-        </tr>
-    </table>
-
-    <div class="footer-note">
-        Dokumen ini dihasilkan oleh Sistem Helpdesk &amp; CRF PT Persona Prima Utama.
-    </div>
+<div class="footer-note">
+    Dokumen ini dihasilkan oleh Sistem Helpdesk &amp; CRF PT Persona Prima Utama · dicetak <?= date('d-m-Y H:i') ?>
+</div>
 
 </body>
 </html>
-';
+<?php
+$html = ob_get_clean();
 
 /* ---------------------------------------------------------------
  * Generate PDF
@@ -825,6 +478,18 @@ $dompdf->loadHtml($html, 'UTF-8');
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
+// Nomor halaman di kaki setiap halaman.
+$canvas = $dompdf->getCanvas();
+$font = $dompdf->getFontMetrics()->getFont('Arial', 'normal');
+$canvas->page_text(
+    $canvas->get_width() - 100,
+    $canvas->get_height() - 26,
+    'Halaman {PAGE_NUM} dari {PAGE_COUNT}',
+    $font,
+    8,
+    [0.4, 0.45, 0.52]
+);
+
 $fileName = 'CRF-' . preg_replace(
     '/[^A-Za-z0-9._-]/',
     '-',
@@ -834,5 +499,3 @@ $fileName = 'CRF-' . preg_replace(
 $dompdf->stream($fileName, [
     'Attachment' => false
 ]);
-
-exit;
