@@ -62,7 +62,7 @@ $tabs = [
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$pageTitle = 'Master Data Kategori';
+$pageTitle = $activeTab === 'crf' ? 'Kategori CRF' : 'Kategori Helpdesk';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -71,13 +71,16 @@ require_once __DIR__ . '/../includes/header.php';
 
         <div class="crf-helpdesk-banner crf-banner-with-actions">
             <div>
-                <span class="crf-helpdesk-eyebrow">MASTER DATA</span>
-                <h1>Kategori &amp; Handling</h1>
-                <p>Kelola kategori Helpdesk beserta PIC, dan kategori CRF beserta PIC CRF-nya, dalam satu halaman.</p>
+                <span class="crf-helpdesk-eyebrow">MASTER DATA · <?= $activeTab === 'crf' ? 'CRF' : 'HELPDESK' ?></span>
+                <h1><?= $activeTab === 'crf' ? 'Kategori CRF' : 'Kategori Helpdesk' ?></h1>
+                <p><?= $activeTab === 'crf' ? 'Kelola kategori CRF, SLA per level urgensi, dan PIC CRF.' : 'Kelola kategori Helpdesk beserta PIC-nya.' ?></p>
             </div>
             <div class="crf-banner-actions">
-                <span class="crf-banner-pill"><i class="bi bi-headset"></i> <?= count($helpdeskCategoryRows) ?> Kategori Helpdesk · <?= $totalPic ?> PIC</span>
-                <span class="crf-banner-pill"><i class="bi bi-bookmarks"></i> <?= count($crfCategoryRows) ?> Kategori CRF · <?= $totalHandler ?> PIC CRF</span>
+                <?php if ($activeTab === 'crf'): ?>
+                    <span class="crf-banner-pill"><i class="bi bi-bookmarks"></i> <?= count($crfCategoryRows) ?> Kategori CRF · <?= $totalHandler ?> PIC CRF</span>
+                <?php else: ?>
+                    <span class="crf-banner-pill"><i class="bi bi-headset"></i> <?= count($helpdeskCategoryRows) ?> Kategori Helpdesk · <?= $totalPic ?> PIC</span>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -90,30 +93,12 @@ require_once __DIR__ . '/../includes/header.php';
             Alur: <strong>Kategori Helpdesk</strong> bertanda <span class="crf-badge badge-stage-otomasi">Butuh CRF</span>
             meneruskan Permintaan Baru ke Form CRF dengan <strong>Kategori CRF</strong> default.
             Semua PIC kategori Helpdesk tersebut otomatis menjadi <strong>PIC CRF</strong> kategori CRF itu, jadi cukup kelola PIC
-            di tab Kategori Helpdesk. Contoh: PIC <em>Aplikasi SIAP</em> (Butuh CRF · Aplikasi) = PIC CRF kategori <em>Aplikasi</em>.
+            di halaman Kategori Helpdesk (modul Helpdesk). Contoh: PIC <em>Aplikasi SIAP</em> (Butuh CRF · Aplikasi) = PIC CRF kategori <em>Aplikasi</em>.
         </div>
-
-        <ul class="nav nav-tabs crf-master-tabs" role="tablist">
-            <?php foreach ($tabs as $tabKey => $tab): ?>
-                <li class="nav-item" role="presentation">
-                    <a
-                        class="nav-link <?= $activeTab === $tabKey ? 'active' : '' ?>"
-                        href="?tab=<?= h($tabKey) ?>"
-                        data-bs-toggle="tab"
-                        data-bs-target="#tab-<?= h($tabKey) ?>"
-                        role="tab"
-                        aria-controls="tab-<?= h($tabKey) ?>"
-                        aria-selected="<?= $activeTab === $tabKey ? 'true' : 'false' ?>"
-                    >
-                        <i class="bi <?= h($tab['icon']) ?>"></i> <?= h($tab['label']) ?>
-                        <span class="badge rounded-pill text-bg-light"><?= count($tab['rows']) ?></span>
-                    </a>
-                </li>
-            <?php endforeach; ?>
-        </ul>
 
         <div class="tab-content">
             <?php foreach ($tabs as $tabKey => $tab): ?>
+                <?php if ($tabKey !== $activeTab) { continue; } // satu modul per halaman ?>
                 <div class="tab-pane fade <?= $activeTab === $tabKey ? 'show active' : '' ?>" id="tab-<?= h($tabKey) ?>" role="tabpanel">
 
                     <div class="crf-master-toolbar">

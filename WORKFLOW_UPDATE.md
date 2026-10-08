@@ -187,9 +187,20 @@ Cara kerja mode `module`:
 - JavaScript: pencarian elemen dibatasi ke `.crf-module`; modal konfirmasi ditempel di dalamnya.
 - Mode module tidak memuat Bootstrap JS. Dialog, dropdown, dan modal CRF memerlukan Bootstrap 5.3
   bundle (JS) dari SIAP, atau aktifkan `CRF_LOAD_BOOTSTRAP`.
-- *Dashboard Handling Kategori* (`helpdesk/handling.php`) ada di grup menu CRF; menu "Dashboard" hanya
-  tersisa untuk Admin (*Kategori & Handling*). Di SIAP halaman ini berada di dalam modul Helpdesk, bukan
-  menu dashboard tersendiri; pindahkan item ini ke menu Helpdesk SIAP saat integrasi (halamannya memuat
-  tab Helpdesk dan CRF).
+- **Kategori dan Handling dipisah per modul** (tanpa tab; menu memilih modul lewat `?tab=`):
+
+  | Modul | Menu | Halaman |
+  |---|---|---|
+  | Help Desk | Handling Helpdesk, Kategori Helpdesk (Admin) | `helpdesk/handling.php?tab=helpdesk`, `admin/master_data.php?tab=helpdesk` |
+  | CRF | Handling CRF, Kategori CRF (Admin) | `helpdesk/handling.php?tab=crf`, `admin/master_data.php?tab=crf` |
+
+  Menu "Dashboard" sudah tidak ada. Saat integrasi SIAP, hapus sisi Helpdesk (halaman dan tab `helpdesk`)
+  karena dipegang modul Helpdesk SIAP; `includes/categories.php` cukup diarahkan ke tabel kategori dan PIC
+  Helpdesk milik SIAP.
+- **Catatan integrasi:** kategori Helpdesk di SIAP **tidak punya kolom "Butuh CRF"**. Di prototipe ini penanda itu
+  (`helpdesk_categories.requires_crf` dan `default_crf_category_id`) menentukan tiket mana yang diteruskan ke
+  Form CRF dan dari kategori Helpdesk mana PIC CRF diturunkan (`crf_category_pic_sources`). Karena SIAP tidak
+  memilikinya, pemetaan itu harus dipindah ke tabel milik modul CRF (kategori Helpdesk SIAP → kategori CRF default,
+  plus penanda butuh CRF) dan dikelola dari halaman Kategori CRF.
 - Tetap perlu dihapus/diganti saat integrasi: `login.php`, `logout.php`, `actions/login.php`
   (login memakai sesi SIAP).
