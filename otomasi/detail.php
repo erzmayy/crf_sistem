@@ -261,19 +261,15 @@ require_once __DIR__ . '/../includes/header.php';
                         <?php if ($otomasiPhase === 'eksekusi'): ?>
 
                             <div class="alert alert-success">
-                                CRF sudah disetujui Kepala Departemen Operasional.
-                                Otomasi dapat menjalankan eksekusi perubahan.
+                                CRF disetujui Kepala Departemen. Silakan jalankan eksekusi perubahan.
                             </div>
 
                             <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
 
                             <div class="crf-readonly-note mb-4">
                                 <i class="bi bi-info-circle"></i>
-                                Setelah eksekusi selesai, tekan <strong>Selesai Eksekusi</strong>. SLA berhenti saat itu
-                                dan CRF diteruskan ke CMO untuk <strong>UAT</strong> (pengujian bersama Otomasi; waktu UAT
-                                tidak dihitung dalam SLA). Setelah UAT lulus, Otomasi mengisi
-                                <strong>Tanggal Implementasi</strong> dan <strong>Implementasi / Hasil Perubahan</strong>,
-                                lalu Pemohon mengisi Post Implementation Review.
+                                Setelah eksekusi selesai, tekan <strong>Selesai Eksekusi</strong>. SLA berhenti dan
+                                CRF dikirim ke CMO untuk <strong>UAT</strong> (tidak dihitung dalam SLA).
                             </div>
 
                             <div class="mb-4">
@@ -307,9 +303,8 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <div class="crf-readonly-note mb-4">
                                 <i class="bi bi-info-circle"></i>
-                                Perbaiki sesuai catatan CMO (koordinasi lewat tombol <strong>Diskusi Forum</strong>), lalu
-                                kirim ulang untuk UAT. SLA sudah berhenti saat eksekusi pertama selesai, jadi perbaikan dan
-                                UAT ulang tidak dihitung dalam SLA.
+                                Perbaiki sesuai catatan CMO (koordinasi lewat <strong>Diskusi Forum</strong>), lalu
+                                kirim ulang untuk UAT. Waktu perbaikan tidak dihitung dalam SLA.
                             </div>
 
                             <div class="mb-4">
@@ -329,18 +324,9 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <div class="alert alert-success">
                                 <strong>UAT lulus</strong><?= !empty($crf['uat_passed_at']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['uat_passed_at']))) : '' ?>.
-                                Isi hasil implementasi, lalu CRF diteruskan ke Pemohon untuk Post Implementation Review.
                             </div>
 
                             <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
-
-                            <div class="crf-readonly-note mb-4">
-                                <i class="bi bi-info-circle"></i>
-                                Wajib mengisi <strong>Tanggal Implementasi</strong> dan
-                                <strong>Implementasi / Hasil Perubahan</strong>.
-                                Setelah itu Pemohon mengisi Post Implementation Review,
-                                lalu CRF diteruskan ke CMO untuk penutupan.
-                            </div>
 
                             <div class="mb-4">
                                 <label for="implementation_date" class="form-label fw-semibold">

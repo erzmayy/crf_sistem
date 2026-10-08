@@ -75,7 +75,13 @@ $sql = "
     SELECT cr.*
     FROM change_requests cr
     WHERE " . implode(' AND ', $where) . "
-    ORDER BY cr.updated_at " . ($view === 'history' ? 'DESC' : 'ASC') . "
+    ORDER BY " . ($view === 'history'
+        ? 'cr.updated_at DESC'
+        // Antrean persetujuan: urgensi (Tinggi dulu), lalu yang paling lama menunggu.
+        : "FIELD(COALESCE(cr.final_urgency_level, cr.level), 'Tinggi', 'Normal', 'Rendah') = 0,
+        FIELD(COALESCE(cr.final_urgency_level, cr.level), 'Tinggi', 'Normal', 'Rendah'),
+        cr.updated_at ASC,
+        cr.id ASC") . "
     LIMIT {$perPage} OFFSET {$offset}
 ";
 

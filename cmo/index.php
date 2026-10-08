@@ -106,7 +106,14 @@ $sql = "
     SELECT cr.*
     FROM change_requests cr
     WHERE " . implode(' AND ', $where) . "
-    ORDER BY cr.updated_at DESC
+    ORDER BY " . ($filter === 'history'
+        ? 'cr.updated_at DESC'
+        // Antrean kerja: yang menunggu Pemohon di bawah, lalu urgensi (Tinggi dulu), lalu yang paling lama menunggu.
+        : "cr.workflow_stage = 'PEMOHON_PIR',
+        FIELD(COALESCE(cr.final_urgency_level, cr.level), 'Tinggi', 'Normal', 'Rendah') = 0,
+        FIELD(COALESCE(cr.final_urgency_level, cr.level), 'Tinggi', 'Normal', 'Rendah'),
+        cr.updated_at ASC,
+        cr.id ASC") . "
     LIMIT {$perPage} OFFSET {$offset}";
 
 $stmt = $pdo->prepare($sql);

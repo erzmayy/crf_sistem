@@ -414,13 +414,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="crf-section-body">
 
                     <p class="text-muted">
-
-                        Otomasi sudah menyelesaikan eksekusi dan mengisi
-                        Implementasi / Hasil Perubahan, lalu Pemohon sudah mengisi
-                        Post Implementation Review.
-                        CMO dapat menutup CRF setelah memastikan
-                        seluruh proses sudah lengkap.
-
+                        Implementasi dan Post Implementation Review sudah diisi. Tutup CRF setelah memastikan semuanya lengkap.
                     </p>
 
                     <form action="../actions/cmo_action.php" method="POST">
@@ -479,8 +473,8 @@ require_once __DIR__ . '/../includes/header.php';
                         Otomasi
                         <?php if (!empty($crf['assigned_handler_name'])): ?>(<strong><?= h($crf['assigned_handler_name']) ?></strong>)<?php endif; ?>
                         sudah menyelesaikan eksekusi<?= !empty($crf['automation_completed_at']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['automation_completed_at']))) : '' ?>
-                        dan SLA sudah berhenti. Lakukan pengujian bersama PIC CRF (koordinasi lewat tombol
-                        <strong>Diskusi Forum</strong>). Waktu UAT dan perbaikan tidak dihitung dalam SLA.
+                        dan SLA berhenti. Lakukan pengujian bersama PIC CRF (koordinasi lewat <strong>Diskusi Forum</strong>);
+                        waktu UAT tidak dihitung dalam SLA.
                     </p>
 
                     <?php if ($uatHandoff && trim((string) $uatHandoff['description']) !== ''): ?>
