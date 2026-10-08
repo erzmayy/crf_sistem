@@ -80,6 +80,9 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
 - **Target hasil** 2 hari kerja (`FORUM_DISCUSSION_DECISION_DAYS`). Lewat target,
   CMO dan Admin mendapat satu pengingat (dikirim saat Forum dibuka).
 - Level/SLA tidak dapat diubah lagi setelah Kepala Departemen Operasional menyetujui.
+- **Tombol "Diskusi Forum"** di halaman detail CRF (CMO, Kadep, PIC CRF, Admin) membuka ruang Forum CRF itu,
+  dengan jumlah komentar dan yang belum dibaca. Hanya tampil untuk CRF yang masih aktif (aturan yang
+  sama dengan ruang Forum) dan peran Forum. Komponen: `includes/partials/forum_button.php`.
 - **Notifikasi:** CMO, Admin, dan PIC CRF kategori saat pembahasan diajukan; Kepala Departemen Operasional
   saat hasil dicatat (CRF menunggu persetujuannya); pengaju (CMO) dan
   pemberi komentar saat hasil dicatat.
@@ -175,11 +178,18 @@ Cara kerja mode `module`:
   atau footer. Isi halaman dibungkus `<div class="crf-module crf-module--embedded">`.
   Halaman CRF tidak perlu diubah: tetap memanggil `include header` / `include footer`.
 - Menu tersedia sebagai data dari `crfNavGroups()` (`includes/crf_nav.php`) agar SIAP dapat
-  menampilkannya di menunya sendiri (label, url relatif, show, active, badge).
+  menampilkannya di menunya sendiri (label, url relatif, show, active, badge, badge_label).
+  Angka antrean (CMO: verifikasi + finalisasi, Kadep: persetujuan, PIC CRF: implementasi dan yang
+  melewati SLA) dan komentar Forum yang belum dibaca ikut di `badge`; teks tooltipnya di `badge_label`.
+  Pengganti kartu angka di dashboard peran yang sudah dihapus.
 - CSS: aturan umum (`body`, `:root`, `a`, `button`, `.btn`, `.card`, `.badge`, dst.) dibatasi di
   `.crf-module`, sehingga tidak menimpa gaya SIAP. Variabel warna memakai awalan `--crf-`.
 - JavaScript: pencarian elemen dibatasi ke `.crf-module`; modal konfirmasi ditempel di dalamnya.
 - Mode module tidak memuat Bootstrap JS. Dialog, dropdown, dan modal CRF memerlukan Bootstrap 5.3
   bundle (JS) dari SIAP, atau aktifkan `CRF_LOAD_BOOTSTRAP`.
+- *Dashboard Handling Kategori* (`helpdesk/handling.php`) ada di grup menu CRF; menu "Dashboard" hanya
+  tersisa untuk Admin (*Kategori & Handling*). Di SIAP halaman ini berada di dalam modul Helpdesk, bukan
+  menu dashboard tersendiri; pindahkan item ini ke menu Helpdesk SIAP saat integrasi (halamannya memuat
+  tab Helpdesk dan CRF).
 - Tetap perlu dihapus/diganti saat integrasi: `login.php`, `logout.php`, `actions/login.php`
   (login memakai sesi SIAP).

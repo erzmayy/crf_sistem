@@ -70,6 +70,38 @@ function forumUnreadTotal(PDO $pdo, int $userId): int
     return array_sum(forumUnreadCounts($pdo, $userId));
 }
 
+/**
+ * Ringkasan diskusi Forum satu CRF untuk tombol "Diskusi Forum" di halaman detail.
+ * Angka "baru" memakai aturan yang sama dengan badge menu Forum.
+ *
+ * @return array{comments:int,unread:int,open:bool}
+ */
+function forumCrfSummary(PDO $pdo, int $crfId, int $userId): array
+{
+    $comments = $pdo->prepare('SELECT COUNT(*) FROM forum_comments WHERE change_request_id = :crf_id AND is_system = 0');
+    $comments->execute(['crf_id' => $crfId]);
+
+    $unread = $pdo->prepare(
+        'SELECT COUNT(*)
+         FROM forum_comments c
+         LEFT JOIN forum_read_states rs
+                ON rs.change_request_id = c.change_request_id AND rs.user_id = :read_user_id
+         WHERE c.change_request_id = :crf_id
+           AND c.user_id <> :comment_user_id
+           AND c.id > COALESCE(rs.last_read_comment_id, 0)'
+    );
+    $unread->execute(['read_user_id' => $userId, 'crf_id' => $crfId, 'comment_user_id' => $userId]);
+
+    $open = $pdo->prepare("SELECT COUNT(*) FROM forum_discussions WHERE change_request_id = :crf_id AND status = 'menunggu'");
+    $open->execute(['crf_id' => $crfId]);
+
+    return [
+        'comments' => (int) $comments->fetchColumn(),
+        'unread' => (int) $unread->fetchColumn(),
+        'open' => (int) $open->fetchColumn() > 0,
+    ];
+}
+
 function markForumRead(PDO $pdo, int $crfId, int $userId, int $lastCommentId): void
 {
     if ($lastCommentId <= 0) {

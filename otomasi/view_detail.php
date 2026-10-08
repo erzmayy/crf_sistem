@@ -144,6 +144,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
             <div class="d-flex gap-2">
+                <?php require __DIR__ . '/../includes/partials/forum_button.php'; ?>
 
                 <a href="index.php" class="btn btn-crf-outline">
                     <i class="bi bi-arrow-left"></i>

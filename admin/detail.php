@@ -85,6 +85,7 @@ require_once __DIR__ . '/../includes/header.php';
         <p>Nomor Register: <strong><?= h($crf['request_number']) ?></strong></p>
       </div>
       <div class="d-flex gap-2">
+          <?php require __DIR__ . '/../includes/partials/forum_button.php'; ?>
         <a
           href="../actions/export_crf.php?id=<?= (int) $crf['id'] ?>"
           class="btn btn-crf-primary"
