@@ -37,7 +37,7 @@ Forum, Helpdesk, dan Notifikasi.
 | Folder | Isi |
 |--------|-----|
 | `user/` | Pemohon: Form CRF, Pengajuan Saya, detail |
-| `cmo/`, `otomasi/`, `pak_joko/` | Dashboard dan detail untuk CMO, Handler/Otomasi, dan Kepala Departemen Operasional |
+| `cmo/`, `otomasi/`, `pak_joko/` | Antrean dan detail untuk CMO, PIC CRF (Otomasi), dan Kepala Departemen Operasional; setelah login langsung masuk ke antrean masing-masing |
 | `admin/` | Dashboard, master kategori CRF/Helpdesk, Handling Kategori |
 | `helpdesk/` | Ticket Helpdesk (form, ticket saya, penanganan PIC) |
 | `forum/` | Diskusi per CRF dan penetapan urgensi final |

@@ -27,6 +27,7 @@ if ($queue === 'history') {
         FROM crf_activity_logs activity_log
         WHERE activity_log.change_request_id = cr.id
           AND activity_log.activity IN (
+              'Eksekusi Selesai',
               'Otomasi Selesai'
           )
     )";

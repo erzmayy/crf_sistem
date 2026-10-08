@@ -1,8 +1,8 @@
 <?php
 /**
  * helpdesk/handling.php
- * Dashboard Handling Kategori (tunggal): kartu per kategori Helpdesk dan
- * kategori CRF dalam satu halaman bertab.
+ * Handling Kategori: kartu per kategori. Satu modul per halaman, dibuka dari menu masing-masing
+ * (?tab=helpdesk di modul Helpdesk, ?tab=crf di modul CRF).
  * - Tab Helpdesk: PIC kategori Helpdesk (Admin melihat semua).
  * - Tab CRF: Handler hanya kategori yang ditanganinya; Admin, CMO, dan
  *   Kadep melihat semua kategori.
@@ -38,7 +38,8 @@ $activeTab = $requestedTab === 'crf'
 $helpdeskCards = [];
 $helpdeskTotals = ['kategori' => 0, 'total' => 0, 'selesai' => 0, 'sisa' => 0, 'batal' => 0];
 
-if ($canHelpdesk) {
+// Satu modul per halaman: hanya data modul yang sedang dibuka yang dihitung.
+if ($canHelpdesk && $activeTab === 'helpdesk') {
     $scope = helpdeskCategoryScopeForUser($pdo);
     $scopeSql = $scope === null
         ? '1 = 1'
@@ -73,7 +74,7 @@ $crfTotals = ['kategori' => 0, 'masuk' => 0, 'review' => 0, 'diproses' => 0, 'ap
 $crfListPage = '';
 $crfListExtra = [];
 
-if ($canCrf) {
+if ($canCrf && $activeTab === 'crf') {
     $conditions = crfDisplayStatusConditions('cr');
 
     if ($role === 'otomasi') {
@@ -130,7 +131,7 @@ if ($canCrf) {
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$pageTitle = 'Dashboard Handling Kategori';
+$pageTitle = $activeTab === 'crf' ? 'Handling Kategori CRF' : 'Handling Kategori Helpdesk';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -139,17 +140,17 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-helpdesk-banner crf-banner-with-actions">
             <div>
                 <span class="crf-helpdesk-eyebrow">PT PERSONA PRIMA UTAMA</span>
-                <h1>Dashboard Handling Kategori</h1>
-                <p>Ringkasan penanganan per kategori Helpdesk dan CRF dalam satu halaman.</p>
+                <h1><?= $activeTab === 'crf' ? 'Handling Kategori CRF' : 'Handling Kategori Helpdesk' ?></h1>
+                <p><?= $activeTab === 'crf' ? 'Ringkasan penanganan CRF per kategori.' : 'Ringkasan penanganan tiket Helpdesk per kategori.' ?></p>
             </div>
             <div class="crf-banner-actions">
-                <?php if ($canHelpdesk): ?>
+                <?php if ($canHelpdesk && $activeTab === 'helpdesk'): ?>
                     <span class="crf-banner-stat">
                         <strong><?= number_format($helpdeskTotals['selesai'], 0, ',', '.') ?></strong>/<?= number_format($helpdeskTotals['total'], 0, ',', '.') ?>
                         <small>Helpdesk selesai</small>
                     </span>
                 <?php endif; ?>
-                <?php if ($canCrf): ?>
+                <?php if ($canCrf && $activeTab === 'crf'): ?>
                     <span class="crf-banner-stat">
                         <strong><?= number_format($crfTotals['selesai'], 0, ',', '.') ?></strong>/<?= number_format($crfTotals['masuk'], 0, ',', '.') ?>
                         <small>CRF selesai</small>
@@ -165,31 +166,8 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="alert alert-<?= h($flash['type']) ?> crf-alert"><?= h($flash['message']) ?></div>
         <?php endif; ?>
 
-        <?php if (count($tabs) > 1): ?>
-            <ul class="nav nav-tabs crf-master-tabs" role="tablist">
-                <?php foreach ($tabs as $tabKey => $tab): ?>
-                    <li class="nav-item" role="presentation">
-                        <a
-                            class="nav-link <?= $activeTab === $tabKey ? 'active' : '' ?>"
-                            href="?tab=<?= h($tabKey) ?>"
-                            data-bs-toggle="tab"
-                            data-bs-target="#tab-<?= h($tabKey) ?>"
-                            role="tab"
-                            aria-controls="tab-<?= h($tabKey) ?>"
-                            aria-selected="<?= $activeTab === $tabKey ? 'true' : 'false' ?>"
-                        >
-                            <i class="bi <?= h($tab['icon']) ?>"></i> <?= h($tab['label']) ?>
-                            <?php if ($tab['count'] > 0): ?>
-                                <span class="badge rounded-pill text-bg-danger" title="Belum selesai"><?= (int) $tab['count'] ?></span>
-                            <?php endif; ?>
-                        </a>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
-
         <div class="tab-content">
-            <?php if ($canHelpdesk): ?>
+            <?php if ($canHelpdesk && $activeTab === 'helpdesk'): ?>
                 <div class="tab-pane fade <?= $activeTab === 'helpdesk' ? 'show active' : '' ?>" id="tab-helpdesk" role="tabpanel">
                     <div class="crf-kpi-grid mb-4">
                         <div class="crf-kpi-card crf-kpi-card--primary"><span class="crf-kpi-icon"><i class="bi bi-tags"></i></span><div><span class="crf-kpi-label">Kategori</span><strong><?= $helpdeskTotals['kategori'] ?></strong></div></div>
@@ -238,7 +216,7 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
             <?php endif; ?>
 
-            <?php if ($canCrf): ?>
+            <?php if ($canCrf && $activeTab === 'crf'): ?>
                 <div class="tab-pane fade <?= $activeTab === 'crf' ? 'show active' : '' ?>" id="tab-crf" role="tabpanel">
                     <div class="crf-kpi-grid mb-4">
                         <div class="crf-kpi-card crf-kpi-card--primary"><span class="crf-kpi-icon"><i class="bi bi-bookmark"></i></span><div><span class="crf-kpi-label">Kategori</span><strong><?= $crfTotals['kategori'] ?></strong></div></div>

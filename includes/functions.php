@@ -229,6 +229,8 @@ function workflowStageLabel(string $stage): string
             return 'Verifikasi CMO';
         case 'OTOMASI':
             return 'Tindak Lanjut Divisi Otomasi';
+        case 'UAT':
+            return 'UAT oleh CMO';
         case 'PEMOHON_PIR':
             return 'Menunggu PIR Pemohon';
         case 'kadep_operasional':
@@ -242,6 +244,25 @@ function workflowStageLabel(string $stage): string
     }
 }
 
+/**
+ * Fase pekerjaan Otomasi pada tahap OTOMASI (tahap yang sama dipakai tiga kali):
+ *   eksekusi     : belum menyelesaikan eksekusi (SLA berjalan)
+ *   perbaikan    : CMO meminta perbaikan setelah UAT (SLA sudah berhenti, tidak dihitung ulang)
+ *   implementasi : UAT lulus, Otomasi mengisi tanggal dan hasil implementasi
+ * Mengembalikan '' bila CRF tidak sedang di tahap OTOMASI.
+ */
+function crfOtomasiPhase(array $crf): string
+{
+    if (($crf['workflow_stage'] ?? '') !== 'OTOMASI') {
+        return '';
+    }
+    if (empty($crf['automation_completed_at'])) {
+        return 'eksekusi';
+    }
+
+    return empty($crf['uat_passed_at']) ? 'perbaikan' : 'implementasi';
+}
+
 function workflowStageBadgeClass(string $stage): string
 {
     switch ($stage) {
@@ -249,6 +270,8 @@ function workflowStageBadgeClass(string $stage): string
             return 'badge-stage-cmo';
         case 'OTOMASI':
             return 'badge-stage-otomasi';
+        case 'UAT':
+            return 'badge-stage-cmo';
         case 'PEMOHON_PIR':
             return 'badge-stage-pir';
         case 'kadep_operasional':
@@ -579,7 +602,15 @@ function crfDisplayStatus(array $crf): array
         return ['key' => 'approval', 'label' => 'Menunggu Persetujuan', 'class' => 'badge-stage-joko'];
     }
     if ($stage === 'OTOMASI' && $approved) {
-        return ['key' => 'disetujui', 'label' => 'Disetujui · Eksekusi', 'class' => 'badge-stage-otomasi'];
+        $phase = crfOtomasiPhase($crf);
+        $label = $phase === 'perbaikan'
+            ? 'Perbaikan Hasil UAT'
+            : ($phase === 'implementasi' ? 'Isi Implementasi' : 'Disetujui · Eksekusi');
+
+        return ['key' => 'disetujui', 'label' => $label, 'class' => 'badge-stage-otomasi'];
+    }
+    if ($stage === 'UAT') {
+        return ['key' => 'uat', 'label' => 'Menunggu UAT', 'class' => 'badge-stage-cmo'];
     }
     if ($stage === 'PEMOHON_PIR') {
         return ['key' => 'pir', 'label' => 'Menunggu PIR Pemohon', 'class' => 'badge-stage-pir'];
@@ -605,7 +636,7 @@ function crfDisplayStatusConditions(string $alias = 'cr'): array
         'review'     => ['label' => 'Menunggu Verifikasi', 'sql' => "{$a}status = 'Belum Ditindak Lanjuti' AND {$a}workflow_stage = 'CMO_FILTER' AND {$a}forum_discussion_open = 0"],
         'pembahasan' => ['label' => 'Menunggu Pembahasan Forum', 'sql' => "{$a}workflow_stage = 'CMO_FILTER' AND {$a}forum_discussion_open = 1 AND {$a}status NOT IN ('Draft','Solve','Cancel')"],
         'approval'   => ['label' => 'Menunggu Persetujuan', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage = 'kadep_operasional'"],
-        'disetujui'  => ['label' => 'Disetujui · Eksekusi', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage IN ('OTOMASI','PEMOHON_PIR','CMO_FINAL') AND {$a}kadep_operasional_approved_at IS NOT NULL"],
+        'disetujui'  => ['label' => 'Disetujui · Eksekusi', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage IN ('OTOMASI','UAT','PEMOHON_PIR','CMO_FINAL') AND {$a}kadep_operasional_approved_at IS NOT NULL"],
         'revisi'     => ['label' => 'Ditolak / Perlu Revisi', 'sql' => "{$a}status = 'Perlu Revisi'"],
         'selesai'    => ['label' => 'Selesai', 'sql' => "{$a}status = 'Solve'"],
         'dibatalkan' => ['label' => 'Dibatalkan', 'sql' => "{$a}status = 'Cancel'"],
@@ -668,8 +699,10 @@ function crfPirReminderInfo(PDO $pdo, array $crf): array
 
     $lastAt = $row['last_at'] ?: null;
     $nextAt = $lastAt !== null ? date('Y-m-d H:i:s', strtotime($lastAt) + CRF_PIR_REMINDER_INTERVAL) : null;
-    $waitingDays = !empty($crf['automation_completed_at'])
-        ? (int) floor(slaWorkingSecondsBetween(new DateTimeImmutable($crf['automation_completed_at']), new DateTimeImmutable()) / 86400)
+    // Penantian PIR dimulai saat Otomasi mengisi implementasi; data lama memakai waktu eksekusi selesai.
+    $pirStartedAt = $crf['implementation_submitted_at'] ?? $crf['automation_completed_at'] ?? null;
+    $waitingDays = !empty($pirStartedAt)
+        ? (int) floor(slaWorkingSecondsBetween(new DateTimeImmutable($pirStartedAt), new DateTimeImmutable()) / 86400)
         : null;
 
     return [
@@ -1006,6 +1039,24 @@ function handleAttachmentUploads(PDO $pdo, int $crfId, array $filesInput): array
     );
 
     return uploadAttachmentsToStorage($filesInput, 'crf_' . $crfId . '_', $stmt, $crfId);
+}
+
+/**
+ * Dokumen hasil UAT: validasi dan penyimpanan sama dengan lampiran CRF,
+ * dicatat dengan category 'uat' agar terpisah dari lampiran pengajuan.
+ *
+ * @return string[] daftar pesan error (kosong jika semua berhasil / tidak ada file)
+ */
+function handleUatDocumentUploads(PDO $pdo, int $crfId, array $filesInput): array
+{
+    $stmt = $pdo->prepare(
+        "INSERT INTO attachments
+        (change_request_id, original_name, stored_name, file_path, file_type, file_size, category)
+        VALUES
+        (:owner_id, :original_name, :stored_name, :file_path, :file_type, :file_size, 'uat')"
+    );
+
+    return uploadAttachmentsToStorage($filesInput, 'crf_' . $crfId . '_uat_', $stmt, $crfId);
 }
 
 /**

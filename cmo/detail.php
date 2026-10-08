@@ -31,7 +31,7 @@ $stmt = $pdo->prepare("
     FROM change_requests cr
     WHERE cr.id = :id
       AND (
-          cr.workflow_stage IN ('CMO_FILTER', 'PEMOHON_PIR', 'CMO_FINAL')
+          cr.workflow_stage IN ('CMO_FILTER', 'UAT', 'PEMOHON_PIR', 'CMO_FINAL')
           OR EXISTS (
               SELECT 1
               FROM crf_activity_logs activity_log
@@ -150,6 +150,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
             <div class="d-flex gap-2">
+                <?php require __DIR__ . '/../includes/partials/forum_button.php'; ?>
                 <a href="../actions/export_crf.php?id=<?= (int) $crf['id'] ?>" class="btn btn-crf-primary" target="_blank" rel="noopener">
                     <i class="bi bi-file-earmark-pdf"></i> Export PDF
                 </a>
@@ -447,6 +448,95 @@ require_once __DIR__ . '/../includes/header.php';
 
             </div>
 
+        <?php elseif ($crf['workflow_stage'] === 'UAT'): ?>
+
+            <?php
+            $uatDocCount = count(array_filter($attachments, static fn(array $file): bool => ($file['category'] ?? '') === 'uat'));
+            // Catatan serah terima terakhir dari PIC CRF (eksekusi selesai / dikirim ulang).
+            $uatHandoffStmt = $pdo->prepare("
+                SELECT activity, description, actor, created_at
+                FROM crf_activity_logs
+                WHERE change_request_id = :id AND activity IN ('Eksekusi Selesai', 'UAT Dikirim Ulang')
+                ORDER BY id DESC
+                LIMIT 1
+            ");
+            $uatHandoffStmt->execute(['id' => (int) $crf['id']]);
+            $uatHandoff = $uatHandoffStmt->fetch() ?: null;
+            $uatRoundStmt = $pdo->prepare("SELECT COUNT(*) FROM crf_activity_logs WHERE change_request_id = :id AND activity = 'UAT Perlu Perbaikan'");
+            $uatRoundStmt->execute(['id' => (int) $crf['id']]);
+            $uatRound = (int) $uatRoundStmt->fetchColumn() + 1;
+            ?>
+            <div class="crf-section crf-detail-card mb-4">
+
+                <div class="crf-section-header">
+                    <span class="crf-section-number"><i class="bi bi-clipboard2-check"></i></span>
+                    <h2>UAT (User Acceptance Test) · Putaran <?= $uatRound ?></h2>
+                </div>
+
+                <div class="crf-section-body">
+
+                    <p class="text-muted">
+                        Otomasi
+                        <?php if (!empty($crf['assigned_handler_name'])): ?>(<strong><?= h($crf['assigned_handler_name']) ?></strong>)<?php endif; ?>
+                        sudah menyelesaikan eksekusi<?= !empty($crf['automation_completed_at']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['automation_completed_at']))) : '' ?>
+                        dan SLA sudah berhenti. Lakukan pengujian bersama PIC CRF (koordinasi lewat tombol
+                        <strong>Diskusi Forum</strong>). Waktu UAT dan perbaikan tidak dihitung dalam SLA.
+                    </p>
+
+                    <?php if ($uatHandoff && trim((string) $uatHandoff['description']) !== ''): ?>
+                        <div class="crf-readonly-note mb-3">
+                            <i class="bi bi-chat-left-text"></i>
+                            <strong><?= h($uatHandoff['activity'] === 'UAT Dikirim Ulang' ? 'Perbaikan dari PIC:' : 'Serah terima dari PIC:') ?></strong>
+                            <?= nl2br(h($uatHandoff['description'])) ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="mb-3">
+                        <?php $uatUploadBack = ''; require __DIR__ . '/../includes/partials/uat_upload_form.php'; ?>
+                        <div class="mt-2 small <?= $uatDocCount > 0 ? 'text-success' : 'text-danger' ?>">
+                            <i class="bi <?= $uatDocCount > 0 ? 'bi-check-circle' : 'bi-exclamation-circle' ?>"></i>
+                            <?= $uatDocCount > 0
+                                ? $uatDocCount . ' dokumen UAT sudah diunggah (lihat di bagian Detail Pengajuan).'
+                                : 'Belum ada dokumen UAT. Unggah minimal satu dokumen sebelum menyatakan UAT lulus.' ?>
+                        </div>
+                    </div>
+
+                    <form action="../actions/cmo_action.php" method="POST">
+
+                        <?= csrfField() ?>
+
+                        <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
+
+                        <div class="mb-3">
+                            <label for="uat_tanggapan" class="form-label fw-semibold">
+                                Catatan hasil UAT
+                                <span class="text-muted fw-normal">(wajib bila perlu perbaikan)</span>
+                            </label>
+                            <textarea
+                                id="uat_tanggapan"
+                                name="tanggapan"
+                                class="form-control"
+                                rows="3"
+                                placeholder="Temuan, error, atau hal yang perlu diperbaiki Otomasi..."
+                            ></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button name="action" value="uat_pass" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i>
+                                Lulus UAT
+                            </button>
+                            <button name="action" value="uat_fail" class="btn btn-outline-danger">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                                Perlu Perbaikan
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
         <?php elseif ($crf['workflow_stage'] === 'PEMOHON_PIR'): ?>
 
             <?php $pirReminder = crfPirReminderInfo($pdo, $crf); ?>

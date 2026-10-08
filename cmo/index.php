@@ -7,7 +7,7 @@ $pdo = getConnection();
 
 $filter = $_GET['stage'] ?? 'all';
 $search = $_GET['q'] ?? '';
-$allowedFilters = ['all', 'filter', 'pir', 'final', 'history'];
+$allowedFilters = ['all', 'filter', 'uat', 'pir', 'final', 'history'];
 if (!in_array($filter, $allowedFilters, true)) {
     $filter = 'all';
 }
@@ -34,11 +34,13 @@ if ($filter === 'history') {
           )
     )";
 } else {
-    $where[] = "cr.workflow_stage IN ('CMO_FILTER','PEMOHON_PIR','CMO_FINAL')";
+    $where[] = "cr.workflow_stage IN ('CMO_FILTER','UAT','PEMOHON_PIR','CMO_FINAL')";
 }
 
 if ($filter === 'filter') {
     $where[] = "cr.workflow_stage = 'CMO_FILTER'";
+} elseif ($filter === 'uat') {
+    $where[] = "cr.workflow_stage = 'UAT'";
 } elseif ($filter === 'pir') {
     $where[] = "cr.workflow_stage = 'PEMOHON_PIR'";
 } elseif ($filter === 'final') {
@@ -116,8 +118,8 @@ $requests = $stmt->fetchAll();
  * SUMMARY
  * ========================================================= */
 
-$countStmt = $pdo->query("SELECT workflow_stage, COUNT(*) total FROM change_requests WHERE workflow_stage IN ('CMO_FILTER','PEMOHON_PIR','CMO_FINAL') AND status <> 'Draft' GROUP BY workflow_stage");
-$counts = ['CMO_FILTER' => 0, 'PEMOHON_PIR' => 0, 'CMO_FINAL' => 0];
+$countStmt = $pdo->query("SELECT workflow_stage, COUNT(*) total FROM change_requests WHERE workflow_stage IN ('CMO_FILTER','UAT','PEMOHON_PIR','CMO_FINAL') AND status <> 'Draft' GROUP BY workflow_stage");
+$counts = ['CMO_FILTER' => 0, 'UAT' => 0, 'PEMOHON_PIR' => 0, 'CMO_FINAL' => 0];
 foreach ($countStmt->fetchAll() as $row) {
     $counts[$row['workflow_stage']] = (int) $row['total'];
 }
@@ -133,7 +135,7 @@ require_once __DIR__ . '/../includes/header.php';
       <div>
         <span class="crf-helpdesk-eyebrow">PORTAL CRF · VERIFIKASI CMO</span>
         <h1>Verifikasi Permohonan Perubahan</h1>
-        <p>Kelola CRF pada tahap filter, pemantauan PIR, dan finalisasi.</p>
+        <p>Kelola CRF pada tahap filter, UAT, pemantauan PIR, dan finalisasi.</p>
       </div>
     </div>
 
@@ -145,6 +147,10 @@ require_once __DIR__ . '/../includes/header.php';
       <a class="crf-stat-card text-decoration-none" href="?stage=filter">
         <span><i class="bi bi-funnel-fill"></i> Menunggu Verifikasi</span>
         <strong><?= $counts['CMO_FILTER'] ?></strong>
+      </a>
+      <a class="crf-stat-card text-decoration-none" href="?stage=uat" title="Eksekusi selesai, menunggu pengujian UAT oleh CMO">
+        <span><i class="bi bi-clipboard2-check"></i> Menunggu UAT</span>
+        <strong><?= $counts['UAT'] ?></strong>
       </a>
       <a class="crf-stat-card text-decoration-none" href="?stage=pir" title="Implementasi selesai, menunggu Post Implementation Review dari Pemohon">
         <span><i class="bi bi-hourglass-split"></i> Menunggu PIR Pemohon</span>
@@ -162,6 +168,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="btn-group">
           <a href="?stage=all" class="btn btn-sm <?= $filter === 'all' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Semua</a>
           <a href="?stage=filter" class="btn btn-sm <?= $filter === 'filter' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Verifikasi</a>
+          <a href="?stage=uat" class="btn btn-sm <?= $filter === 'uat' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">UAT</a>
           <a href="?stage=pir" class="btn btn-sm <?= $filter === 'pir' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Menunggu PIR</a>
           <a href="?stage=final" class="btn btn-sm <?= $filter === 'final' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Finalisasi</a>
           <a href="?stage=history" class="btn btn-sm <?= $filter === 'history' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Riwayat</a>

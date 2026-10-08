@@ -252,13 +252,13 @@ function requireCrfRole($roles): void
                 header('Location: ../admin/dashboard.php');
                 break;
             case 'cmo':
-                header('Location: ../cmo/dashboard.php');
+                header('Location: ../cmo/index.php');
                 break;
             case 'otomasi':
-                header('Location: ../otomasi/dashboard.php');
+                header('Location: ../otomasi/index.php');
                 break;
             case 'kadep_operasional':
-                header('Location: ../pak_joko/dashboard.php');
+                header('Location: ../pak_joko/index.php');
                 break;
             default:
                 header('Location: ../user/pengajuan_saya.php');

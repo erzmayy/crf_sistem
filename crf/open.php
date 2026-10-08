@@ -28,6 +28,7 @@ if ($role === 'demo') {
     // Akun demo dibawa ke halaman peran yang sedang memegang CRF.
     $target = [
         'CMO_FILTER' => 'cmo/detail.php',
+        'UAT' => 'cmo/detail.php',
         'PEMOHON_PIR' => 'cmo/detail.php',
         'CMO_FINAL' => 'cmo/detail.php',
         'OTOMASI' => 'otomasi/detail.php',

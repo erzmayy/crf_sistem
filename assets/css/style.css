@@ -5799,3 +5799,29 @@ body.crf-module {
   .crf-sticky-actions .crf-sticky-buttons { width: 100%; flex-direction: column-reverse; }
   .crf-sticky-actions .crf-sticky-buttons > button { width: 100%; }
 }
+
+
+/* ---------- Tombol Diskusi Forum di halaman detail CRF ---------- */
+.crf-forum-button { display: inline-flex; align-items: center; gap: 0.4rem; }
+.crf-forum-button-count {
+  min-width: 20px;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+}
+.crf-forum-button-new {
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.crf-forum-button-flag { color: #d97706; font-size: 0.8rem; }

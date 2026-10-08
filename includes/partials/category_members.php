@@ -68,7 +68,7 @@ $isCrfMember = $memberType === 'crf';
     <p class="crf-member-hint">
         <i class="bi bi-info-circle"></i>
         PIC CRF mengikuti PIC kategori Helpdesk bertanda <em>Butuh CRF · <?= h($memberCategory['name']) ?></em>.
-        Untuk menambah atau mengganti PIC CRF, ubah PIC di tab <a href="?tab=helpdesk">Kategori Helpdesk</a>.
+        Untuk menambah atau mengganti PIC CRF, ubah PIC di halaman <a href="?tab=helpdesk">Kategori Helpdesk</a> (modul Helpdesk).
     </p>
 <?php else: ?>
     <form method="POST" action="../actions/category_master.php" class="crf-member-add" data-user-picker>

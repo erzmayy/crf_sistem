@@ -109,7 +109,7 @@ if ($crfEmbedded) {
                 <a class="<?= $navItem['active'] ? 'active' : '' ?>" href="<?= h($appBasePath . $navItem['url']) ?>">
                   <?= h($navItem['label']) ?>
                   <?php if (!empty($navItem['badge'])): ?>
-                    <span class="crf-nav-unread" aria-label="<?= (int) $navItem['badge'] ?> baru"><?= $navItem['badge'] > 99 ? '99+' : (int) $navItem['badge'] ?></span>
+                    <span class="crf-nav-unread" title="<?= h($navItem['badge_label'] ?? ((int) $navItem['badge'] . ' baru')) ?>" aria-label="<?= h($navItem['badge_label'] ?? ((int) $navItem['badge'] . ' baru')) ?>"><?= $navItem['badge'] > 99 ? '99+' : (int) $navItem['badge'] ?></span>
                   <?php endif; ?>
                 </a>
               </li>

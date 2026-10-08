@@ -48,6 +48,8 @@ $allowed = [
     'cancel' => 'CMO_FILTER',
     'complete' => 'CMO_FINAL',
     'remind_pir' => 'PEMOHON_PIR',
+    'uat_pass' => 'UAT',
+    'uat_fail' => 'UAT',
 ];
 
 $expected = $allowed[$action] ?? null;
@@ -57,10 +59,23 @@ if ($expected === null || (is_array($expected) ? !in_array($crf['workflow_stage'
     exit;
 }
 
-if (in_array($action, ['revision','cancel','request_discussion'], true) && $tanggapan === '') {
+if (in_array($action, ['revision','cancel','request_discussion','uat_fail'], true) && $tanggapan === '') {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Tanggapan / Tindak Lanjut wajib diisi untuk aksi ini.'];
     header('Location: ../cmo/detail.php?id=' . $id);
     exit;
+}
+
+/*
+ * UAT lulus: bukti pengujian wajib sudah diunggah.
+ */
+if ($action === 'uat_pass') {
+    $docStmt = $pdo->prepare("SELECT COUNT(*) FROM attachments WHERE change_request_id = :id AND category = 'uat'");
+    $docStmt->execute(['id' => $id]);
+    if ((int) $docStmt->fetchColumn() === 0) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Unggah minimal satu dokumen hasil UAT sebelum menyatakan UAT lulus.'];
+        header('Location: ../cmo/detail.php?id=' . $id);
+        exit;
+    }
 }
 
 /*
@@ -252,6 +267,50 @@ try {
         notifyUsers($pdo, [(int) $crf['user_id']], 'CRF dibatalkan: ' . $crfNumber,
             'CRF ' . $crfNumber . ' dibatalkan oleh CMO: ' . $tanggapan, $crfLink, $id, null, (int) $user['id']);
         $message = 'CRF berhasil dibatalkan.';
+    } elseif ($action === 'uat_pass' || $action === 'uat_fail') {
+        // UAT dilakukan CMO bersama Otomasi; hasilnya mengembalikan CRF ke Otomasi (SLA tidak berjalan lagi).
+        $passed = $action === 'uat_pass';
+        $stmt = $pdo->prepare(
+            "UPDATE change_requests
+             SET workflow_stage = 'OTOMASI', status = 'Dalam Proses', uat_passed_at = " . ($passed ? ':now' : 'NULL') . "
+             WHERE id = :id AND workflow_stage = 'UAT'"
+        );
+        $stmt->execute($passed ? ['now' => $now, 'id' => $id] : ['id' => $id]);
+        if ($stmt->rowCount() !== 1) {
+            throw new RuntimeException('CRF sudah tidak berada pada tahap UAT.');
+        }
+
+        $noteSuffix = $tanggapan !== '' ? ' Catatan CMO: ' . $tanggapan : '';
+        logCrfActivity(
+            $pdo,
+            $id,
+            $passed ? 'UAT Lulus' : 'UAT Perlu Perbaikan',
+            $passed
+                ? 'CMO menyatakan UAT lulus. CRF dikembalikan ke Otomasi untuk mengisi Implementasi / Hasil Perubahan.' . $noteSuffix
+                : $tanggapan,
+            $actor,
+            $oldDisplayStatus,
+            $passed ? 'Isi Implementasi' : 'Perbaikan Hasil UAT'
+        );
+
+        $picIds = !empty($crf['assigned_handler_id'])
+            ? [(int) $crf['assigned_handler_id']]
+            : (!empty($crf['crf_category_id']) ? crfCategoryHandlerIds($pdo, (int) $crf['crf_category_id']) : []);
+        notifyUsers(
+            $pdo,
+            $picIds,
+            $passed ? 'UAT lulus: isi implementasi ' . $crfNumber : 'UAT perlu perbaikan: ' . $crfNumber,
+            $passed
+                ? 'UAT CRF ' . $crfNumber . ' lulus. Silakan isi Tanggal Implementasi dan Implementasi / Hasil Perubahan.' . $noteSuffix
+                : 'UAT CRF ' . $crfNumber . ' menemukan hal yang perlu diperbaiki: ' . $tanggapan,
+            $crfLink,
+            $id,
+            null,
+            (int) $user['id']
+        );
+        $message = $passed
+            ? 'UAT dinyatakan lulus. CRF dikembalikan ke Otomasi untuk mengisi implementasi.'
+            : 'CRF dikembalikan ke Otomasi untuk diperbaiki. Lakukan UAT ulang setelah dikirim kembali.';
     } else {
         $stmt = $pdo->prepare("UPDATE change_requests SET status = 'Solve', workflow_stage = 'SELESAI', solved_at = :now, cancelled_at = NULL WHERE id = :id AND workflow_stage = 'CMO_FINAL'");
         $stmt->execute(['now' => $now, 'id' => $id]);
