@@ -74,6 +74,28 @@ $timeline = $timelineStmt->fetchAll();
 
 $isAssignedToOther = !empty($crf['assigned_handler_id']) && !isAssignedCrfHandler($crf);
 
+// Tahap OTOMASI punya tiga fase (eksekusi, perbaikan hasil UAT, isi implementasi).
+$otomasiPhase = crfOtomasiPhase($crf);
+$otomasiPhaseMeta = [
+    'eksekusi' => ['title' => 'Eksekusi / Tangani Permintaan', 'action' => 'execute', 'button' => 'Selesai Eksekusi · Kirim ke UAT', 'icon' => 'bi-play-circle'],
+    'perbaikan' => ['title' => 'Perbaikan Hasil UAT', 'action' => 'resubmit_uat', 'button' => 'Kirim Ulang ke UAT', 'icon' => 'bi-arrow-repeat'],
+    'implementasi' => ['title' => 'Implementasi', 'action' => 'complete', 'button' => 'Selesaikan', 'icon' => 'bi-journal-check'],
+][$otomasiPhase] ?? ['title' => 'Eksekusi / Tangani Permintaan', 'action' => 'execute', 'button' => 'Selesai Eksekusi · Kirim ke UAT', 'icon' => 'bi-play-circle'];
+
+// Catatan CMO pada UAT terakhir yang meminta perbaikan.
+$uatFailNote = null;
+if ($otomasiPhase === 'perbaikan') {
+    $uatFailStmt = $pdo->prepare("
+        SELECT description, actor, created_at
+        FROM crf_activity_logs
+        WHERE change_request_id = :id AND activity = 'UAT Perlu Perbaikan'
+        ORDER BY id DESC
+        LIMIT 1
+    ");
+    $uatFailStmt->execute(['id' => $id]);
+    $uatFailNote = $uatFailStmt->fetch() ?: null;
+}
+
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
@@ -224,11 +246,11 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="crf-section-header">
 
                         <span class="crf-section-number">
-                            <i class="bi bi-play-circle"></i>
+                            <i class="bi <?= h($otomasiPhaseMeta['icon']) ?>"></i>
                         </span>
 
                         <h2>
-                            Eksekusi / Tangani Permintaan
+                            <?= h($otomasiPhaseMeta['title']) ?>
                         </h2>
 
                     </div>
@@ -236,70 +258,121 @@ require_once __DIR__ . '/../includes/header.php';
 
                     <div class="crf-section-body">
 
-                        <div class="alert alert-success">
+                        <?php if ($otomasiPhase === 'eksekusi'): ?>
 
-                            CRF sudah disetujui Kepala Departemen Operasional.
-                            Otomasi dapat menjalankan eksekusi perubahan.
+                            <div class="alert alert-success">
+                                CRF sudah disetujui Kepala Departemen Operasional.
+                                Otomasi dapat menjalankan eksekusi perubahan.
+                            </div>
 
-                        </div>
+                            <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
 
+                            <div class="crf-readonly-note mb-4">
+                                <i class="bi bi-info-circle"></i>
+                                Setelah eksekusi selesai, tekan <strong>Selesai Eksekusi</strong>. SLA berhenti saat itu
+                                dan CRF diteruskan ke CMO untuk <strong>UAT</strong> (pengujian bersama Otomasi; waktu UAT
+                                tidak dihitung dalam SLA). Setelah UAT lulus, Otomasi mengisi
+                                <strong>Tanggal Implementasi</strong> dan <strong>Implementasi / Hasil Perubahan</strong>,
+                                lalu Pemohon mengisi Post Implementation Review.
+                            </div>
 
-                        <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
+                            <div class="mb-4">
+                                <label for="note" class="form-label fw-semibold">
+                                    Catatan untuk UAT <span class="text-muted fw-normal">(opsional)</span>
+                                </label>
+                                <textarea
+                                    id="note"
+                                    name="note"
+                                    class="form-control"
+                                    rows="3"
+                                    placeholder="Ringkasan perubahan yang perlu diuji, lingkungan, atau langkah pengujian..."
+                                ></textarea>
+                            </div>
 
+                        <?php elseif ($otomasiPhase === 'perbaikan'): ?>
 
-                        <div class="crf-readonly-note mb-4">
+                            <div class="alert alert-warning">
+                                <strong>Hasil UAT: perlu perbaikan.</strong>
+                                <?php if ($uatFailNote): ?>
+                                    <div class="mt-1">
+                                        <?= nl2br(h($uatFailNote['description'])) ?>
+                                        <small class="d-block text-muted">
+                                            <?= h($uatFailNote['actor']) ?> · <?= h(date('d-m-Y H:i', strtotime($uatFailNote['created_at']))) ?>
+                                        </small>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
 
-                            <i class="bi bi-info-circle"></i>
+                            <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
 
-                            Sebelum menyelesaikan eksekusi, Otomasi wajib mengisi
-                            <strong>Tanggal Implementasi</strong> dan
-                            <strong>Implementasi / Hasil Perubahan</strong>.
-                            Setelah itu Pemohon mengisi Post Implementation Review,
-                            lalu CRF diteruskan ke CMO untuk penutupan.
+                            <div class="crf-readonly-note mb-4">
+                                <i class="bi bi-info-circle"></i>
+                                Perbaiki sesuai catatan CMO (koordinasi lewat tombol <strong>Diskusi Forum</strong>), lalu
+                                kirim ulang untuk UAT. SLA sudah berhenti saat eksekusi pertama selesai, jadi perbaikan dan
+                                UAT ulang tidak dihitung dalam SLA.
+                            </div>
 
-                        </div>
+                            <div class="mb-4">
+                                <label for="note" class="form-label fw-semibold">
+                                    Catatan perbaikan <span class="text-muted fw-normal">(opsional)</span>
+                                </label>
+                                <textarea
+                                    id="note"
+                                    name="note"
+                                    class="form-control"
+                                    rows="3"
+                                    placeholder="Apa yang diperbaiki dan apa yang perlu diuji ulang..."
+                                ></textarea>
+                            </div>
 
-                        <div class="mb-4">
+                        <?php else: ?>
 
-                            <label
-                                for="implementation_date"
-                                class="form-label fw-semibold"
-                            >
-                                Tanggal Implementasi
-                                <span class="text-danger">*</span>
-                            </label>
+                            <div class="alert alert-success">
+                                <strong>UAT lulus</strong><?= !empty($crf['uat_passed_at']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['uat_passed_at']))) : '' ?>.
+                                Isi hasil implementasi, lalu CRF diteruskan ke Pemohon untuk Post Implementation Review.
+                            </div>
 
-                            <input
-                                type="date"
-                                id="implementation_date"
-                                name="implementation_date"
-                                class="form-control"
-                                value="<?= h($crf['implementation_date'] ?? '') ?>"
-                                required
-                            >
+                            <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
 
-                        </div>
+                            <div class="crf-readonly-note mb-4">
+                                <i class="bi bi-info-circle"></i>
+                                Wajib mengisi <strong>Tanggal Implementasi</strong> dan
+                                <strong>Implementasi / Hasil Perubahan</strong>.
+                                Setelah itu Pemohon mengisi Post Implementation Review,
+                                lalu CRF diteruskan ke CMO untuk penutupan.
+                            </div>
 
-                        <div class="mb-4">
+                            <div class="mb-4">
+                                <label for="implementation_date" class="form-label fw-semibold">
+                                    Tanggal Implementasi
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    id="implementation_date"
+                                    name="implementation_date"
+                                    class="form-control"
+                                    value="<?= h($crf['implementation_date'] ?? '') ?>"
+                                    required
+                                >
+                            </div>
 
-                            <label
-                                for="implementation"
-                                class="form-label fw-semibold"
-                            >
-                                Implementasi / Hasil Perubahan
-                                <span class="text-danger">*</span>
-                            </label>
+                            <div class="mb-4">
+                                <label for="implementation" class="form-label fw-semibold">
+                                    Implementasi / Hasil Perubahan
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <textarea
+                                    id="implementation"
+                                    name="implementation"
+                                    class="form-control"
+                                    rows="6"
+                                    required
+                                    placeholder="Tuliskan hasil atau perubahan yang sudah diterapkan..."
+                                ><?= h($crf['implementation'] ?? '') ?></textarea>
+                            </div>
 
-                            <textarea
-                                id="implementation"
-                                name="implementation"
-                                class="form-control"
-                                rows="6"
-                                required
-                                placeholder="Tuliskan hasil atau perubahan yang sudah diterapkan..."
-                            ><?= h($crf['implementation'] ?? '') ?></textarea>
-
-                        </div>
+                        <?php endif; ?>
 
                     </div>
 
@@ -311,11 +384,11 @@ require_once __DIR__ . '/../includes/header.php';
                     <button
                         type="submit"
                         name="action"
-                        value="complete"
+                        value="<?= h($otomasiPhaseMeta['action']) ?>"
                         class="btn btn-crf-primary"
                     >
                         <i class="bi bi-check2-circle"></i>
-                        Selesaikan
+                        <?= h($otomasiPhaseMeta['button']) ?>
                     </button>
 
                 </div>

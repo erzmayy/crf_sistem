@@ -26,28 +26,30 @@ function crfLayoutIsModule(): bool
 /**
  * Jumlah CRF yang menunggu tindakan peran antrean (angka pada menu).
  * Aturannya sama dengan halaman antrean masing-masing:
- *   cmo     : verifikasi (CMO_FILTER, termasuk yang menunggu hasil Forum) + finalisasi (CMO_FINAL)
+ *   cmo     : verifikasi (CMO_FILTER, termasuk yang menunggu hasil Forum) + UAT + finalisasi (CMO_FINAL)
  *   kadep   : menunggu persetujuan (kadep_operasional)
  *   otomasi : antrean implementasi pada kategori yang ditangani, dan yang melewati SLA
  * Hanya peran yang menunya tampil yang dihitung (satu query ringan per peran).
  *
- * @return array{cmo:int,cmo_verifikasi:int,cmo_final:int,kadep:int,pic:int,pic_overdue:int}
+ * @return array{cmo:int,cmo_verifikasi:int,cmo_uat:int,cmo_final:int,kadep:int,pic:int,pic_overdue:int}
  */
 function crfQueueCounts(PDO $pdo, bool $cmo, bool $kadep, bool $pic): array
 {
-    $counts = ['cmo' => 0, 'cmo_verifikasi' => 0, 'cmo_final' => 0, 'kadep' => 0, 'pic' => 0, 'pic_overdue' => 0];
+    $counts = ['cmo' => 0, 'cmo_verifikasi' => 0, 'cmo_uat' => 0, 'cmo_final' => 0, 'kadep' => 0, 'pic' => 0, 'pic_overdue' => 0];
     $open = "cr.status NOT IN ('Draft','Solve','Cancel')";
 
     if ($cmo) {
         $row = $pdo->query("
             SELECT SUM(cr.workflow_stage = 'CMO_FILTER') AS verifikasi,
+                   SUM(cr.workflow_stage = 'UAT')        AS uat,
                    SUM(cr.workflow_stage = 'CMO_FINAL')  AS finalisasi
             FROM change_requests cr
-            WHERE {$open} AND cr.workflow_stage IN ('CMO_FILTER','CMO_FINAL')
+            WHERE {$open} AND cr.workflow_stage IN ('CMO_FILTER','UAT','CMO_FINAL')
         ")->fetch() ?: [];
         $counts['cmo_verifikasi'] = (int) ($row['verifikasi'] ?? 0);
+        $counts['cmo_uat'] = (int) ($row['uat'] ?? 0);
         $counts['cmo_final'] = (int) ($row['finalisasi'] ?? 0);
-        $counts['cmo'] = $counts['cmo_verifikasi'] + $counts['cmo_final'];
+        $counts['cmo'] = $counts['cmo_verifikasi'] + $counts['cmo_uat'] + $counts['cmo_final'];
     }
 
     if ($kadep) {
@@ -124,7 +126,7 @@ function crfNavGroups(): array
             'items' => [
                 ['label' => 'Dashboard CRF', 'url' => '/admin/dashboard.php', 'show' => $isAdminUser, 'active' => $isNav('admin', 'dashboard.php') || $isNav('admin', 'detail.php') || $isNav('admin', 'edit.php')],
                 ['label' => 'Kategori CRF', 'url' => '/admin/master_data.php?tab=crf', 'show' => $isAdminUser, 'active' => $isNav('admin', 'master_data.php') && $currentTab === 'crf'],
-                ['label' => 'Verifikasi CMO', 'url' => '/cmo/index.php', 'show' => $canRole('cmo'), 'active' => $currentFolder === 'cmo', 'badge' => $queue['cmo'], 'badge_label' => $queue['cmo'] . ' CRF menunggu tindakan CMO (verifikasi ' . $queue['cmo_verifikasi'] . ', finalisasi ' . $queue['cmo_final'] . ')'],
+                ['label' => 'Verifikasi CMO', 'url' => '/cmo/index.php', 'show' => $canRole('cmo'), 'active' => $currentFolder === 'cmo', 'badge' => $queue['cmo'], 'badge_label' => $queue['cmo'] . ' CRF menunggu tindakan CMO (verifikasi ' . $queue['cmo_verifikasi'] . ', UAT ' . $queue['cmo_uat'] . ', finalisasi ' . $queue['cmo_final'] . ')'],
                 ['label' => 'Tindak Lanjut Otomasi', 'url' => '/otomasi/index.php', 'show' => $canRole('otomasi'), 'active' => $currentFolder === 'otomasi', 'badge' => $queue['pic'], 'badge_label' => $queue['pic'] . ' CRF menunggu implementasi' . ($queue['pic_overdue'] > 0 ? ', ' . $queue['pic_overdue'] . ' melewati SLA' : '')],
                 ['label' => 'Persetujuan Kepala Departemen Operasional', 'url' => '/pak_joko/index.php', 'show' => $canRole('kadep_operasional'), 'active' => $currentFolder === 'pak_joko', 'badge' => $queue['kadep'], 'badge_label' => $queue['kadep'] . ' CRF menunggu persetujuan'],
                 // Handling CRF: dibuka per modul (?tab=crf); halaman yang sama dipakai modul Helpdesk (?tab=helpdesk).

@@ -168,6 +168,21 @@ require_once __DIR__ . '/../includes/header.php';
     require __DIR__ . '/../includes/partials/detail_permintaan.php';
     ?>
 
+    <?php if (!empty($crf['automation_completed_at']) && $crf['status'] !== 'Cancel'): ?>
+        <div class="crf-section crf-detail-card mb-4">
+            <div class="crf-section-header">
+                <span class="crf-section-number"><i class="bi bi-clipboard2-check"></i></span>
+                <h2>Dokumen UAT</h2>
+            </div>
+            <div class="crf-section-body">
+                <p class="text-muted small mb-3">
+                    Simpan hasil atau dokumentasi UAT sebagai bukti pengujian. Dokumen tampil di bagian
+                    <strong>Dokumen Hasil UAT</strong> pada Detail Pengajuan.
+                </p>
+                <?php $uatUploadBack = 'admin'; require __DIR__ . '/../includes/partials/uat_upload_form.php'; ?>
+            </div>
+        </div>
+    <?php endif; ?>
     <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
 
     <div class="crf-section crf-detail-card mb-4">

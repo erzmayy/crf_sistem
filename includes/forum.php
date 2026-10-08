@@ -165,7 +165,7 @@ function forumProcessLink(PDO $pdo, array $crf): ?array
         case 'admin':
             return ['url' => '../admin/detail.php?id=' . $id, 'label' => 'Buka halaman Admin'];
         case 'cmo':
-            return in_array($stage, ['CMO_FILTER', 'PEMOHON_PIR', 'CMO_FINAL'], true)
+            return in_array($stage, ['CMO_FILTER', 'UAT', 'PEMOHON_PIR', 'CMO_FINAL'], true)
                 ? ['url' => '../cmo/detail.php?id=' . $id, 'label' => 'Buka halaman proses CMO']
                 : null;
         case 'kadep_operasional':

@@ -19,6 +19,9 @@ $urgencyLevel = !empty($crf['final_urgency_level'])
 $urgencyLabel = !empty($crf['final_urgency_level'])
     ? 'Level Urgensi Final'
     : 'Level Urgensi';
+// Dokumen hasil UAT (category 'uat') ditampilkan terpisah dari lampiran pengajuan.
+$requestAttachments = array_values(array_filter($attachments ?? [], static fn(array $file): bool => empty($file['category'])));
+$uatDocuments = array_values(array_filter($attachments ?? [], static fn(array $file): bool => ($file['category'] ?? '') === 'uat'));
 ?>
 <div class="crf-section crf-detail-card mb-4">
     <div class="crf-section-header">
@@ -69,11 +72,11 @@ $urgencyLabel = !empty($crf['final_urgency_level'])
             <div class="crf-info-row crf-request-row-long">
                 <span class="crf-info-label">Bukti dan Informasi Pendukung</span>
                 <div class="crf-info-value">
-                    <?php if (empty($attachments)): ?>
+                    <?php if (empty($requestAttachments)): ?>
                         <span class="text-muted">Tidak ada file yang dilampirkan.</span>
                     <?php else: ?>
                         <div class="crf-attachment-list">
-                            <?php foreach ($attachments as $file): ?>
+                            <?php foreach ($requestAttachments as $file): ?>
                                 <div class="crf-attachment-row">
                                     <div class="crf-attachment-name">
                                         <i class="bi bi-paperclip text-primary"></i>
@@ -98,6 +101,37 @@ $urgencyLabel = !empty($crf['final_urgency_level'])
                     <?php endif; ?>
                 </div>
             </div>
+            <?php if ($uatDocuments): ?>
+                <div class="crf-info-row crf-request-row-long">
+                    <span class="crf-info-label">Dokumen Hasil UAT</span>
+                    <div class="crf-info-value">
+                        <div class="crf-attachment-list">
+                            <?php foreach ($uatDocuments as $file): ?>
+                                <div class="crf-attachment-row">
+                                    <div class="crf-attachment-name">
+                                        <i class="bi bi-clipboard2-check text-success"></i>
+                                        <span title="<?= h($file['original_name'] ?? '-') ?>"><?= h($file['original_name'] ?? '-') ?></span>
+                                        <small class="text-muted">
+                                            <?= round(((int) ($file['file_size'] ?? 0)) / 1024) ?> KB
+                                            <?php if (!empty($file['uploaded_at'])): ?>· <?= h(date('d-m-Y H:i', strtotime($file['uploaded_at']))) ?><?php endif; ?>
+                                        </small>
+                                    </div>
+                                    <div class="d-flex gap-1 flex-shrink-0">
+                                        <?php if (!empty($file['file_path'])): ?>
+                                            <a href="<?= h($file['file_path']) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-crf-outline py-1 px-2">
+                                                <i class="bi bi-eye"></i> Lihat
+                                            </a>
+                                        <?php endif; ?>
+                                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-primary py-1 px-2">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
             <div class="crf-info-row">
                 <span class="crf-info-label">Biaya / Anggaran</span>
                 <div class="crf-info-value">

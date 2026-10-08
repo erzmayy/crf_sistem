@@ -54,7 +54,7 @@ if (!$crf) {
 $attStmt = $pdo->prepare(
     'SELECT original_name, file_type, file_size
      FROM attachments
-     WHERE change_request_id = :id
+     WHERE change_request_id = :id AND category IS NULL
      ORDER BY uploaded_at ASC'
 );
 

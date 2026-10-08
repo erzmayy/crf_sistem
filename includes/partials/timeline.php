@@ -56,11 +56,19 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
             break;
         case 'CMO_FILTER':
             $pendingStep = !empty($crf['forum_discussion_open'])
-                ? ['title' => 'Menunggu Pembahasan Forum', 'description' => 'CMO mengajukan pembahasan Level Urgensi dan SLA. Setelah hasil dicatat Admin, CRF langsung diteruskan ke Kepala Departemen Operasional.']
+                ? ['title' => 'Menunggu Pembahasan Forum', 'description' => 'CMO mengajukan pembahasan Level Urgensi dan SLA. Setelah hasil dicatat CMO atau Admin, CRF langsung diteruskan ke Kepala Departemen Operasional.']
                 : ['title' => 'Verifikasi CMO', 'description' => 'Menunggu verifikasi permohonan oleh CMO.'];
             break;
         case 'OTOMASI':
-            $pendingStep = ['title' => 'Tindak Lanjut Divisi Otomasi', 'description' => 'SLA berjalan sejak persetujuan. Menunggu PIC CRF mencatat hasil implementasi.'];
+            $otomasiPhase = crfOtomasiPhase($crf);
+            $pendingStep = $otomasiPhase === 'perbaikan'
+                ? ['title' => 'Perbaikan Hasil UAT', 'description' => 'CMO meminta perbaikan. Menunggu PIC CRF memperbaiki dan mengirim ulang untuk UAT (tidak dihitung dalam SLA).']
+                : ($otomasiPhase === 'implementasi'
+                    ? ['title' => 'Isi Implementasi', 'description' => 'UAT lulus. Menunggu PIC CRF mencatat Tanggal Implementasi dan hasil implementasi.']
+                    : ['title' => 'Tindak Lanjut Divisi Otomasi', 'description' => 'SLA berjalan sejak persetujuan. Menunggu PIC CRF menyelesaikan eksekusi.']);
+            break;
+        case 'UAT':
+            $pendingStep = ['title' => 'UAT oleh CMO', 'description' => 'Eksekusi selesai dan SLA berhenti. Menunggu CMO menguji bersama PIC CRF (tidak dihitung dalam SLA).'];
             break;
         case 'kadep_operasional':
             $pendingStep = ['title' => 'Persetujuan Kepala Departemen Operasional', 'description' => 'Menunggu persetujuan Kepala Departemen Operasional.'];

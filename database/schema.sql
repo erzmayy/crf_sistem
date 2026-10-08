@@ -111,6 +111,7 @@ CREATE TABLE change_requests (
                                     'PEMOHON',
                                     'CMO_FILTER',
                                     'OTOMASI',
+                                    'UAT',
                                     'PEMOHON_PIR',
                                     'kadep_operasional',
                                     'CMO_FINAL',
@@ -126,6 +127,9 @@ CREATE TABLE change_requests (
     sla_due_at                  DATETIME NULL,
     automation_started_at       DATETIME NULL,
     automation_completed_at     DATETIME NULL,
+    -- UAT oleh CMO setelah eksekusi Otomasi (tidak dihitung dalam SLA).
+    uat_passed_at               DATETIME NULL,
+    implementation_submitted_at DATETIME NULL,
 
     tanggapan_tindak_lanjut     TEXT            NULL,
 
@@ -172,6 +176,7 @@ CREATE TABLE attachments (
     file_path           VARCHAR(500)    NOT NULL,
     file_type           VARCHAR(100)    NULL,
     file_size           INT UNSIGNED    NULL,
+    category            VARCHAR(20)     NULL,   -- 'uat' = dokumen hasil UAT; NULL = lampiran pengajuan
     uploaded_at         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_attachment_crf
