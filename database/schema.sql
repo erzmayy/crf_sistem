@@ -47,7 +47,7 @@ CREATE TABLE users (
     created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
                                   ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
 -- Tabel: change_requests
@@ -146,7 +146,7 @@ CREATE TABLE change_requests (
     CONSTRAINT fk_crf_kadep_operasional_approved_by
         FOREIGN KEY (kadep_operasional_approved_by) REFERENCES users(id)
         ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
 -- Tabel: crf_sequence
@@ -155,7 +155,7 @@ CREATE TABLE change_requests (
 CREATE TABLE crf_sequence (
     year        CHAR(2) NOT NULL PRIMARY KEY,
     last_number INT UNSIGNED NOT NULL DEFAULT 0
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- INSERT INTO crf_sequence (id, last_number) VALUES (1, 0);
 
@@ -177,7 +177,7 @@ CREATE TABLE attachments (
     CONSTRAINT fk_attachment_crf
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
         ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
 -- Tabel: crf_activity_logs
@@ -194,7 +194,7 @@ CREATE TABLE crf_activity_logs (
     CONSTRAINT fk_activity_crf
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
         ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
 -- Tabel: crf_user_roles
@@ -210,7 +210,7 @@ CREATE TABLE crf_user_roles (
     CONSTRAINT fk_crf_user_roles_user
         FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
 -- Tabel: forum_comments dan forum_read_states
@@ -235,7 +235,7 @@ CREATE TABLE forum_comments (
     CONSTRAINT fk_forum_comments_reply
         FOREIGN KEY (reply_to_comment_id) REFERENCES forum_comments(id)
         ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE forum_read_states (
     user_id                     INT UNSIGNED NOT NULL,
@@ -248,7 +248,7 @@ CREATE TABLE forum_read_states (
     CONSTRAINT fk_forum_read_states_crf
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
         ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Pembahasan Level Urgensi & SLA di Forum: CMO mengajukan, Admin mencatat hasil
 -- (Tetap / Diubah). Satu pembahasan terbuka per CRF.
@@ -293,7 +293,7 @@ CREATE TABLE forum_discussions (
     CONSTRAINT fk_forum_discussions_crf
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
         ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
 -- DATA DUMMY
@@ -587,14 +587,24 @@ SELECT
     MAX(h.is_manual)        AS is_manual,
     GROUP_CONCAT(DISTINCT h.source_name ORDER BY h.source_name SEPARATOR ', ') AS sources
 FROM (
-    SELECT m.id, m.crf_category_id, m.user_id, m.user_name, m.created_at,
-           1 AS is_manual,
-           CAST(NULL AS CHAR(100) CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS source_name
+    SELECT m.id                      AS id,
+           m.crf_category_id         AS crf_category_id,
+           m.user_id                 AS user_id,
+           m.user_name               AS user_name,
+           m.created_at              AS created_at,
+           1                         AS is_manual,
+           -- NULL bertipe teks tanpa CAST ... CHARACTER SET (tidak dikenal MariaDB);
+           -- NULLIF(x, x) selalu NULL dan mewarisi collation kolom.
+           NULLIF(m.user_name, m.user_name) AS source_name
     FROM crf_category_handlers_manual m
     UNION ALL
-    SELECT 1000000000 + p.id, s.crf_category_id, p.user_id, p.user_name, p.created_at,
-           0,
-           hc.name
+    SELECT 1000000000 + p.id         AS id,
+           s.crf_category_id         AS crf_category_id,
+           p.user_id                 AS user_id,
+           p.user_name               AS user_name,
+           p.created_at              AS created_at,
+           0                         AS is_manual,
+           hc.name                   AS source_name
     FROM crf_category_pic_sources s
     INNER JOIN helpdesk_categories hc
         ON hc.id = s.helpdesk_category_id AND hc.deleted_at IS NULL

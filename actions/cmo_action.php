@@ -124,7 +124,7 @@ if (in_array($action, ['request_discussion', 'cancel_discussion'], true)) {
             forumRequestDiscussion($pdo, $id, $user, $tanggapan);
             $_SESSION['flash'] = [
                 'type' => 'success',
-                'message' => 'Pembahasan Forum diajukan. Setelah Admin mencatat hasil pembahasan, CRF langsung diteruskan ke Kepala Departemen Operasional.',
+                'message' => 'Pembahasan Forum diajukan. Setelah CMO atau Admin mencatat hasil pembahasan, CRF langsung diteruskan ke Kepala Departemen Operasional.',
             ];
         } else {
             $openDiscussion = forumOpenDiscussion($pdo, $id);
@@ -153,7 +153,7 @@ if ($action === 'to_approval') {
     if (!empty($crf['forum_discussion_open'])) {
         $_SESSION['flash'] = [
             'type' => 'warning',
-            'message' => 'CRF ini menunggu pembahasan Forum. Setelah hasil pembahasan dicatat Admin, CRF otomatis diteruskan ke Kepala Departemen.',
+            'message' => 'CRF ini menunggu pembahasan Forum. Setelah hasil pembahasan dicatat (CMO atau Admin), CRF otomatis diteruskan ke Kepala Departemen.',
         ];
         header('Location: ../cmo/detail.php?id=' . $id);
         exit;
@@ -179,7 +179,7 @@ if ($action === 'to_approval') {
             dispatchPendingNotificationEmails($pdo);
             $_SESSION['flash'] = [
                 'type' => 'warning',
-                'message' => 'SLA CRF ini belum tersedia karena SLA standar kategori belum diatur. Pembahasan Forum dibuka otomatis; Admin akan menetapkan SLA sebelum CRF dapat diteruskan.',
+                'message' => 'SLA CRF ini belum tersedia karena SLA standar kategori belum diatur. Pembahasan Forum dibuka otomatis; CMO atau Admin akan menetapkan SLA sebelum CRF dapat diteruskan.',
             ];
             header('Location: ../cmo/detail.php?id=' . $id);
             exit;

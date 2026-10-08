@@ -35,6 +35,7 @@ migrasi aman dijalankan ulang.
 | 017 | `pic_crf_dari_helpdesk_migration.sql` | PIC CRF diturunkan dari PIC Kategori Helpdesk (tabel `crf_category_pic_sources`, `crf_category_handlers` menjadi VIEW) |
 | 018 | `forum_hasil_pembahasan_migration.sql` | Forum: pembahasan Level/SLA dengan hasil Tetap/Diubah (`forum_proposals` → `forum_discussions`), penanda `forum_discussion_open`, SLA default saat submit |
 | 019 | `peringatan_sla_migration.sql` | Tabel `crf_sla_alerts` (penanda peringatan SLA ke PIC CRF agar tidak terkirim ganda) |
+| 020 | `portabilitas_migration.sql` | Ekspor database aman diimpor di MySQL 5.7 / MariaDB: collation `utf8mb4_unicode_ci`, hapus prosedur bantu sisa migrasi, view `crf_category_handlers` tanpa `CAST ... CHARACTER SET` |
 
 Skrip pemeliharaan (jalankan dari terminal, bukan browser):
 
@@ -42,4 +43,31 @@ Skrip pemeliharaan (jalankan dari terminal, bukan browser):
 
 - `maintenance/kirim_peringatan_sla.php` — mengirim peringatan SLA ke PIC CRF. **Jadwalkan tiap 5 menit** (Windows Task Scheduler atau cron), mis. `php C:\path\crf_sistem\database\maintenance\kirim_peringatan_sla.php`.
 
-Migrasi baru berikutnya diberi nomor `020_...`.
+Migrasi baru berikutnya diberi nomor `021_...`.
+
+## Memindahkan database ke komputer lain (tanpa galat impor)
+
+Ekspor biasa dari MySQL 8 bisa gagal di MySQL 5.7 / MariaDB (galat `DEFINER`,
+`Unknown collation utf8mb4_0900_ai_ci`, atau syntax error pada `charset utf8mb4`).
+Gunakan alat ekspor portabel:
+
+```
+php database/maintenance/ekspor_portabel.php
+```
+
+Hasilnya `backups/crf_sistem_portabel_<tanggal>.sql`. Di komputer tujuan:
+
+```
+mysql -uroot -e "CREATE DATABASE IF NOT EXISTS crf_sistem CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+mysql -uroot crf_sistem < crf_sistem_portabel_<tanggal>.sql
+```
+
+Bila sudah terlanjur mengekspor dari phpMyAdmin, bersihkan berkasnya dulu:
+
+```
+php database/maintenance/ekspor_portabel.php bersihkan berkas.sql
+```
+
+Berkas ekspor berisi data nyata (nama dan isi CRF). Folder `backups/` diabaikan git; jangan
+dibagikan atau di-commit. Database yang dibuat sebelum migrasi 020: jalankan
+`020_portabilitas_migration.sql` agar ekspor dari phpMyAdmin pun sudah bersih.

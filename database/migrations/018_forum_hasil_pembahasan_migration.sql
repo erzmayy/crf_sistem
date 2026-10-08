@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS forum_discussions (
     CONSTRAINT fk_forum_discussions_crf
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
         ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Penanda "Menunggu Pembahasan Forum" mengikuti pembahasan yang terbuka.
 UPDATE change_requests cr

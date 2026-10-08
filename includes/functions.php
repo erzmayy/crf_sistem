@@ -860,7 +860,7 @@ function crfImpactGroups(): array
     return [
         'Tinggi' => [
             'high_system_stopped' => 'Fungsi Aplikasi SIAP berhenti total.',
-            'high_no_alternative' => 'Tidak ada solusi alternatif.',
+            'high_no_alternative' => 'Belum ada alternatif.',
             'high_liquidity_legal_risk' => 'Dapat menimbulkan risiko likuiditas dan hukum.',
         ],
         'Normal' => [

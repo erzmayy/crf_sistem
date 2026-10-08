@@ -13,17 +13,18 @@ function requireForumAccess(): void
 }
 
 /**
- * Peran yang mencatat hasil pembahasan Forum dan menerapkannya ke data CRF.
- * Ubah di sini untuk mengganti penentu (mis. ['cmo'] atau ['admin', 'cmo']).
+ * Peran yang mencatat hasil pembahasan Forum dan menerapkannya ke data CRF
+ * (satu-satunya jalur yang mengubah Level Urgensi dan SLA setelah pengajuan).
+ * Sesuai hasil rapat: CMO dan Admin. Ubah di sini untuk mengganti penentu.
  */
 function forumResultRoles(): array
 {
-    return ['admin'];
+    return ['admin', 'cmo'];
 }
 
 /**
  * Sengaja memakai getCrfRole() (bukan isAdmin()): akun demo dan hak Admin
- * tambahan pada role lain tidak termasuk.
+ * tambahan pada role lain tidak termasuk; yang dihitung peran kerja user itu sendiri.
  */
 function canRecordForumResult(): bool
 {

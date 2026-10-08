@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS crf_user_roles (
     CONSTRAINT fk_crf_user_roles_user
         FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Sesuaikan tahap data lama agar antreannya masuk ke alur baru.
 UPDATE change_requests
