@@ -47,7 +47,6 @@ Forum, Helpdesk, dan Notifikasi.
 | `includes/` | Logika inti: `auth.php` (peran/akses), `functions.php` (status, SLA, nomor register), `categories.php`, `helpdesk.php`, `notifications.php`, `forum.php` |
 | `config/` | Konfigurasi: `siap.php` (sumber user & peran), `crf.php`, `sla.php`, `database.php` |
 | `database/` | `schema.sql` dan migrasi bernomor |
-| `tests/` | Tes statis (Python) integrasi SIAP dan Helpdesk |
 
 ## Peran
 
