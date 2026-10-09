@@ -141,7 +141,7 @@ require_once __DIR__ . '/../includes/header.php';
     <?php endif; ?>
 
     <!-- Tanggapan / Tindak Lanjut -->
-    <div class="crf-section mb-4">
+    <div class="crf-section crf-response-card mb-4">
       <div class="crf-section-header">
         <span class="crf-section-number">
           <i class="bi bi-chat-left-text"></i>
@@ -227,19 +227,20 @@ require_once __DIR__ . '/../includes/header.php';
           <h2>Tindakan Admin</h2>
         </div>
         <div class="crf-section-body">
-          <p class="crf-readonly-note mb-3">
-            Admin memantau alur dan tidak memproses CRF atas nama CMO, PIC CRF, atau Kepala Departemen Operasional.
-            Gunakan pembatalan administratif hanya bila CRF tidak bisa dilanjutkan lewat alur normal
-            (duplikat, salah input, pemohon tidak lagi bekerja, dsb). Alasan dicatat di timeline
-            dan dikirim ke Pemohon serta PIC CRF.
+          <p class="text-muted small mb-3">
+            Admin hanya memantau alur. Batalkan hanya jika CRF tidak bisa dilanjutkan lewat alur normal
+            (duplikat, salah input, dll). Alasan dicatat di timeline dan dikirim ke Pemohon serta PIC CRF.
           </p>
-          <form method="POST" action="../actions/admin_cancel_crf.php" data-confirm="Batalkan CRF <?= h($crf['request_number']) ?> secara administratif? Tindakan ini tidak bisa diurungkan.">
+          <details class="crf-danger-zone">
+          <summary class="btn btn-outline-danger btn-sm"><i class="bi bi-x-octagon"></i> Batalkan CRF secara administratif</summary>
+          <form class="mt-3" method="POST" action="../actions/admin_cancel_crf.php" data-confirm="Batalkan CRF <?= h($crf['request_number']) ?> secara administratif? Tindakan ini tidak bisa diurungkan.">
             <?= csrfField() ?>
             <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
             <label for="admin_cancel_reason" class="form-label fw-semibold">Alasan Pembatalan <span class="text-danger">*</span></label>
             <textarea id="admin_cancel_reason" name="reason" class="form-control mb-3" rows="3" maxlength="1000" required placeholder="Contoh: Duplikat dengan CRF PPU-02.4.0063.10.26."></textarea>
-            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-octagon"></i> Batalkan CRF</button>
+            <button type="submit" class="btn btn-danger"><i class="bi bi-x-octagon"></i> Konfirmasi Pembatalan</button>
           </form>
+          </details>
         </div>
       </div>
     <?php endif; ?>

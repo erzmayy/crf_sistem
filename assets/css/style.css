@@ -6516,3 +6516,85 @@ body.crf-module {
 [data-master-toggle] .bi { transition: transform 0.15s ease; }
 .crf-category-member-row:not(.is-collapsed) [data-master-toggle] .bi { transform: rotate(180deg); }
 @media (max-width: 768px) { .visually-hidden-sm { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
+
+
+/* =====================================================================
+   Detail CRF: tata letak lebih ringkas (info 2 kolom, SLA ubin, navigasi)
+   ===================================================================== */
+
+/* Info pengajuan/detail: 2 kolom, label di atas nilai; isian panjang tetap penuh */
+.crf-detail-page .crf-detail-card .crf-info-rows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.5rem;
+}
+.crf-detail-page .crf-detail-card .crf-info-rows .crf-info-row {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0.7rem 0;
+  align-items: start;
+}
+.crf-detail-page .crf-detail-card .crf-info-rows .crf-info-row.crf-request-row-long {
+  grid-column: 1 / -1;
+}
+.crf-detail-page .crf-detail-card .crf-info-rows .crf-info-row:last-child { border-bottom: 1px solid #eef2f6; }
+@container (max-width: 520px) {
+  .crf-detail-page .crf-detail-card .crf-info-rows { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* SLA: ubin menyesuaikan lebar kartu; status SLA selalu satu baris penuh */
+.crf-detail-page .crf-sla-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.crf-detail-page .crf-sla-grid > .col-md-6 { grid-column: 1 / -1; }
+.crf-detail-page .crf-detail-card .crf-sla-item .crf-sla-value { font-size: 1.05rem; font-weight: 700; }
+
+/* Tanggapan kosong: tampil sebagai baris tipis */
+.crf-detail-page .crf-response-card:has(.crf-detail-value > .text-muted:only-child) .crf-section-header {
+  padding-top: 0.6rem; padding-bottom: 0.6rem; border-bottom: 0;
+}
+.crf-detail-page .crf-response-card:has(.crf-detail-value > .text-muted:only-child) .crf-section-body {
+  padding-top: 0; padding-bottom: 0.75rem; font-size: 0.85rem;
+}
+
+/* Tindakan berbahaya: tertutup sampai diminta */
+.crf-danger-zone > summary { list-style: none; cursor: pointer; }
+.crf-danger-zone > summary::-webkit-details-marker { display: none; }
+.crf-danger-zone[open] > summary { margin-bottom: 0; }
+
+/* Timeline: tahap saat ini lebih menonjol */
+.crf-timeline-item.is-pending .crf-timeline-title { color: #1f568f; font-weight: 700; }
+.crf-timeline-item.is-pending .crf-timeline-dot {
+  border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+.crf-timeline-item.is-pending .crf-timeline-description { color: #475569; }
+
+/* Navigasi bagian (dibuat otomatis oleh script.js) */
+.crf-detail-nav {
+  position: sticky; top: var(--crf-topbar-height); z-index: 60;
+  display: flex; gap: 0.4rem; overflow-x: auto;
+  margin: 0 0 0.9rem; padding: 0.5rem 0.25rem;
+  background: rgba(244, 245, 247, 0.92); backdrop-filter: blur(6px);
+  scrollbar-width: thin;
+}
+.crf-detail-nav a {
+  flex: 0 0 auto; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 0.3rem 0.8rem; border: 1px solid #dbe3ec; border-radius: 999px;
+  background: #fff; color: #475569; font-size: 0.8rem; font-weight: 600; text-decoration: none;
+}
+.crf-detail-nav a:hover { border-color: #93b4e6; color: #1f568f; }
+.crf-detail-nav a.is-active { border-color: #2563eb; background: #e8f0fe; color: #1f4fbf; }
+.crf-detail-layout [id^="crf-sec-"] { scroll-margin-top: calc(var(--crf-topbar-height) + 3.5rem); }
+
+/* Timeline di HP: akordeon */
+.crf-detail-timeline .crf-section-header { cursor: default; }
+@media (max-width: 768px) {
+  .crf-detail-timeline .crf-section-header { cursor: pointer; }
+  .crf-detail-timeline .crf-section-header::after {
+    content: "\F282"; font-family: "bootstrap-icons"; margin-left: auto; transition: transform 0.15s ease;
+  }
+  .crf-detail-timeline.is-collapsed .crf-section-body { display: none; }
+  .crf-detail-timeline.is-collapsed .crf-section-header::after { transform: rotate(-90deg); }
+  .crf-detail-nav { margin-left: -0.25rem; margin-right: -0.25rem; }
+}

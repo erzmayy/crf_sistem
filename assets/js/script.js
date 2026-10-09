@@ -605,3 +605,70 @@ if (fileInput && fileList) {
   }
 
 });
+/* Halaman detail CRF: navigasi bagian + timeline akordeon di HP */
+(function () {
+  var layout = document.querySelector('.crf-detail-layout');
+  if (!layout) { return; }
+  var main = layout.querySelector('.crf-detail-main');
+  var timeline = layout.querySelector('.crf-detail-timeline');
+  var targets = [];
+
+  if (main) {
+    [].forEach.call(main.children, function (el) {
+      if (!el.classList.contains('crf-section')) { return; }
+      var title = el.querySelector('.crf-section-header h2');
+      if (title) { targets.push({ el: el, label: title.textContent.trim() }); }
+    });
+  }
+  if (timeline) {
+    var tTitle = timeline.querySelector('.crf-section-header h2');
+    if (tTitle) { targets.push({ el: timeline, label: 'Timeline' }); }
+  }
+
+  if (targets.length >= 4) {
+    var nav = document.createElement('nav');
+    nav.className = 'crf-detail-nav';
+    nav.setAttribute('aria-label', 'Bagian halaman');
+    var links = targets.map(function (t, i) {
+      t.el.id = t.el.id || 'crf-sec-' + i;
+      var a = document.createElement('a');
+      a.href = '#' + t.el.id;
+      a.textContent = t.label.replace(/\s*&.*$/, '').replace(/\s*\(.*\)$/, '');
+      a.title = t.label;
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        t.el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (t.el === timeline) { timeline.classList.remove('is-collapsed'); }
+      });
+      nav.appendChild(a);
+      return a;
+    });
+    layout.parentNode.insertBefore(nav, layout);
+
+    if ('IntersectionObserver' in window) {
+      var current = null;
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) { return; }
+          var idx = targets.findIndex(function (t) { return t.el === entry.target; });
+          if (idx < 0 || links[idx] === current) { return; }
+          if (current) { current.classList.remove('is-active'); }
+          current = links[idx];
+          current.classList.add('is-active');
+        });
+      }, { rootMargin: '-20% 0px -65% 0px' });
+      targets.forEach(function (t) { observer.observe(t.el); });
+    }
+  }
+
+  if (timeline) {
+    var head = timeline.querySelector('.crf-section-header');
+    var mobile = window.matchMedia('(max-width: 768px)');
+    if (mobile.matches) { timeline.classList.add('is-collapsed'); }
+    if (head) {
+      head.addEventListener('click', function () {
+        if (mobile.matches) { timeline.classList.toggle('is-collapsed'); }
+      });
+    }
+  }
+})();

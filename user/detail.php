@@ -229,7 +229,7 @@ require_once __DIR__ . '/../includes/header.php';
           <main class="crf-detail-main">
 
         <!-- TANGGAPAN / TINDAK LANJUT -->
-        <div class="crf-section mb-4">
+        <div class="crf-section crf-response-card mb-4">
 
             <div class="crf-section-header">
 
