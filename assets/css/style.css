@@ -6598,3 +6598,81 @@ body.crf-module {
   .crf-detail-timeline.is-collapsed .crf-section-header::after { transform: rotate(-90deg); }
   .crf-detail-nav { margin-left: -0.25rem; margin-right: -0.25rem; }
 }
+
+
+/* =====================================================================
+   Forum: tampilan ringkas & modern
+   ===================================================================== */
+.crf-forum-page .crf-page-header { padding: 0.8rem 1.1rem; margin-bottom: 0.9rem; }
+.crf-forum-page .crf-page-header h1 { font-size: 1.25rem; }
+.crf-forum-page .crf-page-header p { font-size: 0.82rem; }
+
+.crf-forum-rooms,
+.crf-forum-discussion {
+  border-color: #e6ecf3;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+/* Daftar ruang */
+.crf-forum-room { position: relative; gap: 0.25rem; padding: 0.7rem 0.8rem 0.7rem 0.95rem; border-radius: 12px; }
+.crf-forum-room:hover { background: #f4f7fb; }
+.crf-forum-room.active {
+  border-color: #c7dafc; background: #e8f0fe; box-shadow: inset 3px 0 0 #2563eb;
+}
+.crf-forum-room.active .crf-forum-room-top strong { color: #1d4ed8; }
+.crf-forum-room.is-unread .crf-forum-room-top strong::before {
+  content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 0.4rem;
+  border-radius: 50%; background: #dc2626; vertical-align: 1px;
+}
+.crf-forum-room-name { font-size: 0.8rem; }
+.crf-forum-room-bottom .crf-badge { font-size: 0.75rem; padding: 0.15rem 0.55rem; }
+.crf-forum-room-stats, .crf-forum-room-top time { font-size: 0.75rem; }
+
+/* Header diskusi ringkas */
+.crf-forum-discussion-header { padding: 1rem 1.2rem 0.4rem; border-bottom: 0; }
+.crf-forum-title h2 { font-size: 1.2rem; }
+.crf-forum-title p { font-size: 0.82rem; }
+.crf-forum-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.35rem 1.2rem 0.7rem; }
+.crf-forum-chips .crf-badge { font-size: 0.75rem; }
+.crf-forum-chip {
+  display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem;
+  border-radius: 999px; background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 600;
+}
+.crf-forum-more { border-bottom: 1px solid #eef2f7; }
+.crf-forum-more > summary {
+  padding: 0.1rem 1.2rem 0.65rem; color: #2563eb; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+}
+.crf-forum-more[open] > summary { padding-bottom: 0.5rem; }
+.crf-forum-more .crf-forum-info { border-top: 1px solid #eef2f7; }
+.crf-forum-info dt { font-size: 0.75rem; }
+.crf-forum-info dd { font-size: 0.85rem; }
+
+/* Percakapan */
+.crf-forum-message-list { height: clamp(340px, 58vh, 680px); padding: 1.1rem 1.2rem; background: #f6f8fb; }
+.crf-forum-message { max-width: 80%; }
+.crf-forum-bubble { padding: 0.65rem 0.9rem 0.55rem; border-radius: 4px 16px 16px 16px; }
+.crf-forum-message.is-own .crf-forum-bubble { border-radius: 16px 4px 16px 16px; border-color: #c7dafc; background: #e8f0fe; }
+.crf-forum-message-heading { font-size: 0.85rem; }
+.crf-forum-message-content { font-size: 0.9rem; }
+.crf-forum-system { border-style: solid; border-color: #dbeafe; background: #fff; font-size: 0.82rem; border-radius: 14px; }
+
+/* Tombol ke komentar terbaru (dibuat oleh forum.js) */
+.crf-forum-jump-wrap { position: sticky; bottom: 0.4rem; align-self: flex-end; height: 0; overflow: visible; }
+.crf-forum-jump {
+  display: none; transform: translateY(-100%); padding: 0.35rem 0.8rem; border: 0; border-radius: 999px;
+  background: #2563eb; color: #fff; font-size: 0.8rem; font-weight: 600; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+.crf-forum-jump.is-visible { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+/* Kotak komentar */
+.crf-forum-form { padding: 0.9rem 1.2rem 1rem; border-top: 1px solid #eef2f7; background: #fff; }
+.crf-forum-form textarea { border-radius: 12px; font-size: 0.9rem; }
+.crf-forum-form-footer small { font-size: 0.75rem; }
+
+@media (max-width: 768px) {
+  .crf-forum-message { max-width: 92%; }
+  .crf-forum-chips, .crf-forum-more > summary, .crf-forum-form { padding-left: 0.9rem; padding-right: 0.9rem; }
+  .crf-forum-discussion-header { padding-left: 0.9rem; padding-right: 0.9rem; }
+  .crf-forum-message-list { height: clamp(300px, 52vh, 560px); }
+}
