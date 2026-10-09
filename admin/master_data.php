@@ -148,7 +148,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 $formData['legacy_change_category'] = $category['legacy_change_category'];
                             }
                             ?>
-                            <section class="crf-category-member-row" id="<?= h($tabKey) ?>-<?= $categoryId ?>" data-master-name="<?= h(mb_strtolower($category['name'])) ?>">
+                            <section class="crf-category-member-row is-collapsed" id="<?= h($tabKey) ?>-<?= $categoryId ?>" data-master-name="<?= h(mb_strtolower($category['name'])) ?>">
                                 <div class="crf-category-member-head">
                                     <span class="crf-member-index"><?= $i + 1 ?></span>
                                     <span class="crf-category-icon"><i class="bi <?= h($tabKey === 'helpdesk' ? $category['icon'] : 'bi-bookmark') ?>"></i></span>
@@ -181,15 +181,19 @@ require_once __DIR__ . '/../includes/header.php';
                                             <?php endif; ?>
                                         </div>
                                         <div class="d-flex gap-1 mt-2">
+                                            <button type="button" class="btn btn-sm btn-crf-outline" data-master-toggle aria-expanded="false" title="Tampilkan / sembunyikan <?= h($tab['member_label']) ?>">
+                                                <i class="bi bi-chevron-down"></i> <?= h($tab['member_label']) ?>
+                                            </button>
                                             <button
                                                 type="button"
                                                 class="btn btn-sm btn-crf-outline"
+                                                title="Edit kategori"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="<?= h($tab['modal']) ?>"
                                                 data-category-form="<?= h(json_encode($formData)) ?>"
                                                 aria-label="Edit kategori <?= h($category['name']) ?>"
                                             >
-                                                <i class="bi bi-pencil"></i>
+                                                <i class="bi bi-pencil"></i><span class="visually-hidden-sm"> Edit</span>
                                             </button>
                                             <form method="POST" action="../actions/category_master.php" data-confirm="<?= $category['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?> kategori <?= h($category['name']) ?>?">
                                                 <?= csrfField() ?>

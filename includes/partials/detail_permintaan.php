@@ -22,6 +22,21 @@ $urgencyLabel = !empty($crf['final_urgency_level'])
 // Dokumen hasil UAT (category 'uat') ditampilkan terpisah dari lampiran pengajuan.
 $requestAttachments = array_values(array_filter($attachments ?? [], static fn(array $file): bool => empty($file['category'])));
 $uatDocuments = array_values(array_filter($attachments ?? [], static fn(array $file): bool => ($file['category'] ?? '') === 'uat'));
+$attachmentIcon = static function (array $file): string {
+    $ext = strtolower(pathinfo((string) ($file['original_name'] ?? ''), PATHINFO_EXTENSION));
+    return match (true) {
+        $ext === 'pdf' => 'bi-file-earmark-pdf text-danger',
+        in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) => 'bi-file-earmark-image text-info',
+        in_array($ext, ['xls', 'xlsx', 'csv'], true) => 'bi-file-earmark-excel text-success',
+        in_array($ext, ['doc', 'docx'], true) => 'bi-file-earmark-word text-primary',
+        in_array($ext, ['zip', 'rar', '7z'], true) => 'bi-file-earmark-zip text-warning',
+        default => 'bi-file-earmark text-secondary',
+    };
+};
+$attachmentSize = static function (array $file): string {
+    $bytes = (int) ($file['file_size'] ?? 0);
+    return $bytes >= 1048576 ? number_format($bytes / 1048576, 1, ',', '.') . ' MB' : max(1, (int) round($bytes / 1024)) . ' KB';
+};
 ?>
 <div class="crf-section crf-detail-card mb-4">
     <div class="crf-section-header">
@@ -79,10 +94,10 @@ $uatDocuments = array_values(array_filter($attachments ?? [], static fn(array $f
                             <?php foreach ($requestAttachments as $file): ?>
                                 <div class="crf-attachment-row">
                                     <div class="crf-attachment-name">
-                                        <i class="bi bi-paperclip text-primary"></i>
+                                        <i class="bi <?= h($attachmentIcon($file)) ?>"></i>
                                         <span title="<?= h($file['original_name'] ?? '-') ?>"><?= h($file['original_name'] ?? '-') ?></span>
                                         <small class="text-muted">
-                                            <?= round(((int) ($file['file_size'] ?? 0)) / 1024) ?> KB
+                                            <?= h($attachmentSize($file)) ?>
                                         </small>
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
@@ -91,8 +106,8 @@ $uatDocuments = array_values(array_filter($attachments ?? [], static fn(array $f
                                                 <i class="bi bi-eye"></i> Lihat
                                             </a>
                                         <?php endif; ?>
-                                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-primary py-1 px-2">
-                                            <i class="bi bi-download"></i> Download
+                                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-outline py-1 px-2" title="Unduh <?= h($file['original_name'] ?? '') ?>">
+                                            <i class="bi bi-download"></i> Unduh
                                         </a>
                                     </div>
                                 </div>
@@ -109,10 +124,10 @@ $uatDocuments = array_values(array_filter($attachments ?? [], static fn(array $f
                             <?php foreach ($uatDocuments as $file): ?>
                                 <div class="crf-attachment-row">
                                     <div class="crf-attachment-name">
-                                        <i class="bi bi-clipboard2-check text-success"></i>
+                                        <i class="bi <?= h($attachmentIcon($file)) ?>"></i>
                                         <span title="<?= h($file['original_name'] ?? '-') ?>"><?= h($file['original_name'] ?? '-') ?></span>
                                         <small class="text-muted">
-                                            <?= round(((int) ($file['file_size'] ?? 0)) / 1024) ?> KB
+                                            <?= h($attachmentSize($file)) ?>
                                             <?php if (!empty($file['uploaded_at'])): ?>· <?= h(date('d-m-Y H:i', strtotime($file['uploaded_at']))) ?><?php endif; ?>
                                         </small>
                                     </div>
@@ -122,8 +137,8 @@ $uatDocuments = array_values(array_filter($attachments ?? [], static fn(array $f
                                                 <i class="bi bi-eye"></i> Lihat
                                             </a>
                                         <?php endif; ?>
-                                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-primary py-1 px-2">
-                                            <i class="bi bi-download"></i> Download
+                                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-outline py-1 px-2" title="Unduh <?= h($file['original_name'] ?? '') ?>">
+                                            <i class="bi bi-download"></i> Unduh
                                         </a>
                                     </div>
                                 </div>
@@ -158,6 +173,6 @@ $uatDocuments = array_values(array_filter($attachments ?? [], static fn(array $f
     </div>
 </div>
 <?php
-unset($sectionTitle);
+unset($sectionTitle, $attachmentIcon, $attachmentSize);
 unset($urgencyLevel);
 unset($systemUrgencyLevel, $urgencyLabel);

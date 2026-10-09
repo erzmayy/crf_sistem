@@ -152,13 +152,15 @@ require_once __DIR__ . '/../includes/header.php';
                     Kembali
                 </a>
 
-                <a
-                    href="detail.php?id=<?= (int) $crf['id'] ?>"
-                    class="btn btn-crf-primary"
-                >
-                    <i class="bi bi-gear"></i>
-                    Proses CRF
-                </a>
+                <?php if ($crf['workflow_stage'] === 'OTOMASI' && !empty($crf['kadep_operasional_approved_at'])): ?>
+                    <a
+                        href="detail.php?id=<?= (int) $crf['id'] ?>"
+                        class="btn btn-crf-primary"
+                    >
+                        <i class="bi bi-gear"></i>
+                        Proses CRF
+                    </a>
+                <?php endif; ?>
 
             </div>
 

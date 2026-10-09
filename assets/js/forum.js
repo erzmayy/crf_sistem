@@ -51,8 +51,40 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  /* 2b. Gulir daftar ruang ke ruang aktif; tombol "ke komentar terbaru". */
+  var roomList = document.querySelector('.crf-forum-room-list');
+  var activeRoom = roomList && roomList.querySelector('.crf-forum-room.active');
+  if (activeRoom) {
+    var listBox = roomList.getBoundingClientRect();
+    var roomBox = activeRoom.getBoundingClientRect();
+    roomList.scrollTop += (roomBox.top - listBox.top) - (listBox.height - roomBox.height) / 2;
+  }
+
+  if (list && list.querySelector('.crf-forum-message, .crf-forum-system')) {
+    var jumpWrap = document.createElement('div');
+    jumpWrap.className = 'crf-forum-jump-wrap';
+    var jump = document.createElement('button');
+    jump.type = 'button';
+    jump.className = 'crf-forum-jump';
+    jump.innerHTML = '<i class="bi bi-arrow-down" aria-hidden="true"></i> Komentar terbaru';
+    jumpWrap.appendChild(jump);
+    list.appendChild(jumpWrap);
+    var toggleJump = function () {
+      var away = list.scrollHeight - list.scrollTop - list.clientHeight > 160;
+      jump.classList.toggle('is-visible', away);
+    };
+    list.addEventListener('scroll', toggleJump, { passive: true });
+    jump.addEventListener('click', function () {
+      list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+    });
+    toggleJump();
+  }
   if (!form || !textarea) {
     return;
+  }
+
+  if (window.innerWidth >= 992 && !location.hash && textarea.value === '') {
+    textarea.focus({ preventScroll: true });
   }
 
   /* 3. Tanggapi tanpa memuat ulang halaman. */

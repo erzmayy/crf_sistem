@@ -284,14 +284,12 @@ require_once __DIR__ . '/../includes/header.php';
                                     </time>
                                 </span>
                                 <span class="crf-forum-room-name"><?= h($room['full_name']) ?></span>
+                                <?php if ($room['last_comment'] !== null): ?>
                                 <span class="crf-forum-room-preview">
-                                    <?php if ($room['last_comment'] !== null): ?>
-                                        <span class="crf-forum-room-author"><?= h($room['last_user_name']) ?>:</span>
-                                        <?= h(mb_strimwidth((string) $room['last_comment'], 0, 70, '...')) ?>
-                                    <?php else: ?>
-                                        <em>Belum ada pembahasan</em>
-                                    <?php endif; ?>
+                                    <span class="crf-forum-room-author"><?= h($room['last_user_name']) ?>:</span>
+                                    <?= h(mb_strimwidth((string) $room['last_comment'], 0, 70, '...')) ?>
                                 </span>
+                                <?php endif; ?>
                                 <span class="crf-forum-room-bottom">
                                     <span class="crf-badge <?= h($roomStatus['class']) ?>"><?= h($roomStatus['label']) ?></span>
                                     <span class="crf-forum-room-stats">
@@ -363,6 +361,17 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                     </header>
 
+                    <div class="crf-forum-chips">
+                        <span class="crf-badge <?= h($selectedStatus['class']) ?>"><?= h($selectedStatus['label']) ?></span>
+                        <span class="crf-badge <?= h(levelBadgeClass($finalUrgency)) ?>">Urgensi: <?= h($finalUrgency ?? 'Belum ditentukan') ?></span>
+                        <span class="crf-forum-chip"><i class="bi bi-hourglass-split" aria-hidden="true"></i> SLA <?= h(slaLabel($selectedCrf['sla_value'], $selectedCrf['sla_unit'])) ?></span>
+                        <?php if (!empty($slaStatus['label'])): ?>
+                            <span class="crf-forum-tone crf-forum-tone-<?= h($slaStatus['class']) ?>"><?= h($slaStatus['label']) ?></span>
+                        <?php endif; ?>
+                    </div>
+
+                    <details class="crf-forum-more">
+                    <summary>Info CRF lengkap</summary>
                     <dl class="crf-forum-info">
                         <div>
                             <dt>Status</dt>
@@ -402,6 +411,7 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
                         <?php endif; ?>
                     </dl>
+                    </details>
 
                     <?php if (!empty($selectedCrf['change_description'])): ?>
                         <details class="crf-forum-summary">

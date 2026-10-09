@@ -219,7 +219,7 @@ body.crf-module {
   align-items: center;
   gap: 0.7rem;
   text-align: right;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   min-width: 0;
 }
 .crf-user strong {
@@ -228,7 +228,7 @@ body.crf-module {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.crf-user small { display: block; color: #c5cfde; font-size: 0.63rem; }
+.crf-user small { display: block; color: #c5cfde; font-size: 0.75rem; }
 .crf-avatar {
   display: inline-flex;
   align-items: center;
@@ -275,7 +275,7 @@ body.crf-module {
   flex: 0 0 100%;
   margin-bottom: -0.45rem;
   color: #3977a5;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.12em;
 }
@@ -286,7 +286,7 @@ body.crf-module {
   flex: 0 0 100%;
   margin-bottom: -0.45rem;
   color: #3977a5;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.12em;
 }
@@ -391,7 +391,7 @@ body.crf-module {
 
 /* ---------- Buttons ---------- */
 .crf-module .btn {
-  border-radius: 8px !important;
+  border-radius: 8px;
 }
 .btn-crf-primary {
   background-color: var(--crf-blue-700);
@@ -470,10 +470,10 @@ body.crf-module {
 }
 
 .crf-module .badge {
-  display: inline-flex !important;
+  display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  border-radius: 999px !important;
+  border-radius: 999px;
 }
 
 .crf-module .badge:not(.crf-badge)::before {
@@ -516,7 +516,7 @@ body.crf-module {
 .crf-stat-grid .crf-stat-card:nth-child(5) { border-left-color: var(--crf-green); }
 .crf-stat-grid .crf-stat-card:nth-child(6) { border-left-color: var(--crf-red); }
 
-.crf-stat-card span { display: block; color: #52627a; font-size: 0.73rem; margin-bottom: 0.45rem; }
+.crf-stat-card span { display: block; color: #52627a; font-size: 0.75rem; margin-bottom: 0.45rem; }
 .crf-stat-card strong { color: #172b4d; font-size: 1.4rem; line-height: 1; }
 .crf-table-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
 .crf-table-heading h2 { color: #172b4d; font-size: 1rem; font-weight: 700; margin: 0; }
@@ -542,7 +542,7 @@ body.crf-module {
 
 .crf-list-filter-field > span {
   color: #456184;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -612,7 +612,7 @@ body.crf-module {
   border: 1px solid #dce2e8;
   border-radius: 5px !important;
   color: #334155;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   text-align: center;
 }
 
@@ -689,7 +689,7 @@ body.crf-module {
   padding-top: 0.55rem;
   padding-bottom: 0.55rem;
   background: var(--crf-helpdesk-blue);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .crf-list-table-card .crf-table tbody td {
@@ -817,7 +817,7 @@ body.crf-module {
   .crf-table.pengajuan-table tbody td[data-label="Aksi"] .btn {
     min-height: 28px;
     padding: 0.18rem 0.38rem;
-    font-size: 0.68rem;
+    font-size: 0.75rem;
     white-space: nowrap;
   }
 
@@ -965,7 +965,7 @@ body.crf-module {
 
 .crf-detail-sidebar > .crf-detail-timeline {
   width: 100%;
-  margin: 0 !important;
+  margin: 0;
   align-self: start;
 }
 
@@ -988,7 +988,7 @@ body.crf-module {
 }
 
 .crf-detail-main > .crf-detail-card {
-  margin-bottom: 0.65rem !important;
+  margin-bottom: 0.65rem;
 }
 
 .crf-detail-card .crf-info-row {
@@ -1045,7 +1045,7 @@ body.crf-module {
 
 .crf-detail-card .crf-sla-item .crf-detail-label {
   margin-bottom: 0.2rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .crf-detail-card .crf-sla-item .crf-detail-value {
@@ -1235,7 +1235,7 @@ body.crf-module {
 .automation-sla-status-detail {
     max-width: 175px;
     color: #64748b;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     line-height: 1.5;
 }
 
@@ -1462,7 +1462,7 @@ body.crf-module {
     display: block;
     margin-top: 0.1rem;
     color: #1673c9;
-    font-size: 0.68rem;
+    font-size: 0.75rem;
     font-weight: 600;
     line-height: 1.4;
 }
@@ -1470,7 +1470,7 @@ body.crf-module {
 .crf-timeline-description {
     margin-top: 0.12rem;
     color: #748294;
-    font-size: 0.68rem;
+    font-size: 0.75rem;
     line-height: 1.4;
     overflow-wrap: anywhere;
 }
@@ -1478,7 +1478,7 @@ body.crf-module {
 .crf-timeline-actor {
     margin-top: 0.08rem;
     color: #8894a2;
-    font-size: 0.64rem;
+    font-size: 0.75rem;
     line-height: 1.4;
 }
 
@@ -1592,7 +1592,7 @@ body.crf-module {
     padding: 0 1rem;
   }
 
-  .crf-user strong { max-width: 90px; font-size: 0.7rem; }
+  .crf-user strong { max-width: 90px; font-size: 0.75rem; }
   .crf-user small { display: none; }
 
   .crf-page { padding: 1.1rem 0.85rem 1.75rem; }
@@ -1648,9 +1648,9 @@ body.crf-module {
   .crf-table-responsive-cards table.crf-table th {
     border: none;
     padding: 0.35rem 0;
-    white-space: normal !important;
-    min-width: 0 !important;
-    max-width: none !important;
+    white-space: normal;
+    min-width: 0;
+    max-width: none;
     display: flex;
     justify-content: space-between;
     gap: 0.75rem;
@@ -1664,7 +1664,7 @@ body.crf-module {
     content: attr(data-label);
     font-weight: 600;
     color: var(--crf-gray-600);
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.02em;
     text-align: left;
@@ -1763,7 +1763,7 @@ body.crf-module {
     content: attr(data-label);
     display: block;
     color: var(--crf-gray-600);
-    font-size: 0.64rem;
+    font-size: 0.75rem;
     font-weight: 700;
     text-align: left;
     text-transform: uppercase;
@@ -1802,11 +1802,11 @@ body.crf-module {
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions {
-    display: flex !important;
-    flex-direction: row !important;
+    display: flex;
+    flex-direction: row;
     flex-wrap: nowrap !important;
-    gap: 0.3rem !important;
-    justify-content: flex-start !important;
+    gap: 0.3rem;
+    justify-content: flex-start;
     align-items: center;
     width: 100%;
     min-width: 0;
@@ -1815,19 +1815,19 @@ body.crf-module {
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions > a,
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions > form {
-    display: inline-flex !important;
-    flex: 0 0 auto !important;
-    width: auto !important;
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: auto;
     margin: 0;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions .btn {
     display: inline-flex;
     flex: 0 0 auto;
-    width: auto !important;
+    width: auto;
     min-height: 32px;
     padding: 0.25rem 0.45rem;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     white-space: nowrap;
   }
 
@@ -1886,7 +1886,7 @@ body.crf-module {
   display: block;
   margin-bottom: 0.15rem;
   color: #3977a5;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.12em;
 }
@@ -1900,7 +1900,7 @@ body.crf-module {
 .pengajuan-page-banner .crf-page-header p {
   margin-top: 0.2rem;
   color: #64748b !important;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
 }
 
 .pengajuan-create-button {
@@ -1944,7 +1944,7 @@ body.crf-module {
   gap: 0.35rem;
   margin: 0 0 0.3rem;
   color: #586b85;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.2;
   text-transform: uppercase;
@@ -1952,7 +1952,7 @@ body.crf-module {
 
 .crf-user-stat-grid .pengajuan-stat-card span i {
   color: #2563eb;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .crf-user-stat-grid .pengajuan-stat-card strong {
@@ -1999,7 +1999,7 @@ body.crf-module {
 .pengajuan-list-heading p {
   margin: 0.15rem 0 0;
   color: #718096;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .pengajuan-result-pill {
@@ -2042,7 +2042,7 @@ body.crf-module {
   display: block;
   margin-bottom: 0.25rem;
   color: #456184;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -2054,7 +2054,7 @@ body.crf-module {
   min-height: 36px;
   border-color: #cedcf0;
   border-radius: 7px;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
 }
 
 .pengajuan-filters .pengajuan-filter-submit {
@@ -2070,7 +2070,7 @@ body.crf-module {
 
 .pengajuan-filter-reset a {
   color: #53719a;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .pengajuan-table-wrap {
@@ -2093,9 +2093,9 @@ body.crf-module {
   z-index: 70;
   padding: 0.58rem 0.55rem !important;
   border: 0;
-  background: var(--crf-helpdesk-blue) !important;
-  color: var(--crf-helpdesk-blue-text) !important;
-  font-size: 0.64rem !important;
+  background: var(--crf-helpdesk-blue);
+  color: var(--crf-helpdesk-blue-text);
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1.25;
@@ -2105,17 +2105,17 @@ body.crf-module {
 }
 
 .crf-table.pengajuan-table tbody td {
-  padding: 0.65rem 0.55rem !important;
+  padding: 0.65rem 0.55rem;
   border-color: #e6edf6;
   color: #34465f;
-  font-size: 0.72rem !important;
+  font-size: 0.75rem !important;
   line-height: 1.3;
   vertical-align: middle;
 }
 
 .crf-table.pengajuan-table tbody td:nth-child(n + 4) {
   vertical-align: top;
-  padding-top: 0.85rem !important;
+  padding-top: 0.85rem;
 }
 
 .crf-table.pengajuan-table tbody tr:nth-child(even) {
@@ -2160,7 +2160,7 @@ body.crf-module {
   min-width: 0;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 0.25rem !important;
+  gap: 0.25rem;
   overflow: visible;
 }
 
@@ -2176,7 +2176,7 @@ body.crf-module {
 .crf-table.pengajuan-table .pengajuan-actions .btn {
   min-height: 27px;
   padding: 0.18rem 0.38rem;
-  font-size: 0.64rem;
+  font-size: 0.75rem;
 }
 
 @media (max-width: 1100px) and (min-width: 769px) {
@@ -2191,13 +2191,13 @@ body.crf-module {
 
 @media (max-width: 950px) and (min-width: 769px) {
   .crf-table.pengajuan-table .pengajuan-actions {
-    gap: 0.15rem !important;
+    gap: 0.15rem;
   }
 
   .crf-table.pengajuan-table .pengajuan-actions .btn {
     padding-right: 0.15rem;
     padding-left: 0.15rem;
-    font-size: 0.55rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -2213,12 +2213,12 @@ body.crf-module {
 
   .pengajuan-page-banner .crf-page-header p {
     max-width: 34ch;
-    font-size: 0.68rem;
+    font-size: 0.75rem;
   }
 
   .pengajuan-create-button {
     padding: 0.4rem 0.55rem;
-    font-size: 0.68rem;
+    font-size: 0.75rem;
   }
 
   .crf-stat-grid.crf-user-stat-grid {
@@ -2232,7 +2232,7 @@ body.crf-module {
   }
 
   .crf-user-stat-grid .pengajuan-stat-card span {
-    font-size: 0.57rem;
+    font-size: 0.75rem;
   }
 
   .crf-user-stat-grid .pengajuan-stat-card strong {
@@ -2252,7 +2252,7 @@ body.crf-module {
   }
 
   .pengajuan-list-heading p {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
   }
 
   .pengajuan-filters {
@@ -2271,7 +2271,7 @@ body.crf-module {
   }
 
   .pengajuan-filter-label {
-    font-size: 0.58rem;
+    font-size: 0.75rem;
   }
 
   .pengajuan-filter-reset {
@@ -2317,18 +2317,18 @@ body.crf-module {
     width: auto;
     min-width: 0;
     max-width: none;
-    padding: 0.28rem 0 !important;
+    padding: 0.28rem 0;
     border: 0;
     border-bottom: 1px solid #eef2f7;
     overflow-wrap: anywhere;
     text-align: left;
-    font-size: 0.68rem !important;
+    font-size: 0.75rem;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td::before {
     content: attr(data-label);
     color: #6b7d95;
-    font-size: 0.55rem;
+    font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -2348,7 +2348,7 @@ body.crf-module {
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Isi Pengajuan"] {
-    padding: 0.4rem 0 !important;
+    padding: 0.4rem 0;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td .crf-badge {
@@ -2360,7 +2360,7 @@ body.crf-module {
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td:nth-child(n + 4) {
-    padding-top: 0.28rem !important;
+    padding-top: 0.28rem;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] {
@@ -2374,7 +2374,7 @@ body.crf-module {
   .pengajuan-table-wrap .pengajuan-table .pengajuan-actions {
     width: 100%;
     min-width: 0;
-    gap: 0.3rem !important;
+    gap: 0.3rem;
     overflow: visible;
   }
 }
@@ -2385,7 +2385,7 @@ body.crf-module {
   }
 
   .pengajuan-create-button {
-    font-size: 0.62rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -2417,7 +2417,7 @@ body.crf-module {
   display: block;
   margin-bottom: 0.22rem;
   color: #3977a5;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.12em;
 }
@@ -2432,7 +2432,7 @@ body.crf-module {
 .crf-helpdesk-banner p {
   margin: 0.22rem 0 0;
   color: #64748b;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
 }
 
 .crf-helpdesk-summary {
@@ -2459,7 +2459,7 @@ body.crf-module {
   gap: 0.38rem;
   margin-bottom: 0.32rem;
   color: #586b79;
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -2514,9 +2514,9 @@ body.crf-module {
   z-index: 70;
   padding: 0.58rem 0.5rem !important;
   border: 0;
-  background: var(--crf-helpdesk-blue) !important;
+  background: var(--crf-helpdesk-blue);
   color: var(--crf-helpdesk-blue-text) !important;
-  font-size: 0.63rem !important;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.035em;
   line-height: 1.25;
@@ -2529,7 +2529,7 @@ body.crf-module {
   padding: 0.72rem 0.6rem !important;
   border-color: #e6edf6;
   color: #34465f;
-  font-size: 0.75rem !important;
+  font-size: 0.75rem;
   line-height: 1.45;
   vertical-align: top;
   overflow-wrap: anywhere;
@@ -2648,7 +2648,7 @@ body.crf-module {
 .crf-request-caption,
 .crf-request-date-card > span {
   color: #64748b;
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -2677,7 +2677,7 @@ body.crf-module {
 
 .crf-request-date-card strong {
   color: #334155;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -2698,7 +2698,7 @@ body.crf-module {
   border-radius: 6px;
   background: #edf4ff;
   color: #2457a6;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.25;
   overflow-wrap: anywhere;
@@ -2709,7 +2709,7 @@ body.crf-module {
   margin: 0;
   overflow: hidden;
   color: #43546b;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
@@ -2757,7 +2757,7 @@ body.crf-module {
   min-height: 28px;
   margin: 0;
   padding: 0.2rem 0.4rem;
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 
@@ -2769,7 +2769,7 @@ body.crf-module {
   .crf-helpdesk-table tbody td:last-child .btn {
     padding-right: 0.22rem;
     padding-left: 0.22rem;
-    font-size: 0.58rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -2832,7 +2832,7 @@ body.crf-module {
     padding: 0.32rem 0 !important;
     border: 0;
     border-bottom: 1px solid #eef2f7;
-    font-size: 0.73rem !important;
+    font-size: 0.75rem !important;
     text-align: left;
   }
 
@@ -2849,7 +2849,7 @@ body.crf-module {
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td::before {
     content: attr(data-label);
     color: #6b7d95;
-    font-size: 0.61rem;
+    font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.035em;
     text-transform: uppercase;
@@ -2879,7 +2879,7 @@ body.crf-module {
 
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td:last-child .btn {
     min-height: 32px;
-    font-size: 0.68rem;
+    font-size: 0.75rem;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions {
@@ -2891,19 +2891,19 @@ body.crf-module {
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions > a,
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions > form {
-    display: inline-flex !important;
-    flex: 0 0 auto !important;
-    width: auto !important;
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: auto;
     margin: 0;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions .btn {
     display: inline-flex;
     flex: 0 0 auto;
-    width: auto !important;
+    width: auto;
     min-height: 32px;
     padding: 0.25rem 0.45rem;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     white-space: nowrap;
   }
 
@@ -2937,7 +2937,7 @@ body.crf-module {
     border-radius: 8px;
     background: #eaf2fb;
     color: #1f568f;
-    font-size: 0.72rem !important;
+    font-size: 0.75rem;
     font-weight: 700;
   }
 
@@ -2983,17 +2983,17 @@ body.crf-module {
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .d-flex > form,
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .dashboard-actions > a,
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .dashboard-actions > form {
-    display: flex !important;
-    flex: 1 1 88px !important;
-    width: auto !important;
+    display: flex;
+    flex: 1 1 88px;
+    width: auto;
     margin: 0;
   }
 
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .d-flex .btn,
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .dashboard-actions .btn {
-    display: inline-flex !important;
+    display: inline-flex;
     flex: 1 1 auto !important;
-    width: auto !important;
+    width: auto;
     align-items: center;
     justify-content: center;
     gap: 0.3rem;
@@ -3017,7 +3017,7 @@ body.crf-module {
   }
 
   .crf-helpdesk-summary .crf-stat-card span {
-    font-size: 0.58rem;
+    font-size: 0.75rem;
   }
 
   .crf-helpdesk-banner h1 {
@@ -3025,7 +3025,7 @@ body.crf-module {
   }
 
   .crf-helpdesk-banner p {
-    font-size: 0.68rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -3052,7 +3052,7 @@ body.crf-module {
 .crf-page.crf-form-page .crf-page-eyebrow {
   margin-bottom: -0.45rem;
   color: #3977a5;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .crf-page.crf-form-page .crf-page-header h1 {
@@ -3158,7 +3158,7 @@ body.crf-module {
 #crfForm .crf-readonly-note {
   margin-top: 0.35rem;
   color: #8a96a7;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 #crfForm input[type="file"].form-control {
@@ -3414,7 +3414,7 @@ body.crf-module {
 
   .crf-app-shell .crf-user strong {
     max-width: min(38vw, 150px);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -3667,7 +3667,7 @@ body.crf-module {
 .crf-forum-room-top time {
   flex: 0 0 auto;
   color: #94a3b8;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .crf-forum-room-name {
@@ -3681,7 +3681,7 @@ body.crf-module {
 
 .crf-forum-room-preview {
   color: #64748b;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3716,7 +3716,7 @@ body.crf-module {
   gap: 0.5rem;
   flex: 0 0 auto;
   color: #94a3b8;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .crf-forum-unread {
@@ -3794,7 +3794,7 @@ body.crf-module {
 .crf-forum-info dt {
   margin-bottom: 0.25rem;
   color: #94a3b8;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -3818,14 +3818,14 @@ body.crf-module {
 
 .crf-forum-info dd small {
   color: #94a3b8;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
 .crf-forum-tone {
   padding: 0.08rem 0.45rem;
   border-radius: 999px;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -3881,7 +3881,7 @@ body.crf-module {
 
 .crf-forum-final-sla summary small {
   color: #64748b;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
 }
 
 .crf-forum-final-sla summary > i {
@@ -3900,7 +3900,7 @@ body.crf-module {
 .crf-forum-final-sla-note {
   margin: 0 0 0.75rem;
   color: #64748b;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
 }
 
 .crf-forum-final-sla-fields {
@@ -3951,7 +3951,7 @@ body.crf-module {
   align-items: center;
   gap: 0.75rem;
   color: #94a3b8;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -4048,7 +4048,7 @@ body.crf-module {
 .crf-forum-message-heading time {
   margin-left: auto;
   color: #94a3b8;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .crf-forum-role {
@@ -4056,7 +4056,7 @@ body.crf-module {
   border-radius: 999px;
   background: #f1f5f9;
   color: #475569;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -4083,7 +4083,7 @@ body.crf-module {
   border-radius: 4px;
   background: rgba(219, 234, 254, 0.55);
   color: #475569;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   text-decoration: none;
   overflow-wrap: anywhere;
 }
@@ -4102,7 +4102,7 @@ body.crf-module {
   display: inline-block;
   margin-top: 0.35rem;
   color: #64748b;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-decoration: none;
 }
@@ -4137,7 +4137,7 @@ body.crf-module {
 
 .crf-forum-system small {
   color: #64748b;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 /* Form komentar */
@@ -4186,7 +4186,7 @@ body.crf-module {
 
 .crf-forum-form-footer small {
   color: #94a3b8;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .crf-forum-empty,
@@ -4232,7 +4232,7 @@ body.crf-module {
 
 .crf-forum-filter a {
   padding: 0.28rem 0.6rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 
@@ -4252,7 +4252,7 @@ body.crf-module {
   border-radius: 999px;
   background: #fef3c7;
   color: #92400e;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -4327,7 +4327,7 @@ body.crf-module {
 
 .crf-forum-pembahasan-title small {
   color: #64748b;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .crf-forum-pembahasan-icon {
@@ -4356,7 +4356,7 @@ body.crf-module {
 
 .crf-forum-due {
   color: #64748b;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .crf-forum-due.is-overdue {
@@ -4380,7 +4380,7 @@ body.crf-module {
 
 .crf-forum-current dt {
   color: #92400e;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -4434,7 +4434,7 @@ body.crf-module {
 
 .crf-forum-result-option small {
   color: #64748b;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .crf-forum-result-values {
@@ -4456,7 +4456,7 @@ body.crf-module {
 .crf-forum-pembahasan-wait {
   margin: 0.3rem 0 0;
   color: #64748b;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .crf-forum-pembahasan-wait {
@@ -4525,7 +4525,7 @@ body.crf-module {
 .crf-forum-history-top time {
   margin-left: auto;
   color: #94a3b8;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 @media (max-width: 575px) {
@@ -4758,7 +4758,7 @@ body.crf-module {
 
 .crf-helpdesk-page .crf-list-filter-field > span {
   color: #596b82;
-  font-size: 0.67rem;
+  font-size: 0.75rem;
 }
 
 .crf-helpdesk-page .crf-helpdesk-table-wrap {
@@ -4839,7 +4839,7 @@ body.crf-module {
   }
 
   .crf-detail-page .crf-page-header {
-    align-items: flex-start !important;
+    align-items: flex-start;
   }
 }
 
@@ -4867,7 +4867,7 @@ body.crf-module {
 .crf-banner-pill--soft { padding: 0.15rem 0.55rem; font-size: 0.68rem; }
 .crf-banner-stat { display: inline-flex; align-items: baseline; gap: 0.2rem; color: #64748b; font-size: 0.9rem; }
 .crf-banner-stat strong { color: #1e3048; font-size: 1.6rem; }
-.crf-banner-stat small { margin-left: 0.4rem; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.crf-banner-stat small { margin-left: 0.4rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .crf-badge-lg { padding: 0.45rem 0.9rem; font-size: 0.8rem; }
 
 /* Kartu ringkasan yang bisa diklik sebagai filter */
@@ -4884,7 +4884,7 @@ body.crf-module {
   display: inline-flex; align-items: center; justify-content: center; flex: 0 0 40px; width: 40px; height: 40px;
   border-radius: 10px; color: #fff; font-size: 1.05rem;
 }
-.crf-kpi-label { display: block; color: #64748b; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.crf-kpi-label { display: block; color: #64748b; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
 .crf-kpi-card strong { display: block; color: #1e3048; font-size: 1.35rem; line-height: 1.2; }
 .crf-kpi-bar { height: 4px; margin-top: 0.4rem; border-radius: 4px; background: #eef2f6; overflow: hidden; }
 .crf-kpi-bar span { display: block; height: 100%; border-radius: 4px; background: currentColor; }
@@ -4914,21 +4914,21 @@ body.crf-module {
 }
 .crf-category-eyebrow {
   display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; background: #eef4fb; color: #1f568f;
-  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
 }
 .crf-category-ring {
   display: inline-flex; flex-direction: column; align-items: center; justify-content: center; flex: 0 0 54px;
   width: 54px; height: 54px; border: 3px solid; border-radius: 50%; line-height: 1;
 }
 .crf-category-ring strong { font-size: 1rem; }
-.crf-category-ring small { font-size: 0.52rem; font-weight: 700; text-transform: uppercase; }
+.crf-category-ring small { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
 .crf-category-ring.is-pending { border-color: #e08a1e; color: #B4740E; }
 .crf-category-ring.is-done { border-color: #1E7A3D; color: #1E7A3D; }
 .crf-category-stats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #edf1f5; border-radius: 10px; background: #f8fafc; }
 .crf-category-stats > div { padding: 0.65rem 0.7rem; }
 .crf-category-stats > div + div { border-left: 1px solid #edf1f5; }
 .crf-category-stats strong { display: block; color: #1e3048; font-size: 1.15rem; }
-.crf-category-stats span { color: #64748b; font-size: 0.68rem; }
+.crf-category-stats span { color: #64748b; font-size: 0.75rem; }
 .crf-category-stats .is-success strong { color: #1E7A3D; }
 .crf-category-stats .is-danger strong { color: #B3261E; }
 .crf-category-status-list { margin: 0; padding: 0; list-style: none; border: 1px solid #edf1f5; border-radius: 10px; background: #f8fafc; }
@@ -4936,7 +4936,7 @@ body.crf-module {
 .crf-category-status-list li + li { border-top: 1px solid #edf1f5; }
 .crf-category-status-list strong { color: #1e3048; }
 .crf-category-status-list .is-success strong { color: #1E7A3D; }
-.crf-category-note { color: #64748b; font-size: 0.72rem; }
+.crf-category-note { color: #64748b; font-size: 0.75rem; }
 
 /* Master kategori + PIC / Handler */
 .crf-category-member-list { display: flex; flex-direction: column; gap: 0.85rem; }
@@ -4957,11 +4957,11 @@ body.crf-module {
 }
 .crf-member-info { display: flex; flex-direction: column; min-width: 0; }
 .crf-member-info strong { color: #1e3048; font-size: 0.82rem; }
-.crf-member-info small { overflow: hidden; color: #64748b; font-size: 0.7rem; text-overflow: ellipsis; white-space: nowrap; }
+.crf-member-info small { overflow: hidden; color: #64748b; font-size: 0.75rem; text-overflow: ellipsis; white-space: nowrap; }
 .crf-member-card form { position: absolute; top: 0.45rem; right: 0.45rem; }
 .crf-member-remove {
   display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0;
-  border: 1px solid #e5ebf1; border-radius: 50%; background: #fff; color: #94a3b8; font-size: 0.65rem;
+  border: 1px solid #e5ebf1; border-radius: 50%; background: #fff; color: #94a3b8; font-size: 0.75rem;
 }
 .crf-member-remove:hover { border-color: #f1b8b3; color: #B3261E; }
 .crf-member-empty { grid-column: 1 / -1; padding: 0.7rem; border: 1px dashed #d5dee8; border-radius: 10px; color: #64748b; font-size: 0.78rem; }
@@ -4974,7 +4974,7 @@ body.crf-module {
   gap: 0.3rem;
   margin-top: 0.15rem;
   color: #1d4ed8;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .crf-member-manual {
@@ -5002,7 +5002,7 @@ body.crf-module {
   text-align: left; font-size: 0.8rem;
 }
 .crf-member-result:hover, .crf-member-result:focus { background: #f1f7fc; outline: none; }
-.crf-member-result small { color: #64748b; font-size: 0.7rem; }
+.crf-member-result small { color: #64748b; font-size: 0.75rem; }
 .crf-member-result-empty { padding: 0.6rem 0.75rem; color: #64748b; font-size: 0.78rem; }
 .crf-requires-crf-box { padding: 0.75rem; border: 1px solid #dbe6f0; border-radius: 10px; background: #f5f9fc; }
 
@@ -5022,7 +5022,7 @@ body.crf-module {
 .crf-choice-card input { flex: 0 0 auto; width: 1rem; height: 1rem; accent-color: #1f568f; }
 .crf-choice-card > span:last-child { display: flex; flex-direction: column; min-width: 0; }
 .crf-choice-card strong { color: #1e3048; font-size: 0.84rem; }
-.crf-choice-card small { color: #64748b; font-size: 0.72rem; }
+.crf-choice-card small { color: #64748b; font-size: 0.75rem; }
 .crf-choice-icon {
   display: inline-flex; align-items: center; justify-content: center; flex: 0 0 34px; width: 34px; height: 34px;
   border-radius: 8px; background: #eef4fb; color: #1f568f;
@@ -5045,7 +5045,7 @@ body.crf-module {
 /* Detail ticket */
 .crf-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1.25rem; margin: 0; }
 .crf-detail-grid--single { grid-template-columns: 1fr; }
-.crf-detail-grid dt { color: #64748b; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.crf-detail-grid dt { color: #64748b; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
 .crf-detail-grid dd { margin: 0.15rem 0 0; color: #1e3048; font-size: 0.86rem; }
 .crf-detail-text { padding: 0.75rem 0.9rem; border: 1px solid #edf1f5; border-radius: 10px; background: #f8fafc; font-size: 0.86rem; white-space: normal; }
 .crf-linked-crf {
@@ -5073,7 +5073,7 @@ body.crf-module {
 .crf-sla-result.is-success { border-color: #b6dfc2; background: #f0faf3; color: #1E7A3D; }
 .crf-sla-result.is-danger { border-color: #f1c4bf; background: #fdf3f2; color: #B3261E; }
 
-.crf-timeline-status { margin-top: 0.25rem; color: #64748b; font-size: 0.72rem; }
+.crf-timeline-status { margin-top: 0.25rem; color: #64748b; font-size: 0.75rem; }
 .crf-timeline-status strong { color: #1f568f; }
 
 /* Notifikasi */
@@ -5418,7 +5418,7 @@ body.crf-module {
 .crf-detail-page .crf-detail-card .crf-sla-item .crf-detail-label {
   margin-bottom: 0.3rem;
   color: var(--dt-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
 }
@@ -5554,11 +5554,11 @@ body.crf-module {
 .crf-row-register {
   color: #1f568f;
   font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
-.crf-row-meta { color: #64748b; font-size: 0.7rem; }
-.crf-row-meta i { margin-right: 0.15rem; font-size: 0.65rem; }
+.crf-row-meta { color: #64748b; font-size: 0.75rem; }
+.crf-row-meta i { margin-right: 0.15rem; font-size: 0.75rem; }
 
 .crf-row-content { display: grid; justify-items: start; gap: 0.3rem; min-width: 0; }
 .crf-row-description {
@@ -5571,13 +5571,13 @@ body.crf-module {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-.crf-row-handler { color: #64748b; font-size: 0.7rem; }
+.crf-row-handler { color: #64748b; font-size: 0.75rem; }
 .crf-row-handler.is-empty { color: #b3261e; }
 
 .crf-row-status { display: grid; justify-items: start; gap: 0.3rem; }
-.crf-row-stage { color: #64748b; font-size: 0.68rem; line-height: 1.3; }
-.crf-row-stage i { font-size: 0.62rem; }
-.crf-row-muted { color: #94a3b8; font-size: 0.72rem; font-style: italic; }
+.crf-row-stage { color: #64748b; font-size: 0.75rem; line-height: 1.3; }
+.crf-row-stage i { font-size: 0.75rem; }
+.crf-row-muted { color: #94a3b8; font-size: 0.75rem; font-style: italic; }
 
 /* Badge tidak boleh terlipat dua baris */
 .crf-helpdesk-table tbody td .crf-badge,
@@ -5594,7 +5594,7 @@ body.crf-module {
   .crf-helpdesk-table:has(.crf-row-request) tbody td,
   .crf-table.pengajuan-table.crf-helpdesk-table:has(.crf-row-request) tbody td {
     padding: 0.6rem 0.65rem !important;
-    vertical-align: middle !important;
+    vertical-align: middle;
   }
   .crf-helpdesk-table:has(.crf-row-request) th:first-child,
   .crf-helpdesk-table:has(.crf-row-request) td[data-label="No"] {
@@ -5619,7 +5619,7 @@ body.crf-module {
   .crf-helpdesk-table:has(.crf-row-request) td[data-label="Aksi"] .d-flex,
   .crf-helpdesk-table:has(.crf-row-request) td[data-label="Aksi"] .dashboard-actions {
     flex-wrap: nowrap;
-    gap: 0.35rem !important;
+    gap: 0.35rem;
   }
 }
 
@@ -5631,7 +5631,7 @@ body.crf-module {
   min-height: 30px;
   padding: 0.25rem 0.65rem;
   border-radius: 8px;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -5669,7 +5669,7 @@ body.crf-module {
   gap: 0.4rem;
   margin: 0 0 0.35rem;
   color: #5b6b82;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1.25;
@@ -5699,13 +5699,13 @@ body.crf-module {
   width: auto;
   height: auto;
   border-radius: 0;
-  background: none !important;
+  background: none;
   color: var(--kpi-accent, #2563eb);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 .crf-module .crf-kpi-label {
   color: #5b6b82;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
   line-height: 1.25;
 }
@@ -5819,9 +5819,860 @@ body.crf-module {
   border-radius: 999px;
   background: #dc2626;
   color: #fff;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.5;
   white-space: nowrap;
 }
 .crf-forum-button-flag { color: #d97706; font-size: 0.8rem; }
+
+
+/* =====================================================================
+   Dashboard Admin (dipindah dari blok <style> inline admin/dashboard.php)
+   ===================================================================== */
+    /* =========================================================
+       DASHBOARD TABLE
+       ========================================================= */
+
+    .dashboard-table-wrap {
+        overflow: visible;
+        width: 100%;
+        max-width: 100%;
+        max-height: none;
+    }
+
+    .dashboard-table {
+        width: 100%;
+        min-width: 1028px;
+        table-layout: fixed;
+        margin-bottom: 0;
+        font-size: 0.86rem;
+    }
+
+    .dashboard-table th,
+    .dashboard-table td {
+        vertical-align: middle;
+        padding: 0.38rem 0.45rem;
+    }
+
+    .dashboard-table thead th {
+        white-space: normal;
+        overflow-wrap: break-word;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        position: sticky;
+        top: var(--crf-topbar-height);
+        z-index: 70;
+        background: var(--crf-helpdesk-blue);
+    }
+
+    .crf-table.dashboard-table thead th {
+        top: 0;
+    }
+
+    .dashboard-table tbody td {
+        line-height: 1.2;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    /* Lebar tiap kolom */
+    .dashboard-table th:nth-child(1),
+    .dashboard-table td:nth-child(1) {
+        width: 34px;
+        text-align: center;
+    }
+
+    .dashboard-table th:nth-child(2),
+    .dashboard-table td:nth-child(2) {
+        width: 118px;
+    }
+
+    .dashboard-table th:nth-child(3),
+    .dashboard-table td:nth-child(3) {
+        width: 110px;
+    }
+
+    .dashboard-table th:nth-child(4),
+    .dashboard-table td:nth-child(4) {
+        width: 94px;
+    }
+
+    .dashboard-table th:nth-child(5),
+    .dashboard-table td:nth-child(5) {
+        width: 88px;
+    }
+
+    .dashboard-table th:nth-child(6),
+    .dashboard-table td:nth-child(6) {
+        width: 92px;
+    }
+
+    .dashboard-table th:nth-child(7),
+    .dashboard-table td:nth-child(7) {
+        width: 1px;
+    }
+
+    .dashboard-table th:nth-child(8),
+    .dashboard-table td:nth-child(8) {
+        width: 125px;
+    }
+
+    .dashboard-table th:nth-child(9),
+    .dashboard-table td:nth-child(9) {
+        width: 155px;
+    }
+
+    .dashboard-table th:nth-child(10),
+    .dashboard-table td:nth-child(10) {
+        width: 130px;
+    }
+
+    .dashboard-table th:nth-child(11),
+    .dashboard-table td:nth-child(11) {
+        width: 82px;
+    }
+
+    .dashboard-table .register-cell {
+        white-space: nowrap;
+        font-weight: 600;
+    }
+
+    .dashboard-table th:nth-child(7),
+    .dashboard-table td:nth-child(7) {
+        display: none;
+    }
+
+    .dashboard-table .title-cell {
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dashboard-table .date-cell {
+        white-space: nowrap;
+    }
+
+    .dashboard-table .name-cell,
+    .dashboard-table .department-cell,
+    .dashboard-table .division-cell,
+    .dashboard-table .category-cell {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dashboard-table .stage-cell {
+        white-space: nowrap;
+    }
+
+    .dashboard-table .action-cell {
+        white-space: nowrap;
+    }
+
+    .dashboard-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.35rem;
+        flex-wrap: nowrap;
+    }
+
+    .dashboard-actions .btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        overflow-wrap: normal;
+    }
+
+    .dashboard-table .crf-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        max-width: none;
+        white-space: nowrap;
+        overflow-wrap: normal;
+        line-height: 1.2;
+        text-align: center;
+        font-size: 0.72rem;
+    }
+
+    .dashboard-table .urgency-cell,
+    .dashboard-table .urgency-cell .crf-badge {
+        white-space: nowrap;
+        overflow-wrap: normal;
+    }
+
+    .dashboard-table .urgency-cell .crf-badge {
+        max-width: none;
+    }
+
+    .dashboard-table td:nth-child(9) .crf-badge {
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+
+    .dashboard-stage-badge {
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
+        padding: 0.22rem 0.3rem;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #334155;
+        font-size: 0.68rem;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    @media (max-width: 768px) {
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap {
+            overflow: visible;
+            max-height: none;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table {
+            display: block;
+            width: 100%;
+            min-width: 0;
+            table-layout: auto;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table thead {
+            display: none;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table tbody {
+            display: block;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table tr {
+            display: block;
+            margin: 0 0 0.65rem;
+            padding: 0.45rem 0.7rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table th,
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            width: 100%;
+            min-width: 0;
+            max-width: none;
+            padding: 0.38rem 0;
+            border: 0;
+            border-bottom: 1px solid #f1f5f9;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            text-align: right;
+            line-height: 1.25;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td::before {
+            display: block;
+            flex: 0 0 38%;
+            content: attr(data-label);
+            color: #64748b;
+            font-size: 0.66rem;
+            font-weight: 700;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td:last-child {
+            border-bottom: 0;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td:last-child::before {
+            display: block;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td.crf-empty-cell {
+            display: block;
+            text-align: center;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td.crf-empty-cell::before {
+            display: none;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td:nth-child(7) {
+            display: none;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .title-cell,
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .name-cell,
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .department-cell {
+            overflow: visible;
+            text-overflow: clip;
+            white-space: normal;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .urgency-cell .crf-badge,
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .stage-cell .dashboard-stage-badge {
+            max-width: 100%;
+            white-space: nowrap;
+        }
+
+        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .status-cell .crf-badge {
+            max-width: 100%;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+
+    }
+
+    /* Filter bar */
+    .dashboard-summary-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0.55rem;
+        margin-bottom: 0.9rem;
+    }
+
+    .dashboard-summary-grid .crf-stat-card {
+        min-height: 58px;
+        padding: 0.65rem 0.8rem;
+    }
+
+    .dashboard-summary-grid .crf-stat-card span {
+        margin-bottom: 0.25rem;
+        font-size: 0.66rem;
+    }
+
+    .dashboard-summary-grid .crf-stat-card strong {
+        font-size: 1.15rem;
+    }
+
+    .admin-report {
+        margin: 0 0 1rem;
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .admin-report-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.9rem;
+    }
+
+    .admin-report-heading h2 {
+        margin: 0;
+        color: #334155;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .admin-report-heading p {
+        margin: 0.15rem 0 0;
+        color: #64748b;
+        font-size: 0.78rem;
+    }
+
+    .admin-report-date-filter {
+        display: flex;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        margin-bottom: 0.85rem;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #f8fafc;
+    }
+
+    .admin-report-date-filter label {
+        display: grid;
+        gap: 0.25rem;
+        color: #475569;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    .admin-report-date-filter input {
+        min-height: 34px;
+        padding: 0.35rem 0.5rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        color: #334155;
+        font: inherit;
+    }
+
+    .admin-report-date-filter .btn {
+        min-height: 34px;
+    }
+
+    .admin-report-exports {
+        display: flex;
+        gap: 0.45rem;
+        flex: 0 0 auto;
+    }
+
+    .admin-report-exports .btn {
+        white-space: nowrap;
+    }
+
+    .admin-report-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+        gap: 0.8rem;
+    }
+
+    /* Tiga kartu dalam satu baris: donut di kiri, legenda di kanan (sama di Status dan Urgensi). */
+    .admin-report-grid .admin-report-distribution {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 0.8rem;
+    }
+
+    .admin-report-grid .admin-report-donut {
+        width: 100px;
+        height: 100px;
+        flex: 0 0 100px;
+    }
+
+    .admin-report-grid .admin-report-donut-hole {
+        width: 64px;
+        height: 64px;
+    }
+
+    .admin-report-grid .admin-report-legend {
+        flex: 1 1 0;
+        min-width: 0;
+        gap: 0.5rem;
+    }
+
+    .admin-report-grid .admin-report-legend li {
+        grid-template-columns: 9px minmax(0, 1fr) auto;
+        align-items: start;
+        line-height: 1.25;
+    }
+
+    .admin-report-grid .admin-report-legend-swatch {
+        margin-top: 0.22rem;
+    }
+
+    .admin-report-card {
+        min-width: 0;
+        padding: 0.85rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+    }
+
+    .admin-report-card h3 {
+        margin: 0 0 0.8rem;
+        color: #334155;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    .admin-report-chart {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(32px, 1fr));
+        gap: 0.4rem;
+        min-height: 150px;
+        align-items: end;
+    }
+
+    .admin-report-month {
+        display: flex;
+        min-width: 0;
+        height: 100%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.2rem;
+        color: #64748b;
+        font-size: 0.68rem;
+    }
+
+    .admin-report-month-count {
+        color: #475569;
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+
+    .admin-report-bar-track {
+        display: flex;
+        width: min(100%, 26px);
+        height: 105px;
+        align-items: flex-end;
+        overflow: hidden;
+        border-bottom: 2px solid #e2e8f0;
+        border-radius: 4px 4px 0 0;
+        /* tanpa latar: bulan bernilai 0 tidak terlihat seperti ada data */
+        background: transparent;
+    }
+
+    .admin-report-month-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .admin-report-month-label small {
+        color: #94a3b8;
+        font-size: 0.6rem;
+    }
+
+    .admin-report-bar {
+        display: block;
+        width: 100%;
+        min-height: 2px;
+        border-radius: 4px 4px 0 0;
+        background: #2563eb;
+    }
+
+    .admin-report-bar.is-empty {
+        display: none;
+    }
+
+    .admin-report-distribution {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        min-height: 150px;
+    }
+
+    .admin-report-donut {
+        display: grid;
+        width: 112px;
+        height: 112px;
+        flex: 0 0 112px;
+        place-items: center;
+        border-radius: 50%;
+    }
+
+    .admin-report-donut-hole {
+        display: grid;
+        width: 72px;
+        height: 72px;
+        align-content: center;
+        border-radius: 50%;
+        background: #fff;
+        text-align: center;
+    }
+
+    .admin-report-donut-hole strong {
+        color: #334155;
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+
+    .admin-report-donut-hole span {
+        color: #64748b;
+        font-size: 0.62rem;
+    }
+
+    .admin-report-legend {
+        display: grid;
+        gap: 0.4rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .admin-report-legend li {
+        display: grid;
+        grid-template-columns: 9px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.4rem;
+        color: #475569;
+        font-size: 0.68rem;
+    }
+
+    .admin-report-legend-swatch {
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+    }
+
+    .admin-report-legend strong {
+        color: #334155;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 1280px) {
+        .admin-report-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-report-grid > .admin-report-card:first-child {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .dashboard-summary-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .admin-report-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .admin-report-grid > .admin-report-card:first-child {
+            grid-column: auto;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .dashboard-summary-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-report {
+            padding: 0.75rem;
+        }
+
+        .admin-report-heading {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .admin-report-exports {
+            width: 100%;
+        }
+
+        .admin-report-exports .btn {
+            flex: 1 1 50%;
+        }
+
+        .admin-report-distribution {
+            flex-wrap: wrap;
+        }
+    }
+
+
+/* =====================================================================
+   UI polish (hasil review tampilan)
+   ===================================================================== */
+
+/* Kartu ringkasan tetap 2 kolom di HP (sebelumnya 1 kolom <=400px) */
+@media (max-width: 400px) {
+  .crf-stat-grid,
+  .crf-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+}
+@media (max-width: 640px) {
+  .crf-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+  .crf-kpi-grid .crf-kpi-card { padding: 0.6rem 0.7rem; }
+  .crf-kpi-grid .crf-kpi-bar { display: none; }
+}
+
+/* Tabel lebar: bisa digeser horizontal, kolom Aksi tidak terpotong */
+@media (max-width: 1280px) {
+  .crf-helpdesk-table-wrap,
+  .table-responsive.crf-helpdesk-table-wrap { overflow-x: auto; }
+  .crf-helpdesk-table thead th { position: static; }
+}
+
+/* Teks tabel & hint: nyaman dibaca */
+.crf-helpdesk-table thead th { font-size: 0.75rem; }
+.crf-helpdesk-table tbody td { font-size: 0.8rem !important; }
+.crf-readonly-note { font-size: 0.75rem; }
+
+/* Filter: tombol sejajar dengan input */
+.crf-list-filters-advanced { align-items: end; }
+.crf-list-filters-advanced .crf-list-filter-actions { align-self: end; }
+
+/* Form CRF: ruang bawah supaya bar aksi tidak menutup field terakhir */
+#crfForm { padding-bottom: 5rem; }
+#crfForm .crf-sticky-actions { position: sticky; bottom: 0; }
+#crfForm input[readonly].form-control { cursor: not-allowed; }
+
+/* Sidebar: hierarki menu seragam */
+.siap-menu-main a { font-size: 0.92rem; font-weight: 400; padding: 0.5rem 1.4rem; }
+.siap-menu-main a.active { font-weight: 700; }
+.siap-menu-title { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; }
+
+/* Menu akun (avatar) */
+.crf-user-menu .crf-user {
+  border: 0; background: transparent; color: inherit; cursor: pointer;
+}
+.crf-user-menu .crf-user:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 12px; }
+.crf-user-menu .dropdown-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+.crf-user-menu .dropdown-header { font-size: 0.75rem; }
+
+/* Master data: baris kategori ringkas, PIC dibuka lewat tombol */
+.crf-category-member-row.is-collapsed { grid-template-columns: 1fr; }
+.crf-category-member-row.is-collapsed .crf-category-member-body { display: none; }
+[data-master-toggle] .bi { transition: transform 0.15s ease; }
+.crf-category-member-row:not(.is-collapsed) [data-master-toggle] .bi { transform: rotate(180deg); }
+@media (max-width: 768px) { .visually-hidden-sm { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
+
+
+/* =====================================================================
+   Detail CRF: tata letak lebih ringkas (info 2 kolom, SLA ubin, navigasi)
+   ===================================================================== */
+
+/* Info pengajuan/detail: 2 kolom, label di atas nilai; isian panjang tetap penuh */
+.crf-detail-page .crf-detail-card .crf-info-rows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.5rem;
+}
+.crf-detail-page .crf-detail-card .crf-info-rows .crf-info-row {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0.7rem 0;
+  align-items: start;
+}
+.crf-detail-page .crf-detail-card .crf-info-rows .crf-info-row.crf-request-row-long {
+  grid-column: 1 / -1;
+}
+.crf-detail-page .crf-detail-card .crf-info-rows .crf-info-row:last-child { border-bottom: 1px solid #eef2f6; }
+@container (max-width: 520px) {
+  .crf-detail-page .crf-detail-card .crf-info-rows { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* SLA: ubin menyesuaikan lebar kartu; status SLA selalu satu baris penuh */
+.crf-detail-page .crf-sla-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.crf-detail-page .crf-sla-grid > .col-md-6 { grid-column: 1 / -1; }
+.crf-detail-page .crf-detail-card .crf-sla-item .crf-sla-value { font-size: 1.05rem; font-weight: 700; }
+
+/* Tanggapan kosong: tampil sebagai baris tipis */
+.crf-detail-page .crf-response-card:has(.crf-detail-value > .text-muted:only-child) .crf-section-header {
+  padding-top: 0.6rem; padding-bottom: 0.6rem; border-bottom: 0;
+}
+.crf-detail-page .crf-response-card:has(.crf-detail-value > .text-muted:only-child) .crf-section-body {
+  padding-top: 0; padding-bottom: 0.75rem; font-size: 0.85rem;
+}
+
+/* Tindakan berbahaya: tertutup sampai diminta */
+.crf-danger-zone > summary { list-style: none; cursor: pointer; }
+.crf-danger-zone > summary::-webkit-details-marker { display: none; }
+.crf-danger-zone[open] > summary { margin-bottom: 0; }
+
+/* Timeline: tahap saat ini lebih menonjol */
+.crf-timeline-item.is-pending .crf-timeline-title { color: #1f568f; font-weight: 700; }
+.crf-timeline-item.is-pending .crf-timeline-dot {
+  border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+.crf-timeline-item.is-pending .crf-timeline-description { color: #475569; }
+
+/* Navigasi bagian (dibuat otomatis oleh script.js) */
+.crf-detail-nav {
+  position: sticky; top: var(--crf-topbar-height); z-index: 60;
+  display: flex; gap: 0.4rem; overflow-x: auto;
+  margin: 0 0 0.9rem; padding: 0.5rem 0.25rem;
+  background: rgba(244, 245, 247, 0.92); backdrop-filter: blur(6px);
+  scrollbar-width: thin;
+}
+.crf-detail-nav a {
+  flex: 0 0 auto; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 0.3rem 0.8rem; border: 1px solid #dbe3ec; border-radius: 999px;
+  background: #fff; color: #475569; font-size: 0.8rem; font-weight: 600; text-decoration: none;
+}
+.crf-detail-nav a:hover { border-color: #93b4e6; color: #1f568f; }
+.crf-detail-nav a.is-active { border-color: #2563eb; background: #e8f0fe; color: #1f4fbf; }
+.crf-detail-layout [id^="crf-sec-"] { scroll-margin-top: calc(var(--crf-topbar-height) + 3.5rem); }
+
+/* Timeline di HP: akordeon */
+.crf-detail-timeline .crf-section-header { cursor: default; }
+@media (max-width: 768px) {
+  .crf-detail-timeline .crf-section-header { cursor: pointer; }
+  .crf-detail-timeline .crf-section-header::after {
+    content: "\F282"; font-family: "bootstrap-icons"; margin-left: auto; transition: transform 0.15s ease;
+  }
+  .crf-detail-timeline.is-collapsed .crf-section-body { display: none; }
+  .crf-detail-timeline.is-collapsed .crf-section-header::after { transform: rotate(-90deg); }
+  .crf-detail-nav { margin-left: -0.25rem; margin-right: -0.25rem; }
+}
+
+
+/* =====================================================================
+   Forum: tampilan ringkas & modern
+   ===================================================================== */
+.crf-forum-page .crf-page-header { padding: 0.8rem 1.1rem; margin-bottom: 0.9rem; }
+.crf-forum-page .crf-page-header h1 { font-size: 1.25rem; }
+.crf-forum-page .crf-page-header p { font-size: 0.82rem; }
+
+.crf-forum-rooms,
+.crf-forum-discussion {
+  border-color: #e6ecf3;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+/* Daftar ruang */
+.crf-forum-room { position: relative; gap: 0.25rem; padding: 0.7rem 0.8rem 0.7rem 0.95rem; border-radius: 12px; }
+.crf-forum-room:hover { background: #f4f7fb; }
+.crf-forum-room.active {
+  border-color: #c7dafc; background: #e8f0fe; box-shadow: inset 3px 0 0 #2563eb;
+}
+.crf-forum-room.active .crf-forum-room-top strong { color: #1d4ed8; }
+.crf-forum-room.is-unread .crf-forum-room-top strong::before {
+  content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 0.4rem;
+  border-radius: 50%; background: #dc2626; vertical-align: 1px;
+}
+.crf-forum-room-name { font-size: 0.8rem; }
+.crf-forum-room-bottom .crf-badge { font-size: 0.75rem; padding: 0.15rem 0.55rem; }
+.crf-forum-room-stats, .crf-forum-room-top time { font-size: 0.75rem; }
+
+/* Header diskusi ringkas */
+.crf-forum-discussion-header { padding: 1rem 1.2rem 0.4rem; border-bottom: 0; }
+.crf-forum-title h2 { font-size: 1.2rem; }
+.crf-forum-title p { font-size: 0.82rem; }
+.crf-forum-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.35rem 1.2rem 0.7rem; }
+.crf-forum-chips .crf-badge { font-size: 0.75rem; }
+.crf-forum-chip {
+  display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem;
+  border-radius: 999px; background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 600;
+}
+.crf-forum-more { border-bottom: 1px solid #eef2f7; }
+.crf-forum-more > summary {
+  padding: 0.1rem 1.2rem 0.65rem; color: #2563eb; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+}
+.crf-forum-more[open] > summary { padding-bottom: 0.5rem; }
+.crf-forum-more .crf-forum-info { border-top: 1px solid #eef2f7; }
+.crf-forum-info dt { font-size: 0.75rem; }
+.crf-forum-info dd { font-size: 0.85rem; }
+
+/* Percakapan */
+.crf-forum-message-list { height: clamp(340px, 58vh, 680px); padding: 1.1rem 1.2rem; background: #f6f8fb; }
+.crf-forum-message { max-width: 80%; }
+.crf-forum-bubble { padding: 0.65rem 0.9rem 0.55rem; border-radius: 4px 16px 16px 16px; }
+.crf-forum-message.is-own .crf-forum-bubble { border-radius: 16px 4px 16px 16px; border-color: #c7dafc; background: #e8f0fe; }
+.crf-forum-message-heading { font-size: 0.85rem; }
+.crf-forum-message-content { font-size: 0.9rem; }
+.crf-forum-system { border-style: solid; border-color: #dbeafe; background: #fff; font-size: 0.82rem; border-radius: 14px; }
+
+/* Tombol ke komentar terbaru (dibuat oleh forum.js) */
+.crf-forum-jump-wrap { position: sticky; bottom: 0.4rem; align-self: flex-end; height: 0; overflow: visible; }
+.crf-forum-jump {
+  display: none; transform: translateY(-100%); padding: 0.35rem 0.8rem; border: 0; border-radius: 999px;
+  background: #2563eb; color: #fff; font-size: 0.8rem; font-weight: 600; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+.crf-forum-jump.is-visible { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+/* Kotak komentar */
+.crf-forum-form { padding: 0.9rem 1.2rem 1rem; border-top: 1px solid #eef2f7; background: #fff; }
+.crf-forum-form textarea { border-radius: 12px; font-size: 0.9rem; }
+.crf-forum-form-footer small { font-size: 0.75rem; }
+
+@media (max-width: 768px) {
+  .crf-forum-message { max-width: 92%; }
+  .crf-forum-chips, .crf-forum-more > summary, .crf-forum-form { padding-left: 0.9rem; padding-right: 0.9rem; }
+  .crf-forum-discussion-header { padding-left: 0.9rem; padding-right: 0.9rem; }
+  .crf-forum-message-list { height: clamp(300px, 52vh, 560px); }
+}
