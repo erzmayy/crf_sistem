@@ -6,7 +6,7 @@
  */
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/helpdesk.php';
+require_once __DIR__ . '/../includes/notifications.php';
 
 requireLogin();
 
@@ -112,11 +112,8 @@ try {
         'Pemohon sudah mengisi PIR untuk CRF ' . $crf['request_number'] . '. CRF menunggu finalisasi CMO.',
         'crf/open.php?id=' . $id,
         $id,
-        null,
         (int) $user['id']
     );
-
-    syncHelpdeskTicketFromCrf($pdo, $id, $actor);
 
     $pdo->commit();
     dispatchPendingNotificationEmails($pdo);

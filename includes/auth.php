@@ -349,22 +349,3 @@ function canAccessCrf(PDO $pdo, int $crfId): bool
 
     return in_array($role, ['admin', 'demo', 'cmo', 'kadep_operasional'], true);
 }
-
-/**
- * Halaman Helpdesk untuk PIC (atau admin).
- */
-function requireHelpdeskPic(): void
-{
-    requireLogin();
-
-    if (isAdmin() || isHelpdeskPic(getConnection(), (int) $_SESSION['user_id'])) {
-        return;
-    }
-
-    $_SESSION['flash'] = [
-        'type' => 'danger',
-        'message' => 'Halaman ini khusus PIC kategori Helpdesk.',
-    ];
-    header('Location: ../helpdesk/saya.php');
-    exit;
-}

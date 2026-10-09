@@ -733,24 +733,6 @@ function crfPirReminderInfo(PDO $pdo, array $crf): array
     ];
 }
 
-/**
- * Label ticket untuk tampilan & notifikasi (tanpa nomor ticket, mengikuti
- * SIAP): "Kategori · dd-mm-YYYY HH:ii".
- * $ticket butuh category_name & created_at.
- */
-function helpdeskTicketLabel(array $ticket): string
-{
-    $parts = [];
-    if (!empty($ticket['category_name'])) {
-        $parts[] = (string) $ticket['category_name'];
-    }
-    if (!empty($ticket['created_at'])) {
-        $parts[] = date('d-m-Y H:i', strtotime((string) $ticket['created_at']));
-    }
-
-    return $parts ? implode(' · ', $parts) : 'Ticket Helpdesk';
-}
-
 function crfActorName(array $user): string
 {
     return !empty($user['nama']) ? (string) $user['nama'] : (string) ($user['userid'] ?? '-');
@@ -1076,23 +1058,6 @@ function handleUatDocumentUploads(PDO $pdo, int $crfId, array $filesInput): arra
     );
 
     return uploadAttachmentsToStorage($filesInput, 'crf_' . $crfId . '_uat_', $stmt, $crfId);
-}
-
-/**
- * Lampiran ticket Helpdesk: validasi & penyimpanan sama dengan lampiran CRF.
- *
- * @return string[]
- */
-function handleHelpdeskAttachmentUploads(PDO $pdo, int $ticketId, array $filesInput): array
-{
-    $stmt = $pdo->prepare(
-        'INSERT INTO helpdesk_attachments
-        (helpdesk_ticket_id, original_name, stored_name, file_path, file_type, file_size)
-        VALUES
-        (:owner_id, :original_name, :stored_name, :file_path, :file_type, :file_size)'
-    );
-
-    return uploadAttachmentsToStorage($filesInput, 'hd_' . $ticketId . '_', $stmt, $ticketId);
 }
 
 /**

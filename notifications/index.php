@@ -49,9 +49,9 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="container">
         <div class="crf-helpdesk-banner crf-banner-with-actions">
             <div>
-                <span class="crf-helpdesk-eyebrow">HELPDESK &amp; CRF</span>
+                <span class="crf-helpdesk-eyebrow">CRF</span>
                 <h1>Notifikasi</h1>
-                <p>Pemberitahuan terkait ticket Helpdesk dan CRF Anda.</p>
+                <p>Pemberitahuan terkait CRF Anda.</p>
             </div>
             <?php if ($notificationUnread > 0): ?>
                 <form method="POST" class="crf-banner-actions">

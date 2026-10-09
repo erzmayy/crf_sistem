@@ -1,10 +1,9 @@
 /* =====================================================================
-   Integrasi Helpdesk & CRF - interaksi UI
+   Interaksi UI modul CRF
    - Dialog konfirmasi untuk form ber-atribut data-confirm
    - Loading state tombol submit (data-loading-form / data-confirm)
    - Isi otomatis modal kategori (data-category-form)
-   - Pencarian user untuk PIC CRF / PIC (data-user-picker)
-   - Formulir Helpdesk: alihkan ke Form CRF untuk kategori "Butuh CRF"
+   - Pencarian user untuk PIC CRF (data-user-picker)
    Semua aturan akses tetap divalidasi di server.
    ===================================================================== */
 
@@ -174,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
    * Form CRF: status penyimpanan + konfirmasi browser bila meninggalkan
    * halaman yang punya isian belum disimpan.
    *   new      : belum ada isian
-   *   unsaved  : isian dibawa dari Helpdesk, belum pernah disimpan
+   *   unsaved  : isian gagal validasi, belum pernah disimpan
    *   saved    : draft tersimpan, belum ada perubahan
    *   revision : perlu revisi, belum dikirim ulang
    *   dirty    : ada perubahan yang belum disimpan
@@ -372,55 +371,4 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   });
-
-  /* -----------------------------------------------------------------
-   * Formulir Helpdesk: Permintaan Baru + kategori Butuh CRF
-   * ----------------------------------------------------------------- */
-  var helpdeskForm = document.getElementById('helpdeskForm');
-  if (helpdeskForm) {
-    var categorySelect = document.getElementById('helpdesk_category_id');
-    var crfNotice = document.getElementById('helpdeskCrfNotice');
-    var submitLabel = document.getElementById('helpdeskSubmitLabel');
-    var newRequestSection = document.getElementById('helpdeskNewRequest');
-    var existingSection = document.getElementById('helpdeskExisting');
-    var attachmentsSection = document.getElementById('helpdeskAttachmentSection');
-
-    function currentMode() {
-      var checked = helpdeskForm.querySelector('input[name="request_mode"]:checked');
-      return checked ? checked.value : 'new';
-    }
-
-    function updateHelpdeskForm() {
-      var mode = currentMode();
-      var option = categorySelect ? categorySelect.options[categorySelect.selectedIndex] : null;
-      // Diteruskan ke CRF hanya bila kategori "via CRF" DAN jenis = Request/Permintaan.
-      var kindInput = helpdeskForm.querySelector('input[name="request_kind"]:checked');
-      var requiresCrf = mode === 'new' && option && option.getAttribute('data-requires-crf') === '1'
-        && kindInput && kindInput.value === 'request';
-
-      if (newRequestSection) { newRequestSection.classList.toggle('d-none', mode !== 'new'); }
-      if (existingSection) { existingSection.classList.toggle('d-none', mode !== 'existing'); }
-      if (crfNotice) { crfNotice.classList.toggle('d-none', !requiresCrf); }
-      if (attachmentsSection) { attachmentsSection.classList.toggle('d-none', requiresCrf || mode !== 'new'); }
-      if (submitLabel) {
-        submitLabel.textContent = requiresCrf ? 'Lanjut ke Form CRF' : 'Kirim Permintaan';
-      }
-      helpdeskForm.querySelectorAll('[data-new-only]').forEach(function (field) {
-        field.disabled = mode !== 'new';
-      });
-      // Request via CRF: Jam Mulai Laporan tidak dipakai.
-      helpdeskForm.querySelectorAll('[data-hide-for-crf]').forEach(function (block) {
-        block.classList.toggle('d-none', requiresCrf);
-        block.querySelectorAll('input').forEach(function (field) {
-          field.disabled = mode !== 'new' || requiresCrf;
-        });
-      });
-    }
-
-    helpdeskForm.querySelectorAll('input[name="request_mode"], input[name="request_kind"]').forEach(function (radio) {
-      radio.addEventListener('change', updateHelpdeskForm);
-    });
-    if (categorySelect) { categorySelect.addEventListener('change', updateHelpdeskForm); }
-    updateHelpdeskForm();
-  }
 });

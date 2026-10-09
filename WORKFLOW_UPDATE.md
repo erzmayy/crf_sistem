@@ -148,26 +148,19 @@ bersama untuk semua KPU, direset per tahun, dan dibuat atomik lewat tabel `crf_s
 
 ## Helpdesk
 
-Ticket Helpdesk dikelompokkan per kategori dengan PIC masing-masing. Jenis
-permintaan: Maintenance, Request, Komplain. Pada kategori yang mewajibkan CRF,
-Request diajukan langsung lewat Form CRF. Ticket lama berstatus
-"Diteruskan ke CRF" mengikuti status CRF-nya.
+Aplikasi CRF **tidak lagi memiliki modul Helpdesk** (migrasi 022). Helpdesk ditangani modul
+Helpdesk SIAP yang berdiri sendiri; pemohon masuk ke CRF langsung lewat **Form CRF**
+(`user/form_crf.php`). Tidak ada lagi ticket, tautan ticket ↔ CRF, maupun status ticket yang
+mengikuti CRF.
 
 ## PIC CRF
 
-PIC CRF (dulu disebut Petugas Otomasi/Handler) **tidak diisi terpisah**. Aturannya satu:
-kategori Helpdesk bertanda **Butuh CRF** dengan *Kategori CRF default* X → semua PIC-nya
-menjadi PIC CRF kategori X. Contoh: PIC **Aplikasi SIAP** (Butuh CRF · Aplikasi) = PIC CRF
-kategori **Aplikasi**.
+PIC CRF (dulu disebut Petugas Otomasi/Handler) diisi Admin di **Kategori CRF** (`admin/master_data.php`):
+buka kartu kategori → **PIC CRF** → cari user SIAP → **Tambah**.
 
-- PIC cukup dikelola di **Master Data → Kategori Helpdesk** (kelak menu Kategori Helpdesk SIAP).
-- Mengubah atau mematikan *Butuh CRF* / *Kategori CRF default* langsung mengubah PIC CRF-nya.
-- Perubahan PIC di kategori Helpdesk langsung berlaku untuk antrean CRF (tanpa sinkronisasi).
-- PIC CRF yang dulu diisi manual tetap berlaku (ditandai *isian manual lama*) dan hanya bisa dihapus.
-- Secara teknis `crf_category_handlers` adalah VIEW gabungan `crf_category_pic_sources` +
-  `helpdesk_category_pics` + `crf_category_handlers_manual`. Saat integrasi SIAP, view ini cukup
-  diarahkan ke tabel kategori & PIC Helpdesk milik SIAP.
-
+- Kategori tanpa PIC ditangani role Otomasi (fallback agar tidak ada CRF yatim).
+- PIC dari kategori Helpdesk (migrasi 017) sudah disalin menjadi isian tetap oleh migrasi 022.
+- Tabel `crf_category_handlers` kembali menjadi tabel biasa (bukan VIEW).
 ## Database
 
 - Instalasi baru: jalankan `database/schema.sql`.
@@ -180,9 +173,11 @@ kategori **Aplikasi**.
   CRF yang masih di tahap `OTOMASI` akan melewati UAT.
 - Alur antrean Otomasi (015) dan usulan Forum (016) sudah digantikan oleh migrasi 018.
   Pada database lama jalankan 015, 016, 017, lalu 018 secara berurutan.
-- PIC CRF dari PIC Helpdesk: jalankan `017_pic_crf_dari_helpdesk_migration.sql`. **Wajib**:
-  tabel `crf_category_handlers` diganti nama menjadi `crf_category_handlers_manual` dan
-  digantikan VIEW. Aman dijalankan ulang.
+- PIC CRF dari PIC Helpdesk: `017_pic_crf_dari_helpdesk_migration.sql` (kini digantikan 022).
+- Hapus modul Helpdesk: jalankan `022_hapus_modul_helpdesk_migration.sql`. **Backup dulu**: tabel
+  `helpdesk_*` di-DROP permanen (ticket, lampiran, log), PIC CRF disalin menjadi isian tetap, dan
+  kolom `helpdesk_ticket_id` dilepas. Aman dijalankan ulang. Wajib dijalankan sebelum aplikasi baru
+  dipakai (penulisan PIC CRF kini langsung ke `crf_category_handlers`).
 - Forum hasil pembahasan: jalankan `018_forum_hasil_pembahasan_migration.sql`. **Wajib**: tabel
   `forum_proposals` menjadi `forum_discussions` dan `change_requests` mendapat kolom
   `forum_discussion_open`. Aman dijalankan ulang. Bila saat itu ada CRF yang sudah
@@ -221,20 +216,7 @@ Cara kerja mode `module`:
 - JavaScript: pencarian elemen dibatasi ke `.crf-module`; modal konfirmasi ditempel di dalamnya.
 - Mode module tidak memuat Bootstrap JS. Dialog, dropdown, dan modal CRF memerlukan Bootstrap 5.3
   bundle (JS) dari SIAP, atau aktifkan `CRF_LOAD_BOOTSTRAP`.
-- **Kategori dan Handling dipisah per modul** (tanpa tab; menu memilih modul lewat `?tab=`):
-
-  | Modul | Menu | Halaman |
-  |---|---|---|
-  | Help Desk | Handling Helpdesk, Kategori Helpdesk (Admin) | `helpdesk/handling.php?tab=helpdesk`, `admin/master_data.php?tab=helpdesk` |
-  | CRF | Handling CRF, Kategori CRF (Admin) | `helpdesk/handling.php?tab=crf`, `admin/master_data.php?tab=crf` |
-
-  Menu "Dashboard" sudah tidak ada. Saat integrasi SIAP, hapus sisi Helpdesk (halaman dan tab `helpdesk`)
-  karena dipegang modul Helpdesk SIAP; `includes/categories.php` cukup diarahkan ke tabel kategori dan PIC
-  Helpdesk milik SIAP.
-- **Catatan integrasi:** kategori Helpdesk di SIAP **tidak punya kolom "Butuh CRF"**. Di prototipe ini penanda itu
-  (`helpdesk_categories.requires_crf` dan `default_crf_category_id`) menentukan tiket mana yang diteruskan ke
-  Form CRF dan dari kategori Helpdesk mana PIC CRF diturunkan (`crf_category_pic_sources`). Karena SIAP tidak
-  memilikinya, pemetaan itu harus dipindah ke tabel milik modul CRF (kategori Helpdesk SIAP → kategori CRF default,
-  plus penanda butuh CRF) dan dikelola dari halaman Kategori CRF.
+- **Halaman master dan handling CRF:** Kategori CRF (Admin) di `admin/master_data.php`, Handling CRF di
+  `crf/handling.php`. Sisi Helpdesk sudah dihapus karena dipegang modul Helpdesk SIAP.
 - Tetap perlu dihapus/diganti saat integrasi: `login.php`, `logout.php`, `actions/login.php`
   (login memakai sesi SIAP).

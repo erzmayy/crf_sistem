@@ -2,13 +2,10 @@
 /**
  * actions/category_master.php
  * ---------------------------------------------------------------
- * Kelola master Kategori CRF dan Kategori Helpdesk (Admin):
- *   type = crf | helpdesk
- *   op   = save | toggle | delete | add_member | remove_member
- * Anggota kategori = PIC CRF atau PIC Helpdesk. PIC CRF = PIC kategori Helpdesk
- * bertanda "Butuh CRF" dengan Kategori CRF default tersebut; isian manual lama
- * hanya bisa dihapus, tidak ditambah.
- * Hapus kategori = soft delete (deleted_at), data CRF/ticket lama aman.
+ * Kelola master Kategori CRF (Admin):
+ *   op = save | toggle | delete | add_member | remove_member
+ * Anggota kategori = PIC CRF (tabel crf_category_handlers).
+ * Hapus kategori = soft delete (deleted_at), data CRF lama aman.
  * ---------------------------------------------------------------
  */
 
@@ -25,38 +22,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 verifyCsrf();
 
 $pdo = getConnection();
-$type = $_POST['type'] ?? '';
 $op = $_POST['op'] ?? '';
 
-$config = [
-    'crf' => [
-        'table'    => 'crf_categories',
-        // Penulisan ke tabel manual; crf_category_handlers adalah VIEW gabungan.
-        'pivot'    => 'crf_category_handlers_manual',
-        'fk'       => 'crf_category_id',
-        'member'   => 'PIC CRF',
-        'pages'    => ['master_data.php'],
-    ],
-    'helpdesk' => [
-        'table'    => 'helpdesk_categories',
-        'pivot'    => 'helpdesk_category_pics',
-        'fk'       => 'helpdesk_category_id',
-        'member'   => 'PIC',
-        'pages'    => ['master_data.php'],
-    ],
-];
-
-if (!isset($config[$type])) {
-    http_response_code(400);
-    exit('Tipe kategori tidak dikenal.');
-}
-
-$cfg = $config[$type];
-$returnPage = in_array($_POST['return'] ?? '', $cfg['pages'], true) ? $_POST['return'] : $cfg['pages'][0];
-$redirect = '../admin/' . $returnPage . '?tab=' . $type;
+$redirect = '../admin/master_data.php';
 // Kembali ke kartu kategori yang baru diubah.
-if ((int) ($_POST['id'] ?? 0) > 0 && in_array($_POST['op'] ?? '', ['save', 'toggle', 'add_member', 'remove_member'], true)) {
-    $redirect .= '#' . $type . '-' . (int) $_POST['id'];
+if ((int) ($_POST['id'] ?? 0) > 0 && in_array($op, ['save', 'toggle', 'add_member', 'remove_member'], true)) {
+    $redirect .= '#crf-' . (int) $_POST['id'];
 }
 
 function categoryMasterFinish(string $type, string $message, string $redirect): void
@@ -67,7 +38,7 @@ function categoryMasterFinish(string $type, string $message, string $redirect): 
 }
 
 $categoryId = (int) ($_POST['id'] ?? 0);
-$table = $cfg['table'];
+$table = 'crf_categories';
 
 try {
     switch ($op) {
@@ -101,41 +72,29 @@ try {
             }
 
             $extra = [];
-            if ($type === 'crf') {
-                // Matriks SLA: kolom sla_value/sla_unit di atas = SLA Normal.
-                foreach (['tinggi' => 'Tinggi', 'rendah' => 'Rendah'] as $levelKey => $levelLabel) {
-                    $levelValueRaw = trim($_POST['sla_' . $levelKey . '_value'] ?? '');
-                    $levelUnit = $_POST['sla_' . $levelKey . '_unit'] ?? '';
-                    $levelValue = null;
-                    if ($levelValueRaw !== '') {
-                        if (!is_numeric($levelValueRaw) || (float) $levelValueRaw <= 0) {
-                            $errors[] = 'Nilai SLA ' . $levelLabel . ' harus angka lebih dari 0.';
-                        } elseif (!in_array($levelUnit, ['Menit', 'Jam', 'Hari'], true)) {
-                            $errors[] = 'Satuan SLA ' . $levelLabel . ' tidak valid.';
-                        } else {
-                            $levelValue = (float) $levelValueRaw;
-                        }
+            // Matriks SLA: kolom sla_value/sla_unit di atas = SLA Normal.
+            foreach (['tinggi' => 'Tinggi', 'rendah' => 'Rendah'] as $levelKey => $levelLabel) {
+                $levelValueRaw = trim($_POST['sla_' . $levelKey . '_value'] ?? '');
+                $levelUnit = $_POST['sla_' . $levelKey . '_unit'] ?? '';
+                $levelValue = null;
+                if ($levelValueRaw !== '') {
+                    if (!is_numeric($levelValueRaw) || (float) $levelValueRaw <= 0) {
+                        $errors[] = 'Nilai SLA ' . $levelLabel . ' harus angka lebih dari 0.';
+                    } elseif (!in_array($levelUnit, ['Menit', 'Jam', 'Hari'], true)) {
+                        $errors[] = 'Satuan SLA ' . $levelLabel . ' tidak valid.';
+                    } else {
+                        $levelValue = (float) $levelValueRaw;
                     }
-                    $extra['sla_' . $levelKey . '_value'] = $levelValue;
-                    $extra['sla_' . $levelKey . '_unit'] = $levelValue !== null ? $levelUnit : null;
                 }
-
-                $legacy = $_POST['legacy_change_category'] ?? 'Lainnya';
-                if (!in_array($legacy, ['Aplikasi', 'Infrastruktur', 'Proses', 'Security', 'Lainnya'], true)) {
-                    $errors[] = 'Kelompok kategori laporan tidak valid.';
-                }
-                $extra['legacy_change_category'] = $legacy;
-            } else {
-                $icon = trim($_POST['icon'] ?? 'bi-tag');
-                $extra['icon'] = preg_match('/^bi-[a-z0-9-]{1,40}$/', $icon) ? $icon : 'bi-tag';
-                $extra['requires_crf'] = !empty($_POST['requires_crf']) ? 1 : 0;
-                $defaultCrfCategoryId = (int) ($_POST['default_crf_category_id'] ?? 0);
-                if ($defaultCrfCategoryId > 0 && !findCrfCategory($pdo, $defaultCrfCategoryId)) {
-                    $errors[] = 'Kategori CRF default tidak ditemukan.';
-                }
-                $extra['default_crf_category_id'] = $defaultCrfCategoryId > 0 ? $defaultCrfCategoryId : null;
+                $extra['sla_' . $levelKey . '_value'] = $levelValue;
+                $extra['sla_' . $levelKey . '_unit'] = $levelValue !== null ? $levelUnit : null;
             }
 
+            $legacy = $_POST['legacy_change_category'] ?? 'Lainnya';
+            if (!in_array($legacy, ['Aplikasi', 'Infrastruktur', 'Proses', 'Security', 'Lainnya'], true)) {
+                $errors[] = 'Kelompok kategori laporan tidak valid.';
+            }
+            $extra['legacy_change_category'] = $legacy;
             // Nama unik terhadap kategori lain yang masih ada.
             $dupStmt = $pdo->prepare("SELECT id, deleted_at FROM {$table} WHERE name = :name AND id <> :id LIMIT 1");
             $dupStmt->execute(['name' => $name, 'id' => $categoryId]);
@@ -175,17 +134,6 @@ try {
                 $message = 'Kategori "' . $name . '" berhasil ditambahkan.';
             }
 
-            // Kategori Helpdesk "Butuh CRF": PIC-nya otomatis menjadi PIC CRF kategori CRF default.
-            if ($type === 'helpdesk') {
-                $picCrfCategoryId = $extra['requires_crf'] && $extra['default_crf_category_id']
-                    ? (int) $extra['default_crf_category_id']
-                    : null;
-                syncCrfPicSource($pdo, $categoryId, $picCrfCategoryId, crfActorName(getCurrentUser()));
-                if ($picCrfCategoryId) {
-                    $message .= ' PIC kategori ini menjadi PIC CRF kategori ' . (findCrfCategory($pdo, $picCrfCategoryId)['name'] ?? '') . '.';
-                }
-            }
-
             categoryMasterFinish('success', $message, $redirect);
             break;
 
@@ -200,7 +148,7 @@ try {
             break;
 
         case 'delete':
-            // Soft delete: data CRF / ticket yang memakai kategori ini tetap utuh.
+            // Soft delete: data CRF yang memakai kategori ini tetap utuh.
             $stmt = $pdo->prepare("UPDATE {$table} SET is_active = 0, deleted_at = NOW() WHERE id = :id AND deleted_at IS NULL");
             $stmt->execute(['id' => $categoryId]);
             categoryMasterFinish(
@@ -213,50 +161,27 @@ try {
         case 'add_member':
         case 'remove_member':
             $userId = (int) ($_POST['user_id'] ?? 0);
-            $category = $type === 'crf' ? findCrfCategory($pdo, $categoryId) : findHelpdeskCategory($pdo, $categoryId);
+            $category = findCrfCategory($pdo, $categoryId);
             $memberUser = findCrfUserById($pdo, $userId);
 
             if (!$category || !$memberUser) {
                 categoryMasterFinish('danger', 'Kategori atau user tidak ditemukan.', $redirect);
             }
 
-            $pivot = $cfg['pivot'];
-            $fk = $cfg['fk'];
             $memberName = crfActorName($memberUser);
 
-            if ($type === 'crf' && $op === 'add_member') {
-                categoryMasterFinish(
-                    'warning',
-                    'PIC CRF diambil dari PIC kategori Helpdesk bertanda "Butuh CRF · ' . $category['name'] . '". Tambahkan '
-                        . $memberName . ' sebagai PIC kategori Helpdesk tersebut.',
-                    $redirect
-                );
-            }
-
             if ($op === 'add_member') {
-                $pdo->prepare("
-                    INSERT INTO {$pivot} ({$fk}, user_id, user_name)
+                $pdo->prepare('
+                    INSERT INTO crf_category_handlers (crf_category_id, user_id, user_name)
                     VALUES (:category_id, :user_id, :user_name)
                     ON DUPLICATE KEY UPDATE user_name = VALUES(user_name)
-                ")->execute(['category_id' => $categoryId, 'user_id' => $userId, 'user_name' => $memberName]);
-                $message = $memberName . ' ditambahkan sebagai ' . $cfg['member'] . ' kategori ' . $category['name'] . '.';
+                ')->execute(['category_id' => $categoryId, 'user_id' => $userId, 'user_name' => $memberName]);
+                $message = $memberName . ' ditambahkan sebagai PIC CRF kategori ' . $category['name'] . '.';
             } else {
-                $pdo->prepare("DELETE FROM {$pivot} WHERE {$fk} = :category_id AND user_id = :user_id")
+                $pdo->prepare('DELETE FROM crf_category_handlers WHERE crf_category_id = :category_id AND user_id = :user_id')
                     ->execute(['category_id' => $categoryId, 'user_id' => $userId]);
-                $message = $memberName . ' dihapus dari ' . $cfg['member'] . ' kategori ' . $category['name'] . '.';
-
-                // Masih terdaftar lewat kategori Helpdesk sumber -> tetap PIC CRF.
-                if ($type === 'crf') {
-                    $still = $pdo->prepare('SELECT sources FROM crf_category_handlers WHERE crf_category_id = :c AND user_id = :u');
-                    $still->execute(['c' => $categoryId, 'u' => $userId]);
-                    $stillSources = $still->fetchColumn();
-                    if ($stillSources) {
-                        $message = 'Isian manual ' . $memberName . ' dihapus, tetapi ia tetap PIC CRF karena PIC kategori Helpdesk '
-                            . $stillSources . '. Ubah di tab Kategori Helpdesk bila perlu.';
-                    }
-                }
+                $message = $memberName . ' dihapus dari PIC CRF kategori ' . $category['name'] . '.';
             }
-
             categoryMasterFinish('success', $message, $redirect);
             break;
 

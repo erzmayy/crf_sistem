@@ -37,6 +37,7 @@ migrasi aman dijalankan ulang.
 | 019 | `peringatan_sla_migration.sql` | Tabel `crf_sla_alerts` (penanda peringatan SLA ke PIC CRF agar tidak terkirim ganda) |
 | 020 | `portabilitas_migration.sql` | Ekspor database aman diimpor di MySQL 5.7 / MariaDB: collation `utf8mb4_unicode_ci`, hapus prosedur bantu sisa migrasi, view `crf_category_handlers` tanpa `CAST ... CHARACTER SET` |
 | 021 | `uat_migration.sql` | Fase UAT oleh CMO: tahap `UAT`, kolom `uat_passed_at` dan `implementation_submitted_at`, `attachments.category` (dokumen hasil UAT) |
+| 022 | `hapus_modul_helpdesk_migration.sql` | **Menghapus modul Helpdesk** (Helpdesk dipegang SIAP): PIC CRF disalin menjadi isian tetap dan `crf_category_handlers` kembali jadi tabel; kolom `helpdesk_ticket_id` dilepas; tabel `helpdesk_*`, `crf_category_pic_sources`, `app_sequences` di-DROP permanen. **Backup dulu.** |
 
 Skrip pemeliharaan (jalankan dari terminal, bukan browser):
 
@@ -44,7 +45,7 @@ Skrip pemeliharaan (jalankan dari terminal, bukan browser):
 
 - `maintenance/kirim_peringatan_sla.php` — mengirim peringatan SLA ke PIC CRF. **Jadwalkan tiap 5 menit** (Windows Task Scheduler atau cron), mis. `php C:\path\crf_sistem\database\maintenance\kirim_peringatan_sla.php`.
 
-Migrasi baru berikutnya diberi nomor `022_...`.
+Migrasi baru berikutnya diberi nomor `023_...`.
 
 ## Memindahkan database ke komputer lain (tanpa galat impor)
 

@@ -2,8 +2,8 @@
 /**
  * includes/categories.php
  * ---------------------------------------------------------------
- * Master Kategori CRF (+ Handling Kategori) dan Kategori Helpdesk
- * (+ PIC). Kategori bersifat dinamis (dikelola Admin), tidak hardcode.
+ * Master Kategori CRF (+ PIC CRF). Kategori bersifat dinamis
+ * (dikelola Admin), tidak hardcode.
  * ---------------------------------------------------------------
  */
 
@@ -74,52 +74,6 @@ function crfCategoryName(array $crf, string $fallback = '-'): string
     return !empty($crf['change_category']) ? (string) $crf['change_category'] : $fallback;
 }
 
-function helpdeskCategories(PDO $pdo, bool $onlyActive = true): array
-{
-    $sql = 'SELECT * FROM helpdesk_categories WHERE deleted_at IS NULL';
-    if ($onlyActive) {
-        $sql .= ' AND is_active = 1';
-    }
-    $sql .= ' ORDER BY sort_order, name';
-
-    return $pdo->query($sql)->fetchAll();
-}
-
-function findHelpdeskCategory(PDO $pdo, int $id): ?array
-{
-    $stmt = $pdo->prepare('SELECT * FROM helpdesk_categories WHERE id = :id AND deleted_at IS NULL LIMIT 1');
-    $stmt->execute(['id' => $id]);
-    $row = $stmt->fetch();
-
-    return $row ?: null;
-}
-
-/**
- * PIC CRF diturunkan dari PIC Kategori Helpdesk (migrasi 017):
- *   crf_category_pic_sources     : Kategori CRF <- Kategori Helpdesk. Diisi otomatis dari
- *                                  pengaturan "Butuh CRF + Kategori CRF default" kategori Helpdesk.
- *   crf_category_handlers_manual : PIC CRF lama yang diisi manual (masa transisi).
- *   crf_category_handlers (VIEW) : gabungan keduanya — dipakai semua pembacaan PIC CRF.
- */
-
-/**
- * Samakan pemetaan PIC CRF sebuah kategori Helpdesk dengan pengaturannya:
- * "Butuh CRF" + Kategori CRF default -> semua PIC-nya menjadi PIC CRF kategori itu.
- * $crfCategoryId null = kategori Helpdesk ini tidak memberi PIC CRF.
- */
-function syncCrfPicSource(PDO $pdo, int $helpdeskCategoryId, ?int $crfCategoryId, string $actorName): void
-{
-    $pdo->prepare('DELETE FROM crf_category_pic_sources WHERE helpdesk_category_id = :helpdesk_id')
-        ->execute(['helpdesk_id' => $helpdeskCategoryId]);
-
-    if ($crfCategoryId) {
-        $pdo->prepare('
-            INSERT INTO crf_category_pic_sources (crf_category_id, helpdesk_category_id, created_by_name)
-            VALUES (:crf_id, :helpdesk_id, :actor)
-        ')->execute(['crf_id' => $crfCategoryId, 'helpdesk_id' => $helpdeskCategoryId, 'actor' => $actorName]);
-    }
-}
-
 /**
  * ID user PIC CRF untuk satu kategori CRF.
  *
@@ -174,56 +128,15 @@ function isCrfCategoryHandler(PDO $pdo, int $userId): bool
 }
 
 /**
- * @return int[]
+ * Daftar PIC CRF per kategori: [category_id => [ [user_id, user_name, email, no_wa], ... ]].
  */
-function helpdeskCategoryPicIds(PDO $pdo, int $categoryId): array
+function categoryMembers(PDO $pdo): array
 {
-    $stmt = $pdo->prepare('SELECT user_id FROM helpdesk_category_pics WHERE helpdesk_category_id = :id');
-    $stmt->execute(['id' => $categoryId]);
-
-    return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
-}
-
-/**
- * @return int[]
- */
-function picHelpdeskCategoryIds(PDO $pdo, int $userId): array
-{
-    static $cache = [];
-
-    if (!isset($cache[$userId])) {
-        $stmt = $pdo->prepare('SELECT helpdesk_category_id FROM helpdesk_category_pics WHERE user_id = :user_id');
-        $stmt->execute(['user_id' => $userId]);
-        $cache[$userId] = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
-    }
-
-    return $cache[$userId];
-}
-
-function isHelpdeskPic(PDO $pdo, int $userId): bool
-{
-    return picHelpdeskCategoryIds($pdo, $userId) !== [];
-}
-
-/**
- * Daftar handler/PIC per kategori: [category_id => [ [user_id, user_name, email, no_wa], ... ]].
- */
-function categoryMembers(PDO $pdo, string $pivotTable, string $categoryColumn): array
-{
-    if (!in_array($pivotTable, ['crf_category_handlers', 'helpdesk_category_pics'], true)) {
-        throw new InvalidArgumentException('Tabel pivot tidak dikenal.');
-    }
-
     $userTable = crfUserTable();
-    // PIC CRF (view) membawa asal PIC: isian manual dan/atau kategori Helpdesk sumber.
-    $extraColumns = $pivotTable === 'crf_category_handlers'
-        ? 'p.is_manual, p.sources'
-        : '0 AS is_manual, NULL AS sources';
     $rows = $pdo->query("
-        SELECT p.id AS pivot_id, p.{$categoryColumn} AS category_id, p.user_id,
-               COALESCE(u.nama, p.user_name) AS user_name, u.userid, u.email, u.no_wa,
-               {$extraColumns}
-        FROM {$pivotTable} p
+        SELECT p.id AS pivot_id, p.crf_category_id AS category_id, p.user_id,
+               COALESCE(u.nama, p.user_name) AS user_name, u.userid, u.email, u.no_wa
+        FROM crf_category_handlers p
         LEFT JOIN {$userTable} u ON u.id = p.user_id
         ORDER BY p.id
     ")->fetchAll();
@@ -237,7 +150,7 @@ function categoryMembers(PDO $pdo, string $pivotTable, string $categoryColumn): 
 }
 
 /**
- * Cari user SIAP untuk dipilih sebagai PIC/handler.
+ * Cari user SIAP untuk dipilih sebagai PIC CRF.
  */
 function searchCrfUsers(PDO $pdo, string $term, int $limit = 15): array
 {

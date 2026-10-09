@@ -2,7 +2,7 @@
 
 Aplikasi **Change Request Form (CRF)** PT Persona Prima Utama (PPU): pengajuan,
 persetujuan, eksekusi, dan pelaporan permintaan perubahan, dilengkapi modul
-Forum, Helpdesk, dan Notifikasi.
+Forum dan Notifikasi. Helpdesk ditangani modul Helpdesk SIAP (bukan bagian aplikasi ini).
 
 - Stack: PHP native (PDO) + MySQL, tanpa framework.
 - Library (Composer): `dompdf/dompdf` (cetak PDF), `phpmailer/phpmailer`
@@ -38,13 +38,12 @@ Forum, Helpdesk, dan Notifikasi.
 |--------|-----|
 | `user/` | Pemohon: Form CRF, Pengajuan Saya, detail |
 | `cmo/`, `otomasi/`, `pak_joko/` | Antrean dan detail untuk CMO, PIC CRF (Otomasi), dan Kepala Departemen Operasional; setelah login langsung masuk ke antrean masing-masing |
-| `admin/` | Dashboard, master kategori CRF/Helpdesk, Handling Kategori |
-| `helpdesk/` | Ticket Helpdesk (form, ticket saya, penanganan PIC) |
+| `admin/` | Dashboard dan master Kategori CRF (+ PIC CRF) |
 | `forum/` | Diskusi per CRF dan penetapan urgensi final |
 | `notifications/` | Notifikasi in-app |
-| `crf/` | Pintu masuk tautan CRF (mengarahkan ke halaman sesuai peran) |
+| `crf/` | Pintu masuk tautan CRF (mengarahkan ke halaman sesuai peran) dan Handling Kategori CRF |
 | `actions/` | Endpoint POST (submit, draft, approval, assign, ekspor, dll.) |
-| `includes/` | Logika inti: `auth.php` (peran/akses), `functions.php` (status, SLA, nomor register), `categories.php`, `helpdesk.php`, `notifications.php`, `forum.php` |
+| `includes/` | Logika inti: `auth.php` (peran/akses), `functions.php` (status, SLA, nomor register), `categories.php`, `notifications.php`, `forum.php` |
 | `config/` | Konfigurasi: `siap.php` (sumber user & peran), `crf.php`, `sla.php`, `database.php` |
 | `database/` | `schema.sql` dan migrasi bernomor |
 

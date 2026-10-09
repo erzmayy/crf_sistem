@@ -53,20 +53,9 @@ if ($draftId > 0) {
 }
 
 /*
- * Kategori CRF dinamis + ticket Helpdesk asal (jika CRF dibuat dari Helpdesk).
+ * Kategori CRF dinamis.
  */
 $crfCategoryOptions = crfCategories($pdo);
-$sourceTicket = null;
-if (!empty($draftData['helpdesk_ticket_id'])) {
-    $ticketStmt = $pdo->prepare('
-        SELECT t.id, t.created_at, c.name AS category_name
-        FROM helpdesk_tickets t
-        JOIN helpdesk_categories c ON c.id = t.helpdesk_category_id
-        WHERE t.id = :id
-    ');
-    $ticketStmt->execute(['id' => $draftData['helpdesk_ticket_id']]);
-    $sourceTicket = $ticketStmt->fetch() ?: null;
-}
 
 // Kategori lama yang sudah dinonaktifkan tetap tampil agar draft tidak kehilangan pilihan.
 $selectedCategoryId = (int) ($_SESSION['old_crf']['crf_category_id'] ?? ($draftData['crf_category_id'] ?? 0));
@@ -140,7 +129,7 @@ if (($draftData['status'] ?? '') === 'Perlu Revisi') {
     $saveState = 'saved';
     $saveStateText = 'Tersimpan sebagai Draft · ' . date('d-m-Y H:i', strtotime($draftData['updated_at'] ?? $draftData['created_at'] ?? 'now'));
 } elseif (trim((string) ($old['change_description'] ?? '')) !== '') {
-    // Isian dibawa dari Formulir Helpdesk / gagal validasi: belum pernah tersimpan.
+    // Isian gagal validasi: belum pernah tersimpan.
     $saveState = 'unsaved';
     $saveStateText = 'Belum disimpan · klik Simpan Draft atau Ajukan CRF';
 } else {
@@ -176,19 +165,6 @@ require_once __DIR__ . '/../includes/header.php';
       <strong>Mohon periksa kembali data berikut:</strong>
       <ul id="validationList" class="mb-0 mt-2"></ul>
     </div>
-
-    <?php if ($sourceTicket): ?>
-      <div class="crf-ticket-link-card">
-        <span class="crf-ticket-link-icon"><i class="bi bi-ticket-detailed"></i></span>
-        <div>
-          <span class="crf-request-caption">CRF ini berasal dari ticket Helpdesk</span>
-          <a href="../helpdesk/detail.php?id=<?= (int) $sourceTicket['id'] ?>" class="crf-link">
-            <strong><?= h(helpdeskTicketLabel($sourceTicket)) ?></strong>
-          </a>
-          <div class="crf-readonly-note mb-0">Data pelapor &amp; isi permintaan dari Helpdesk sudah terisi otomatis. Lengkapi sisanya lalu ajukan CRF.</div>
-        </div>
-      </div>
-    <?php endif; ?>
 
     <form action="../actions/submit_crf.php" method="POST" enctype="multipart/form-data" id="crfForm" novalidate
           data-unsaved-guard data-save-state="<?= h($saveState) ?>">

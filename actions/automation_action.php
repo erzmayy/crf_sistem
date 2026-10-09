@@ -16,7 +16,7 @@
  */
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/helpdesk.php';
+require_once __DIR__ . '/../includes/notifications.php';
 
 requireCrfRole(['otomasi']);
 
@@ -232,7 +232,6 @@ try {
             'Implementasi CRF ' . $crfNumber . ' sudah selesai. Silakan isi Post Implementation Review.',
             'crf/open.php?id=' . $id,
             $id,
-            null,
             (int) $user['id']
         );
     } else {
@@ -243,12 +242,9 @@ try {
             $uatMessage,
             'crf/open.php?id=' . $id,
             $id,
-            null,
             (int) $user['id']
         );
     }
-
-    syncHelpdeskTicketFromCrf($pdo, $id, $actor);
 
     $pdo->commit();
     dispatchPendingNotificationEmails($pdo);

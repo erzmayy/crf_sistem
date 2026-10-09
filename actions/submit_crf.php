@@ -14,7 +14,6 @@
 
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/helpdesk.php';
 require_once __DIR__ . '/../includes/forum_discussions.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -455,10 +454,8 @@ try {
     forumApplyDefaultSla($pdo, $crfId, $user);
 
     /* ------------------------------------------------------------------
-     * 6B. Ticket Helpdesk ikut diperbarui + notifikasi CMO & Handler
+     * 6B. Notifikasi CMO & Handler
      * ------------------------------------------------------------------ */
-    syncHelpdeskTicketFromCrf($pdo, $crfId, $actor);
-
     $notifyTitle = ($isResubmission ? 'CRF dikirim ulang: ' : 'CRF baru: ') . $requestNumber;
     $notifyMessage = $actor . ' mengajukan CRF kategori ' . $crfCategory['name']
         . '. CRF menunggu verifikasi CMO.';
@@ -469,7 +466,6 @@ try {
         $notifyMessage,
         'crf/open.php?id=' . $crfId,
         $crfId,
-        null,
         (int) $user['id']
     );
 

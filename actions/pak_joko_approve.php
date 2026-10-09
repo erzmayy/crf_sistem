@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/helpdesk.php';
 require_once __DIR__ . '/../includes/forum_discussions.php';
 
 requireCrfRole(['kadep_operasional']);
@@ -177,11 +176,8 @@ try {
             'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional. SLA mulai dihitung dan batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. PIC CRF dapat mengeksekusi CRF.',
             $crfLink,
             $id,
-            null,
             (int) $user['id']
         );
-
-        syncHelpdeskTicketFromCrf($pdo, $id, $actor);
 
         $pdo->commit();
         dispatchPendingNotificationEmails($pdo);

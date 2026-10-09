@@ -27,7 +27,7 @@ $navUserId = (int) ($currentUser['id'] ?? 0);
 $notificationUnread = unreadNotificationCount(getConnection(), $navUserId);
 $notificationItems = $crfEmbedded ? [] : recentNotifications(getConnection(), $navUserId, 6);
 
-$appBasePath = preg_replace('#/(?:admin|user|cmo|otomasi|pak_joko|forum|helpdesk|crf|notifications)/[^/]+$#', '', $scriptPath) ?: '';
+$appBasePath = preg_replace('#/(?:admin|user|cmo|otomasi|pak_joko|forum|crf|notifications)/[^/]+$#', '', $scriptPath) ?: '';
 $appBasePath = rtrim($appBasePath, '/');
 // Di dalam SIAP, awalan URL modul diatur dari config/siap.php.
 if (defined('CRF_BASE_URL') && CRF_BASE_URL !== '') {
@@ -65,7 +65,7 @@ if ($crfEmbedded) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= h($pageTitle) ?> · Helpdesk & CRF PPU</title>
+<title><?= h($pageTitle) ?> · CRF PPU</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="<?= h($styleUrl) ?>" rel="stylesheet">
