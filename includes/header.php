@@ -126,7 +126,6 @@ if ($crfEmbedded) {
           <span class="crf-nav-unread"><?= $notificationUnread > 99 ? '99+' : $notificationUnread ?></span>
         <?php endif; ?>
       </a>
-      <a href="<?= h($appBasePath) ?>/actions/logout.php">Keluar</a>
     </nav>
   </aside>
 
@@ -169,11 +168,17 @@ if ($crfEmbedded) {
             <i class="bi bi-shield-check"></i> Admin
           </span>
         <?php endif; ?>
-        <div class="crf-user">
-          <strong><?= h($currentUser['nama'] ?? '-') ?></strong>
-          <span class="crf-avatar">
-            <?= h(strtoupper(substr($currentUser['nama'] ?? 'U', 0, 2))) ?>
-          </span>
+        <div class="dropdown crf-user-menu">
+          <button type="button" class="crf-user" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu akun">
+            <strong><?= h($currentUser['nama'] ?? '-') ?></strong>
+            <span class="crf-avatar">
+              <?= h(strtoupper(substr($currentUser['nama'] ?? 'U', 0, 2))) ?>
+            </span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li class="dropdown-header"><?= h($currentUser['nama'] ?? '-') ?></li>
+            <li><a class="dropdown-item" href="<?= h($appBasePath) ?>/actions/logout.php"><i class="bi bi-box-arrow-right"></i> Keluar</a></li>
+          </ul>
         </div>
       </div>
     </header>
