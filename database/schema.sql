@@ -10,44 +10,10 @@ CREATE DATABASE IF NOT EXISTS crf_sistem
 USE crf_sistem;
 
 -- ---------------------------------------------------------------------
--- Tabel: users
--- prototype CRF.
+-- Data user TIDAK disimpan di database CRF. User dibaca dari
+-- siap.tbl_user (lihat config/siap.php). Kolom user_id di tabel lain
+-- hanya menyimpan id user SIAP, tanpa foreign key (tbl_user MyISAM).
 -- ---------------------------------------------------------------------
-CREATE TABLE users (
-    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    userid          VARCHAR(50)     NULL,
-    password        VARCHAR(255)    NOT NULL,
-    password_new    VARCHAR(75)     NULL,
-
-    nama            VARCHAR(75)     NULL,
-    dept            VARCHAR(75)     NULL,
-    divisi          VARCHAR(50)     NULL,
-
-    email           VARCHAR(150)    NULL,
-    no_wa           VARCHAR(25)     NULL,
-
-    tgl_insert      TIMESTAMP       NULL DEFAULT CURRENT_TIMESTAMP,
-    lastlogin       DATETIME        NULL,
-
-    ganti_password  ENUM('1','2')   NULL,
-    gender          VARCHAR(7)      NULL,
-
-    atasan_id       VARCHAR(10)     NULL,
-    atasan_nama     VARCHAR(75)     NULL,
-    atasan_telp     VARCHAR(25)     NULL,
-
-    kpu_kode        VARCHAR(3)      NULL,
-    kpu_nama        VARCHAR(75)     NULL,
-    npp             VARCHAR(50)     NULL,
-
-    status_wa       ENUM('BLM','SDH') NOT NULL DEFAULT 'BLM',
-    pusat           ENUM('YES','NO')  NOT NULL DEFAULT 'NO',
-
-    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-                                  ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
 -- Tabel: change_requests
@@ -142,14 +108,7 @@ CREATE TABLE change_requests (
 
     created_at                  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP
-                                                 ON UPDATE CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_crf_user
-        FOREIGN KEY (user_id) REFERENCES users(id)
-        ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT fk_crf_kadep_operasional_approved_by
-        FOREIGN KEY (kadep_operasional_approved_by) REFERENCES users(id)
-        ON DELETE SET NULL ON UPDATE CASCADE
+                                                 ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
@@ -211,10 +170,7 @@ CREATE TABLE crf_user_roles (
     role                ENUM('pemohon','cmo','otomasi','kadep_operasional','admin') NOT NULL,
     is_active           TINYINT(1) NOT NULL DEFAULT 1,
     created_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_crf_user_role_user (user_id),
-    CONSTRAINT fk_crf_user_roles_user
-        FOREIGN KEY (user_id) REFERENCES users(id)
-        ON DELETE CASCADE ON UPDATE CASCADE
+    UNIQUE KEY uq_crf_user_role_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
@@ -299,71 +255,6 @@ CREATE TABLE forum_discussions (
         FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ---------------------------------------------------------------------
--- DATA DUMMY
--- ---------------------------------------------------------------------
-
--- User 
-INSERT INTO users (
-    id,
-    userid,
-    password,
-    nama,
-    dept,
-    divisi,
-    email,
-    no_wa
-) VALUES (
-    1,
-    'USER001',
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC8T9hS2YqJYQ1Q8q7i',
-    'User Demo',
-    'Departemen Teknologi Informasi',
-    'IT Support',
-    'user@ppu.test',
-    '081234567890'
-);
-
--- Akun demo kedua
-INSERT INTO users (
-    id,
-    userid,
-    password,
-    nama,
-    dept,
-    divisi,
-    email,
-    no_wa
-) VALUES (
-    2,
-    'ADMIN001',
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC8T9hS2YqJYQ1Q8q7i',
-    'Admin CRF',
-    'Departemen Operasional',
-    'Divisi Otomasi',
-    'admin@ppu.test',
-    NULL
-);
-
--- Akun demo CMO
-INSERT INTO users (id, userid, password, nama, dept, divisi, email, no_wa) VALUES
-(3, 'CMO001', '$2y$10$92IXUNpkj0rOQ5byMi.Ye4oKoEa3Ro9llC8T9hS2YqJYQ1Q8q7i', 'CMO Demo', 'CMO', 'Pemimpin Divisi', 'cmo@ppu.test', '081234567893');
-
--- Akun demo Otomasi
-INSERT INTO users (id, userid, password, nama, dept, divisi, email, no_wa) VALUES
-(4, 'OTOMASI001', '$2y$10$92IXUNpkj0rOQ5byMi.Ye4oKoEa3Ro9llC8T9hS2YqJYQ1Q8q7i', 'Otomasi Demo', 'Departemen Operasional', 'Divisi Otomasi', 'otomasi@ppu.test', '081234567894');
-
--- Akun demo Pak Joko
-INSERT INTO users (id, userid, password, nama, dept, divisi, email, no_wa) VALUES
-(5, 'JOKO001', '$2y$10$92IXUNpkj0rOQ5byMi.Ye4oKoEa3Ro9llC8T9hS2YqJYQ1Q8q7i', 'Pak Joko Demo', 'Departemen Operasional', 'Pemimpin Departemen', 'joko@ppu.test', '081234567895');
-
-INSERT INTO crf_user_roles (user_id, role) VALUES
-(1, 'pemohon'),
-(2, 'admin'),
-(3, 'cmo'),
-(4, 'otomasi'),
-(5, 'kadep_operasional');
 
 
 -- =====================================================================
