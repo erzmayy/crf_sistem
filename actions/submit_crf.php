@@ -265,7 +265,7 @@ try {
          */
         $requestNumber = !empty($draft['request_number'])
             ? $draft['request_number']
-            : generateRequestNumber($pdo, $today);
+            : generateRequestNumber($pdo, $today, $user);
 
         $stmt = $pdo->prepare("
             UPDATE change_requests
@@ -337,7 +337,7 @@ try {
      */
     } else {
 
-        $requestNumber = generateRequestNumber($pdo, $today);
+        $requestNumber = generateRequestNumber($pdo, $today, $user);
 
         $stmt = $pdo->prepare("
             INSERT INTO change_requests (

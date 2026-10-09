@@ -141,8 +141,10 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
 
 ## Nomor register
 
-Format `PPU-02.4.NNNN.MM.YY`. Nomor urut direset per tahun dan dibuat atomik
-lewat tabel `crf_sequence`.
+Format `PPU-<kode>.4.NNNN.MM.YY`. `<kode>` adalah `kpu_kode` akun SIAP pemohon saat mengajukan
+(`crfRegisterCode()`); akun tanpa kode (mis. pusat) memakai `CRF_REGISTER_DEFAULT_CODE` di
+`config/siap.php` (default `02`). Nomor tidak berubah setelah terbit. Nomor urut satu penghitung
+bersama untuk semua KPU, direset per tahun, dan dibuat atomik lewat tabel `crf_sequence`.
 
 ## Helpdesk
 

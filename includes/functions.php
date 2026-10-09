@@ -32,7 +32,8 @@ use Aws\Exception\AwsException;
 /**
  * Membuat Nomor Register BARU (menaikkan penghitung).
  *
- * Format: PPU-02.4.NNNN.MM.YY
+ * Format: PPU-<kode KPU>.4.NNNN.MM.YY (kode dari akun pemohon, lihat crfRegisterCode()).
+ * Urutan NNNN satu penghitung bersama per tahun untuk semua KPU.
  * Dipanggil hanya saat data benar-benar disimpan (save_draft.php
  * dan submit_crf.php). Untuk sekadar menampilkan pratinjau di form,
  * gunakan previewRequestNumber().
@@ -41,7 +42,23 @@ use Aws\Exception\AwsException;
  * sampai transaksi selesai, sehingga dua pengajuan bersamaan
  * tidak akan mendapat nomor yang sama.
  */
-function generateRequestNumber(PDO $pdo, DateTime $date): string
+/**
+ * Kode KPU untuk awalan Nomor Register: kpu_kode akun SIAP pemohon,
+ * hanya huruf/angka (maks. 3 karakter). Kosong = kode cadangan (config/siap.php).
+ */
+function crfRegisterCode(?array $user): string
+{
+    $code = preg_replace('/[^A-Za-z0-9]/', '', (string) ($user['kpu_kode'] ?? ''));
+    $code = substr((string) $code, 0, 3);
+
+    if ($code === '') {
+        $code = defined('CRF_REGISTER_DEFAULT_CODE') ? (string) CRF_REGISTER_DEFAULT_CODE : '02';
+    }
+
+    return $code;
+}
+
+function generateRequestNumber(PDO $pdo, DateTime $date, ?array $user = null): string
 {
     $year = $date->format('y');
 
@@ -68,7 +85,7 @@ function generateRequestNumber(PDO $pdo, DateTime $date): string
                          )
                      )
                      FROM change_requests
-                     WHERE request_number LIKE CONCAT("PPU-02.4.%.", :year1)
+                     WHERE request_number LIKE CONCAT("PPU-%.4.%.", :year1)
                  ), 0)
              ) + 1
          )
@@ -95,14 +112,15 @@ function generateRequestNumber(PDO $pdo, DateTime $date): string
     }
 
     return sprintf(
-        'PPU-02.4.%04d.%s.%s',
+        'PPU-%s.4.%04d.%s.%s',
+        crfRegisterCode($user),
         $sequence,
         $date->format('m'),
         $year
     );
 }
 
-function previewRequestNumber(PDO $pdo, DateTime $date): string
+function previewRequestNumber(PDO $pdo, DateTime $date, ?array $user = null): string
 {
     $year = $date->format('y');
 
@@ -114,7 +132,8 @@ function previewRequestNumber(PDO $pdo, DateTime $date): string
     $lastNumber = (int) $stmt->fetchColumn();
 
     return sprintf(
-        'PPU-02.4.%04d.%s.%s',
+        'PPU-%s.4.%04d.%s.%s',
+        crfRegisterCode($user),
         $lastNumber + 1,
         $date->format('m'),
         $year
