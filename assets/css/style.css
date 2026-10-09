@@ -6259,3 +6259,6 @@ body.crf-module {
   .crf-forum-discussion-header { padding-left: 0.9rem; padding-right: 0.9rem; }
   .crf-forum-message-list { height: clamp(300px, 52vh, 560px); }
 }
+
+/* Kartu Tanggapan: baris baru sudah diurus nl2br; jangan tampilkan spasi template */
+.crf-response-card .crf-detail-value { white-space: normal; }

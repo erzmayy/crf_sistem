@@ -242,23 +242,9 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
             <div class="crf-section-body">
-
-                <div class="crf-detail-value mb-0">
-
-                    <?php if (!empty($crf['tanggapan_tindak_lanjut'])): ?>
-
-                        <?= nl2br(h($crf['tanggapan_tindak_lanjut'])) ?>
-
-                    <?php else: ?>
-
-                        <span class="text-muted">
-                            Belum ada tanggapan atau tindak lanjut.
-                        </span>
-
-                    <?php endif; ?>
-
-                </div>
-
+                <div class="crf-detail-value mb-0"><?= !empty($crf['tanggapan_tindak_lanjut'])
+                    ? nl2br(h($crf['tanggapan_tindak_lanjut']))
+                    : '<span class="text-muted">Belum ada tanggapan atau tindak lanjut.</span>' ?></div>
             </div>
 
         </div>
