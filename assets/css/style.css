@@ -391,7 +391,7 @@ body.crf-module {
 
 /* ---------- Buttons ---------- */
 .crf-module .btn {
-  border-radius: 8px !important;
+  border-radius: 8px;
 }
 .btn-crf-primary {
   background-color: var(--crf-blue-700);
@@ -470,10 +470,10 @@ body.crf-module {
 }
 
 .crf-module .badge {
-  display: inline-flex !important;
+  display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  border-radius: 999px !important;
+  border-radius: 999px;
 }
 
 .crf-module .badge:not(.crf-badge)::before {
@@ -965,7 +965,7 @@ body.crf-module {
 
 .crf-detail-sidebar > .crf-detail-timeline {
   width: 100%;
-  margin: 0 !important;
+  margin: 0;
   align-self: start;
 }
 
@@ -988,7 +988,7 @@ body.crf-module {
 }
 
 .crf-detail-main > .crf-detail-card {
-  margin-bottom: 0.65rem !important;
+  margin-bottom: 0.65rem;
 }
 
 .crf-detail-card .crf-info-row {
@@ -1648,9 +1648,9 @@ body.crf-module {
   .crf-table-responsive-cards table.crf-table th {
     border: none;
     padding: 0.35rem 0;
-    white-space: normal !important;
-    min-width: 0 !important;
-    max-width: none !important;
+    white-space: normal;
+    min-width: 0;
+    max-width: none;
     display: flex;
     justify-content: space-between;
     gap: 0.75rem;
@@ -1802,11 +1802,11 @@ body.crf-module {
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions {
-    display: flex !important;
-    flex-direction: row !important;
+    display: flex;
+    flex-direction: row;
     flex-wrap: nowrap !important;
-    gap: 0.3rem !important;
-    justify-content: flex-start !important;
+    gap: 0.3rem;
+    justify-content: flex-start;
     align-items: center;
     width: 100%;
     min-width: 0;
@@ -1815,16 +1815,16 @@ body.crf-module {
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions > a,
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions > form {
-    display: inline-flex !important;
-    flex: 0 0 auto !important;
-    width: auto !important;
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: auto;
     margin: 0;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions .btn {
     display: inline-flex;
     flex: 0 0 auto;
-    width: auto !important;
+    width: auto;
     min-height: 32px;
     padding: 0.25rem 0.45rem;
     font-size: 0.75rem;
@@ -2093,9 +2093,9 @@ body.crf-module {
   z-index: 70;
   padding: 0.58rem 0.55rem !important;
   border: 0;
-  background: var(--crf-helpdesk-blue) !important;
-  color: var(--crf-helpdesk-blue-text) !important;
-  font-size: 0.75rem !important;
+  background: var(--crf-helpdesk-blue);
+  color: var(--crf-helpdesk-blue-text);
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1.25;
@@ -2105,7 +2105,7 @@ body.crf-module {
 }
 
 .crf-table.pengajuan-table tbody td {
-  padding: 0.65rem 0.55rem !important;
+  padding: 0.65rem 0.55rem;
   border-color: #e6edf6;
   color: #34465f;
   font-size: 0.75rem !important;
@@ -2115,7 +2115,7 @@ body.crf-module {
 
 .crf-table.pengajuan-table tbody td:nth-child(n + 4) {
   vertical-align: top;
-  padding-top: 0.85rem !important;
+  padding-top: 0.85rem;
 }
 
 .crf-table.pengajuan-table tbody tr:nth-child(even) {
@@ -2160,7 +2160,7 @@ body.crf-module {
   min-width: 0;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 0.25rem !important;
+  gap: 0.25rem;
   overflow: visible;
 }
 
@@ -2191,7 +2191,7 @@ body.crf-module {
 
 @media (max-width: 950px) and (min-width: 769px) {
   .crf-table.pengajuan-table .pengajuan-actions {
-    gap: 0.15rem !important;
+    gap: 0.15rem;
   }
 
   .crf-table.pengajuan-table .pengajuan-actions .btn {
@@ -2317,12 +2317,12 @@ body.crf-module {
     width: auto;
     min-width: 0;
     max-width: none;
-    padding: 0.28rem 0 !important;
+    padding: 0.28rem 0;
     border: 0;
     border-bottom: 1px solid #eef2f7;
     overflow-wrap: anywhere;
     text-align: left;
-    font-size: 0.75rem !important;
+    font-size: 0.75rem;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td::before {
@@ -2348,7 +2348,7 @@ body.crf-module {
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Isi Pengajuan"] {
-    padding: 0.4rem 0 !important;
+    padding: 0.4rem 0;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td .crf-badge {
@@ -2360,7 +2360,7 @@ body.crf-module {
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td:nth-child(n + 4) {
-    padding-top: 0.28rem !important;
+    padding-top: 0.28rem;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] {
@@ -2374,7 +2374,7 @@ body.crf-module {
   .pengajuan-table-wrap .pengajuan-table .pengajuan-actions {
     width: 100%;
     min-width: 0;
-    gap: 0.3rem !important;
+    gap: 0.3rem;
     overflow: visible;
   }
 }
@@ -2514,9 +2514,9 @@ body.crf-module {
   z-index: 70;
   padding: 0.58rem 0.5rem !important;
   border: 0;
-  background: var(--crf-helpdesk-blue) !important;
+  background: var(--crf-helpdesk-blue);
   color: var(--crf-helpdesk-blue-text) !important;
-  font-size: 0.75rem !important;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.035em;
   line-height: 1.25;
@@ -2529,7 +2529,7 @@ body.crf-module {
   padding: 0.72rem 0.6rem !important;
   border-color: #e6edf6;
   color: #34465f;
-  font-size: 0.75rem !important;
+  font-size: 0.75rem;
   line-height: 1.45;
   vertical-align: top;
   overflow-wrap: anywhere;
@@ -2891,16 +2891,16 @@ body.crf-module {
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions > a,
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions > form {
-    display: inline-flex !important;
-    flex: 0 0 auto !important;
-    width: auto !important;
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: auto;
     margin: 0;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td[data-label="Aksi"] .pengajuan-actions .btn {
     display: inline-flex;
     flex: 0 0 auto;
-    width: auto !important;
+    width: auto;
     min-height: 32px;
     padding: 0.25rem 0.45rem;
     font-size: 0.75rem;
@@ -2937,7 +2937,7 @@ body.crf-module {
     border-radius: 8px;
     background: #eaf2fb;
     color: #1f568f;
-    font-size: 0.75rem !important;
+    font-size: 0.75rem;
     font-weight: 700;
   }
 
@@ -2983,17 +2983,17 @@ body.crf-module {
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .d-flex > form,
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .dashboard-actions > a,
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .dashboard-actions > form {
-    display: flex !important;
-    flex: 1 1 88px !important;
-    width: auto !important;
+    display: flex;
+    flex: 1 1 88px;
+    width: auto;
     margin: 0;
   }
 
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .d-flex .btn,
   .crf-table-responsive-cards table.crf-table.crf-helpdesk-table tbody td[data-label="Aksi"] .dashboard-actions .btn {
-    display: inline-flex !important;
+    display: inline-flex;
     flex: 1 1 auto !important;
-    width: auto !important;
+    width: auto;
     align-items: center;
     justify-content: center;
     gap: 0.3rem;
@@ -4839,7 +4839,7 @@ body.crf-module {
   }
 
   .crf-detail-page .crf-page-header {
-    align-items: flex-start !important;
+    align-items: flex-start;
   }
 }
 
@@ -5594,7 +5594,7 @@ body.crf-module {
   .crf-helpdesk-table:has(.crf-row-request) tbody td,
   .crf-table.pengajuan-table.crf-helpdesk-table:has(.crf-row-request) tbody td {
     padding: 0.6rem 0.65rem !important;
-    vertical-align: middle !important;
+    vertical-align: middle;
   }
   .crf-helpdesk-table:has(.crf-row-request) th:first-child,
   .crf-helpdesk-table:has(.crf-row-request) td[data-label="No"] {
@@ -5619,7 +5619,7 @@ body.crf-module {
   .crf-helpdesk-table:has(.crf-row-request) td[data-label="Aksi"] .d-flex,
   .crf-helpdesk-table:has(.crf-row-request) td[data-label="Aksi"] .dashboard-actions {
     flex-wrap: nowrap;
-    gap: 0.35rem !important;
+    gap: 0.35rem;
   }
 }
 
@@ -5699,7 +5699,7 @@ body.crf-module {
   width: auto;
   height: auto;
   border-radius: 0;
-  background: none !important;
+  background: none;
   color: var(--kpi-accent, #2563eb);
   font-size: 0.75rem;
 }
@@ -6484,7 +6484,7 @@ body.crf-module {
 }
 
 /* Teks tabel & hint: nyaman dibaca */
-.crf-helpdesk-table thead th { font-size: 0.75rem !important; }
+.crf-helpdesk-table thead th { font-size: 0.75rem; }
 .crf-helpdesk-table tbody td { font-size: 0.8rem !important; }
 .crf-readonly-note { font-size: 0.75rem; }
 
