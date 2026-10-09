@@ -41,6 +41,12 @@ const CRF_KADEP_OPERASIONAL_USERIDS = ['3736'];
 const CRF_CMO_DEPTS = ['CMO'];
 
 /*
+ * Kode awal Nomor Register (PPU-<kode>.4.NNNN.MM.YY) diambil dari kpu_kode akun pemohon di SIAP.
+ * Akun tanpa kpu_kode (mis. pusat) memakai kode cadangan berikut.
+ */
+const CRF_REGISTER_DEFAULT_CODE = '02';
+
+/*
  * Tampilan modul.
  *
  * 'standalone' : CRF memakai header, sidebar, dan <html> sendiri (default).

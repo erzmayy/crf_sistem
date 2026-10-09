@@ -11,7 +11,6 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/forum_discussions.php';
-require_once __DIR__ . '/../includes/helpdesk.php';
 
 requireAdmin();
 
@@ -87,13 +86,10 @@ try {
         'CRF ' . $crf['request_number'] . ' dibatalkan oleh Admin. Alasan: ' . $reason,
         'crf/open.php?id=' . $id,
         $id,
-        null,
         (int) $user['id']
     );
 
     forumCloseOpenDiscussions($pdo, $id, 'CRF dibatalkan oleh Admin.');
-    syncHelpdeskTicketFromCrf($pdo, $id, $actor);
-
     $pdo->commit();
     dispatchPendingNotificationEmails($pdo);
     $_SESSION['flash'] = ['type' => 'success', 'message' => 'CRF ' . $crf['request_number'] . ' berhasil dibatalkan.'];

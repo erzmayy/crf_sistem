@@ -100,37 +100,22 @@ function crfNavGroups(): array
         $currentFolder === $folder && ($file === null || $currentPath === $file);
 
     $isForum = $currentFolder === 'forum';
-    // Halaman Handling dan Kategori dipakai dua modul lewat ?tab=; menu memilih modul.
-    $currentTab = ($_GET['tab'] ?? '') === 'crf' ? 'crf' : 'helpdesk';
     $forumUnreadTotal = in_array($crfRole, forumRoles(), true)
         ? forumUnreadTotal($pdo, $userId)
         : 0;
-    $isPicUser = $isAdminUser || isHelpdeskPic($pdo, $userId);
     $queue = crfQueueCounts($pdo, $canRole('cmo'), $canRole('kadep_operasional'), $canRole('otomasi'));
 
     return [
-        [
-            'label' => 'Help Desk',
-            'icon' => 'bi-headset',
-            'items' => [
-                ['label' => 'Dashboard Help Desk', 'url' => '/helpdesk/dashboard.php', 'show' => $isPicUser, 'active' => $isNav('helpdesk', 'dashboard.php')],
-                ['label' => 'Handling Helpdesk', 'url' => '/helpdesk/handling.php?tab=helpdesk', 'show' => $isPicUser, 'active' => ($isNav('helpdesk', 'handling.php') && $currentTab === 'helpdesk') || $isNav('helpdesk', 'kategori.php')],
-                ['label' => 'Kategori Helpdesk', 'url' => '/admin/master_data.php?tab=helpdesk', 'show' => $isAdminUser, 'active' => $isNav('admin', 'master_data.php') && $currentTab === 'helpdesk'],
-                ['label' => 'Formulir Help Desk', 'url' => '/helpdesk/form.php', 'show' => true, 'active' => $isNav('helpdesk', 'form.php')],
-                ['label' => 'Tiket Saya', 'url' => '/helpdesk/saya.php', 'show' => true, 'active' => $isNav('helpdesk', 'saya.php') || $isNav('helpdesk', 'detail.php')],
-            ],
-        ],
         [
             'label' => 'Change Request (CRF)',
             'icon' => 'bi-file-earmark-diff',
             'items' => [
                 ['label' => 'Dashboard CRF', 'url' => '/admin/dashboard.php', 'show' => $isAdminUser, 'active' => $isNav('admin', 'dashboard.php') || $isNav('admin', 'detail.php') || $isNav('admin', 'edit.php')],
-                ['label' => 'Kategori CRF', 'url' => '/admin/master_data.php?tab=crf', 'show' => $isAdminUser, 'active' => $isNav('admin', 'master_data.php') && $currentTab === 'crf'],
+                ['label' => 'Kategori CRF', 'url' => '/admin/master_data.php', 'show' => $isAdminUser, 'active' => $isNav('admin', 'master_data.php')],
                 ['label' => 'Verifikasi CMO', 'url' => '/cmo/index.php', 'show' => $canRole('cmo'), 'active' => $currentFolder === 'cmo', 'badge' => $queue['cmo'], 'badge_label' => $queue['cmo'] . ' CRF menunggu tindakan CMO (verifikasi ' . $queue['cmo_verifikasi'] . ', UAT ' . $queue['cmo_uat'] . ', finalisasi ' . $queue['cmo_final'] . ')'],
                 ['label' => 'Tindak Lanjut Otomasi', 'url' => '/otomasi/index.php', 'show' => $canRole('otomasi'), 'active' => $currentFolder === 'otomasi', 'badge' => $queue['pic'], 'badge_label' => $queue['pic'] . ' CRF menunggu implementasi' . ($queue['pic_overdue'] > 0 ? ', ' . $queue['pic_overdue'] . ' melewati SLA' : '')],
                 ['label' => 'Persetujuan Kepala Departemen Operasional', 'url' => '/pak_joko/index.php', 'show' => $canRole('kadep_operasional'), 'active' => $currentFolder === 'pak_joko', 'badge' => $queue['kadep'], 'badge_label' => $queue['kadep'] . ' CRF menunggu persetujuan'],
-                // Handling CRF: dibuka per modul (?tab=crf); halaman yang sama dipakai modul Helpdesk (?tab=helpdesk).
-                ['label' => 'Handling CRF', 'url' => '/helpdesk/handling.php?tab=crf', 'show' => $isAdminUser || in_array($crfRole, ['cmo', 'otomasi', 'kadep_operasional', 'demo'], true), 'active' => $isNav('helpdesk', 'handling.php') && $currentTab === 'crf'],
+                ['label' => 'Handling CRF', 'url' => '/crf/handling.php', 'show' => $isAdminUser || in_array($crfRole, ['cmo', 'otomasi', 'kadep_operasional', 'demo'], true), 'active' => $isNav('crf', 'handling.php')],
                 ['label' => 'Form CRF', 'url' => '/user/form_crf.php', 'show' => true, 'active' => $isNav('user', 'form_crf.php')],
                 ['label' => 'Pengajuan CRF Saya', 'url' => '/user/pengajuan_saya.php', 'show' => in_array($crfRole, ['pemohon', 'demo'], true), 'active' => $isNav('user', 'pengajuan_saya.php') || $isNav('user', 'detail.php')],
                 ['label' => 'Forum', 'url' => '/forum/index.php', 'show' => in_array($crfRole, forumRoles(), true), 'active' => $isForum, 'badge' => $forumUnreadTotal],

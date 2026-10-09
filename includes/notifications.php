@@ -30,7 +30,6 @@ function notifyUsers(
     string $message,
     string $url = '',
     ?int $crfId = null,
-    ?int $ticketId = null,
     ?int $exceptUserId = null
 ): void {
     $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
@@ -43,8 +42,8 @@ function notifyUsers(
     }
 
     $stmt = $pdo->prepare('
-        INSERT INTO notifications (user_id, title, message, url, change_request_id, helpdesk_ticket_id)
-        VALUES (:user_id, :title, :message, :url, :crf_id, :ticket_id)
+        INSERT INTO notifications (user_id, title, message, url, change_request_id)
+        VALUES (:user_id, :title, :message, :url, :crf_id)
     ');
 
     foreach ($userIds as $userId) {
@@ -54,7 +53,6 @@ function notifyUsers(
             'message'   => $message,
             'url'       => $url !== '' ? $url : null,
             'crf_id'    => $crfId,
-            'ticket_id' => $ticketId,
         ]);
     }
 }
@@ -262,7 +260,7 @@ function sendNotificationEmail(array $config, string $toEmail, string $toName, a
             $mail->SMTPSecure = (string) $config['encryption'];
         }
 
-        $mail->setFrom((string) $config['from_email'], (string) ($config['from_name'] ?? 'Helpdesk & CRF'));
+        $mail->setFrom((string) $config['from_email'], (string) ($config['from_name'] ?? 'CRF'));
         $mail->addAddress($toEmail, $toName);
         $mail->isHTML(true);
         $mail->Subject = (string) $notification['title'];
@@ -277,7 +275,7 @@ function sendNotificationEmail(array $config, string $toEmail, string $toName, a
         if ($link !== '') {
             $body .= '<p><a href="' . h($link) . '">Buka di aplikasi</a></p>';
         }
-        $body .= '<p style="color:#888;font-size:12px">Email otomatis dari Helpdesk &amp; CRF PT Persona Prima Utama.</p>';
+        $body .= '<p style="color:#888;font-size:12px">Email otomatis dari Sistem CRF PT Persona Prima Utama.</p>';
 
         $mail->Body = $body;
         $mail->AltBody = (string) $notification['message'] . ($link !== '' ? "\n\n" . $link : '');

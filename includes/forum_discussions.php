@@ -20,7 +20,6 @@
  */
 require_once __DIR__ . '/forum.php';
 require_once __DIR__ . '/functions.php';
-require_once __DIR__ . '/helpdesk.php';
 
 /** Target waktu pembahasan (hari kerja). Hanya target proses, bukan SLA CRF. */
 const FORUM_DISCUSSION_DECISION_DAYS = 2;
@@ -224,7 +223,6 @@ function forumNotify(PDO $pdo, array $userIds, string $title, string $message, i
             $message,
             'forum/index.php?crf_id=' . $crfId . '#forum-pembahasan',
             $crfId,
-            null,
             $actorId
         );
     } catch (Throwable $e) {
@@ -582,10 +580,8 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
                 'CRF ' . $crfNumber . ' selesai dibahas di Forum (' . $outcomeLabel . ': ' . $afterText . ') dan menunggu persetujuan Anda.',
                 'crf/open.php?id=' . $crfId,
                 $crfId,
-                null,
                 (int) $user['id']
             );
-            syncHelpdeskTicketFromCrf($pdo, $crfId, $actor);
         }
         // Hanya yang terlibat: pengaju (atau seluruh CMO bila dibuka sistem) dan pemberi komentar.
         $commenters = $pdo->prepare('SELECT DISTINCT user_id FROM forum_comments WHERE change_request_id = :id AND is_system = 0');

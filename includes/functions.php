@@ -32,7 +32,8 @@ use Aws\Exception\AwsException;
 /**
  * Membuat Nomor Register BARU (menaikkan penghitung).
  *
- * Format: PPU-02.4.NNNN.MM.YY
+ * Format: PPU-<kode KPU>.4.NNNN.MM.YY (kode dari akun pemohon, lihat crfRegisterCode()).
+ * Urutan NNNN satu penghitung bersama per tahun untuk semua KPU.
  * Dipanggil hanya saat data benar-benar disimpan (save_draft.php
  * dan submit_crf.php). Untuk sekadar menampilkan pratinjau di form,
  * gunakan previewRequestNumber().
@@ -41,7 +42,23 @@ use Aws\Exception\AwsException;
  * sampai transaksi selesai, sehingga dua pengajuan bersamaan
  * tidak akan mendapat nomor yang sama.
  */
-function generateRequestNumber(PDO $pdo, DateTime $date): string
+/**
+ * Kode KPU untuk awalan Nomor Register: kpu_kode akun SIAP pemohon,
+ * hanya huruf/angka (maks. 3 karakter). Kosong = kode cadangan (config/siap.php).
+ */
+function crfRegisterCode(?array $user): string
+{
+    $code = preg_replace('/[^A-Za-z0-9]/', '', (string) ($user['kpu_kode'] ?? ''));
+    $code = substr((string) $code, 0, 3);
+
+    if ($code === '') {
+        $code = defined('CRF_REGISTER_DEFAULT_CODE') ? (string) CRF_REGISTER_DEFAULT_CODE : '02';
+    }
+
+    return $code;
+}
+
+function generateRequestNumber(PDO $pdo, DateTime $date, ?array $user = null): string
 {
     $year = $date->format('y');
 
@@ -68,7 +85,7 @@ function generateRequestNumber(PDO $pdo, DateTime $date): string
                          )
                      )
                      FROM change_requests
-                     WHERE request_number LIKE CONCAT("PPU-02.4.%.", :year1)
+                     WHERE request_number LIKE CONCAT("PPU-%.4.%.", :year1)
                  ), 0)
              ) + 1
          )
@@ -95,14 +112,15 @@ function generateRequestNumber(PDO $pdo, DateTime $date): string
     }
 
     return sprintf(
-        'PPU-02.4.%04d.%s.%s',
+        'PPU-%s.4.%04d.%s.%s',
+        crfRegisterCode($user),
         $sequence,
         $date->format('m'),
         $year
     );
 }
 
-function previewRequestNumber(PDO $pdo, DateTime $date): string
+function previewRequestNumber(PDO $pdo, DateTime $date, ?array $user = null): string
 {
     $year = $date->format('y');
 
@@ -114,7 +132,8 @@ function previewRequestNumber(PDO $pdo, DateTime $date): string
     $lastNumber = (int) $stmt->fetchColumn();
 
     return sprintf(
-        'PPU-02.4.%04d.%s.%s',
+        'PPU-%s.4.%04d.%s.%s',
+        crfRegisterCode($user),
         $lastNumber + 1,
         $date->format('m'),
         $year
@@ -714,24 +733,6 @@ function crfPirReminderInfo(PDO $pdo, array $crf): array
     ];
 }
 
-/**
- * Label ticket untuk tampilan & notifikasi (tanpa nomor ticket, mengikuti
- * SIAP): "Kategori · dd-mm-YYYY HH:ii".
- * $ticket butuh category_name & created_at.
- */
-function helpdeskTicketLabel(array $ticket): string
-{
-    $parts = [];
-    if (!empty($ticket['category_name'])) {
-        $parts[] = (string) $ticket['category_name'];
-    }
-    if (!empty($ticket['created_at'])) {
-        $parts[] = date('d-m-Y H:i', strtotime((string) $ticket['created_at']));
-    }
-
-    return $parts ? implode(' · ', $parts) : 'Ticket Helpdesk';
-}
-
 function crfActorName(array $user): string
 {
     return !empty($user['nama']) ? (string) $user['nama'] : (string) ($user['userid'] ?? '-');
@@ -1057,23 +1058,6 @@ function handleUatDocumentUploads(PDO $pdo, int $crfId, array $filesInput): arra
     );
 
     return uploadAttachmentsToStorage($filesInput, 'crf_' . $crfId . '_uat_', $stmt, $crfId);
-}
-
-/**
- * Lampiran ticket Helpdesk: validasi & penyimpanan sama dengan lampiran CRF.
- *
- * @return string[]
- */
-function handleHelpdeskAttachmentUploads(PDO $pdo, int $ticketId, array $filesInput): array
-{
-    $stmt = $pdo->prepare(
-        'INSERT INTO helpdesk_attachments
-        (helpdesk_ticket_id, original_name, stored_name, file_path, file_type, file_size)
-        VALUES
-        (:owner_id, :original_name, :stored_name, :file_path, :file_type, :file_size)'
-    );
-
-    return uploadAttachmentsToStorage($filesInput, 'hd_' . $ticketId . '_', $stmt, $ticketId);
 }
 
 /**

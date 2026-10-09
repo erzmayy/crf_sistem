@@ -1054,13 +1054,6 @@ body.crf-module {
   line-height: 1.4;
 }
 
-.crf-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.35rem;
-}
-
 /* =========================================================
    PERBAIKAN LAYOUT INFORMASI CRF
    ========================================================= */
@@ -1284,7 +1277,7 @@ body.crf-module {
   .crf-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .crf-detail-page .crf-section-body { padding: 1.2rem; }
   .crf-detail-page .crf-detail-card .crf-section-body { padding: 0.85rem 0.9rem; }
-  .crf-detail-grid { grid-template-columns: 1fr; gap: 0.8rem; }
+  
   .crf-detail-layout { grid-template-columns: 1fr; }
   .crf-detail-sidebar { position: static; }
   .crf-detail-card .crf-sla-grid > .crf-sla-item { width: 50%; }
@@ -1330,42 +1323,10 @@ body.crf-module {
    ========================================================= */
 
 /* Kolom dashboard admin */
-.dashboard-table td:nth-child(2) {
-    white-space: nowrap;
-}
-
-.dashboard-table td:nth-child(6) {
-    white-space: nowrap;
-}
-
-.dashboard-table td:nth-child(8) {
-    min-width: 110px;
-}
-
-.dashboard-table td:nth-child(8) .crf-badge {
-    white-space: nowrap;
-    overflow-wrap: normal;
-    line-height: 1.3;
-    text-align: center;
-}
 
 /* Status */
-.dashboard-table td:nth-child(9) {
-    min-width: 125px;
-}
-
-.dashboard-table td:nth-child(9) .crf-badge {
-    max-width: 100%;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    line-height: 1.3;
-    text-align: center;
-}
 
 /* Aksi */
-.dashboard-table td:nth-child(11) {
-    white-space: nowrap;
-}
 
 .badge-status-belum {
     background: #e5e7eb;
@@ -2639,53 +2600,12 @@ body.crf-module {
   font-weight: 600;
 }
 
-.crf-request-meta {
-  display: grid;
-  gap: 0.12rem;
-  margin-bottom: 0.45rem;
-}
-
-.crf-request-caption,
-.crf-request-date-card > span {
+.crf-request-caption {
   color: #64748b;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-}
-
-.crf-request-date-card {
-  display: grid;
-  gap: 0.12rem;
-  padding: 0.38rem 0.45rem;
-  border: 1px solid #dbe5f2;
-  border-left: 2px solid #3478ef;
-  border-radius: 7px;
-  background: #fbfdff;
-}
-
-.crf-request-date-card > span {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  text-transform: none;
-}
-
-.crf-request-date-card > span i {
-  color: #2563eb;
-}
-
-.crf-request-date-card strong {
-  color: #334155;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.crf-request-content {
-  display: grid;
-  justify-items: start;
-  gap: 0.42rem;
-  min-width: 0;
 }
 
 .crf-request-category-chip {
@@ -2702,18 +2622,6 @@ body.crf-module {
   font-weight: 700;
   line-height: 1.25;
   overflow-wrap: anywhere;
-}
-
-.crf-request-description {
-  display: -webkit-box;
-  margin: 0;
-  overflow: hidden;
-  color: #43546b;
-  font-size: 0.75rem;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 5;
 }
 
 .crf-helpdesk-table tbody td .crf-badge {
@@ -3466,10 +3374,6 @@ body.crf-module {
 .crf-dashboard-page .crf-stat-grid .pengajuan-stat-processing { border-left-color: #2563eb; }
 .crf-dashboard-page .crf-stat-grid .pengajuan-stat-solved { border-left-color: #15803d; }
 .crf-dashboard-page .crf-stat-grid .pengajuan-stat-cancelled { border-left-color: #64748b; }
-
-.crf-forum-stat {
-  border-left: 3px solid #0e7490 !important;
-}
 
 /* ---------------------------------------------------------------
  * Forum CRF
@@ -4849,9 +4753,6 @@ body.crf-module {
    Helpdesk, notifikasi, penugasan handler, hasil SLA.
    ===================================================================== */
 
-.crf-link { color: #1f568f; text-decoration: none; font-weight: 600; }
-.crf-link:hover { text-decoration: underline; }
-
 /* Banner dengan tombol aksi */
 .crf-banner-with-actions { gap: 1rem; flex-wrap: wrap; }
 .crf-banner-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
@@ -4868,7 +4769,6 @@ body.crf-module {
 .crf-banner-stat { display: inline-flex; align-items: baseline; gap: 0.2rem; color: #64748b; font-size: 0.9rem; }
 .crf-banner-stat strong { color: #1e3048; font-size: 1.6rem; }
 .crf-banner-stat small { margin-left: 0.4rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
-.crf-badge-lg { padding: 0.45rem 0.9rem; font-size: 0.8rem; }
 
 /* Kartu ringkasan yang bisa diklik sebagai filter */
 .crf-stat-card.is-active { border-color: #69acd2; box-shadow: 0 0 0 2px rgba(105, 172, 210, 0.25); }
@@ -4886,17 +4786,12 @@ body.crf-module {
 }
 .crf-kpi-label { display: block; color: #64748b; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
 .crf-kpi-card strong { display: block; color: #1e3048; font-size: 1.35rem; line-height: 1.2; }
-.crf-kpi-bar { height: 4px; margin-top: 0.4rem; border-radius: 4px; background: #eef2f6; overflow: hidden; }
-.crf-kpi-bar span { display: block; height: 100%; border-radius: 4px; background: currentColor; }
+
 .crf-kpi-card--primary .crf-kpi-icon { background: #2563eb; }
 .crf-kpi-card--success .crf-kpi-icon { background: #1E7A3D; }
 .crf-kpi-card--info .crf-kpi-icon { background: #1c8fdb; }
 .crf-kpi-card--danger .crf-kpi-icon { background: #B3261E; }
 .crf-kpi-card--secondary .crf-kpi-icon { background: #64748b; }
-.crf-kpi-card--success .crf-kpi-bar { color: #1E7A3D; }
-.crf-kpi-card--info .crf-kpi-bar { color: #1c8fdb; }
-.crf-kpi-card--danger .crf-kpi-bar { color: #B3261E; }
-.crf-kpi-card--secondary .crf-kpi-bar { color: #64748b; }
 
 /* Kartu kategori (Dashboard Handling & Dashboard Kategori) */
 .crf-category-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
@@ -4924,13 +4819,7 @@ body.crf-module {
 .crf-category-ring small { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
 .crf-category-ring.is-pending { border-color: #e08a1e; color: #B4740E; }
 .crf-category-ring.is-done { border-color: #1E7A3D; color: #1E7A3D; }
-.crf-category-stats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #edf1f5; border-radius: 10px; background: #f8fafc; }
-.crf-category-stats > div { padding: 0.65rem 0.7rem; }
-.crf-category-stats > div + div { border-left: 1px solid #edf1f5; }
-.crf-category-stats strong { display: block; color: #1e3048; font-size: 1.15rem; }
-.crf-category-stats span { color: #64748b; font-size: 0.75rem; }
-.crf-category-stats .is-success strong { color: #1E7A3D; }
-.crf-category-stats .is-danger strong { color: #B3261E; }
+
 .crf-category-status-list { margin: 0; padding: 0; list-style: none; border: 1px solid #edf1f5; border-radius: 10px; background: #f8fafc; }
 .crf-category-status-list li { display: flex; justify-content: space-between; padding: 0.5rem 0.8rem; font-size: 0.8rem; color: #475569; }
 .crf-category-status-list li + li { border-top: 1px solid #edf1f5; }
@@ -4967,28 +4856,7 @@ body.crf-module {
 .crf-member-empty { grid-column: 1 / -1; padding: 0.7rem; border: 1px dashed #d5dee8; border-radius: 10px; color: #64748b; font-size: 0.78rem; }
 
 /* Asal PIC CRF pada kartu anggota */
-.crf-member-source {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.3rem;
-  margin-top: 0.15rem;
-  color: #1d4ed8;
-  font-size: 0.75rem;
-}
 
-.crf-member-manual {
-  padding: 0 0.4rem;
-  border-radius: 999px;
-  background: #f1f5f9;
-  color: #64748b;
-}
-
-.crf-member-hint {
-  margin: 0.6rem 0 0;
-  color: #64748b;
-  font-size: 0.75rem;
-}
 .crf-member-add { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.7rem; }
 .crf-member-search { position: relative; flex: 1; max-width: 420px; }
 .crf-member-search > i { position: absolute; top: 50%; left: 0.6rem; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; }
@@ -5004,56 +4872,10 @@ body.crf-module {
 .crf-member-result:hover, .crf-member-result:focus { background: #f1f7fc; outline: none; }
 .crf-member-result small { color: #64748b; font-size: 0.75rem; }
 .crf-member-result-empty { padding: 0.6rem 0.75rem; color: #64748b; font-size: 0.78rem; }
-.crf-requires-crf-box { padding: 0.75rem; border: 1px solid #dbe6f0; border-radius: 10px; background: #f5f9fc; }
 
 /* Formulir Helpdesk */
-.crf-auto-pill {
-  display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border-radius: 999px;
-  background: #fff; color: #64748b; font-size: 0.7rem; font-weight: 600;
-}
-.crf-choice-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
-.crf-choice-row--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.crf-choice-card {
-  display: flex; align-items: center; gap: 0.65rem; padding: 0.75rem 0.85rem; cursor: pointer;
-  border: 1px solid #dfe5ec; border-radius: 10px; background: #fff; transition: border-color 0.15s, box-shadow 0.15s;
-}
-.crf-choice-card:hover { border-color: #9cc3df; }
-.crf-choice-card:has(input:checked) { border-color: #1f568f; box-shadow: 0 0 0 2px rgba(31, 86, 143, 0.15); background: #f7fbff; }
-.crf-choice-card input { flex: 0 0 auto; width: 1rem; height: 1rem; accent-color: #1f568f; }
-.crf-choice-card > span:last-child { display: flex; flex-direction: column; min-width: 0; }
-.crf-choice-card strong { color: #1e3048; font-size: 0.84rem; }
-.crf-choice-card small { color: #64748b; font-size: 0.75rem; }
-.crf-choice-icon {
-  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 34px; width: 34px; height: 34px;
-  border-radius: 8px; background: #eef4fb; color: #1f568f;
-}
-.crf-crf-notice {
-  display: flex; gap: 0.7rem; margin-top: 1rem; padding: 0.85rem 1rem; border: 1px solid #b9d8ef; border-radius: 10px;
-  background: #eef7fd; color: #1f568f; font-size: 0.82rem;
-}
-.crf-crf-notice > i { font-size: 1.1rem; }
-.crf-ticket-link-card {
-  display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem; padding: 0.85rem 1rem;
-  border: 1px solid #b9d8ef; border-left: 3px solid #1f568f; border-radius: 10px; background: #f5faff;
-}
-.crf-ticket-link-icon {
-  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 40px; width: 40px; height: 40px;
-  border-radius: 10px; background: #1f568f; color: #fff; font-size: 1.1rem;
-}
-.crf-ticket-link-card .crf-request-caption { display: block; }
 
 /* Detail ticket */
-.crf-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1.25rem; margin: 0; }
-.crf-detail-grid--single { grid-template-columns: 1fr; }
-.crf-detail-grid dt { color: #64748b; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
-.crf-detail-grid dd { margin: 0.15rem 0 0; color: #1e3048; font-size: 0.86rem; }
-.crf-detail-text { padding: 0.75rem 0.9rem; border: 1px solid #edf1f5; border-radius: 10px; background: #f8fafc; font-size: 0.86rem; white-space: normal; }
-.crf-linked-crf {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; padding: 0.75rem 0.85rem;
-  border: 1px solid #e5ebf1; border-radius: 10px; color: #1e3048; text-decoration: none;
-}
-.crf-linked-crf + .crf-linked-crf { margin-top: 0.5rem; }
-.crf-linked-crf:hover { border-color: #9cc3df; background: #f7fbff; }
 
 /* Penugasan handler CRF */
 .crf-assignment-card {
@@ -5104,13 +4926,11 @@ body.crf-module {
 
 /* Empty state & filter lanjutan */
 .crf-empty-state > i { display: block; margin-bottom: 0.5rem; color: #94a3b8; font-size: 2rem; }
-.crf-empty-state--compact { padding: 1.5rem 1rem; }
-.crf-list-filters-advanced { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 
 @media (max-width: 768px) {
   .crf-category-member-row { grid-template-columns: 1fr; }
-  .crf-choice-row, .crf-choice-row--3 { grid-template-columns: 1fr; }
-  .crf-detail-grid { grid-template-columns: 1fr; }
+  
+  
   .crf-sla-result { grid-template-columns: 1fr; }
   .crf-member-add { flex-wrap: wrap; }
   .crf-member-search { max-width: none; flex-basis: 100%; }
@@ -5118,11 +4938,7 @@ body.crf-module {
 }
 
 /* Master data gabungan (Kategori & Handling) */
-.crf-master-flow {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-bottom: 1rem; padding: 0.7rem 0.9rem;
-  border: 1px solid #dbe6f0; border-radius: 10px; background: #f5f9fc; color: #475569; font-size: 0.8rem;
-}
-.crf-master-flow > i { color: #1f568f; }
+
 .crf-master-tabs { gap: 0.25rem; border-bottom-color: #dbe3ec; }
 .crf-master-tabs .nav-link { display: inline-flex; align-items: center; gap: 0.4rem; color: #475569; font-size: 0.84rem; font-weight: 600; }
 .crf-master-tabs .nav-link.active { color: #1f568f; border-color: #dbe3ec #dbe3ec #fff; }
@@ -5709,9 +5525,8 @@ body.crf-module {
   letter-spacing: 0.04em;
   line-height: 1.25;
 }
-.crf-module .crf-kpi-card strong,
-.crf-module .crf-kpi-bar { grid-column: 1 / -1; }
-.crf-module .crf-kpi-bar { margin-top: 0; }
+.crf-module .crf-kpi-card strong { grid-column: 1 / -1; }
+
 .crf-module .crf-kpi-card--primary { --kpi-accent: #2563eb; border-left-color: #2563eb; }
 .crf-module .crf-kpi-card--info { --kpi-accent: #1c8fdb; border-left-color: #1c8fdb; }
 .crf-module .crf-kpi-card--success { --kpi-accent: #1e7a3d; border-left-color: #1e7a3d; }
@@ -5752,7 +5567,6 @@ body.crf-module {
 .crf-module .crf-stat-grid .crf-stat-tone-revisi { border-left-color: #dc2626; }
 .crf-module .crf-stat-grid .crf-stat-tone-selesai { border-left-color: #15803d; }
 .crf-module .crf-stat-grid .crf-stat-tone-dibatalkan { border-left-color: #64748b; }
-.crf-module .crf-stat-grid .crf-forum-stat { border-left-color: #0f766e; }
 
 /* Teks di samping logo tetap satu baris */
 .crf-app-shell .siap-sidebar .ppu-brand-text { font-size: 0.95rem; white-space: nowrap; }
@@ -5800,7 +5614,6 @@ body.crf-module {
   .crf-sticky-actions .crf-sticky-buttons > button { width: 100%; }
 }
 
-
 /* ---------- Tombol Diskusi Forum di halaman detail CRF ---------- */
 .crf-forum-button { display: inline-flex; align-items: center; gap: 0.4rem; }
 .crf-forum-button-count {
@@ -5826,7 +5639,6 @@ body.crf-module {
 }
 .crf-forum-button-flag { color: #d97706; font-size: 0.8rem; }
 
-
 /* =====================================================================
    Dashboard Admin (dipindah dari blok <style> inline admin/dashboard.php)
    ===================================================================== */
@@ -5834,143 +5646,54 @@ body.crf-module {
        DASHBOARD TABLE
        ========================================================= */
 
-    .dashboard-table-wrap {
-        overflow: visible;
-        width: 100%;
-        max-width: 100%;
-        max-height: none;
-    }
+    
 
-    .dashboard-table {
-        width: 100%;
-        min-width: 1028px;
-        table-layout: fixed;
-        margin-bottom: 0;
-        font-size: 0.86rem;
-    }
+    
 
-    .dashboard-table th,
-    .dashboard-table td {
-        vertical-align: middle;
-        padding: 0.38rem 0.45rem;
-    }
+    
 
-    .dashboard-table thead th {
-        white-space: normal;
-        overflow-wrap: break-word;
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-        position: sticky;
-        top: var(--crf-topbar-height);
-        z-index: 70;
-        background: var(--crf-helpdesk-blue);
-    }
+    
 
-    .crf-table.dashboard-table thead th {
-        top: 0;
-    }
+    
 
-    .dashboard-table tbody td {
-        line-height: 1.2;
-        white-space: normal;
-        overflow-wrap: anywhere;
-    }
+    
 
     /* Lebar tiap kolom */
-    .dashboard-table th:nth-child(1),
-    .dashboard-table td:nth-child(1) {
-        width: 34px;
-        text-align: center;
-    }
+    
 
-    .dashboard-table th:nth-child(2),
-    .dashboard-table td:nth-child(2) {
-        width: 118px;
-    }
+    
 
-    .dashboard-table th:nth-child(3),
-    .dashboard-table td:nth-child(3) {
-        width: 110px;
-    }
+    
 
-    .dashboard-table th:nth-child(4),
-    .dashboard-table td:nth-child(4) {
-        width: 94px;
-    }
+    
 
-    .dashboard-table th:nth-child(5),
-    .dashboard-table td:nth-child(5) {
-        width: 88px;
-    }
+    
 
-    .dashboard-table th:nth-child(6),
-    .dashboard-table td:nth-child(6) {
-        width: 92px;
-    }
+    
 
-    .dashboard-table th:nth-child(7),
-    .dashboard-table td:nth-child(7) {
-        width: 1px;
-    }
+    
 
-    .dashboard-table th:nth-child(8),
-    .dashboard-table td:nth-child(8) {
-        width: 125px;
-    }
+    
 
-    .dashboard-table th:nth-child(9),
-    .dashboard-table td:nth-child(9) {
-        width: 155px;
-    }
+    
 
-    .dashboard-table th:nth-child(10),
-    .dashboard-table td:nth-child(10) {
-        width: 130px;
-    }
+    
 
-    .dashboard-table th:nth-child(11),
-    .dashboard-table td:nth-child(11) {
-        width: 82px;
-    }
+    
 
-    .dashboard-table .register-cell {
-        white-space: nowrap;
-        font-weight: 600;
-    }
+    
 
-    .dashboard-table th:nth-child(7),
-    .dashboard-table td:nth-child(7) {
-        display: none;
-    }
+    
 
-    .dashboard-table .title-cell {
-        max-width: 140px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+    
 
-    .dashboard-table .date-cell {
-        white-space: nowrap;
-    }
+    
 
-    .dashboard-table .name-cell,
-    .dashboard-table .department-cell,
-    .dashboard-table .division-cell,
-    .dashboard-table .category-cell {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+    
 
-    .dashboard-table .stage-cell {
-        white-space: nowrap;
-    }
+    
 
-    .dashboard-table .action-cell {
-        white-space: nowrap;
-    }
+    
 
     .dashboard-actions {
         display: flex;
@@ -5986,152 +5709,17 @@ body.crf-module {
         overflow-wrap: normal;
     }
 
-    .dashboard-table .crf-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        max-width: none;
-        white-space: nowrap;
-        overflow-wrap: normal;
-        line-height: 1.2;
-        text-align: center;
-        font-size: 0.72rem;
-    }
+    
 
-    .dashboard-table .urgency-cell,
-    .dashboard-table .urgency-cell .crf-badge {
-        white-space: nowrap;
-        overflow-wrap: normal;
-    }
+    
 
-    .dashboard-table .urgency-cell .crf-badge {
-        max-width: none;
-    }
+    
 
-    .dashboard-table td:nth-child(9) .crf-badge {
-        max-width: 100%;
-        white-space: normal;
-        overflow-wrap: anywhere;
-    }
+    
 
+    
 
-    .dashboard-stage-badge {
-        display: inline-flex;
-        align-items: center;
-        max-width: 100%;
-        padding: 0.22rem 0.3rem;
-        border-radius: 999px;
-        background: #eef2ff;
-        color: #334155;
-        font-size: 0.68rem;
-        line-height: 1.2;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    @media (max-width: 768px) {
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap {
-            overflow: visible;
-            max-height: none;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table {
-            display: block;
-            width: 100%;
-            min-width: 0;
-            table-layout: auto;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table thead {
-            display: none;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table tbody {
-            display: block;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table tr {
-            display: block;
-            margin: 0 0 0.65rem;
-            padding: 0.45rem 0.7rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            background: #fff;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table th,
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.6rem;
-            width: 100%;
-            min-width: 0;
-            max-width: none;
-            padding: 0.38rem 0;
-            border: 0;
-            border-bottom: 1px solid #f1f5f9;
-            white-space: normal !important;
-            overflow-wrap: anywhere;
-            text-align: right;
-            line-height: 1.25;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td::before {
-            display: block;
-            flex: 0 0 38%;
-            content: attr(data-label);
-            color: #64748b;
-            font-size: 0.66rem;
-            font-weight: 700;
-            text-align: left;
-            text-transform: uppercase;
-            letter-spacing: 0.02em;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td:last-child {
-            border-bottom: 0;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td:last-child::before {
-            display: block;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td.crf-empty-cell {
-            display: block;
-            text-align: center;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td.crf-empty-cell::before {
-            display: none;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table td:nth-child(7) {
-            display: none;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .title-cell,
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .name-cell,
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .department-cell {
-            overflow: visible;
-            text-overflow: clip;
-            white-space: normal;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .urgency-cell .crf-badge,
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .stage-cell .dashboard-stage-badge {
-            max-width: 100%;
-            white-space: nowrap;
-        }
-
-        .table-responsive.crf-table-responsive-cards.dashboard-table-wrap table.crf-table.dashboard-table .status-cell .crf-badge {
-            max-width: 100%;
-            white-space: normal;
-            overflow-wrap: anywhere;
-        }
-
-    }
+    
 
     /* Filter bar */
     .dashboard-summary-grid {
@@ -6460,7 +6048,6 @@ body.crf-module {
         }
     }
 
-
 /* =====================================================================
    UI polish (hasil review tampilan)
    ===================================================================== */
@@ -6473,7 +6060,7 @@ body.crf-module {
 @media (max-width: 640px) {
   .crf-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
   .crf-kpi-grid .crf-kpi-card { padding: 0.6rem 0.7rem; }
-  .crf-kpi-grid .crf-kpi-bar { display: none; }
+  
 }
 
 /* Tabel lebar: bisa digeser horizontal, kolom Aksi tidak terpotong */
@@ -6489,8 +6076,6 @@ body.crf-module {
 .crf-readonly-note { font-size: 0.75rem; }
 
 /* Filter: tombol sejajar dengan input */
-.crf-list-filters-advanced { align-items: end; }
-.crf-list-filters-advanced .crf-list-filter-actions { align-self: end; }
 
 /* Form CRF: ruang bawah supaya bar aksi tidak menutup field terakhir */
 #crfForm { padding-bottom: 5rem; }
@@ -6516,7 +6101,6 @@ body.crf-module {
 [data-master-toggle] .bi { transition: transform 0.15s ease; }
 .crf-category-member-row:not(.is-collapsed) [data-master-toggle] .bi { transform: rotate(180deg); }
 @media (max-width: 768px) { .visually-hidden-sm { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
-
 
 /* =====================================================================
    Detail CRF: tata letak lebih ringkas (info 2 kolom, SLA ubin, navigasi)
@@ -6599,7 +6183,6 @@ body.crf-module {
   .crf-detail-nav { margin-left: -0.25rem; margin-right: -0.25rem; }
 }
 
-
 /* =====================================================================
    Forum: tampilan ringkas & modern
    ===================================================================== */
@@ -6676,3 +6259,6 @@ body.crf-module {
   .crf-forum-discussion-header { padding-left: 0.9rem; padding-right: 0.9rem; }
   .crf-forum-message-list { height: clamp(300px, 52vh, 560px); }
 }
+
+/* Kartu Tanggapan: baris baru sudah diurus nl2br; jangan tampilkan spasi template */
+.crf-response-card .crf-detail-value { white-space: normal; }

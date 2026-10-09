@@ -2,7 +2,7 @@
 /**
  * crf/open.php
  * Membuka detail CRF pada halaman yang sesuai dengan peran user
- * (dipakai tautan notifikasi & link dari ticket Helpdesk).
+ * (dipakai tautan notifikasi).
  */
 require_once __DIR__ . '/../includes/auth.php';
 

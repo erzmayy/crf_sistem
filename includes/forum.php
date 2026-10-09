@@ -230,7 +230,6 @@ function notifyForumUsers(
             $message,
             'forum/index.php?crf_id=' . $crfId . '#comment-' . $commentId,
             $crfId,
-            null,
             $actorId
         );
     } catch (Throwable $exception) {

@@ -21,8 +21,7 @@ switch (getCrfRole()) {
         header('Location: pak_joko/index.php');
         break;
     default:
-        // Helpdesk = pintu masuk seluruh permintaan.
-        header('Location: helpdesk/form.php');
+        header('Location: user/form_crf.php');
         break;
 }
 exit;

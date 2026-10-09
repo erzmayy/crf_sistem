@@ -11,18 +11,6 @@
 
 $showStatusInGrid = $showStatusInGrid ?? false;
 
-// Ticket Helpdesk asal CRF (link dua arah Helpdesk <-> CRF).
-$infoTicket = null;
-if (!empty($crf['helpdesk_ticket_id'])) {
-    $infoTicketStmt = getConnection()->prepare('
-        SELECT t.id, t.created_at, c.name AS category_name
-        FROM helpdesk_tickets t
-        JOIN helpdesk_categories c ON c.id = t.helpdesk_category_id
-        WHERE t.id = :id
-    ');
-    $infoTicketStmt->execute(['id' => $crf['helpdesk_ticket_id']]);
-    $infoTicket = $infoTicketStmt->fetch() ?: null;
-}
 $infoDisplayStatus = crfDisplayStatus($crf);
 ?>
 <div class="crf-section crf-detail-card mb-4">
@@ -55,16 +43,6 @@ $infoDisplayStatus = crfDisplayStatus($crf);
                 <span class="crf-info-label">Nomor Register</span>
                 <span class="crf-info-value crf-info-register"><?= h($crf['request_number'] ?? '-') ?></span>
             </div>
-            <?php if ($infoTicket): /* hanya CRF lama yang dibuat dari ticket Helpdesk */ ?>
-            <div class="crf-info-row">
-                <span class="crf-info-label">Ticket Helpdesk</span>
-                <span class="crf-info-value">
-                    <a href="../helpdesk/detail.php?id=<?= (int) $infoTicket['id'] ?>" class="crf-link">
-                        <i class="bi bi-ticket-detailed"></i> <?= h(helpdeskTicketLabel($infoTicket)) ?>
-                    </a>
-                </span>
-            </div>
-            <?php endif; ?>
             <div class="crf-info-row">
                 <span class="crf-info-label">Kategori CRF</span>
                 <span class="crf-info-value"><?= h(crfCategoryName($crf)) ?></span>

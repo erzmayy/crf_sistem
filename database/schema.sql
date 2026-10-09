@@ -10,44 +10,10 @@ CREATE DATABASE IF NOT EXISTS crf_sistem
 USE crf_sistem;
 
 -- ---------------------------------------------------------------------
--- Tabel: users
--- prototype CRF.
+-- Data user TIDAK disimpan di database CRF. User dibaca dari
+-- siap.tbl_user (lihat config/siap.php). Kolom user_id di tabel lain
+-- hanya menyimpan id user SIAP, tanpa foreign key (tbl_user MyISAM).
 -- ---------------------------------------------------------------------
-CREATE TABLE users (
-    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    userid          VARCHAR(50)     NULL,
-    password        VARCHAR(255)    NOT NULL,
-    password_new    VARCHAR(75)     NULL,
-
-    nama            VARCHAR(75)     NULL,
-    dept            VARCHAR(75)     NULL,
-    divisi          VARCHAR(50)     NULL,
-
-    email           VARCHAR(150)    NULL,
-    no_wa           VARCHAR(25)     NULL,
-
-    tgl_insert      TIMESTAMP       NULL DEFAULT CURRENT_TIMESTAMP,
-    lastlogin       DATETIME        NULL,
-
-    ganti_password  ENUM('1','2')   NULL,
-    gender          VARCHAR(7)      NULL,
-
-    atasan_id       VARCHAR(10)     NULL,
-    atasan_nama     VARCHAR(75)     NULL,
-    atasan_telp     VARCHAR(25)     NULL,
-
-    kpu_kode        VARCHAR(3)      NULL,
-    kpu_nama        VARCHAR(75)     NULL,
-    npp             VARCHAR(50)     NULL,
-
-    status_wa       ENUM('BLM','SDH') NOT NULL DEFAULT 'BLM',
-    pusat           ENUM('YES','NO')  NOT NULL DEFAULT 'NO',
-
-    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-                                  ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
 -- Tabel: change_requests
@@ -142,14 +108,7 @@ CREATE TABLE change_requests (
 
     created_at                  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP
-                                                 ON UPDATE CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_crf_user
-        FOREIGN KEY (user_id) REFERENCES users(id)
-        ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT fk_crf_kadep_operasional_approved_by
-        FOREIGN KEY (kadep_operasional_approved_by) REFERENCES users(id)
-        ON DELETE SET NULL ON UPDATE CASCADE
+                                                 ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
@@ -211,10 +170,7 @@ CREATE TABLE crf_user_roles (
     role                ENUM('pemohon','cmo','otomasi','kadep_operasional','admin') NOT NULL,
     is_active           TINYINT(1) NOT NULL DEFAULT 1,
     created_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_crf_user_role_user (user_id),
-    CONSTRAINT fk_crf_user_roles_user
-        FOREIGN KEY (user_id) REFERENCES users(id)
-        ON DELETE CASCADE ON UPDATE CASCADE
+    UNIQUE KEY uq_crf_user_role_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
@@ -300,81 +256,12 @@ CREATE TABLE forum_discussions (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ---------------------------------------------------------------------
--- DATA DUMMY
--- ---------------------------------------------------------------------
-
--- User 
-INSERT INTO users (
-    id,
-    userid,
-    password,
-    nama,
-    dept,
-    divisi,
-    email,
-    no_wa
-) VALUES (
-    1,
-    'USER001',
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC8T9hS2YqJYQ1Q8q7i',
-    'User Demo',
-    'Departemen Teknologi Informasi',
-    'IT Support',
-    'user@ppu.test',
-    '081234567890'
-);
-
--- Akun demo kedua
-INSERT INTO users (
-    id,
-    userid,
-    password,
-    nama,
-    dept,
-    divisi,
-    email,
-    no_wa
-) VALUES (
-    2,
-    'ADMIN001',
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC8T9hS2YqJYQ1Q8q7i',
-    'Admin CRF',
-    'Departemen Operasional',
-    'Divisi Otomasi',
-    'admin@ppu.test',
-    NULL
-);
-
--- Akun demo CMO
-INSERT INTO users (id, userid, password, nama, dept, divisi, email, no_wa) VALUES
-(3, 'CMO001', '$2y$10$92IXUNpkj0rOQ5byMi.Ye4oKoEa3Ro9llC8T9hS2YqJYQ1Q8q7i', 'CMO Demo', 'CMO', 'Pemimpin Divisi', 'cmo@ppu.test', '081234567893');
-
--- Akun demo Otomasi
-INSERT INTO users (id, userid, password, nama, dept, divisi, email, no_wa) VALUES
-(4, 'OTOMASI001', '$2y$10$92IXUNpkj0rOQ5byMi.Ye4oKoEa3Ro9llC8T9hS2YqJYQ1Q8q7i', 'Otomasi Demo', 'Departemen Operasional', 'Divisi Otomasi', 'otomasi@ppu.test', '081234567894');
-
--- Akun demo Pak Joko
-INSERT INTO users (id, userid, password, nama, dept, divisi, email, no_wa) VALUES
-(5, 'JOKO001', '$2y$10$92IXUNpkj0rOQ5byMi.Ye4oKoEa3Ro9llC8T9hS2YqJYQ1Q8q7i', 'Pak Joko Demo', 'Departemen Operasional', 'Pemimpin Departemen', 'joko@ppu.test', '081234567895');
-
-INSERT INTO crf_user_roles (user_id, role) VALUES
-(1, 'pemohon'),
-(2, 'admin'),
-(3, 'cmo'),
-(4, 'otomasi'),
-(5, 'kadep_operasional');
-
 
 -- =====================================================================
--- INTEGRASI HELPDESK & CRF
--- (isi sama dengan helpdesk_crf_integration_migration.sql)
+-- KATEGORI CRF, HANDLER, NOTIFIKASI, SLA
 -- =====================================================================
--- Integrasi CRF dengan modul Helpdesk.
--- Menambahkan: master Kategori Helpdesk + PIC, ticket Helpdesk,
--- master Kategori CRF + Handling Kategori, notifikasi, relasi
--- ticket <-> CRF, assignment handler, dan hasil SLA.
--- Aman dijalankan ulang pada database crf_sistem.
+-- Master Kategori CRF + PIC CRF, notifikasi, assignment handler,
+-- dan hasil SLA. Aman dijalankan ulang pada database crf_sistem.
 
 USE crf_sistem;
 
@@ -436,17 +323,7 @@ END//
 DELIMITER ;
 
 -- ------------------------------------------------------------------
--- 1. Penghitung nomor umum (nomor ticket Helpdesk HD-YYYY-NNNNN)
--- ------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS app_sequences (
-    name        VARCHAR(30) NOT NULL,
-    year        CHAR(4) NOT NULL,
-    last_number INT UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (name, year)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ------------------------------------------------------------------
--- 2. Master Kategori CRF + Handling Kategori
+-- 1. Master Kategori CRF + PIC CRF
 -- ------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS crf_categories (
     id                     INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -468,10 +345,8 @@ CREATE TABLE IF NOT EXISTS crf_categories (
     UNIQUE KEY uq_crf_categories_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- PIC CRF isian manual (masa transisi). PIC CRF utama diturunkan dari PIC
--- Kategori Helpdesk lewat crf_category_pic_sources; gabungannya = VIEW
--- crf_category_handlers (dibuat setelah tabel Helpdesk di bawah).
-CREATE TABLE IF NOT EXISTS crf_category_handlers_manual (
+-- PIC CRF per kategori (diisi Admin di Master Kategori CRF).
+CREATE TABLE IF NOT EXISTS crf_category_handlers (
     id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
     crf_category_id INT UNSIGNED NOT NULL,
     user_id         INT UNSIGNED NOT NULL,
@@ -496,201 +371,8 @@ SELECT * FROM (
 WHERE NOT EXISTS (SELECT 1 FROM crf_categories existing WHERE existing.name = seed.name);
 
 -- ------------------------------------------------------------------
--- 3. Master Kategori Helpdesk + PIC
+-- 2. Kategori dinamis, handler, hasil SLA
 -- ------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS helpdesk_categories (
-    id                      INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name                    VARCHAR(100) NOT NULL,
-    description             VARCHAR(255) NULL,
-    icon                    VARCHAR(50) NOT NULL DEFAULT 'bi-tag',
-    requires_crf            TINYINT(1) NOT NULL DEFAULT 0,
-    default_crf_category_id INT UNSIGNED NULL,
-    sla_value               DECIMAL(10,2) NULL,
-    sla_unit                ENUM('Menit','Jam','Hari') NULL,
-    is_active               TINYINT(1) NOT NULL DEFAULT 1,
-    sort_order              INT NOT NULL DEFAULT 0,
-    deleted_at              DATETIME NULL,
-    created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uq_helpdesk_categories_name (name),
-    CONSTRAINT fk_helpdesk_categories_crf_category
-        FOREIGN KEY (default_crf_category_id) REFERENCES crf_categories (id)
-        ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS helpdesk_category_pics (
-    id                   INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    helpdesk_category_id INT UNSIGNED NOT NULL,
-    user_id              INT UNSIGNED NOT NULL,
-    user_name            VARCHAR(150) NULL,
-    created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uq_helpdesk_category_pics (helpdesk_category_id, user_id),
-    KEY idx_helpdesk_category_pics_user (user_id),
-    CONSTRAINT fk_helpdesk_category_pics_category
-        FOREIGN KEY (helpdesk_category_id) REFERENCES helpdesk_categories (id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO helpdesk_categories (name, description, icon, requires_crf, default_crf_category_id, sla_value, sla_unit, sort_order)
-SELECT seed.name, seed.description, seed.icon, seed.requires_crf,
-       (SELECT id FROM crf_categories WHERE name = seed.crf_category),
-       seed.sla_value, seed.sla_unit, seed.sort_order
-FROM (
-    SELECT 'Aplikasi SIAP' AS name, 'Permintaan perubahan aplikasi SIAP (diteruskan ke CRF)' AS description, 'bi-window-stack' AS icon, 1 AS requires_crf, 'Aplikasi' AS crf_category, 2 AS sla_value, 'Hari' AS sla_unit, 1 AS sort_order
-    UNION ALL SELECT 'User ID dan Reset Password', 'Pembuatan user ID dan reset password', 'bi-lock', 0, NULL, 4, 'Jam', 2
-    UNION ALL SELECT 'BPJS Managemen', 'Permintaan terkait BPJS', 'bi-heart-pulse', 0, NULL, 1, 'Hari', 3
-    UNION ALL SELECT 'Tele Sales & Call Center', 'Permintaan tele sales & call center', 'bi-telephone', 0, NULL, 1, 'Hari', 4
-    UNION ALL SELECT 'Penggunaan Ruang Rapat', 'Peminjaman ruang rapat', 'bi-building', 0, NULL, 4, 'Jam', 5
-    UNION ALL SELECT 'Penggunaan Mobil PPU', 'Peminjaman kendaraan operasional', 'bi-truck', 0, NULL, 4, 'Jam', 6
-    UNION ALL SELECT 'Peminjaman Barang IT', 'Peminjaman laptop, proyektor, dan perangkat IT', 'bi-laptop', 0, NULL, 4, 'Jam', 7
-    UNION ALL SELECT 'Pembuatan Link ZOOM', 'Pembuatan link meeting online', 'bi-camera-video', 0, NULL, 2, 'Jam', 8
-    UNION ALL SELECT 'Jaringan & Internet', 'Gangguan jaringan dan internet', 'bi-wifi', 0, NULL, 4, 'Jam', 9
-    UNION ALL SELECT 'Email Perusahaan', 'Pembuatan atau kendala email perusahaan', 'bi-envelope', 0, NULL, 1, 'Hari', 10
-    UNION ALL SELECT 'Printer & Perangkat', 'Kendala printer dan perangkat kantor', 'bi-printer', 0, NULL, 1, 'Hari', 11
-    UNION ALL SELECT 'Departemen Komersial', 'Permintaan ke Departemen Komersial', 'bi-briefcase', 0, NULL, 2, 'Hari', 12
-    UNION ALL SELECT 'Lainnya', 'Permintaan lain', 'bi-three-dots', 0, NULL, 2, 'Hari', 13
-) seed
-WHERE NOT EXISTS (SELECT 1 FROM helpdesk_categories existing WHERE existing.name = seed.name);
-
--- PIC CRF diturunkan dari PIC Kategori Helpdesk (lihat migrasi 017).
-CREATE TABLE IF NOT EXISTS crf_category_pic_sources (
-    id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    crf_category_id         INT UNSIGNED NOT NULL,
-    helpdesk_category_id    INT UNSIGNED NOT NULL,
-    created_by_name         VARCHAR(150) NULL,
-    created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    UNIQUE KEY uq_crf_category_pic_sources (crf_category_id, helpdesk_category_id),
-    KEY idx_crf_category_pic_sources_helpdesk (helpdesk_category_id),
-    CONSTRAINT fk_crf_pic_sources_crf
-        FOREIGN KEY (crf_category_id) REFERENCES crf_categories(id)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT fk_crf_pic_sources_helpdesk
-        FOREIGN KEY (helpdesk_category_id) REFERENCES helpdesk_categories(id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Pemetaan awal dari "Kategori CRF default" kategori Helpdesk yang Butuh CRF.
-INSERT IGNORE INTO crf_category_pic_sources (crf_category_id, helpdesk_category_id, created_by_name)
-SELECT hc.default_crf_category_id, hc.id, 'Migrasi 017'
-FROM helpdesk_categories hc
-WHERE hc.requires_crf = 1
-  AND hc.default_crf_category_id IS NOT NULL
-  AND hc.deleted_at IS NULL;
-
--- Satu baris per (kategori CRF, user). is_manual = 1 bila (juga) diisi manual;
--- sources = nama kategori Helpdesk asal PIC tersebut.
-CREATE OR REPLACE SQL SECURITY INVOKER VIEW crf_category_handlers AS
-SELECT
-    MIN(h.id)               AS id,
-    h.crf_category_id       AS crf_category_id,
-    h.user_id               AS user_id,
-    MAX(h.user_name)        AS user_name,
-    MIN(h.created_at)       AS created_at,
-    MAX(h.is_manual)        AS is_manual,
-    GROUP_CONCAT(DISTINCT h.source_name ORDER BY h.source_name SEPARATOR ', ') AS sources
-FROM (
-    SELECT m.id                      AS id,
-           m.crf_category_id         AS crf_category_id,
-           m.user_id                 AS user_id,
-           m.user_name               AS user_name,
-           m.created_at              AS created_at,
-           1                         AS is_manual,
-           -- NULL bertipe teks tanpa CAST ... CHARACTER SET (tidak dikenal MariaDB);
-           -- NULLIF(x, x) selalu NULL dan mewarisi collation kolom.
-           NULLIF(m.user_name, m.user_name) AS source_name
-    FROM crf_category_handlers_manual m
-    UNION ALL
-    SELECT 1000000000 + p.id         AS id,
-           s.crf_category_id         AS crf_category_id,
-           p.user_id                 AS user_id,
-           p.user_name               AS user_name,
-           p.created_at              AS created_at,
-           0                         AS is_manual,
-           hc.name                   AS source_name
-    FROM crf_category_pic_sources s
-    INNER JOIN helpdesk_categories hc
-        ON hc.id = s.helpdesk_category_id AND hc.deleted_at IS NULL
-    INNER JOIN helpdesk_category_pics p
-        ON p.helpdesk_category_id = s.helpdesk_category_id
-) h
-GROUP BY h.crf_category_id, h.user_id;
-
--- ------------------------------------------------------------------
--- 4. Ticket Helpdesk
--- ------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS helpdesk_tickets (
-    id                   INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    user_id              INT UNSIGNED NOT NULL,
-    full_name            VARCHAR(150) NOT NULL,
-    phone                VARCHAR(30) NULL,
-    email                VARCHAR(150) NULL,
-    department           VARCHAR(150) NULL,
-    division             VARCHAR(150) NULL,
-    helpdesk_category_id INT UNSIGNED NOT NULL,
-    request_kind         ENUM('maintenance','request','komplain') NOT NULL DEFAULT 'request',
-    report_time          TIME NULL,
-    message              TEXT NOT NULL,
-    level                ENUM('Tinggi','Sedang','Rendah') NULL,
-    follow_up            TEXT NULL,
-    status               ENUM('Belum Ditindaklanjuti','Dalam Proses','Diteruskan ke CRF','Selesai','Dibatalkan') NOT NULL DEFAULT 'Belum Ditindaklanjuti',
-    sla_value            DECIMAL(10,2) NULL,
-    sla_unit             ENUM('Menit','Jam','Hari') NULL,
-    handled_by           INT UNSIGNED NULL,
-    handled_by_name      VARCHAR(150) NULL,
-    handled_at           DATETIME NULL,
-    completed_at         DATETIME NULL,
-    cancelled_at         DATETIME NULL,
-    created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_helpdesk_tickets_user (user_id),
-    KEY idx_helpdesk_tickets_category_status (helpdesk_category_id, status),
-    KEY idx_helpdesk_tickets_created (created_at),
-    CONSTRAINT fk_helpdesk_tickets_category
-        FOREIGN KEY (helpdesk_category_id) REFERENCES helpdesk_categories (id)
-        ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS helpdesk_attachments (
-    id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    helpdesk_ticket_id INT UNSIGNED NOT NULL,
-    original_name      VARCHAR(255) NOT NULL,
-    stored_name        VARCHAR(255) NOT NULL,
-    file_path          VARCHAR(500) NOT NULL,
-    file_type          VARCHAR(100) NULL,
-    file_size          INT UNSIGNED NULL,
-    uploaded_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_helpdesk_attachments_ticket (helpdesk_ticket_id),
-    CONSTRAINT fk_helpdesk_attachments_ticket
-        FOREIGN KEY (helpdesk_ticket_id) REFERENCES helpdesk_tickets (id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS helpdesk_activity_logs (
-    id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    helpdesk_ticket_id INT UNSIGNED NOT NULL,
-    user_id            INT UNSIGNED NULL,
-    actor              VARCHAR(150) NULL,
-    activity           VARCHAR(100) NOT NULL,
-    old_status         VARCHAR(50) NULL,
-    new_status         VARCHAR(50) NULL,
-    description        TEXT NULL,
-    created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_helpdesk_activity_logs_ticket (helpdesk_ticket_id, created_at),
-    CONSTRAINT fk_helpdesk_activity_logs_ticket
-        FOREIGN KEY (helpdesk_ticket_id) REFERENCES helpdesk_tickets (id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ------------------------------------------------------------------
--- 5. Relasi CRF <-> Helpdesk, kategori dinamis, handler, hasil SLA
--- ------------------------------------------------------------------
-CALL crf_add_column('change_requests', 'helpdesk_ticket_id', 'INT UNSIGNED NULL AFTER user_id');
 CALL crf_add_column('change_requests', 'crf_category_id', 'INT UNSIGNED NULL AFTER change_category');
 CALL crf_add_column('change_requests', 'requester_position', 'VARCHAR(150) NULL AFTER email');
 CALL crf_add_column('change_requests', 'assigned_handler_id', 'INT UNSIGNED NULL AFTER workflow_stage');
@@ -699,12 +381,9 @@ CALL crf_add_column('change_requests', 'assigned_at', 'DATETIME NULL AFTER assig
 CALL crf_add_column('change_requests', 'sla_actual_minutes', 'INT UNSIGNED NULL AFTER sla_due_at');
 CALL crf_add_column('change_requests', 'sla_result', 'ENUM(''Sesuai SLA'',''Melebihi SLA'') NULL AFTER sla_actual_minutes');
 
-CALL crf_add_index('change_requests', 'idx_change_requests_helpdesk_ticket', 'helpdesk_ticket_id');
 CALL crf_add_index('change_requests', 'idx_change_requests_crf_category', 'crf_category_id');
 CALL crf_add_index('change_requests', 'idx_change_requests_assigned_handler', 'assigned_handler_id');
 
-CALL crf_add_foreign_key('change_requests', 'fk_change_requests_helpdesk_ticket',
-    'FOREIGN KEY (helpdesk_ticket_id) REFERENCES helpdesk_tickets (id) ON DELETE SET NULL ON UPDATE CASCADE');
 CALL crf_add_foreign_key('change_requests', 'fk_change_requests_crf_category',
     'FOREIGN KEY (crf_category_id) REFERENCES crf_categories (id) ON DELETE RESTRICT ON UPDATE CASCADE');
 
@@ -723,14 +402,14 @@ WHERE cr.crf_category_id IS NULL
   AND cr.change_category IS NOT NULL;
 
 -- ------------------------------------------------------------------
--- 6. Audit trail CRF: user & perubahan status
+-- 3. Audit trail CRF: user & perubahan status
 -- ------------------------------------------------------------------
 CALL crf_add_column('crf_activity_logs', 'user_id', 'INT UNSIGNED NULL AFTER change_request_id');
 CALL crf_add_column('crf_activity_logs', 'old_status', 'VARCHAR(50) NULL AFTER actor');
 CALL crf_add_column('crf_activity_logs', 'new_status', 'VARCHAR(50) NULL AFTER old_status');
 
 -- ------------------------------------------------------------------
--- 7. Notifikasi in-app + status email
+-- 4. Notifikasi in-app + status email
 -- ------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS notifications (
     id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -739,7 +418,6 @@ CREATE TABLE IF NOT EXISTS notifications (
     message            TEXT NULL,
     url                VARCHAR(255) NULL,
     change_request_id  INT UNSIGNED NULL,
-    helpdesk_ticket_id INT UNSIGNED NULL,
     read_at            DATETIME NULL,
     email_status       ENUM('pending','sent','failed','skipped') NOT NULL DEFAULT 'pending',
     created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -748,14 +426,11 @@ CREATE TABLE IF NOT EXISTS notifications (
     KEY idx_notifications_email_status (email_status),
     CONSTRAINT fk_notifications_change_request
         FOREIGN KEY (change_request_id) REFERENCES change_requests (id)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT fk_notifications_helpdesk_ticket
-        FOREIGN KEY (helpdesk_ticket_id) REFERENCES helpdesk_tickets (id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------------
--- 8. Peringatan SLA untuk PIC CRF (anti kirim ganda)
+-- 5. Peringatan SLA untuk PIC CRF (anti kirim ganda)
 -- ------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS crf_sla_alerts (
     id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
