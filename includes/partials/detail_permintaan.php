@@ -102,7 +102,7 @@ $attachmentSize = static function (array $file): string {
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
                                         <?php if (!empty($file['file_path'])): ?>
-                                            <a href="<?= h($file['file_path']) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-crf-outline py-1 px-2">
+                                            <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>&amp;inline=1" target="_blank" rel="noopener" class="btn btn-sm btn-crf-outline py-1 px-2">
                                                 <i class="bi bi-eye"></i> Lihat
                                             </a>
                                         <?php endif; ?>
@@ -133,7 +133,7 @@ $attachmentSize = static function (array $file): string {
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
                                         <?php if (!empty($file['file_path'])): ?>
-                                            <a href="<?= h($file['file_path']) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-crf-outline py-1 px-2">
+                                            <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>&amp;inline=1" target="_blank" rel="noopener" class="btn btn-sm btn-crf-outline py-1 px-2">
                                                 <i class="bi bi-eye"></i> Lihat
                                             </a>
                                         <?php endif; ?>

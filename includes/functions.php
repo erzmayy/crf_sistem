@@ -1061,6 +1061,46 @@ function handleUatDocumentUploads(PDO $pdo, int $crfId, array $filesInput): arra
 }
 
 /**
+ * Konfigurasi Wasabi (config/wasabi.php).
+ */
+function crfWasabiConfig(): array
+{
+    static $config = null;
+
+    if ($config === null) {
+        $config = require __DIR__ . '/../config/wasabi.php';
+    }
+
+    return $config;
+}
+
+function crfWasabiClient(): S3Client
+{
+    static $client = null;
+
+    if ($client === null) {
+        $config = crfWasabiConfig();
+        $client = new S3Client([
+            'version' => $config['version'],
+            'region' => $config['region'],
+            'endpoint' => $config['endpoint'],
+            'credentials' => $config['credentials'],
+            'use_path_style_endpoint' => $config['use_path_style_endpoint'],
+        ]);
+    }
+
+    return $client;
+}
+
+/**
+ * Key objek Wasabi untuk sebuah lampiran (upload_path + nama tersimpan).
+ */
+function crfAttachmentKey(string $storedName): string
+{
+    return rtrim(crfWasabiConfig()['upload_path'], '/') . '/' . basename($storedName);
+}
+
+/**
  * Validasi lalu upload file ke Wasabi, dan catat lewat $insertStmt
  * (parameter: owner_id, original_name, stored_name, file_path, file_type, file_size).
  *
@@ -1074,20 +1114,10 @@ function uploadAttachmentsToStorage(array $filesInput, string $storedPrefix, PDO
         return $errors;
     }
 
-    // Ambil konfigurasi Wasabi
-    $wasabiConfig = require __DIR__ . '/../config/wasabi.php';
-
-    // Inisialisasi S3 Client
-    $s3Client = new S3Client([
-        'version' => $wasabiConfig['version'],
-        'region' => $wasabiConfig['region'],
-        'endpoint' => $wasabiConfig['endpoint'],
-        'credentials' => $wasabiConfig['credentials'],
-        'use_path_style_endpoint' => $wasabiConfig['use_path_style_endpoint'],
-    ]);
+    $wasabiConfig = crfWasabiConfig();
+    $s3Client = crfWasabiClient();
 
     $bucket = $wasabiConfig['bucket'];
-    $uploadPath = rtrim($wasabiConfig['upload_path'], '/') . '/';
 
     $total = count($filesInput['name']);
 
@@ -1138,16 +1168,17 @@ function uploadAttachmentsToStorage(array $filesInput, string $storedPrefix, PDO
         $storedName = uniqid($storedPrefix, true) . '.' . $ext;
 
         // Path file di Wasabi
-        $key = $uploadPath . $storedName;
+        $key = crfAttachmentKey($storedName);
 
         try {
 
-            // Upload file ke Wasabi
+            // Upload ke Wasabi sebagai objek private: file hanya dapat dibuka
+            // lewat actions/download_attachment.php (setelah cek hak akses).
             $result = $s3Client->putObject([
                 'Bucket' => $bucket,
                 'Key' => $key,
                 'SourceFile' => $tmpPath,
-                'ACL' => 'public-read',
+                'ACL' => 'private',
                 'ContentType' => $mimeType ?: 'application/octet-stream',
             ]);
 
