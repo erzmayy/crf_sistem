@@ -204,7 +204,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
 
         <div class="crf-detail-layout">
-          <main class="crf-detail-main">
+          <div class="crf-detail-main">
 
         <!-- 1. INFORMASI PENGAJUAN -->
         <?php
@@ -284,7 +284,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
         <?php endif; ?>
 
-          </main>
+          </div><!-- /.crf-detail-main -->
           <aside class="crf-detail-sidebar">
         <?php require __DIR__ . '/../includes/partials/timeline.php'; ?>
 

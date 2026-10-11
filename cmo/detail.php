@@ -201,7 +201,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
 
         <div class="crf-detail-layout">
-          <main class="crf-detail-main">
+          <div class="crf-detail-main">
 
         <!-- 1. INFORMASI PENGAJUAN -->
         <?php
@@ -213,76 +213,6 @@ require_once __DIR__ . '/../includes/header.php';
         <?php
         require __DIR__ . '/../includes/partials/detail_permintaan.php';
         ?>
-
-        <!-- =====================================================
-             3. IMPLEMENTASI & PIR (khusus tampilan CMO, read-only)
-             ===================================================== -->
-        <div class="crf-section crf-detail-card mb-4">
-
-            <div class="crf-section-header">
-                <span class="crf-section-number"><i class="bi bi-clipboard-check"></i></span>
-                <h2>Implementasi & Post Implementation Review</h2>
-            </div>
-
-            <div class="crf-section-body">
-
-                <div class="crf-info-rows">
-                    <div class="crf-info-row">
-                        <span class="crf-info-label">Tanggal Implementasi</span>
-                        <div class="crf-info-value">
-                            <?= !empty($crf['tgl_implementasi'])
-                                ? h(date('d-m-Y', strtotime($crf['tgl_implementasi'])))
-                                : '<span class="text-muted">Belum diisi oleh Otomasi.</span>' ?>
-                        </div>
-                    </div>
-                    <div class="crf-info-row crf-request-row-long">
-                        <span class="crf-info-label">Implementasi / Hasil Perubahan</span>
-                        <div class="crf-info-value">
-                            <?php if (!empty($crf['implementasi'])): ?>
-                                <?= nl2br(h($crf['implementasi'])) ?>
-                            <?php else: ?>
-                                <span class="text-muted">Belum diisi oleh Otomasi.</span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <div class="crf-info-row">
-                        <span class="crf-info-label">Tanggal PIR</span>
-                        <div class="crf-info-value">
-                            <?= !empty($crf['tgl_pir'])
-                                ? h(date('d-m-Y', strtotime($crf['tgl_pir'])))
-                                : '<span class="text-muted">Belum diisi oleh Pemohon.</span>' ?>
-                        </div>
-                    </div>
-                    <div class="crf-info-row crf-request-row-long">
-                        <span class="crf-info-label">Post Implementation Review</span>
-                        <div class="crf-info-value">
-                            <?php if (!empty($crf['tinjauan_pasca_implementasi'])): ?>
-                                <?= nl2br(h($crf['tinjauan_pasca_implementasi'])) ?>
-                            <?php else: ?>
-                                <span class="text-muted">Belum diisi oleh Pemohon.</span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-
-                <?php if (!empty($crf['tgl_disetujui_kadep'])): ?>
-                    <div class="crf-readonly-note">
-                        <i class="bi bi-check2-circle"></i>
-                        Disetujui Kepala Departemen Operasional pada
-                        <?= h(date('d-m-Y H:i', strtotime($crf['tgl_disetujui_kadep']))) ?>
-                    </div>
-                <?php endif; ?>
-
-            </div>
-
-        </div>
-
-
-        <!-- 4. INFORMASI SLA -->
-        <?php
-        require __DIR__ . '/../includes/partials/informasi_sla.php';
-        ?>
-
 
         <!-- =====================================================
              5. REVIEW CMO / FINALISASI (khusus CMO)
@@ -606,7 +536,76 @@ require_once __DIR__ . '/../includes/header.php';
 
         <?php endif; ?>
 
-          </main>
+        <!-- =====================================================
+             3. IMPLEMENTASI & PIR (khusus tampilan CMO, read-only)
+             ===================================================== -->
+        <div class="crf-section crf-detail-card mb-4">
+
+            <div class="crf-section-header">
+                <span class="crf-section-number"><i class="bi bi-clipboard-check"></i></span>
+                <h2>Implementasi & Post Implementation Review</h2>
+            </div>
+
+            <div class="crf-section-body">
+
+                <div class="crf-info-rows">
+                    <div class="crf-info-row">
+                        <span class="crf-info-label">Tanggal Implementasi</span>
+                        <div class="crf-info-value">
+                            <?= !empty($crf['tgl_implementasi'])
+                                ? h(date('d-m-Y', strtotime($crf['tgl_implementasi'])))
+                                : '<span class="text-muted">Belum diisi oleh Otomasi.</span>' ?>
+                        </div>
+                    </div>
+                    <div class="crf-info-row crf-request-row-long">
+                        <span class="crf-info-label">Implementasi / Hasil Perubahan</span>
+                        <div class="crf-info-value">
+                            <?php if (!empty($crf['implementasi'])): ?>
+                                <?= nl2br(h($crf['implementasi'])) ?>
+                            <?php else: ?>
+                                <span class="text-muted">Belum diisi oleh Otomasi.</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="crf-info-row">
+                        <span class="crf-info-label">Tanggal PIR</span>
+                        <div class="crf-info-value">
+                            <?= !empty($crf['tgl_pir'])
+                                ? h(date('d-m-Y', strtotime($crf['tgl_pir'])))
+                                : '<span class="text-muted">Belum diisi oleh Pemohon.</span>' ?>
+                        </div>
+                    </div>
+                    <div class="crf-info-row crf-request-row-long">
+                        <span class="crf-info-label">Post Implementation Review</span>
+                        <div class="crf-info-value">
+                            <?php if (!empty($crf['tinjauan_pasca_implementasi'])): ?>
+                                <?= nl2br(h($crf['tinjauan_pasca_implementasi'])) ?>
+                            <?php else: ?>
+                                <span class="text-muted">Belum diisi oleh Pemohon.</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <?php if (!empty($crf['tgl_disetujui_kadep'])): ?>
+                    <div class="crf-readonly-note">
+                        <i class="bi bi-check2-circle"></i>
+                        Disetujui Kepala Departemen Operasional pada
+                        <?= h(date('d-m-Y H:i', strtotime($crf['tgl_disetujui_kadep']))) ?>
+                    </div>
+                <?php endif; ?>
+
+            </div>
+
+        </div>
+
+
+        <!-- 4. INFORMASI SLA -->
+        <?php
+        require __DIR__ . '/../includes/partials/informasi_sla.php';
+        ?>
+
+          </div><!-- /.crf-detail-main -->
           <aside class="crf-detail-sidebar">
         <?php require __DIR__ . '/../includes/partials/timeline.php'; ?>
 

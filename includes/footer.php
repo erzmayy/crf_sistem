@@ -13,6 +13,7 @@ if (crfLayoutIsModule()) {
     return;
 }
 ?>
+    </main>
     <footer class="crf-footer">
       <small>Change Request Form &middot; PT Persona Prima Utama</small>
     </footer>

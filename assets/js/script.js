@@ -672,3 +672,15 @@ if (fileInput && fileList) {
     }
   }
 })();
+
+/* Filter daftar CRF: dapat diciutkan di layar kecil (tombol hanya tampil di mobile lewat CSS). */
+(function () {
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest ? event.target.closest('[data-filter-toggle]') : null;
+    if (!button) { return; }
+    var form = document.getElementById(button.getAttribute('aria-controls'));
+    if (!form) { return; }
+    var collapsed = form.classList.toggle('is-collapsed');
+    button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+  });
+})();

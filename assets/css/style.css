@@ -143,7 +143,7 @@ body.crf-module {
   border-radius: 999px;
   background: #dc2626;
   color: #fff;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.25;
   text-align: center;
@@ -238,7 +238,7 @@ body.crf-module {
   border: 1px solid rgba(255,255,255,0.22);
   border-radius: 11px;
   background: #53627d;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 .crf-content-shell > .crf-footer { margin-top: auto; }
@@ -599,7 +599,7 @@ body.crf-module {
 .crf-list-count {
   margin: 0;
   color: #85909b;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .crf-list-pagination .pagination {
@@ -950,7 +950,7 @@ body.crf-module {
 
 .crf-detail-page .crf-badge {
   padding: 0.32rem 0.65rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .crf-detail-main,
@@ -1023,7 +1023,7 @@ body.crf-module {
   min-height: 1.75rem;
   margin: 0;
   padding: 0.3rem 0.65rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   line-height: 1;
   white-space: nowrap;
 }
@@ -1387,7 +1387,7 @@ body.crf-module {
     border: 2px solid #cbd5e1;
     background: #fff;
     color: #fff;
-    font-size: 0.62rem;
+    font-size: 0.75rem;
 }
 
 .crf-timeline-item.is-complete .crf-timeline-dot {
@@ -1751,7 +1751,7 @@ body.crf-module {
   .pengajuan-table-wrap .pengajuan-table tbody td:nth-child(5) .crf-badge,
   .pengajuan-table-wrap .pengajuan-table tbody td:nth-child(6) .crf-badge {
     padding: 0.22rem 0.42rem;
-    font-size: 0.68rem;
+    font-size: 0.75rem;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td:last-child {
@@ -1973,7 +1973,7 @@ body.crf-module {
   border-radius: 999px;
   background: #f1f6ff;
   color: #2457a6;
-  font-size: 0.67rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -2109,7 +2109,7 @@ body.crf-module {
   min-height: 24px;
   padding: 0.2rem 0.45rem;
   overflow: hidden;
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   line-height: 1.15;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2317,7 +2317,7 @@ body.crf-module {
     min-height: 22px;
     max-width: 100%;
     padding: 0.16rem 0.35rem;
-    font-size: 0.59rem;
+    font-size: 0.75rem;
   }
 
   .pengajuan-table-wrap .pengajuan-table tbody td:nth-child(n + 4) {
@@ -2630,7 +2630,7 @@ body.crf-module {
   max-width: 100%;
   min-height: 24px;
   padding: 0.2rem 0.45rem;
-  font-size: 0.63rem;
+  font-size: 0.75rem;
   line-height: 1.15;
   white-space: nowrap;
 }
@@ -3429,7 +3429,7 @@ body.crf-module {
   border-radius: 999px;
   background: #f1f5f9;
   color: #475569;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -3514,7 +3514,7 @@ body.crf-module {
   border-radius: 999px;
   background: #dc2626;
   color: #fff;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   line-height: 1.15rem;
   text-align: center;
 }
@@ -3611,7 +3611,7 @@ body.crf-module {
 }
 
 .crf-forum-room-bottom .crf-badge {
-  font-size: 0.66rem;
+  font-size: 0.75rem;
 }
 
 .crf-forum-room-stats {
@@ -3632,7 +3632,7 @@ body.crf-module {
   border-radius: 999px;
   background: #dc2626;
   color: #fff;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -3907,7 +3907,7 @@ body.crf-module {
   border-radius: 50%;
   background: #e2e8f0;
   color: #334155;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -4542,7 +4542,7 @@ body.crf-module {
   border-radius: 999px;
   background: #eff6ff;
   color: #1d4ed8;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .crf-forum-detail-body {
@@ -4763,9 +4763,9 @@ body.crf-module {
 .crf-banner-pill {
   display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.32rem 0.75rem;
   border: 1px solid #dbe6f0; border-radius: 999px; background: #f5f9fc; color: #1f568f;
-  font-size: 0.74rem; font-weight: 600; white-space: nowrap;
+  font-size: 0.75rem; font-weight: 600; white-space: nowrap;
 }
-.crf-banner-pill--soft { padding: 0.15rem 0.55rem; font-size: 0.68rem; }
+.crf-banner-pill--soft { padding: 0.15rem 0.55rem; font-size: 0.75rem; }
 .crf-banner-stat { display: inline-flex; align-items: baseline; gap: 0.2rem; color: #64748b; font-size: 0.9rem; }
 .crf-banner-stat strong { color: #1e3048; font-size: 1.6rem; }
 .crf-banner-stat small { margin-left: 0.4rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -4908,7 +4908,7 @@ body.crf-module {
 .crf-notification-bell:hover { background: rgba(255, 255, 255, 0.22); }
 .crf-notification-count {
   position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px;
-  background: #B3261E; color: #fff; font-size: 0.62rem; font-weight: 700; line-height: 18px; text-align: center;
+  background: #B3261E; color: #fff; font-size: 0.75rem; font-weight: 700; line-height: 18px; text-align: center;
 }
 .crf-notification-menu { width: min(360px, calc(100vw - 32px)); padding: 0; overflow: hidden; border-radius: 12px; }
 .crf-notification-head { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0.9rem; border-bottom: 1px solid #edf1f5; font-size: 0.82rem; }
@@ -4920,7 +4920,7 @@ body.crf-module {
 }
 .crf-notification-item:hover { background: #f7fbff; }
 .crf-notification-item span { color: #475569; }
-.crf-notification-item small { color: #94a3b8; font-size: 0.68rem; }
+.crf-notification-item small { color: #94a3b8; font-size: 0.75rem; }
 .crf-notification-item.unread { border-left: 3px solid #1c8fdb; background: #f3f9fe; }
 .crf-notification-list { border: 1px solid #edf1f5; border-radius: 10px; overflow: hidden; }
 
@@ -5735,7 +5735,7 @@ body.crf-module {
 
     .dashboard-summary-grid .crf-stat-card span {
         margin-bottom: 0.25rem;
-        font-size: 0.66rem;
+        font-size: 0.75rem;
     }
 
     .dashboard-summary-grid .crf-stat-card strong {
@@ -5885,12 +5885,12 @@ body.crf-module {
         justify-content: flex-end;
         gap: 0.2rem;
         color: #64748b;
-        font-size: 0.68rem;
+        font-size: 0.75rem;
     }
 
     .admin-report-month-count {
         color: #475569;
-        font-size: 0.65rem;
+        font-size: 0.75rem;
         font-weight: 600;
     }
 
@@ -5916,7 +5916,7 @@ body.crf-module {
 
     .admin-report-month-label small {
         color: #94a3b8;
-        font-size: 0.6rem;
+        font-size: 0.75rem;
     }
 
     .admin-report-bar {
@@ -5966,7 +5966,7 @@ body.crf-module {
 
     .admin-report-donut-hole span {
         color: #64748b;
-        font-size: 0.62rem;
+        font-size: 0.75rem;
     }
 
     .admin-report-legend {
@@ -5983,7 +5983,7 @@ body.crf-module {
         align-items: center;
         gap: 0.4rem;
         color: #475569;
-        font-size: 0.68rem;
+        font-size: 0.75rem;
     }
 
     .admin-report-legend-swatch {
@@ -6262,3 +6262,119 @@ body.crf-module {
 
 /* Kartu Tanggapan: baris baru sudah diurus nl2br; jangan tampilkan spasi template */
 .crf-response-card .crf-detail-value { white-space: normal; }
+
+/* =====================================================================
+   Aksesibilitas & kenyamanan pakai (hasil tinjauan UI/UX)
+   Blok ini sengaja di akhir berkas agar menang atas aturan sebelumnya.
+   ===================================================================== */
+
+/* --- 1. Indikator fokus keyboard yang jelas --------------------------- */
+.crf-module :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+.crf-module .crf-topbar :where(a, button):focus-visible,
+.crf-module .crf-sidebar :where(a, button):focus-visible,
+.crf-module .siap-sidebar :where(a, button):focus-visible {
+  outline-color: #ffffff;
+}
+.crf-module #crfForm .form-control:focus,
+.crf-module #crfForm .form-select:focus,
+.crf-module .crf-detail-page .form-control:focus,
+.crf-module .crf-detail-page .form-select:focus {
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.28);
+}
+.crf-module main:focus { outline: none; }
+
+/* --- 2. Lewati ke konten ---------------------------------------------- */
+.crf-skip-link:focus {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 3000;
+  padding: 0.55rem 0.9rem;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1d4ed8;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+}
+
+/* --- 3. Kontras teks (WCAG AA 4,5:1) ---------------------------------- */
+.crf-module { --crf-text-muted: #5b6878; }
+.crf-module .crf-hint,
+.crf-module #crfForm .crf-hint,
+.crf-module .crf-readonly-note,
+.crf-module #crfForm .crf-readonly-note,
+.crf-module .crf-list-count { color: var(--crf-text-muted); }
+.crf-module .crf-timeline-date { color: #51606f; }
+.crf-module .crf-timeline-actor { color: #566474; }
+.crf-module .crf-timeline-description,
+.crf-module .crf-timeline-item .crf-timeline-description { color: #4f5d6c; }
+.crf-module .badge-status-proses,
+.crf-module .crf-badge.badge-status-proses { color: #8a5707; }
+.crf-module .crf-notification-item small { color: var(--crf-text-muted); }
+.crf-module .siap-menu-title { color: #555d69; }
+.crf-module .crf-section-number,
+.crf-module #crfForm .crf-section-number,
+.crf-module .crf-detail-page .crf-section-number { color: #1b5f96; }
+.crf-module #crfForm .input-group-text { color: #4b5666; }
+.crf-module .crf-save-status.is-new { color: #475467; }
+
+/* --- 4. Target sentuh & ruang bernapas -------------------------------- */
+.crf-module .form-check-input { width: 1.15rem; height: 1.15rem; }
+.crf-module .crf-budget-option { min-height: 2.5rem; display: flex; align-items: center; gap: 0.25rem; }
+.crf-module .crf-list-filter-actions .btn,
+.crf-module .crf-table-heading .btn,
+.crf-module .crf-list-table-card .btn-sm { min-height: 2.5rem; }
+
+/* --- 5. Filter daftar yang bisa diciutkan (layar kecil) --------------- */
+.crf-filter-toggle { display: none; }
+@media (max-width: 767.98px) {
+  .crf-filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 2.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .crf-list-filters.is-collapsed { display: none !important; }
+
+  /* KPI satu baris yang bisa digeser, agar daftar CRF cepat terlihat. */
+  .crf-module .crf-stat-grid {
+    display: flex;
+    gap: 0.6rem;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding-bottom: 0.4rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  .crf-module .crf-stat-grid .crf-stat-card {
+    flex: 0 0 9.5rem;
+    scroll-snap-align: start;
+  }
+
+  /* Tab filter tahap: turun baris agar semua pilihan terlihat (tidak terpotong). */
+  .crf-module .crf-table-heading { flex-wrap: wrap; gap: 0.6rem; }
+  .crf-module .crf-table-heading .btn-group { flex-wrap: wrap; width: 100%; gap: 0.35rem; }
+  .crf-module .crf-table-heading .btn-group > .btn { flex: 1 1 auto; border-radius: 6px !important; margin-left: 0; }
+
+  /* Bar aksi form: tombol sebaris, status ringkas di atasnya. */
+  .crf-sticky-actions .crf-sticky-buttons { flex-direction: row; }
+  .crf-sticky-actions .crf-sticky-buttons > button { flex: 1 1 0; min-height: 2.75rem; padding-left: 0.4rem; padding-right: 0.4rem; font-size: 0.9rem; white-space: nowrap; }
+  .crf-module .crf-save-status { padding-top: 0.15rem; padding-bottom: 0.15rem; font-size: 0.8rem; }
+  .crf-module .btn, .crf-module .form-select, .crf-module .form-control { min-height: 2.75rem; }
+}
+
+/* --- 6. Hormati preferensi kurangi gerak ------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .crf-module *, .crf-module *::before, .crf-module *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

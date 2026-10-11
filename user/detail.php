@@ -227,8 +227,14 @@ require_once __DIR__ . '/../includes/header.php';
         <?php endif; ?>
 
         <div class="crf-detail-layout">
-          <main class="crf-detail-main">
+          <div class="crf-detail-main">
 
+        <?php
+        // Tanggapan tampil paling atas hanya bila pemohon perlu menindaklanjuti
+        // (Perlu Revisi / Dibatalkan); selain itu ditaruh setelah data pengajuan.
+        $tanggapanDulu = in_array((string) ($crf['status'] ?? ''), ['Perlu Revisi', 'Cancel'], true);
+        ob_start();
+        ?>
         <!-- TANGGAPAN / TINDAK LANJUT -->
         <div class="crf-section crf-response-card mb-4">
 
@@ -249,7 +255,8 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
         </div>
-
+        <?php $tanggapanCard = ob_get_clean(); ?>
+        <?= $tanggapanDulu ? $tanggapanCard : '' ?>
 
         <!-- INFORMASI PENGAJUAN -->
         <?php
@@ -261,6 +268,8 @@ require_once __DIR__ . '/../includes/header.php';
         <?php
         require __DIR__ . '/../includes/partials/detail_permintaan.php';
         ?>
+
+        <?= $tanggapanDulu ? '' : $tanggapanCard ?>
 
         <?php /* Pemohon hanya melihat Level Urgensi; panel Informasi SLA khusus peran internal. */ ?>
 
@@ -379,7 +388,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
 
         <!-- TIMELINE PROSES PENGAJUAN -->
-          </main>
+          </div><!-- /.crf-detail-main -->
           <aside class="crf-detail-sidebar">
         <?php $timelineHideSla = true; require __DIR__ . '/../includes/partials/timeline.php'; ?>
 

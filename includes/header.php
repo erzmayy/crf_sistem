@@ -71,6 +71,7 @@ if ($crfEmbedded) {
 <link href="<?= h($styleUrl) ?>" rel="stylesheet">
 </head>
 <body class="crf-module" data-app-base="<?= h($appBasePath) ?>" data-sla-holidays="<?= h(json_encode(CRF_SLA_HOLIDAYS)) ?>">
+<a class="visually-hidden-focusable crf-skip-link" href="#crf-main">Lewati ke konten utama</a>
 <div class="crf-app-shell">
     <div class="crf-sidebar-overlay"></div>
 
@@ -182,3 +183,4 @@ if ($crfEmbedded) {
         </div>
       </div>
     </header>
+    <main id="crf-main" tabindex="-1">

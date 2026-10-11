@@ -197,26 +197,42 @@ require_once __DIR__ . '/../includes/header.php';
                 name="nama_pemohon"
                 placeholder="Masukkan nama lengkap"
                 value="<?= h($old['nama_pemohon'] ?? '') ?>"
-                readonly
+                <?= trim((string) ($old['nama_pemohon'] ?? '')) !== '' ? 'readonly' : '' ?>
                 required
               >
-              <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
+              <?php if (trim((string) ($old['nama_pemohon'] ?? '')) !== ''): ?>
+                <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
+              <?php else: ?>
+                <div class="crf-readonly-note"><i class="bi bi-info-circle"></i>Belum terisi dari akun; mohon lengkapi</div>
+              <?php endif; ?>
             </div>
 
             <div class="col-md-4">
               <label for="telepon" class="crf-field-label">No. Handphone/WA<span class="text-danger">*</span>
               </label>
+              <?php
+              // Terkunci hanya bila nomornya sudah ada (dari akun SIAP atau pengajuan
+              // sebelumnya). Bila kosong, pemohon harus bisa mengisinya sendiri.
+              $phoneLocked = trim((string) ($old['telepon'] ?? '')) !== '';
+              ?>
               <input
-                type="text"
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel"
+                maxlength="25"
                 class="form-control"
                 id="telepon"
                 name="telepon"
                 placeholder="Masukkan nomor handphone/WA"
                 value="<?= h($old['telepon'] ?? '') ?>"
-                readonly
+                <?= $phoneLocked ? 'readonly' : '' ?>
                 required
               >
-              <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun atau data pengajuan sebelumnya</div>
+              <?php if ($phoneLocked): ?>
+                <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun atau data pengajuan sebelumnya</div>
+              <?php else: ?>
+                <div class="crf-readonly-note"><i class="bi bi-info-circle"></i>Isi nomor yang bisa dihubungi; akan diingat untuk pengajuan berikutnya</div>
+              <?php endif; ?>
             </div>
 
             <div class="col-md-4">
@@ -229,29 +245,33 @@ require_once __DIR__ . '/../includes/header.php';
                 name="email"
                 placeholder="Masukkan alamat email"
                 value="<?= h($old['email'] ?? '') ?>"
-                readonly
+                <?= trim((string) ($old['email'] ?? '')) !== '' ? 'readonly' : '' ?>
                 required
               >
-              <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
+              <?php if (trim((string) ($old['email'] ?? '')) !== ''): ?>
+                <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
+              <?php else: ?>
+                <div class="crf-readonly-note"><i class="bi bi-info-circle"></i>Belum terisi dari akun; mohon lengkapi</div>
+              <?php endif; ?>
             </div>
             
 
             <div class="col-md-6">
-              <label class="crf-field-label">Hari/Tanggal<span class="text-danger">*</span>
+              <label for="info_tanggal" class="crf-field-label">Hari/Tanggal<span class="text-danger">*</span>
               </label>
-              <input type="text" class="form-control" value="<?= h($tanggalDisplay) ?>" readonly>
+              <input type="text" class="form-control" id="info_tanggal" value="<?= h($tanggalDisplay) ?>" readonly>
               <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis oleh sistem</div>
             </div>
             <div class="col-md-6">
-              <label class="crf-field-label">Nomor Register<span class="text-danger">*</span>
+              <label for="info_nomor_register" class="crf-field-label">Nomor Register<span class="text-danger">*</span>
               </label>
-              <input type="text" class="form-control" value="<?= h($previewRequestNo) ?>" readonly>
+              <input type="text" class="form-control" id="info_nomor_register" value="<?= h($previewRequestNo) ?>" readonly>
               <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Nomor dibuat sistem setelah CRF disubmit</div>
             </div>
             <div class="col-md-6">
-              <label class="crf-field-label">Kepada<span class="text-danger">*</span>
+              <label for="info_kepada" class="crf-field-label">Kepada<span class="text-danger">*</span>
               </label>
-              <input type="text" class="form-control" value="<?= h($toDepartment . ' (' . $toDivision . ')') ?>" readonly>
+              <input type="text" class="form-control" id="info_kepada" value="<?= h($toDepartment . ' (' . $toDivision . ')') ?>" readonly>
               <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Tujuan pengajuan CRF ditetapkan sistem</div>
             </div>
             <div class="col-md-6">
@@ -269,10 +289,14 @@ require_once __DIR__ . '/../includes/header.php';
                     name="dept_asal"
                     placeholder="Masukkan nama departemen"
                     value="<?= h($old['dept_asal'] ?? '') ?>"
-                    readonly
+                    <?= trim((string) ($old['dept_asal'] ?? '')) !== '' ? 'readonly' : '' ?>
                     required
                   >
-                  <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
+                  <?php if (trim((string) ($old['dept_asal'] ?? '')) !== ''): ?>
+                    <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
+                  <?php else: ?>
+                    <div class="crf-readonly-note"><i class="bi bi-info-circle"></i>Belum terisi dari akun; mohon lengkapi</div>
+                  <?php endif; ?>
                 </div>
 
                 <div class="col-12">
@@ -285,10 +309,14 @@ require_once __DIR__ . '/../includes/header.php';
                     name="divisi_asal"
                     placeholder="Masukkan nama divisi"
                     value="<?= h($old['divisi_asal'] ?? '') ?>"
-                    readonly
+                    <?= trim((string) ($old['divisi_asal'] ?? '')) !== '' ? 'readonly' : '' ?>
                     required
                   >
-                  <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
+                  <?php if (trim((string) ($old['divisi_asal'] ?? '')) !== ''): ?>
+                    <div class="crf-readonly-note"><i class="bi bi-lock-fill"></i>Diisi otomatis dari akun Anda</div>
+                  <?php else: ?>
+                    <div class="crf-readonly-note"><i class="bi bi-info-circle"></i>Belum terisi dari akun; mohon lengkapi</div>
+                  <?php endif; ?>
                 </div>
               </div>
             </div>
@@ -373,7 +401,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-section-body">
           <p class="crf-hint">Silakan sampaikan bukti berupa screenshot, printout, atau dokumen pendukung lain (opsional).</p>
             <input type="file" class="form-control" id="attachments" name="attachments[]" multiple
-                 accept=".pdf,.jpg,.jpeg,.png">
+                 accept=".pdf,.jpg,.jpeg,.png" aria-label="Unggah bukti pendukung (PDF, JPG, PNG, maksimal 5 MB per file)">
           <div class="crf-readonly-note mt-2">
             Format yang didukung: PDF, JPG, JPEG, PNG. Maks. 5 MB per file.
           </div>

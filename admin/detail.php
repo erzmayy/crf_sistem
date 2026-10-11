@@ -122,7 +122,7 @@ require_once __DIR__ . '/../includes/header.php';
     <?php endif; ?>
 
     <div class="crf-detail-layout">
-      <main class="crf-detail-main">
+      <div class="crf-detail-main">
 
     <?php if ($crf['status'] === 'Solve' && $crf['tgl_selesai']): ?>
       <div class="crf-readonly-note mb-3">
@@ -140,6 +140,16 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
     <?php endif; ?>
 
+    <!-- Informasi Pengajuan -->
+    <?php
+    require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
+    ?>
+
+    <!-- Detail Pengajuan -->
+    <?php
+    require __DIR__ . '/../includes/partials/detail_permintaan.php';
+    ?>
+
     <!-- Tanggapan / Tindak Lanjut -->
     <div class="crf-section crf-response-card mb-4">
       <div class="crf-section-header">
@@ -155,16 +165,6 @@ require_once __DIR__ . '/../includes/header.php';
             : '<span class="text-muted">Belum ada tanggapan atau tindak lanjut.</span>' ?></div>
       </div>
     </div>
-
-    <!-- Informasi Pengajuan -->
-    <?php
-    require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
-    ?>
-
-    <!-- Detail Pengajuan -->
-    <?php
-    require __DIR__ . '/../includes/partials/detail_permintaan.php';
-    ?>
 
     <?php if (!empty($crf['otomasi_selesai']) && $crf['status'] !== 'Cancel'): ?>
         <div class="crf-section crf-detail-card mb-4">
@@ -243,7 +243,7 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
     <?php endif; ?>
 
-      </main>
+      </div><!-- /.crf-detail-main -->
       <aside class="crf-detail-sidebar">
         <?php require __DIR__ . '/../includes/partials/timeline.php'; ?>
 
