@@ -73,7 +73,7 @@ $discussionHistory = [];
 if ($crfId > 0) {
     $selectedStmt = $pdo->prepare(
         "SELECT cr.id, cr.nomor_register, cr.nama_pemohon, cr.status, cr.tahap_alur,
-                cr.level, cr.kategori_dampak, cr.level_urgensi_final,
+                cr.level, cr.kategori_dampak, cr.dampak_dipilih, cr.level_urgensi_final,
                 cr.sla_nilai, cr.sla_satuan, cr.sla_mulai, cr.sla_tenggat,
                 cr.tgl_disetujui_kadep, cr.otomasi_selesai, cr.pembahasan_forum_terbuka,
                 cr.pic_nama, cr.pic_id, cr.kategori_id,
@@ -330,7 +330,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php else: ?>
                     <?php
                     $selectedStatus = crfDisplayStatus($selectedCrf);
-                    $systemUrgency = crfUrgencyForImpact($selectedCrf['kategori_dampak'] ?? null)
+                    $systemUrgency = crfUrgensiSistem($selectedCrf)
                         ?: ($selectedCrf['level'] ?? null);
                     $finalUrgency = $selectedCrf['level_urgensi_final'] ?: $systemUrgency;
                     $slaStatus = getCrfSlaStatus($selectedCrf);

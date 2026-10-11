@@ -112,7 +112,7 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
     ];
     $urgencyCounts = array_fill_keys(array_keys($urgencyMeta), 0);
     $urgencyStmt = $pdo->prepare(
-        "SELECT level_urgensi_final, level, kategori_dampak
+        "SELECT level_urgensi_final, level, kategori_dampak, dampak_dipilih
          FROM crf_pengajuan
          WHERE {$baseWhere}"
     );

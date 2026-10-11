@@ -126,7 +126,7 @@ require_once __DIR__ . '/../includes/header.php';
         $dhShowForum = false;
         $dhShowSla = false;
         $dhNumber = $requestNumberDisplay;
-        $dhLevelHint = 'Berdasarkan dampak yang Anda pilih; dapat disesuaikan oleh CMO';
+        $dhShowUrgency = false;
         $dhExtraHtml = (($crf['status'] ?? '') === 'Perlu Revisi')
             ? '<a href="form_crf.php?id=' . (int) $crf['id'] . '" class="btn btn-warning"><i class="bi bi-pencil-square" aria-hidden="true"></i> Perbaiki pengajuan</a>'
             : '';
@@ -207,7 +207,7 @@ require_once __DIR__ . '/../includes/header.php';
 
         <?= $tanggapanDulu ? '' : $tanggapanCard ?>
 
-        <?php /* Pemohon hanya melihat Level Urgensi; panel Informasi SLA khusus peran internal. */ ?>
+        <?php /* Pemohon tidak melihat urgensi maupun SLA; keduanya khusus peran internal. */ ?>
 
 
         <!-- IMPLEMENTASI & POST IMPLEMENTATION REVIEW -->

@@ -48,7 +48,10 @@ $changeDescription = trim($_POST['deskripsi_perubahan'] ?? '');
 $benefit           = trim($_POST['manfaat'] ?? '');
 $impact            = trim($_POST['dampak'] ?? '');
 $requestType       = trim($_POST['jenis_pengajuan'] ?? '');
-$impactCategory    = trim($_POST['kategori_dampak'] ?? '');
+// Urgensi berbobot: pemohon mencentang semua pernyataan dampak yang berlaku.
+$dampakKeys     = crfDampakDipilih($_POST['dampak_dipilih'] ?? ($_POST['kategori_dampak'] ?? []));
+$urgensi        = crfHitungUrgensi($dampakKeys);
+$impactCategory = (string) (crfDampakUtama($dampakKeys) ?? '');
 $reason            = trim($_POST['alasan'] ?? '');
 
 $budgetType = $_POST['jenis_anggaran'] ?? null;
@@ -136,7 +139,7 @@ if (!in_array($impactCategory, $allowedImpactCategories, true)) {
     $impactCategory = '';
 }
 
-$level = crfUrgencyForImpact($impactCategory);
+$level = $urgensi['level'];
 
 
 /*
@@ -213,6 +216,8 @@ try {
                 dampak = :dampak,
                 jenis_pengajuan = :jenis_pengajuan,
                 kategori_dampak = :kategori_dampak,
+                dampak_dipilih = :dampak_dipilih,
+                skor_urgensi = :skor_urgensi,
                 level = :level,
                 alasan = :alasan,
                 jenis_anggaran = :jenis_anggaran,
@@ -241,6 +246,8 @@ try {
             'dampak' => $impact,
             'jenis_pengajuan' => $requestType !== '' ? $requestType : null,
             'kategori_dampak' => $impactCategory !== '' ? $impactCategory : null,
+            'dampak_dipilih' => $dampakKeys ? implode(',', $dampakKeys) : null,
+            'skor_urgensi' => $dampakKeys ? $urgensi['skor'] : null,
             'level' => $level,
             'alasan' => $reason,
             'jenis_anggaran' => $budgetType !== '' ? $budgetType : null,
@@ -289,6 +296,8 @@ try {
                 dampak,
                 jenis_pengajuan,
                 kategori_dampak,
+                dampak_dipilih,
+                skor_urgensi,
                 alasan,
                 jenis_anggaran,
                 nilai_anggaran,
@@ -318,6 +327,8 @@ try {
                 :dampak,
                 :jenis_pengajuan,
                 :kategori_dampak,
+                :dampak_dipilih,
+                :skor_urgensi,
                 :alasan,
                 :jenis_anggaran,
                 :nilai_anggaran,
@@ -350,6 +361,8 @@ try {
                 'dampak' => $impact,
                 'jenis_pengajuan' => $requestType !== '' ? $requestType : null,
                 'kategori_dampak' => $impactCategory !== '' ? $impactCategory : null,
+                'dampak_dipilih' => $dampakKeys ? implode(',', $dampakKeys) : null,
+                'skor_urgensi' => $dampakKeys ? $urgensi['skor'] : null,
                 'level' => $level,
                 'alasan' => $reason,
                 'jenis_anggaran' => $budgetType !== '' ? $budgetType : null,

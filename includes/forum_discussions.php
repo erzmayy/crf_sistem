@@ -260,7 +260,7 @@ function forumLockCrf(PDO $pdo, int $crfId): ?array
 {
     $stmt = $pdo->prepare(
         'SELECT id, pengguna_id, nomor_register, kategori_id, pic_id,
-                status, tahap_alur, level, kategori_dampak, level_urgensi_final,
+                status, tahap_alur, level, kategori_dampak, dampak_dipilih, level_urgensi_final,
                 sla_nilai, sla_satuan, tgl_disetujui_kadep, pembahasan_forum_terbuka
          FROM crf_pengajuan cr
          WHERE cr.id = :id AND ' . forumActiveCrfCondition('cr') . '

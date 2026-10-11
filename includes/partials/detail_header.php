@@ -11,6 +11,7 @@
  *   bool   $dhShowForum   tampilkan tombol Diskusi Forum (bawaan true)
  *   bool   $dhShowExport  tampilkan tombol Ekspor PDF (bawaan true)
  *   bool   $dhShowSla     tampilkan lencana SLA (bawaan true; false untuk Pemohon)
+ *   bool   $dhShowUrgency tampilkan lencana urgensi (bawaan true; false untuk Pemohon)
  *   string $dhNumber      nomor register yang ditampilkan (bawaan dari $crf)
  *   string $dhExtraHtml   tombol tambahan (sudah di-escape oleh pemanggil)
  *   string $dhLevelHint   keterangan saat lencana level disorot
@@ -21,6 +22,7 @@ $dhEyebrow = $dhEyebrow ?? 'Detail CRF';
 $dhShowForum = $dhShowForum ?? true;
 $dhShowExport = $dhShowExport ?? true;
 $dhShowSla = $dhShowSla ?? true;
+$dhShowUrgency = $dhShowUrgency ?? true;
 $dhNumber = $dhNumber ?? (string) ($crf['nomor_register'] ?? '');
 $dhExtraHtml = $dhExtraHtml ?? '';
 $dhLevelHint = $dhLevelHint ?? '';
@@ -60,7 +62,8 @@ $dhSla = (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan']))
     <div class="crf-dh-badges">
 
         <span class="crf-badge <?= h($dhStatus['class']) ?>"><?= h($dhStatus['label']) ?></span>
-        <?php if ($dhLevel !== null && $dhLevel !== ''): ?>
+        <?php if (!$dhShowUrgency): /* Pemohon tidak diberi tahu urgensi. */ ?>
+        <?php elseif ($dhLevel !== null && $dhLevel !== ''): ?>
             <span class="crf-badge <?= h(levelBadgeClass($dhLevel)) ?>"<?= $dhLevelHint !== '' ? ' title="' . h($dhLevelHint) . '"' : '' ?>>
                 Urgensi <?= h(mb_strtolower((string) $dhLevel)) ?>
             </span>
@@ -84,4 +87,4 @@ $dhSla = (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan']))
 <?php endif; ?>
 <?php
 unset($dhEyebrow, $dhShowForum, $dhShowExport, $dhShowSla, $dhNumber,
-    $dhExtraHtml, $dhLevelHint, $dhStatus, $dhLevel, $dhSubject, $dhSla, $dhCategory);
+    $dhExtraHtml, $dhShowUrgency, $dhLevelHint, $dhStatus, $dhLevel, $dhSubject, $dhSla, $dhCategory);

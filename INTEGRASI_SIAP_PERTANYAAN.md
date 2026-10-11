@@ -116,8 +116,8 @@ Dokumen ini untuk dibahas dengan tim SIAP. Setiap pertanyaan punya **asumsi kami
     `userid`, `password`, `password_new`, `nama`, `dept`, `divisi`, `email`, `no_wa`, `kpu_kode`.*
     Jawaban: ______
 22. **Bagaimana skema database dipasang?** Instalasi baru memakai `database/schema.sql`
-    (satu berkas, hasil akhir migrasi 001–024). Perubahan berikutnya diberi nomor
-    `025_...` di `database/migrations/`. Apakah SIAP punya mekanisme migrasi sendiri?
+    (satu berkas, hasil akhir migrasi 001–025). Perubahan berikutnya diberi nomor
+    `026_...` di `database/migrations/`. Apakah SIAP punya mekanisme migrasi sendiri?
     Jawaban: ______
 23. **Data CRF yang sudah ada** (pengajuan, lampiran, riwayat): **tidak dibawa**. Modul
     dipasang sebagai modul baru dengan database kosong dan nomor register mulai dari awal.

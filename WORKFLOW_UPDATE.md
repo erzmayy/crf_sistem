@@ -220,3 +220,28 @@ Cara kerja mode `module`:
   `crf/handling.php`. Sisi Helpdesk sudah dihapus karena dipegang modul Helpdesk SIAP.
 - Tetap perlu dihapus/diganti saat integrasi: `login.php`, `logout.php`, `actions/login.php`
   (login memakai sesi SIAP).
+
+## Penilaian urgensi berbobot
+
+Level Urgensi tidak lagi dari satu pilihan dampak, melainkan dari **bobot** semua
+pernyataan dampak yang dicentang Pemohon.
+
+- **Skor** = jumlah bobot pernyataan yang dicentang (maksimum 100).
+- **Level**: skor ≥ 35 → Tinggi, ≥ 10 → Normal, selain itu Rendah.
+- **Pagar pengaman**: "fungsi aplikasi berhenti total" dan "risiko likuiditas dan hukum"
+  selalu menghasilkan Tinggi, berapa pun skornya.
+- Bobot, ambang, dan pagar pengaman ada di `config/urgensi.php` (nilai awal adalah usulan,
+  sesuaikan dengan ketentuan resmi). Pernyataan mengikuti `crfImpactGroups()`.
+- Tersimpan di `crf_pengajuan.dampak_dipilih` dan `skor_urgensi`; `kategori_dampak` berisi
+  pernyataan dengan bobot tertinggi agar laporan dan PDF lama tetap berfungsi.
+- **Pemohon tidak diberi tahu urgensi**: bobot, kelompok, perkiraan, dan hasil level tidak tampil
+  di form, detail, daftar, maupun PDF-nya (agar tidak selalu memilih dampak tertinggi). Pernyataan
+  ditampilkan dalam urutan netral (abjad). Level dan skor hanya tampil untuk peran internal
+  (skor pada kartu Isi Permintaan).
+- **Pemeriksaan konsistensi**: pasangan pernyataan yang tidak mungkin benar bersamaan (mis.
+  "tidak ada risiko" dengan "risiko likuiditas dan hukum") ditolak saat kirim, diatur di
+  `bertentangan` pada `config/urgensi.php`. Jika pemohon mencentang banyak pernyataan
+  (`batas_banyak`, bawaan 7), CMO melihat penanda "Perlu dicek" di detail; pemohon tidak melihatnya.
+- CMO atau hasil Forum tetap dapat menetapkan Level akhir (`level_urgensi_final`).
+- CRF lama tetap memakai pemetaan satu pilihan lama; skornya tidak dihitung ulang.
+- Uji: `php tools/uji_urgensi.php`.

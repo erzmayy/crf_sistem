@@ -25,7 +25,7 @@ if ($id <= 0) {
 $stmt = $pdo->prepare('
     SELECT id, pengguna_id, nomor_register, kategori_id, pic_id,
            status, tahap_alur, tgl_disetujui_kadep, otomasi_selesai,
-           level, kategori_dampak, level_urgensi_final, sla_nilai, sla_satuan, pembahasan_forum_terbuka
+           level, kategori_dampak, dampak_dipilih, level_urgensi_final, sla_nilai, sla_satuan, pembahasan_forum_terbuka
     FROM crf_pengajuan
     WHERE id = :id
     LIMIT 1

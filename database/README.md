@@ -40,6 +40,7 @@ migrasi aman dijalankan ulang.
 | 022 | `hapus_modul_helpdesk_migration.sql` | **Menghapus modul Helpdesk** (Helpdesk dipegang SIAP): PIC CRF disalin menjadi isian tetap dan `crf_category_handlers` kembali jadi tabel; kolom `helpdesk_ticket_id` dilepas; tabel `helpdesk_*`, `crf_category_pic_sources`, `app_sequences` di-DROP permanen. **Backup dulu.** |
 | 023 | `nama_tabel_indonesia_migration.sql` | **Mengganti nama 12 tabel ke bahasa Indonesia** berawalan `crf_` (mis. `change_requests` menjadi `crf_pengajuan`, `attachments` menjadi `crf_lampiran`); daftar lengkap ada di berkas migrasi. Backup dulu. Kode aplikasi versi baru wajib dipakai sesudahnya. |
 | 024 | `nama_kolom_indonesia_migration.sql` | **Mengganti nama 134 kolom ke bahasa Indonesia** di semua tabel `crf_*` (mis. `request_number` menjadi `nomor_register`, `workflow_stage` menjadi `tahap_alur`, `user_id` menjadi `pengguna_id`, `created_at` menjadi `tgl_dibuat`). Kolom `id`, `status`, `level`, `email`, `url` tidak berubah. Membutuhkan MySQL 8.0+ / MariaDB 10.5.2+. Jalankan setelah 023 dan bersamaan dengan kode baru. Backup dulu. |
+| 025 | `urgensi_berbobot_migration.sql` | **Penilaian urgensi berbobot**: kolom `dampak_dipilih` (kunci pernyataan dampak, dipisah koma) dan `skor_urgensi` pada `crf_pengajuan`; CRF lama diisi `dampak_dipilih` dari `kategori_dampak`, skor dibiarkan kosong. Bobot dan ambang ada di `config/urgensi.php`. |
 
 Skrip pemeliharaan (jalankan dari terminal, bukan browser):
 
@@ -47,7 +48,7 @@ Skrip pemeliharaan (jalankan dari terminal, bukan browser):
 
 - `maintenance/kirim_peringatan_sla.php` — mengirim peringatan SLA ke PIC CRF. **Jadwalkan tiap 5 menit** (Windows Task Scheduler atau cron), mis. `php C:\path\crf_sistem\database\maintenance\kirim_peringatan_sla.php`.
 
-Migrasi baru berikutnya diberi nomor `025_...`.
+Migrasi baru berikutnya diberi nomor `026_...`.
 
 > Migrasi 001–022 di atas ditulis dengan nama tabel lama (bahasa Inggris). Untuk instalasi baru tidak perlu dijalankan; cukup `schema.sql`.
 

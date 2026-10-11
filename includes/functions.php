@@ -959,6 +959,190 @@ function crfUrgencyForImpact(?string $impact): ?string
     return $urgencyByImpact[$impact ?? ''] ?? null;
 }
 
+/* ---------------------------------------------------------------------
+ * Penilaian urgensi berbobot (lihat config/urgensi.php)
+ * ------------------------------------------------------------------- */
+
+/** Konfigurasi bobot, ambang, dan pagar pengaman urgensi. */
+function crfUrgencyConfig(): array
+{
+    static $config = null;
+
+    if ($config === null) {
+        $path = __DIR__ . '/../config/urgensi.php';
+        $loaded = is_file($path) ? require $path : [];
+        $config = is_array($loaded) ? $loaded : [];
+    }
+
+    return $config;
+}
+
+/**
+ * Daftar kunci dampak yang valid dari input pemohon.
+ * Menerima array (checkbox), string dipisah koma (kolom database), atau
+ * satu kunci (nilai lama). Kunci tak dikenal dan duplikat dibuang.
+ *
+ * @param mixed $raw
+ * @return string[]
+ */
+function crfDampakDipilih($raw): array
+{
+    if (is_string($raw)) {
+        $raw = explode(',', $raw);
+    }
+    if (!is_array($raw)) {
+        return [];
+    }
+
+    $valid = crfImpactOptions();
+    $keys = [];
+    foreach ($raw as $item) {
+        $key = trim((string) $item);
+        if ($key !== '' && isset($valid[$key]) && !in_array($key, $keys, true)) {
+            $keys[] = $key;
+        }
+    }
+
+    return $keys;
+}
+
+/**
+ * Hitung skor dan Level Urgensi dari pernyataan dampak yang dipilih.
+ *
+ * @param string[]   $keys    hasil crfDampakDipilih()
+ * @param array|null $config  menimpa config/urgensi.php (untuk uji)
+ * @return array{skor:float,level:?string,dikunci:bool,rincian:array<string,float>}
+ */
+function crfHitungUrgensi(array $keys, ?array $config = null): array
+{
+    $config = array_replace_recursive(crfUrgencyConfig(), $config ?? []);
+    $bobot = (array) ($config['bobot'] ?? []);
+    $maks = (float) ($config['maks'] ?? 100);
+    $ambangTinggi = (float) ($config['ambang']['Tinggi'] ?? 35);
+    $ambangNormal = (float) ($config['ambang']['Normal'] ?? 10);
+    $wajibTinggi = (array) ($config['wajib_tinggi'] ?? []);
+
+    $rincian = [];
+    $dikunci = false;
+    foreach (crfDampakDipilih($keys) as $key) {
+        $rincian[$key] = (float) ($bobot[$key] ?? 0);
+        if (in_array($key, $wajibTinggi, true)) {
+            $dikunci = true;
+        }
+    }
+
+    if (!$rincian) {
+        return ['skor' => 0.0, 'level' => null, 'dikunci' => false, 'rincian' => []];
+    }
+
+    $skor = min($maks, array_sum($rincian));
+    if ($dikunci || $skor >= $ambangTinggi) {
+        $level = 'Tinggi';
+    } elseif ($skor >= $ambangNormal) {
+        $level = 'Normal';
+    } else {
+        $level = 'Rendah';
+    }
+
+    return ['skor' => (float) $skor, 'level' => $level, 'dikunci' => $dikunci, 'rincian' => $rincian];
+}
+
+/**
+ * Pasangan pernyataan yang saling bertentangan (config 'bertentangan').
+ *
+ * @param string[] $keys
+ * @return array<int,array{0:string,1:string}>
+ */
+function crfDampakBertentangan(array $keys): array
+{
+    $keys = crfDampakDipilih($keys);
+    $peta = (array) (crfUrgencyConfig()['bertentangan'] ?? []);
+    $pasangan = [];
+    foreach ($peta as $a => $lawan) {
+        if (!in_array($a, $keys, true)) {
+            continue;
+        }
+        foreach ((array) $lawan as $b) {
+            if (in_array($b, $keys, true)) {
+                $pasangan[] = [$a, $b];
+            }
+        }
+    }
+    return $pasangan;
+}
+
+/**
+ * Penanda "perlu dicek" untuk CMO: daftar alasan (kosong = wajar).
+ * Hanya untuk peran internal; jangan ditampilkan ke Pemohon.
+ *
+ * @param string[] $keys
+ * @return string[]
+ */
+function crfDampakCatatan(array $keys): array
+{
+    $keys = crfDampakDipilih($keys);
+    $catatan = [];
+    if (crfDampakBertentangan($keys)) {
+        $catatan[] = 'Ada pernyataan yang saling bertentangan.';
+    }
+    $batas = (int) (crfUrgencyConfig()['batas_banyak'] ?? 0);
+    if ($batas > 0 && count($keys) >= $batas) {
+        $total = count(crfImpactOptions());
+        $catatan[] = 'Pemohon mencentang ' . count($keys) . ' dari ' . $total . ' pernyataan.';
+    }
+    return $catatan;
+}
+
+/** Pernyataan dampak dengan bobot tertinggi (disimpan sebagai kategori_dampak utama). */
+function crfDampakUtama(array $keys): ?string
+{
+    $bobot = (array) (crfUrgencyConfig()['bobot'] ?? []);
+    $utama = null;
+    $tertinggi = -1.0;
+    foreach (crfDampakDipilih($keys) as $key) {
+        $nilai = (float) ($bobot[$key] ?? 0);
+        if ($nilai > $tertinggi) {
+            $tertinggi = $nilai;
+            $utama = $key;
+        }
+    }
+
+    return $utama;
+}
+
+/** Kunci dampak sebuah CRF: dari dampak_dipilih, atau pilihan tunggal lama. */
+function crfDampakKunci(array $crf): array
+{
+    $keys = crfDampakDipilih($crf['dampak_dipilih'] ?? null);
+
+    return $keys ?: crfDampakDipilih($crf['kategori_dampak'] ?? null);
+}
+
+/**
+ * Urgensi menurut sistem (sebelum diubah CMO/Forum). Baris baru memakai skor
+ * berbobot; baris lama (pilihan tunggal) memakai pemetaan lama.
+ */
+function crfUrgensiSistem(array $crf): ?string
+{
+    $keys = crfDampakDipilih($crf['dampak_dipilih'] ?? null);
+    if ($keys) {
+        return crfHitungUrgensi($keys)['level'];
+    }
+
+    return crfUrgencyForImpact($crf['kategori_dampak'] ?? null);
+}
+
+/** Teks pernyataan dampak yang dipilih sebuah CRF. */
+function crfDampakLabels(array $crf): array
+{
+    $options = crfImpactOptions();
+
+    return array_values(array_map(
+        static fn(string $key): string => $options[$key],
+        crfDampakKunci($crf)
+    ));
+}
+
 /**
  * Matriks SLA satu kategori CRF per level urgensi.
  * Kolom sla_nilai / sla_satuan = SLA Normal; Tinggi/Rendah kosong ikut Normal.
@@ -988,7 +1172,7 @@ function crfEffectiveUrgency(array $crf): ?string
 {
     return ($crf['level_urgensi_final'] ?? null)
         ?: ($crf['level'] ?? null)
-        ?: crfUrgencyForImpact($crf['kategori_dampak'] ?? null);
+        ?: crfUrgensiSistem($crf);
 }
 
 /**

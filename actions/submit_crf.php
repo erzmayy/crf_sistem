@@ -44,7 +44,10 @@ $changeDescription = trim($_POST['deskripsi_perubahan'] ?? '');
 $benefit            = trim($_POST['manfaat'] ?? '');
 $impact             = trim($_POST['dampak'] ?? '');
 $requestType        = trim($_POST['jenis_pengajuan'] ?? '');
-$impactCategory     = trim($_POST['kategori_dampak'] ?? '');
+// Urgensi berbobot: pemohon mencentang semua pernyataan dampak yang berlaku.
+$dampakKeys     = crfDampakDipilih($_POST['dampak_dipilih'] ?? ($_POST['kategori_dampak'] ?? []));
+$urgensi        = crfHitungUrgensi($dampakKeys);
+$impactCategory = (string) (crfDampakUtama($dampakKeys) ?? '');
 $reason             = trim($_POST['alasan'] ?? '');
 
 $fromDepartment = trim($_POST['dept_asal'] ?? '');
@@ -84,7 +87,7 @@ $allowedBudgetTypes = [
 $errors = [];
 $allowedRequestTypes = crfRequestTypeOptions();
 $allowedImpactCategories = array_keys(crfImpactOptions());
-$level = crfUrgencyForImpact($impactCategory);
+$level = $urgensi['level'];
 
 /* Informasi pengajuan */
 if ($fullName === '') {
@@ -106,7 +109,9 @@ if (!in_array($requestType, $allowedRequestTypes, true)) {
 }
 
 if (!in_array($impactCategory, $allowedImpactCategories, true)) {
-    $errors[] = 'Dampak wajib dipilih.';
+    $errors[] = 'Pilih minimal satu pernyataan dampak.';
+} elseif (crfDampakBertentangan($dampakKeys)) {
+    $errors[] = 'Beberapa pernyataan dampak saling bertentangan. Periksa kembali pilihan Anda.';
 }
 
 /* Change Request Description */
@@ -283,6 +288,8 @@ try {
                 dampak = :dampak,
                 jenis_pengajuan = :jenis_pengajuan,
                 kategori_dampak = :kategori_dampak,
+                dampak_dipilih = :dampak_dipilih,
+                skor_urgensi = :skor_urgensi,
                 level = :level,
                 alasan = :alasan,
                 jenis_anggaran = :jenis_anggaran,
@@ -314,6 +321,8 @@ try {
             'dampak'                 => $impact,
             'jenis_pengajuan'           => $requestType,
             'kategori_dampak'        => $impactCategory,
+            'dampak_dipilih'        => implode(',', $dampakKeys),
+            'skor_urgensi'        => $urgensi['skor'],
             'level'                  => $level,
             'alasan'                 => $reason,
             'jenis_anggaran'            => $budgetTypeRaw,
@@ -355,6 +364,8 @@ try {
                 dampak,
                 jenis_pengajuan,
                 kategori_dampak,
+                dampak_dipilih,
+                skor_urgensi,
                 alasan,
                 jenis_anggaran,
                 nilai_anggaran,
@@ -382,6 +393,8 @@ try {
                 :dampak,
                 :jenis_pengajuan,
                 :kategori_dampak,
+                :dampak_dipilih,
+                :skor_urgensi,
                 :alasan,
                 :jenis_anggaran,
                 :nilai_anggaran,
@@ -412,6 +425,8 @@ try {
             'dampak'                 => $impact,
             'jenis_pengajuan'           => $requestType,
             'kategori_dampak'        => $impactCategory,
+            'dampak_dipilih'        => implode(',', $dampakKeys),
+            'skor_urgensi'        => $urgensi['skor'],
             'level'                  => $level,
             'alasan'                 => $reason,
             'jenis_anggaran'            => $budgetTypeRaw,

@@ -228,7 +228,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <h1>Pengajuan Saya</h1>
 
                 <p class="text-muted mb-0">
-                    Pantau status, urgensi, dan tindak lanjut pengajuan perubahan Anda.
+                    Pantau status dan tindak lanjut pengajuan perubahan Anda.
                 </p>
             </div>
 
@@ -418,7 +418,6 @@ require_once __DIR__ . '/../includes/header.php';
                                     <th>No</th>
                                     <th>Pengajuan</th>
                                     <th>Isi Pengajuan</th>
-                                    <th>Urgensi</th>
                                     <th>Status</th>
                                     <th>Aksi</th>
                                 </tr>
@@ -429,7 +428,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <?php if (empty($pengajuan)): ?>
                                 <tr>
-                                    <td data-label="Pengajuan" colspan="6" class="crf-empty-cell">
+                                    <td data-label="Pengajuan" colspan="5" class="crf-empty-cell">
                                         <div class="crf-empty-state crf-empty-state-compact">
                                             <div class="crf-empty-icon">
                                                 <i class="bi bi-search"></i>
@@ -451,7 +450,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                     <?php $rowCategoryEmpty = 'Kategori belum dipilih'; require __DIR__ . '/../includes/partials/crf_row_request.php'; ?>
-                                    <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
+                                    <?php $rowPemohonView = true; require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
 
                                    <!-- AKSI -->
                                 <td data-label="Aksi">

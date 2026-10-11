@@ -47,6 +47,8 @@ CREATE TABLE crf_pengajuan (
     dampak                      TEXT            NULL,
     jenis_pengajuan                VARCHAR(50)     NULL,
     kategori_dampak             VARCHAR(50)     NULL,
+    dampak_dipilih              VARCHAR(600)    NULL,   -- kunci pernyataan dampak yang dicentang (koma)
+    skor_urgensi                DECIMAL(5,2)    NULL,   -- skor berbobot 0-100 (config/urgensi.php)
     alasan                      TEXT            NULL,
 
     jenis_anggaran                 ENUM('rkap','boq_pks','anggaran_baru') NULL,

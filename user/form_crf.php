@@ -360,16 +360,34 @@ require_once __DIR__ . '/../includes/header.php';
           </div>
 
           <div class="mb-3">
-            <label for="kategori_dampak" class="crf-field-label">Dampak Jika Tidak Dilakukan Perubahan<span class="text-danger">*</span></label>
-            <select class="form-select" id="kategori_dampak" name="kategori_dampak" required>
-              <option value="">Pilih dampak</option>
-              <?php foreach (crfImpactOptions() as $impactKey => $impactLabel): ?>
-                <option
-                  value="<?= h($impactKey) ?>"
-                  <?= ($old['kategori_dampak'] ?? '') === $impactKey ? 'selected' : '' ?>
-                ><?= h($impactLabel) ?></option>
-              <?php endforeach; ?>
-            </select>
+            <?php
+            // Penilaian urgensi berbobot dilakukan di server (config/urgensi.php).
+            // Pemohon TIDAK diberi tahu bobot, kelompok, atau hasilnya, agar tidak
+            // selalu memilih dampak tertinggi. Urutan ditampilkan netral (abjad).
+            $dampakTerpilih = crfDampakDipilih($old['dampak_dipilih'] ?? ($old['kategori_dampak'] ?? null));
+            $dampakOpsi = crfImpactOptions();
+            uasort($dampakOpsi, static fn(string $a, string $b): int => strcasecmp($a, $b));
+            ?>
+            <fieldset class="crf-impact-fieldset" id="dampak_dipilih_group" aria-describedby="dampak_dipilih_hint" data-bertentangan="<?= h(json_encode((object) (crfUrgencyConfig()['bertentangan'] ?? []), JSON_UNESCAPED_UNICODE)) ?>">
+              <legend class="crf-field-label">Dampak Jika Tidak Dilakukan Perubahan<span class="text-danger">*</span></legend>
+              <p class="crf-hint" id="dampak_dipilih_hint">
+                Centang <strong>semua</strong> pernyataan yang sesuai dengan kondisi sebenarnya.
+              </p>
+
+              <div class="crf-impact-group">
+                <?php foreach ($dampakOpsi as $impactKey => $impactLabel): ?>
+                  <label class="crf-impact-option">
+                    <input
+                      type="checkbox"
+                      name="dampak_dipilih[]"
+                      value="<?= h($impactKey) ?>"
+                      <?= in_array($impactKey, $dampakTerpilih, true) ? 'checked' : '' ?>
+                    >
+                    <span><?= h($impactLabel) ?></span>
+                  </label>
+                <?php endforeach; ?>
+              </div>
+            </fieldset>
             <label for="dampak" class="form-label mt-3">Penjelasan Dampak yang Dipilih<span class="text-danger">*</span></label>
             <textarea
               class="form-control"

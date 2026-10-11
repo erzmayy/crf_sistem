@@ -380,7 +380,6 @@ if (fileInput && fileList) {
       'jenis_pengajuan',
       'deskripsi_perubahan',
       'manfaat',
-      'kategori_dampak',
       'dampak',
       'alasan'
     ];
@@ -392,6 +391,10 @@ if (fileInput && fileList) {
     var email = document.getElementById('email');
     if (isComplete && email
       && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+      isComplete = false;
+    }
+
+    if (isComplete && !crfRoot.querySelector('input[name="dampak_dipilih[]"]:checked')) {
       isComplete = false;
     }
 
@@ -456,7 +459,6 @@ if (fileInput && fileList) {
       ['jenis_pengajuan', 'Tipe pengajuan wajib dipilih.'],
       ['deskripsi_perubahan', 'Rincian permohonan perubahan wajib diisi.'],
       ['manfaat', 'Benefit perubahan wajib diisi.'],
-      ['kategori_dampak', 'Dampak jika tidak dilakukan perubahan wajib dipilih.'],
       ['dampak', 'Penjelasan dampak wajib diisi.'],
       ['alasan', 'Alasan permohonan perubahan wajib diisi.']
     ].forEach(function (item) {
@@ -470,6 +472,24 @@ if (fileInput && fileList) {
     if (email && email.value.trim() !== ''
       && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
       addInlineError(email, 'Format email belum valid.', errors);
+    }
+
+    var impactGroup = document.getElementById('dampak_dipilih_group');
+    if (impactGroup && !impactGroup.querySelector('input[type="checkbox"]:checked')) {
+      addInlineError(impactGroup, 'Pilih minimal satu pernyataan dampak.', errors);
+    } else if (impactGroup) {
+      var konflik = {};
+      try { konflik = JSON.parse(impactGroup.getAttribute('data-bertentangan') || '{}'); } catch (e) { konflik = {}; }
+      var dicentang = Array.prototype.map.call(
+        impactGroup.querySelectorAll('input[type="checkbox"]:checked'),
+        function (box) { return box.value; }
+      );
+      var bentrok = dicentang.some(function (key) {
+        return (konflik[key] || []).some(function (lawan) { return dicentang.indexOf(lawan) !== -1; });
+      });
+      if (bentrok) {
+        addInlineError(impactGroup, 'Beberapa pernyataan dampak saling bertentangan. Periksa kembali pilihan Anda.', errors);
+      }
     }
 
     var category = document.getElementById('kategori_perubahan');
