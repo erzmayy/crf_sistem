@@ -76,7 +76,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <?php foreach ($items as $item): ?>
                         <a class="crf-notification-item <?= $item['tgl_dibaca'] === null ? 'unread' : '' ?>" href="open.php?id=<?= (int) $item['id'] ?>">
                             <strong><?= h($item['judul']) ?></strong>
-                            <span><?= nl2br(h((string) $item['pesan'])) ?></span>
+                            <span><?= nl2br(h(getCrfRole() === 'pemohon' ? crfStripSlaText($item['pesan']) : (string) $item['pesan'])) ?></span>
                             <small><?= h(date('d M Y H:i', strtotime($item['tgl_dibuat']))) ?></small>
                         </a>
                     <?php endforeach; ?>

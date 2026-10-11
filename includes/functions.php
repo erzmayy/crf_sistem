@@ -588,6 +588,26 @@ function logCrfActivity(
 }
 
 /**
+ * Buang informasi SLA dari sebuah teks untuk tampilan Pemohon.
+ * Pemohon hanya melihat Level Urgensi dan tahap CRF; SLA adalah urusan
+ * internal (CMO, Kadep, PIC CRF, Admin). Data yang tersimpan tidak diubah.
+ */
+function crfStripSlaText(?string $text): string
+{
+    $text = strtr((string) $text, [
+        ' dan SLA berhenti' => '',
+        'SLA berhenti; ' => '',
+        'SLA berjalan sejak persetujuan. ' => '',
+        ' (tidak dihitung dalam SLA)' => '',
+        '(tidak dihitung dalam SLA)' => '',
+    ]);
+    $sentences = preg_split('/(?<=[.!?])\s+/u', trim($text)) ?: [];
+    $sentences = array_filter($sentences, static fn(string $s): bool => !preg_match('/\bSLA\b/u', $s));
+
+    return trim(implode(' ', $sentences));
+}
+
+/**
  * Status tampilan CRF (label sesuai alur Helpdesk/CRF) yang diturunkan
  * dari kombinasi status + tahap_alur. ENUM database tidak diubah.
  *

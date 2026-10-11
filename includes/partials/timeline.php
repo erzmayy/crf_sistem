@@ -43,6 +43,25 @@ $legacyTerms = [
 ];
 $modernizeTerm = static fn(?string $text): string => strtr((string) $text, $legacyTerms);
 
+/*
+ * Tampilan untuk Pemohon ($timelineHideSla = true): SLA dan Forum adalah
+ * urusan internal, jadi entri dan kalimat yang memuat SLA tidak ditampilkan.
+ * Pemohon hanya melihat Level Urgensi dan tahap CRF.
+ */
+if (!empty($timelineHideSla)) {
+    $slaHiddenActivities = [
+        'SLA Otomatis', 'Otomasi - SLA Ditentukan', 'SLA Disesuaikan Handler', 'Peringatan SLA',
+        'Kesepakatan Urgensi dan SLA Forum', 'Pembahasan Forum Diajukan', 'Hasil Pembahasan Forum',
+        'Pembahasan Forum Dibatalkan',
+    ];
+    $timeline = array_values(array_filter(
+        $timeline ?? [],
+        static fn(array $item): bool => !in_array((string) ($item['aktivitas'] ?? ''), $slaHiddenActivities, true)
+    ));
+
+    $modernizeTerm = static fn(?string $text): string => crfStripSlaText(strtr((string) $text, $legacyTerms));
+}
+
 $pendingStep = null;
 $workflowStage = (string) ($crf['tahap_alur'] ?? '');
 $requestStatus = (string) ($crf['status'] ?? '');
@@ -55,7 +74,8 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
                 : ['title' => 'Perbaikan oleh Pemohon', 'deskripsi' => 'Menunggu pemohon memperbaiki dan mengirim ulang CRF.'];
             break;
         case 'CMO_FILTER':
-            $pendingStep = !empty($crf['pembahasan_forum_terbuka'])
+            // Forum tidak terbuka bagi Pemohon; baginya CRF tetap "Verifikasi CMO".
+            $pendingStep = (!empty($crf['pembahasan_forum_terbuka']) && empty($timelineHideSla))
                 ? ['title' => 'Menunggu Pembahasan Forum', 'deskripsi' => 'CMO mengajukan pembahasan Level Urgensi dan SLA. Setelah hasil dicatat CMO atau Admin, CRF langsung diteruskan ke Kepala Departemen Operasional.']
                 : ['title' => 'Verifikasi CMO', 'deskripsi' => 'Menunggu verifikasi permohonan oleh CMO.'];
             break;
@@ -147,7 +167,7 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
                         <div class="crf-timeline-content">
                             <strong class="crf-timeline-title"><?= h($pendingStep['title']) ?></strong>
                             <span class="crf-timeline-date">-</span>
-                            <div class="crf-timeline-description"><?= h($pendingStep['deskripsi']) ?></div>
+                            <div class="crf-timeline-description"><?= h(!empty($timelineHideSla) ? $modernizeTerm($pendingStep['deskripsi']) : $pendingStep['deskripsi']) ?></div>
                         </div>
                     </li>
                 <?php endif; ?>

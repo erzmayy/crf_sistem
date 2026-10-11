@@ -217,7 +217,7 @@ if (
  * Ambil tanggal aktivitas workflow untuk kebutuhan export PDF
  * --------------------------------------------------------------- */
 $activityStmt = $pdo->prepare("
-    SELECT aktivitas, tgl_dibuat
+    SELECT aktivitas, pelaksana, tgl_dibuat
     FROM crf_log_aktivitas
     WHERE pengajuan_id = :id
     ORDER BY tgl_dibuat ASC, id ASC
@@ -259,16 +259,56 @@ $shortDate = static fn(?string $value): ?string => !empty($value) ? date('d-m-Y'
 $implementationDateText = $dateOnly($crf['tgl_implementasi'] ?? null) ?? '-';
 $pirDateText = $dateOnly($crf['tgl_pir'] ?? null) ?? '-';
 
+// Nama pelaksana terbaru untuk sebuah aktivitas (dicatat di crf_log_aktivitas).
+$lastActor = static function (array $rows, array $activities): string {
+    $name = '';
+    foreach ($rows as $row) {
+        $actor = trim((string) ($row['pelaksana'] ?? ''));
+        if ($actor !== '' && $actor !== 'Sistem' && in_array($row['aktivitas'], $activities, true)) {
+            $name = $actor;
+        }
+    }
+
+    return $name;
+};
+
+// Nama langkah yang sudah dilalui; bila tidak tercatat, pakai nama jabatan.
+// Langkah yang belum dilalui (tanggal kosong) dibiarkan kosong.
+$stepName = static function (?string $date, string $recorded, string $fallback): string {
+    if (empty($date)) {
+        return '';
+    }
+
+    return $recorded !== '' ? $recorded : $fallback;
+};
+
+$pemohonName = (string) ($crf['nama_pemohon'] ?? '');
+
 // Langkah proses pengajuan (tanggal kosong = belum dilalui).
-$processSteps = [
-    ['role' => 'Pemohon',    'action' => 'Mengajukan CRF', 'name' => $crf['nama_pemohon'] ?? '',             'date' => $shortDate($crf['tgl_pengajuan'] ?? null)],
-    ['role' => 'CMO',        'action' => 'Verifikasi',     'name' => '',                                  'date' => $shortDate($cmoFilterAt ?? null)],
-    ['role' => 'Kadep Ops.', 'action' => 'Persetujuan',    'name' => '',                                  'date' => $shortDate($crf['tgl_disetujui_kadep'] ?? null)],
-    ['role' => 'PIC CRF',    'action' => 'Eksekusi',       'name' => $crf['pic_nama'] ?? '', 'date' => $shortDate($crf['otomasi_selesai'] ?? null)],
-    ['role' => 'CMO',        'action' => 'UAT lulus',      'name' => '',                                  'date' => $shortDate($crf['tgl_uat_lulus'] ?? null)],
-    ['role' => 'Pemohon',    'action' => 'PIR',            'name' => '',                                  'date' => $shortDate($crf['tgl_pir'] ?? null)],
-    ['role' => 'CMO',        'action' => 'Penutupan',      'name' => '',                                  'date' => $shortDate($crf['tgl_selesai'] ?? null)],
-];
+$processSteps = [];
+foreach ([
+    ['Pemohon',    'Mengajukan CRF', $crf['tgl_pengajuan'] ?? null,        $pemohonName,
+        $pemohonName],
+    ['CMO',        'Verifikasi',     $cmoFilterAt,                         $lastActor($activityRows, ['Lolos Filter CMO', 'Diteruskan ke Kepala Departemen']),
+        'Tim CMO'],
+    ['Kadep Ops.', 'Persetujuan',    $crf['tgl_disetujui_kadep'] ?? null,  $lastActor($activityRows, ['Approval Kepala Departemen Operasional']),
+        'Kepala Departemen Operasional'],
+    ['PIC CRF',    'Eksekusi',       $crf['otomasi_selesai'] ?? null,      trim((string) ($crf['pic_nama'] ?? '')) ?: $lastActor($activityRows, ['Eksekusi Selesai']),
+        'PIC CRF'],
+    ['CMO',        'UAT lulus',      $crf['tgl_uat_lulus'] ?? null,        $lastActor($activityRows, ['UAT Lulus']),
+        'Tim CMO'],
+    ['Pemohon',    'PIR',            $crf['tgl_pir'] ?? null,              $lastActor($activityRows, ['PIR Diisi Pemohon']) ?: $pemohonName,
+        $pemohonName],
+    ['CMO',        'Penutupan',      $crf['tgl_selesai'] ?? null,          $lastActor($activityRows, ['Solve']),
+        'Tim CMO'],
+] as [$role, $action, $date, $recorded, $fallback]) {
+    $processSteps[] = [
+        'role' => $role,
+        'action' => $action,
+        'name' => $stepName($date, (string) $recorded, (string) $fallback),
+        'date' => $shortDate($date),
+    ];
+}
 
 $esc = static fn($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 
@@ -374,10 +414,12 @@ ob_start();
             <div class="chip-label">Level Urgensi</div>
             <div class="chip-value"><span class="pill" style="background: <?= $levelBg ?>; color: <?= $levelFg ?>;"><?= $esc($levelDisplay) ?></span></div>
         </td>
+<?php if (getCrfRole() !== 'pemohon'): /* Pemohon tidak melihat SLA; hanya Level Urgensi. */ ?>
         <td>
             <div class="chip-label">SLA</div>
             <div class="chip-value"><?= $esc($slaDisplay) ?></div>
         </td>
+<?php endif; ?>
         <td>
             <div class="chip-label">Status</div>
             <div class="chip-value"><span class="pill" style="background: <?= $statusBg ?>; color: <?= $statusFg ?>;"><?= $esc($statusDisplay) ?></span></div>
@@ -456,7 +498,7 @@ ob_start();
 </table>
 
 <div class="footer-note">
-    Dokumen ini dihasilkan oleh Sistem Helpdesk &amp; CRF PT Persona Prima Utama · dicetak <?= date('d-m-Y H:i') ?>
+    Dokumen ini dihasilkan oleh Sistem CRF PT Persona Prima Utama · dicetak <?= date('d-m-Y H:i') ?>
 </div>
 
 </body>

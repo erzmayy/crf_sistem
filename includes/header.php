@@ -153,7 +153,7 @@ if ($crfEmbedded) {
             <?php foreach ($notificationItems as $notificationItem): ?>
               <a class="crf-notification-item <?= $notificationItem['tgl_dibaca'] === null ? 'unread' : '' ?>" href="<?= h($appBasePath) ?>/notifications/open.php?id=<?= (int) $notificationItem['id'] ?>">
                 <strong><?= h($notificationItem['judul']) ?></strong>
-                <span><?= h(mb_strimwidth((string) $notificationItem['pesan'], 0, 110, '…')) ?></span>
+                <span><?= h(mb_strimwidth($crfRole === 'pemohon' ? crfStripSlaText($notificationItem['pesan']) : (string) $notificationItem['pesan'], 0, 110, '…')) ?></span>
                 <small><?= h(date('d M Y H:i', strtotime($notificationItem['tgl_dibuat']))) ?></small>
               </a>
             <?php endforeach; ?>

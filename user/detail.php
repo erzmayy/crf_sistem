@@ -181,7 +181,8 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- STATUS -->
         <div class="crf-status-strip mb-4">
 
-            <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>">
+            <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>"
+                  title="Berdasarkan dampak yang Anda pilih; dapat disesuaikan oleh CMO">
                 Level Urgensi:
                 <?= h($crf['level'] ?? 'Belum ditentukan') ?>
             </span>
@@ -261,7 +262,7 @@ require_once __DIR__ . '/../includes/header.php';
         require __DIR__ . '/../includes/partials/detail_permintaan.php';
         ?>
 
-        <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
+        <?php /* Pemohon hanya melihat Level Urgensi; panel Informasi SLA khusus peran internal. */ ?>
 
 
         <!-- IMPLEMENTASI & POST IMPLEMENTATION REVIEW -->
@@ -380,7 +381,7 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- TIMELINE PROSES PENGAJUAN -->
           </main>
           <aside class="crf-detail-sidebar">
-        <?php require __DIR__ . '/../includes/partials/timeline.php'; ?>
+        <?php $timelineHideSla = true; require __DIR__ . '/../includes/partials/timeline.php'; ?>
 
           </aside>
         </div>

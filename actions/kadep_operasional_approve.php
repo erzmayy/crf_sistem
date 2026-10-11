@@ -169,11 +169,25 @@ try {
             'Disetujui · Eksekusi'
         );
 
+        // PIC CRF menerima rincian SLA; Pemohon hanya diberi tahu CRF-nya disetujui.
+        $picRecipients = array_values(array_diff(
+            array_map('intval', $handlerRecipients ?: crfUserIdsForRole($pdo, 'otomasi')),
+            [(int) $crf['pengguna_id']]
+        ));
         notifyUsers(
             $pdo,
-            array_merge($handlerRecipients ?: crfUserIdsForRole($pdo, 'otomasi'), [(int) $crf['pengguna_id']]),
+            $picRecipients,
             'CRF disetujui: ' . $crfNumber,
             'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional. SLA mulai dihitung dan batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. PIC CRF dapat mengeksekusi CRF.',
+            $crfLink,
+            $id,
+            (int) $user['id']
+        );
+        notifyUsers(
+            $pdo,
+            [(int) $crf['pengguna_id']],
+            'CRF disetujui: ' . $crfNumber,
+            'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional dan diteruskan ke PIC CRF untuk dieksekusi.',
             $crfLink,
             $id,
             (int) $user['id']
