@@ -14,18 +14,18 @@ require_once __DIR__ . '/session.php';
  */
 function crfCategories(PDO $pdo, bool $onlyActive = true): array
 {
-    $sql = 'SELECT * FROM crf_categories WHERE deleted_at IS NULL';
+    $sql = 'SELECT * FROM crf_kategori WHERE tgl_dihapus IS NULL';
     if ($onlyActive) {
-        $sql .= ' AND is_active = 1';
+        $sql .= ' AND aktif = 1';
     }
-    $sql .= ' ORDER BY sort_order, name';
+    $sql .= ' ORDER BY urutan, nama';
 
     return $pdo->query($sql)->fetchAll();
 }
 
 function findCrfCategory(PDO $pdo, int $id): ?array
 {
-    $stmt = $pdo->prepare('SELECT * FROM crf_categories WHERE id = :id AND deleted_at IS NULL LIMIT 1');
+    $stmt = $pdo->prepare('SELECT * FROM crf_kategori WHERE id = :id AND tgl_dihapus IS NULL LIMIT 1');
     $stmt->execute(['id' => $id]);
     $row = $stmt->fetch();
 
@@ -44,7 +44,7 @@ function resolveActiveCrfCategory(PDO $pdo, $rawId): ?array
 
     $category = findCrfCategory($pdo, $id);
 
-    return $category && (int) $category['is_active'] === 1 ? $category : null;
+    return $category && (int) $category['aktif'] === 1 ? $category : null;
 }
 
 /**
@@ -58,20 +58,20 @@ function crfCategoryName(array $crf, string $fallback = '-'): string
         return (string) $crf['crf_category_name'];
     }
 
-    if (!empty($crf['crf_category_id'])) {
+    if (!empty($crf['kategori_id'])) {
         if ($names === null) {
             try {
-                $names = getConnection()->query('SELECT id, name FROM crf_categories')->fetchAll(PDO::FETCH_KEY_PAIR);
+                $names = getConnection()->query('SELECT id, nama FROM crf_kategori')->fetchAll(PDO::FETCH_KEY_PAIR);
             } catch (Throwable $e) {
                 $names = [];
             }
         }
-        if (isset($names[(int) $crf['crf_category_id']])) {
-            return (string) $names[(int) $crf['crf_category_id']];
+        if (isset($names[(int) $crf['kategori_id']])) {
+            return (string) $names[(int) $crf['kategori_id']];
         }
     }
 
-    return !empty($crf['change_category']) ? (string) $crf['change_category'] : $fallback;
+    return !empty($crf['kategori_perubahan']) ? (string) $crf['kategori_perubahan'] : $fallback;
 }
 
 /**
@@ -81,7 +81,7 @@ function crfCategoryName(array $crf, string $fallback = '-'): string
  */
 function crfCategoryHandlerIds(PDO $pdo, int $categoryId): array
 {
-    $stmt = $pdo->prepare('SELECT user_id FROM crf_category_handlers WHERE crf_category_id = :id');
+    $stmt = $pdo->prepare('SELECT pengguna_id FROM crf_kategori_pic WHERE kategori_id = :id');
     $stmt->execute(['id' => $categoryId]);
 
     return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
@@ -97,8 +97,8 @@ function handledCrfCategoryIds(PDO $pdo, int $userId): array
     static $cache = [];
 
     if (!isset($cache[$userId])) {
-        $stmt = $pdo->prepare('SELECT crf_category_id FROM crf_category_handlers WHERE user_id = :user_id');
-        $stmt->execute(['user_id' => $userId]);
+        $stmt = $pdo->prepare('SELECT kategori_id FROM crf_kategori_pic WHERE pengguna_id = :pengguna_id');
+        $stmt->execute(['pengguna_id' => $userId]);
         $cache[$userId] = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
@@ -115,9 +115,9 @@ function unhandledCrfCategoryIds(PDO $pdo): array
 {
     return array_map('intval', $pdo->query('
         SELECT c.id
-        FROM crf_categories c
+        FROM crf_kategori c
         WHERE NOT EXISTS (
-            SELECT 1 FROM crf_category_handlers h WHERE h.crf_category_id = c.id
+            SELECT 1 FROM crf_kategori_pic h WHERE h.kategori_id = c.id
         )
     ')->fetchAll(PDO::FETCH_COLUMN));
 }
@@ -128,16 +128,16 @@ function isCrfCategoryHandler(PDO $pdo, int $userId): bool
 }
 
 /**
- * Daftar PIC CRF per kategori: [category_id => [ [user_id, user_name, email, no_wa], ... ]].
+ * Daftar PIC CRF per kategori: [category_id => [ [pengguna_id, pengguna_nama, email, no_wa], ... ]].
  */
 function categoryMembers(PDO $pdo): array
 {
     $userTable = crfUserTable();
     $rows = $pdo->query("
-        SELECT p.id AS pivot_id, p.crf_category_id AS category_id, p.user_id,
-               COALESCE(u.nama, p.user_name) AS user_name, u.userid, u.email, u.no_wa
-        FROM crf_category_handlers p
-        LEFT JOIN {$userTable} u ON u.id = p.user_id
+        SELECT p.id AS pivot_id, p.kategori_id AS category_id, p.pengguna_id,
+               COALESCE(u.nama, p.pengguna_nama) AS pengguna_nama, u.userid, u.email, u.no_wa
+        FROM crf_kategori_pic p
+        LEFT JOIN {$userTable} u ON u.id = p.pengguna_id
         ORDER BY p.id
     ")->fetchAll();
 

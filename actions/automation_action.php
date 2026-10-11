@@ -10,7 +10,7 @@
  *   implementasi -> complete     : setelah UAT lulus, catat tanggal dan hasil implementasi,
  *                                  lalu CRF diteruskan ke Pemohon untuk PIR
  *
- * Waktu eksekusi selesai (automation_completed_at) hanya diisi sekali, sehingga
+ * Waktu eksekusi selesai (otomasi_selesai) hanya diisi sekali, sehingga
  * UAT dan perbaikannya tidak dihitung dalam SLA.
  * PIC CRF tidak menentukan atau mengubah Level Urgensi & SLA.
  */
@@ -32,8 +32,8 @@ $user = getCurrentUser();
 $id = (int) ($_POST['id'] ?? 0);
 $action = trim($_POST['action'] ?? '');
 $note = trim($_POST['note'] ?? '');
-$implementation = trim($_POST['implementation'] ?? '');
-$implementationDate = trim($_POST['implementation_date'] ?? '');
+$implementation = trim($_POST['implementasi'] ?? '');
+$implementationDate = trim($_POST['tgl_implementasi'] ?? '');
 
 if ($id <= 0) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'CRF tidak valid.'];
@@ -56,23 +56,23 @@ try {
     $stmt = $pdo->prepare("
         SELECT
             id,
-            user_id,
-            request_number,
-            crf_category_id,
-            assigned_handler_id,
-            assigned_handler_name,
-            workflow_stage,
-            kadep_operasional_approved_at,
-            automation_completed_at,
-            uat_passed_at
-        FROM change_requests
+            pengguna_id,
+            nomor_register,
+            kategori_id,
+            pic_id,
+            pic_nama,
+            tahap_alur,
+            tgl_disetujui_kadep,
+            otomasi_selesai,
+            tgl_uat_lulus
+        FROM crf_pengajuan
         WHERE id = :id
         FOR UPDATE
     ");
     $stmt->execute(['id' => $id]);
     $crf = $stmt->fetch();
 
-    if (!$crf || $crf['workflow_stage'] !== 'OTOMASI' || empty($crf['kadep_operasional_approved_at'])) {
+    if (!$crf || $crf['tahap_alur'] !== 'OTOMASI' || empty($crf['tgl_disetujui_kadep'])) {
         $failRedirect('CRF tidak ditemukan pada daftar eksekusi.', '../otomasi/index.php');
     }
 
@@ -81,9 +81,9 @@ try {
         $failRedirect('CRF ini bukan kategori yang Anda tangani.', '../otomasi/index.php');
     }
 
-    if (!empty($crf['assigned_handler_id']) && !isAssignedCrfHandler($crf)) {
+    if (!empty($crf['pic_id']) && !isAssignedCrfHandler($crf)) {
         $failRedirect(
-            'CRF ini sedang ditangani oleh ' . ($crf['assigned_handler_name'] ?? 'PIC CRF lain') . '.',
+            'CRF ini sedang ditangani oleh ' . ($crf['pic_nama'] ?? 'PIC CRF lain') . '.',
             '../otomasi/detail.php?id=' . $id
         );
     }
@@ -119,14 +119,14 @@ try {
 
     $now = date('Y-m-d H:i:s');
     $actor = crfActorName($user);
-    $crfNumber = (string) ($crf['request_number'] ?: 'CRF #' . $id);
+    $crfNumber = (string) ($crf['nomor_register'] ?: 'CRF #' . $id);
     $noteText = $note !== '' ? ' Catatan PIC: ' . $note : '';
 
     // PIC CRF yang memproses tercatat sebagai pemegang CRF.
-    if (empty($crf['assigned_handler_id'])) {
+    if (empty($crf['pic_id'])) {
         $pdo->prepare('
-            UPDATE change_requests
-            SET assigned_handler_id = :handler_id, assigned_handler_name = :handler_name, assigned_at = NOW()
+            UPDATE crf_pengajuan
+            SET pic_id = :handler_id, pic_nama = :handler_name, tgl_ditugaskan = NOW()
             WHERE id = :id
         ')->execute(['handler_id' => (int) $user['id'], 'handler_name' => $actor, 'id' => $id]);
     }
@@ -134,12 +134,12 @@ try {
     if ($action === 'execute') {
         // Eksekusi selesai: SLA berhenti di sini dan tidak dihitung ulang.
         $stmt = $pdo->prepare("
-            UPDATE change_requests
-            SET automation_completed_at = :now, workflow_stage = 'UAT', status = 'Dalam Proses'
+            UPDATE crf_pengajuan
+            SET otomasi_selesai = :now, tahap_alur = 'UAT', status = 'Dalam Proses'
             WHERE id = :id
-              AND workflow_stage = 'OTOMASI'
-              AND kadep_operasional_approved_at IS NOT NULL
-              AND automation_completed_at IS NULL
+              AND tahap_alur = 'OTOMASI'
+              AND tgl_disetujui_kadep IS NOT NULL
+              AND otomasi_selesai IS NULL
         ");
         $stmt->execute(['now' => $now, 'id' => $id]);
         if ($stmt->rowCount() !== 1) {
@@ -162,12 +162,12 @@ try {
         $redirect = '../otomasi/index.php';
     } elseif ($action === 'resubmit_uat') {
         $stmt = $pdo->prepare("
-            UPDATE change_requests
-            SET workflow_stage = 'UAT', status = 'Dalam Proses'
+            UPDATE crf_pengajuan
+            SET tahap_alur = 'UAT', status = 'Dalam Proses'
             WHERE id = :id
-              AND workflow_stage = 'OTOMASI'
-              AND automation_completed_at IS NOT NULL
-              AND uat_passed_at IS NULL
+              AND tahap_alur = 'OTOMASI'
+              AND otomasi_selesai IS NOT NULL
+              AND tgl_uat_lulus IS NULL
         ");
         $stmt->execute(['id' => $id]);
         if ($stmt->rowCount() !== 1) {
@@ -189,21 +189,21 @@ try {
         $redirect = '../otomasi/index.php';
     } else {
         $stmt = $pdo->prepare("
-            UPDATE change_requests
+            UPDATE crf_pengajuan
             SET
-                implementation_date = :implementation_date,
-                implementation = :implementation,
-                implementation_submitted_at = :now,
-                workflow_stage = 'PEMOHON_PIR',
+                tgl_implementasi = :tgl_implementasi,
+                implementasi = :implementasi,
+                tgl_implementasi_diisi = :now,
+                tahap_alur = 'PEMOHON_PIR',
                 status = 'Dalam Proses'
             WHERE id = :id
-              AND workflow_stage = 'OTOMASI'
-              AND kadep_operasional_approved_at IS NOT NULL
-              AND uat_passed_at IS NOT NULL
+              AND tahap_alur = 'OTOMASI'
+              AND tgl_disetujui_kadep IS NOT NULL
+              AND tgl_uat_lulus IS NOT NULL
         ");
         $stmt->execute([
-            'implementation_date' => $parsedImplementationDate->format('Y-m-d'),
-            'implementation' => $implementation,
+            'tgl_implementasi' => $parsedImplementationDate->format('Y-m-d'),
+            'implementasi' => $implementation,
             'now' => $now,
             'id' => $id,
         ]);
@@ -227,7 +227,7 @@ try {
     if ($action === 'complete') {
         notifyUsers(
             $pdo,
-            [(int) $crf['user_id']],
+            [(int) $crf['pengguna_id']],
             'Isi PIR CRF: ' . $crfNumber,
             'Implementasi CRF ' . $crfNumber . ' sudah selesai. Silakan isi Post Implementation Review.',
             'crf/open.php?id=' . $id,

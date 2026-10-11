@@ -11,7 +11,7 @@ Pemohon → CMO (screening) ─┬→ Kepala Departemen Operasional (approve; SL
   → CMO (Finalisasi) → Selesai
 ```
 
-## Tahap workflow (`change_requests.workflow_stage`)
+## Tahap workflow (`crf_pengajuan.tahap_alur`)
 
 | Tahap | Label di aplikasi | Pemegang |
 |-------|-------------------|----------|
@@ -32,14 +32,14 @@ Tahap `OTOMASI` dipakai ulang untuk tiga fase milik PIC CRF yang dibedakan lewat
 
 | Fase | Penanda | Aksi PIC CRF |
 |------|---------|--------------|
-| Eksekusi | `automation_completed_at` kosong | **Selesai Eksekusi · Kirim ke UAT** (`execute`) |
-| Perbaikan hasil UAT | `automation_completed_at` ada, `uat_passed_at` kosong | **Kirim Ulang ke UAT** (`resubmit_uat`) |
-| Isi implementasi | `uat_passed_at` ada | **Selesaikan** (`complete`) |
+| Eksekusi | `otomasi_selesai` kosong | **Selesai Eksekusi · Kirim ke UAT** (`execute`) |
+| Perbaikan hasil UAT | `otomasi_selesai` ada, `tgl_uat_lulus` kosong | **Kirim Ulang ke UAT** (`resubmit_uat`) |
+| Isi implementasi | `tgl_uat_lulus` ada | **Selesaikan** (`complete`) |
 
 Aksi di `actions/automation_action.php` divalidasi menurut fase di server, jadi UAT tidak dapat dilewati.
 
 Selama pembahasan Forum terbuka, CRF di tahap `CMO_FILTER` bertanda
-`forum_discussion_open = 1` dan tampil sebagai **Menunggu Pembahasan Forum**.
+`pembahasan_forum_terbuka = 1` dan tampil sebagai **Menunggu Pembahasan Forum**.
 
 ## Langkah per peran
 
@@ -62,12 +62,12 @@ Selama pembahasan Forum terbuka, CRF di tahap `CMO_FILTER` bertanda
 5. **UAT oleh CMO** (tahap `UAT`), bersama PIC CRF; koordinasi lewat tombol *Diskusi Forum*.
    - **Dokumen hasil UAT** diunggah sebagai bukti oleh **CMO** (saat tahap UAT) dan **Admin**
      (kapan pun setelah UAT dimulai) lewat `actions/uat_upload.php`. Dokumen disimpan di
-     `attachments` dengan `category = 'uat'` dan tampil di bagian *Dokumen Hasil UAT* pada Detail Pengajuan
+     `crf_lampiran` dengan `category = 'uat'` dan tampil di bagian *Dokumen Hasil UAT* pada Detail Pengajuan
      (terpisah dari lampiran pengajuan; tidak ikut di PDF Form CRF).
    - **Lulus UAT**: wajib sudah ada minimal satu dokumen UAT. CRF kembali ke PIC CRF.
    - **Perlu Perbaikan**: catatan wajib. CRF kembali ke PIC CRF; setelah **Kirim Ulang ke UAT**, CMO menguji lagi.
      Tidak ada batas putaran; tiap putaran tercatat di timeline.
-   - **UAT dan perbaikannya tidak dihitung dalam SLA**: waktu eksekusi selesai (`automation_completed_at`)
+   - **UAT dan perbaikannya tidak dihitung dalam SLA**: waktu eksekusi selesai (`otomasi_selesai`)
      hanya diisi sekali, jadi hasil SLA tidak berubah oleh putaran UAT.
 6. **PIC CRF** setelah UAT lulus mengisi **Tanggal Implementasi** dan **Implementasi / Hasil Perubahan**,
    lalu CRF diteruskan ke Pemohon.
@@ -95,12 +95,12 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
 
 - **Hasil pembahasan** selalu salah satu dari:
   - **Tetap** — Level dan SLA tetap memakai nilai sistem (data CRF tidak berubah).
-  - **Diubah** — nilai kesepakatan diterapkan: `final_urgency_level`, `level`, `sla_value`, `sla_unit`.
-- **Riwayat** (timeline, komentar sistem, dan tabel `forum_discussions`) mencatat nilai
+  - **Diubah** — nilai kesepakatan diterapkan: `level_urgensi_final`, `level`, `sla_nilai`, `sla_satuan`.
+- **Riwayat** (timeline, komentar sistem, dan tabel `crf_forum_pembahasan`) mencatat nilai
   **sebelum**, nilai **sesudah**, alasan, waktu, dan pelaksana.
 - **Tidak ada penetapan langsung** dan tidak ada pengajuan nilai oleh pengguna lain;
   satu-satunya jalan mengubah Level/SLA adalah hasil pembahasan "Diubah".
-- **Satu pembahasan terbuka per CRF** (UNIQUE `forum_discussions.open_crf_id`).
+- **Satu pembahasan terbuka per CRF** (UNIQUE `crf_forum_pembahasan.crf_terbuka_id`).
 - **Pembahasan otomatis**: bila kategori belum punya SLA standar sehingga SLA default
   kosong, sistem membuka pembahasan; CMO atau Admin wajib menetapkannya (hasil "Diubah") sebelum
   CRF dapat diteruskan. Pembahasan jenis ini tidak dapat dibatalkan selama SLA kosong.
@@ -137,14 +137,14 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
   *Pengingat* saat 50% SLA terpakai (dilewati bila SLA < 1 jam), *Mendesak* saat sisa waktu
   ≤ yang lebih kecil antara 25% SLA dan 1 jam, *Terlambat* saat melewati batas lalu diulang tiap
   hari kerja hingga PIC menekan Selesai Eksekusi. Dikirim oleh `database/maintenance/kirim_peringatan_sla.php`
-  (jadwalkan tiap 5 menit); penanda anti-ganda di tabel `crf_sla_alerts` (migrasi 019).
+  (jadwalkan tiap 5 menit); penanda anti-ganda di tabel `crf_peringatan_sla` (migrasi 019).
 
 ## Nomor register
 
 Format `PPU-<kode>.4.NNNN.MM.YY`. `<kode>` adalah `kpu_kode` akun SIAP pemohon saat mengajukan
 (`crfRegisterCode()`); akun tanpa kode (mis. pusat) memakai `CRF_REGISTER_DEFAULT_CODE` di
 `config/siap.php` (default `02`). Nomor tidak berubah setelah terbit. Nomor urut satu penghitung
-bersama untuk semua KPU, direset per tahun, dan dibuat atomik lewat tabel `crf_sequence`.
+bersama untuk semua KPU, direset per tahun, dan dibuat atomik lewat tabel `crf_nomor_urut`.
 
 ## Helpdesk
 
@@ -160,15 +160,15 @@ buka kartu kategori → **PIC CRF** → cari user SIAP → **Tambah**.
 
 - Kategori tanpa PIC ditangani role Otomasi (fallback agar tidak ada CRF yatim).
 - PIC dari kategori Helpdesk (migrasi 017) sudah disalin menjadi isian tetap oleh migrasi 022.
-- Tabel `crf_category_handlers` kembali menjadi tabel biasa (bukan VIEW).
+- Tabel `crf_kategori_pic` kembali menjadi tabel biasa (bukan VIEW).
 ## Database
 
 - Instalasi baru: jalankan `database/schema.sql`.
 - Database lama: jalankan migrasi di `database/migrations/` berurutan.
   Daftar lengkap ada di [database/README.md](database/README.md).
 - Tahap `PEMOHON_PIR` dipulihkan oleh migrasi `011_pir_pemohon_migration.sql`.
-- Fase UAT: jalankan `021_uat_migration.sql`. **Wajib**: tahap `UAT` pada ENUM `workflow_stage`, kolom
-  `uat_passed_at` dan `implementation_submitted_at` pada `change_requests`, serta `attachments.category`.
+- Fase UAT: jalankan `021_uat_migration.sql`. **Wajib**: tahap `UAT` pada ENUM `tahap_alur`, kolom
+  `tgl_uat_lulus` dan `tgl_implementasi_diisi` pada `crf_pengajuan`, serta `crf_lampiran.category`.
   Aman dijalankan ulang. CRF yang sudah melewati tahap eksekusi sebelum migrasi tidak terpengaruh;
   CRF yang masih di tahap `OTOMASI` akan melewati UAT.
 - Alur antrean Otomasi (015) dan usulan Forum (016) sudah digantikan oleh migrasi 018.
@@ -177,10 +177,10 @@ buka kartu kategori → **PIC CRF** → cari user SIAP → **Tambah**.
 - Hapus modul Helpdesk: jalankan `022_hapus_modul_helpdesk_migration.sql`. **Backup dulu**: tabel
   `helpdesk_*` di-DROP permanen (ticket, lampiran, log), PIC CRF disalin menjadi isian tetap, dan
   kolom `helpdesk_ticket_id` dilepas. Aman dijalankan ulang. Wajib dijalankan sebelum aplikasi baru
-  dipakai (penulisan PIC CRF kini langsung ke `crf_category_handlers`).
+  dipakai (penulisan PIC CRF kini langsung ke `crf_kategori_pic`).
 - Forum hasil pembahasan: jalankan `018_forum_hasil_pembahasan_migration.sql`. **Wajib**: tabel
-  `forum_proposals` menjadi `forum_discussions` dan `change_requests` mendapat kolom
-  `forum_discussion_open`. Aman dijalankan ulang. Bila saat itu ada CRF yang sudah
+  `forum_proposals` menjadi `crf_forum_pembahasan` dan `crf_pengajuan` mendapat kolom
+  `pembahasan_forum_terbuka`. Aman dijalankan ulang. Bila saat itu ada CRF yang sudah
   disetujui tetapi belum dimulai, jalankan setelahnya `php database/maintenance/hitung_tenggat_sla.php`
   untuk menghitung tenggat SLA-nya.
 
@@ -220,3 +220,31 @@ Cara kerja mode `module`:
   `crf/handling.php`. Sisi Helpdesk sudah dihapus karena dipegang modul Helpdesk SIAP.
 - Tetap perlu dihapus/diganti saat integrasi: `login.php`, `logout.php`, `actions/login.php`
   (login memakai sesi SIAP).
+
+## Penilaian urgensi berbobot
+
+Level Urgensi tidak lagi dari satu pilihan dampak, melainkan dari **bobot** semua
+pernyataan dampak yang dicentang Pemohon.
+
+- **Skor** = jumlah bobot pernyataan yang dicentang (maksimum 100).
+- **Level**: skor ≥ 35 → Tinggi, ≥ 10 → Normal, selain itu Rendah.
+- **Pagar pengaman**: "fungsi aplikasi berhenti total" dan "risiko likuiditas dan hukum"
+  selalu menghasilkan Tinggi, berapa pun skornya.
+- Bobot, ambang, dan pagar pengaman ada di `config/urgensi.php` (nilai awal adalah usulan,
+  sesuaikan dengan ketentuan resmi). Pernyataan mengikuti `crfImpactGroups()`.
+- Tersimpan di `crf_pengajuan.dampak_dipilih` dan `skor_urgensi`; `kategori_dampak` berisi
+  pernyataan dengan bobot tertinggi agar laporan dan PDF lama tetap berfungsi.
+- **Pemohon tidak diberi tahu urgensi**: bobot, kelompok, perkiraan, dan hasil level tidak tampil
+  di form, detail, daftar, maupun PDF-nya (agar tidak selalu memilih dampak tertinggi). Pernyataan
+  ditampilkan dalam urutan netral (abjad). Level dan skor hanya tampil untuk peran internal
+  (skor pada kartu Isi Permintaan).
+- **Pemeriksaan konsistensi**: pasangan pernyataan yang tidak mungkin benar bersamaan (mis.
+  "tidak ada risiko" dengan "risiko likuiditas dan hukum") ditolak saat kirim, diatur di
+  `bertentangan` pada `config/urgensi.php`. Jika pemohon mencentang banyak pernyataan
+  (`batas_banyak`, bawaan 7), CMO melihat penanda "Perlu dicek" di detail; pemohon tidak melihatnya.
+- **Tipe Pengajuan vs dampak** (tidak mengubah skor): `tipe_pengajuan` di `config/urgensi.php`.
+  Permohonan Tambahan + "berhenti total" ditolak; Permohonan Tambahan + dampak tinggi lain, atau
+  Problem dengan dampak hanya "permintaan baru/fitur", ditandai "Perlu dicek" untuk CMO.
+- CMO atau hasil Forum tetap dapat menetapkan Level akhir (`level_urgensi_final`).
+- CRF lama tetap memakai pemetaan satu pilihan lama; skornya tidak dihitung ulang.
+- Uji: `php tools/uji_urgensi.php`.

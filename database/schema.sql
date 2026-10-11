@@ -11,59 +11,61 @@ USE crf_sistem;
 
 -- ---------------------------------------------------------------------
 -- Data user TIDAK disimpan di database CRF. User dibaca dari
--- siap.tbl_user (lihat config/siap.php). Kolom user_id di tabel lain
+-- siap.tbl_user (lihat config/siap.php). Kolom pengguna_id di tabel lain
 -- hanya menyimpan id user SIAP, tanpa foreign key (tbl_user MyISAM).
 -- ---------------------------------------------------------------------
 
 -- ---------------------------------------------------------------------
--- Tabel: change_requests
+-- Tabel: crf_pengajuan
 -- Tabel utama, satu baris = satu pengajuan Change Request Form.
 -- ---------------------------------------------------------------------
-CREATE TABLE change_requests (
+CREATE TABLE crf_pengajuan (
     id                          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    request_number              VARCHAR(50)     NULL UNIQUE,
-    user_id                     INT UNSIGNED    NOT NULL,
+    nomor_register              VARCHAR(50)     NULL UNIQUE,
+    pengguna_id                     INT UNSIGNED    NOT NULL,
 
-    full_name                   VARCHAR(150)    NOT NULL,
-    phone                       VARCHAR(25)     NOT NULL,
+    nama_pemohon                   VARCHAR(150)    NOT NULL,
+    telepon                       VARCHAR(25)     NOT NULL,
     email                       VARCHAR(150)    NOT NULL,
 
-    submission_date             DATE            NULL,
+    tgl_pengajuan             DATE            NULL,
 
-    to_department               VARCHAR(150)    NOT NULL,
-    to_division                 VARCHAR(150)    NULL,
+    dept_tujuan               VARCHAR(150)    NOT NULL,
+    divisi_tujuan                 VARCHAR(150)    NULL,
 
-    from_department             VARCHAR(150)    NOT NULL,
-    from_division               VARCHAR(150)    NULL,
+    dept_asal             VARCHAR(150)    NOT NULL,
+    divisi_asal               VARCHAR(150)    NULL,
 
-    -- Catatan: change_description, benefit, impact, reason, dan
-    -- change_category dibuat NULLABLE di level database supaya
+    -- Catatan: deskripsi_perubahan, manfaat, dampak, alasan, dan
+    -- kategori_perubahan dibuat NULLABLE di level database supaya
     -- validasi kelengkapan data dapat ditegakkan oleh kode PHP.
     -- Field-field tersebut WAJIB diisi ketika user menekan
     -- "Submit CRF" - aturan wajib ditegakkan di kode PHP
     -- (actions/submit_crf.php), bukan di skema database.
-    change_description          TEXT            NULL,
-    benefit                     TEXT            NULL,
-    impact                      TEXT            NULL,
-    request_type                VARCHAR(50)     NULL,
-    impact_category             VARCHAR(50)     NULL,
-    reason                      TEXT            NULL,
+    deskripsi_perubahan          TEXT            NULL,
+    manfaat                     TEXT            NULL,
+    dampak                      TEXT            NULL,
+    jenis_pengajuan                VARCHAR(50)     NULL,
+    kategori_dampak             VARCHAR(50)     NULL,
+    dampak_dipilih              VARCHAR(600)    NULL,   -- kunci pernyataan dampak yang dicentang (koma)
+    skor_urgensi                DECIMAL(5,2)    NULL,   -- skor berbobot 0-100 (config/urgensi.php)
+    alasan                      TEXT            NULL,
 
-    budget_type                 ENUM('rkap','boq_pks','anggaran_baru') NULL,
-    budget_amount                DECIMAL(18,2)  NULL,
+    jenis_anggaran                 ENUM('rkap','boq_pks','anggaran_baru') NULL,
+    nilai_anggaran                DECIMAL(18,2)  NULL,
 
-    change_category             ENUM('Aplikasi','Infrastruktur','Proses','Security','Lainnya') NULL,
-    change_category_detail      VARCHAR(255)    NULL,
+    kategori_perubahan             ENUM('Aplikasi','Infrastruktur','Proses','Security','Lainnya') NULL,
+    detail_kategori_perubahan      VARCHAR(255)    NULL,
 
-    alternative_suggestion      TEXT            NULL,
+    saran_alternatif      TEXT            NULL,
 
-    post_implementation_review  TEXT            NULL,
-    implementation              TEXT            NULL,
-    implementation_date         DATE            NULL,
-    pir_date                    DATE            NULL,
+    tinjauan_pasca_implementasi  TEXT            NULL,
+    implementasi              TEXT            NULL,
+    tgl_implementasi         DATE            NULL,
+    tgl_pir                    DATE            NULL,
 
     level                       ENUM('Tinggi','Normal','Rendah') NULL DEFAULT NULL,
-    final_urgency_level         ENUM('Tinggi','Normal','Rendah') NULL DEFAULT NULL,
+    level_urgensi_final         ENUM('Tinggi','Normal','Rendah') NULL DEFAULT NULL,
     status                      ENUM(
                                     'Draft',
                                     'Belum Ditindak Lanjuti',
@@ -73,7 +75,7 @@ CREATE TABLE change_requests (
                                     'Cancel'
                                 ) NOT NULL DEFAULT 'Belum Ditindak Lanjuti',
 
-    workflow_stage              ENUM(
+    tahap_alur              ENUM(
                                     'PEMOHON',
                                     'CMO_FILTER',
                                     'OTOMASI',
@@ -85,174 +87,174 @@ CREATE TABLE change_requests (
                                 ) NOT NULL DEFAULT 'PEMOHON',
 
     -- 1 selama CRF menunggu pembahasan Forum (CMO belum boleh meneruskan ke Kadep).
-    forum_discussion_open       TINYINT(1)      NOT NULL DEFAULT 0,
+    pembahasan_forum_terbuka       TINYINT(1)      NOT NULL DEFAULT 0,
 
-    sla_value                   DECIMAL(10,2) NULL,
-    sla_unit                    ENUM('Menit','Jam','Hari') NULL,
-    sla_started_at              DATETIME NULL,
-    sla_due_at                  DATETIME NULL,
-    automation_started_at       DATETIME NULL,
-    automation_completed_at     DATETIME NULL,
+    sla_nilai                   DECIMAL(10,2) NULL,
+    sla_satuan                    ENUM('Menit','Jam','Hari') NULL,
+    sla_mulai              DATETIME NULL,
+    sla_tenggat                  DATETIME NULL,
+    otomasi_mulai       DATETIME NULL,
+    otomasi_selesai     DATETIME NULL,
     -- UAT oleh CMO setelah eksekusi Otomasi (tidak dihitung dalam SLA).
-    uat_passed_at               DATETIME NULL,
-    implementation_submitted_at DATETIME NULL,
+    tgl_uat_lulus               DATETIME NULL,
+    tgl_implementasi_diisi DATETIME NULL,
 
     tanggapan_tindak_lanjut     TEXT            NULL,
 
-    approval_at                 DATETIME        NULL,
-    kadep_operasional_approved_by        INT UNSIGNED    NULL,
-    kadep_operasional_approved_at        DATETIME        NULL,
-    kadep_operasional_approval_note      TEXT            NULL,
-    solved_at                   DATETIME        NULL,
-    cancelled_at                DATETIME        NULL,
+    tgl_persetujuan                 DATETIME        NULL,
+    disetujui_kadep_oleh        INT UNSIGNED    NULL,
+    tgl_disetujui_kadep        DATETIME        NULL,
+    catatan_persetujuan_kadep      TEXT            NULL,
+    tgl_selesai                   DATETIME        NULL,
+    tgl_dibatalkan                DATETIME        NULL,
 
-    created_at                  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at                  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP
+    tgl_dibuat                  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tgl_diubah                  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP
                                                  ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
--- Tabel: crf_sequence
+-- Tabel: crf_nomor_urut
 -- Penghitung nomor register yang aman untuk pengajuan bersamaan.
 -- ---------------------------------------------------------------------
-CREATE TABLE crf_sequence (
-    year        CHAR(2) NOT NULL PRIMARY KEY,
-    last_number INT UNSIGNED NOT NULL DEFAULT 0
+CREATE TABLE crf_nomor_urut (
+    tahun        CHAR(2) NOT NULL PRIMARY KEY,
+    nomor_terakhir INT UNSIGNED NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- INSERT INTO crf_sequence (id, last_number) VALUES (1, 0);
+-- INSERT INTO crf_nomor_urut (id, nomor_terakhir) VALUES (1, 0);
 
 -- ---------------------------------------------------------------------
 -- Tabel: attachments
 -- Bukti dan informasi pendukung yang diupload user. Satu CRF bisa
 -- punya beberapa file, karena itu dipisah ke tabel sendiri.
 -- ---------------------------------------------------------------------
-CREATE TABLE attachments (
+CREATE TABLE crf_lampiran (
     id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    change_request_id   INT UNSIGNED    NOT NULL,
-    original_name       VARCHAR(255)    NOT NULL,
-    stored_name         VARCHAR(255)    NOT NULL,
-    file_path           VARCHAR(500)    NOT NULL,
-    file_type           VARCHAR(100)    NULL,
-    file_size           INT UNSIGNED    NULL,
-    category            VARCHAR(20)     NULL,   -- 'uat' = dokumen hasil UAT; NULL = lampiran pengajuan
-    uploaded_at         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    pengajuan_id   INT UNSIGNED    NOT NULL,
+    nama_asli       VARCHAR(255)    NOT NULL,
+    nama_tersimpan         VARCHAR(255)    NOT NULL,
+    path_file           VARCHAR(500)    NOT NULL,
+    tipe_file           VARCHAR(100)    NULL,
+    ukuran_file           INT UNSIGNED    NULL,
+    kategori            VARCHAR(20)     NULL,   -- 'uat' = dokumen hasil UAT; NULL = lampiran pengajuan
+    tgl_unggah         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_attachment_crf
-        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
+        FOREIGN KEY (pengajuan_id) REFERENCES crf_pengajuan(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
--- Tabel: crf_activity_logs
+-- Tabel: crf_log_aktivitas
 -- Timeline aktivitas setiap pengajuan CRF.
 -- ---------------------------------------------------------------------
-CREATE TABLE crf_activity_logs (
+CREATE TABLE crf_log_aktivitas (
     id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    change_request_id   INT UNSIGNED NOT NULL,
-    activity            VARCHAR(100) NOT NULL,
-    description         TEXT         NOT NULL,
-    actor               VARCHAR(150) NOT NULL,
-    created_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    pengajuan_id   INT UNSIGNED NOT NULL,
+    aktivitas            VARCHAR(100) NOT NULL,
+    deskripsi         TEXT         NOT NULL,
+    pelaksana               VARCHAR(150) NOT NULL,
+    tgl_dibuat          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_activity_crf
-        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
+        FOREIGN KEY (pengajuan_id) REFERENCES crf_pengajuan(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
--- Tabel: crf_user_roles
--- Mapping role workflow CRF terhadap akun prototype.
+-- Tabel: crf_peran_pengguna
+-- Mapping peran workflow CRF terhadap akun prototype.
 -- ---------------------------------------------------------------------
-CREATE TABLE crf_user_roles (
+CREATE TABLE crf_peran_pengguna (
     id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id             INT UNSIGNED NOT NULL,
-    role                ENUM('pemohon','cmo','otomasi','kadep_operasional','admin') NOT NULL,
-    is_active           TINYINT(1) NOT NULL DEFAULT 1,
-    created_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_crf_user_role_user (user_id)
+    pengguna_id             INT UNSIGNED NOT NULL,
+    peran                ENUM('pemohon','cmo','otomasi','kadep_operasional','admin') NOT NULL,
+    aktif           TINYINT(1) NOT NULL DEFAULT 1,
+    tgl_dibuat          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_crf_user_role_user (pengguna_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
--- Tabel: forum_comments dan forum_read_states
+-- Tabel: crf_forum_komentar dan crf_forum_status_baca
 -- Komentar diskusi CRF dan posisi baca terakhir per user.
 -- ---------------------------------------------------------------------
-CREATE TABLE forum_comments (
+CREATE TABLE crf_forum_komentar (
     id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    change_request_id       INT UNSIGNED NOT NULL,
-    user_id                 INT UNSIGNED NOT NULL,
-    user_name               VARCHAR(150) NOT NULL,
-    user_role               VARCHAR(50) NOT NULL,
-    comment                 TEXT NOT NULL,
-    is_system               TINYINT(1) NOT NULL DEFAULT 0,
-    reply_to_comment_id     INT UNSIGNED NULL,
-    created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    pengajuan_id       INT UNSIGNED NOT NULL,
+    pengguna_id                 INT UNSIGNED NOT NULL,
+    pengguna_nama               VARCHAR(150) NOT NULL,
+    pengguna_peran               VARCHAR(50) NOT NULL,
+    komentar                 TEXT NOT NULL,
+    dari_sistem               TINYINT(1) NOT NULL DEFAULT 0,
+    balasan_untuk_id     INT UNSIGNED NULL,
+    tgl_dibuat              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    KEY idx_forum_comments_crf_created (change_request_id, created_at, id),
-    KEY idx_forum_comments_user (user_id),
+    KEY idx_forum_comments_crf_created (pengajuan_id, tgl_dibuat, id),
+    KEY idx_forum_comments_user (pengguna_id),
     CONSTRAINT fk_forum_comments_crf
-        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
+        FOREIGN KEY (pengajuan_id) REFERENCES crf_pengajuan(id)
         ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_forum_comments_reply
-        FOREIGN KEY (reply_to_comment_id) REFERENCES forum_comments(id)
+        FOREIGN KEY (balasan_untuk_id) REFERENCES crf_forum_komentar(id)
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE forum_read_states (
-    user_id                     INT UNSIGNED NOT NULL,
-    change_request_id           INT UNSIGNED NOT NULL,
-    last_read_comment_id        INT UNSIGNED NOT NULL DEFAULT 0,
-    updated_at                  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE crf_forum_status_baca (
+    pengguna_id                     INT UNSIGNED NOT NULL,
+    pengajuan_id           INT UNSIGNED NOT NULL,
+    komentar_terakhir_dibaca_id        INT UNSIGNED NOT NULL DEFAULT 0,
+    tgl_diubah                  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
                                             ON UPDATE CURRENT_TIMESTAMP,
 
-    PRIMARY KEY (user_id, change_request_id),
+    PRIMARY KEY (pengguna_id, pengajuan_id),
     CONSTRAINT fk_forum_read_states_crf
-        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
+        FOREIGN KEY (pengajuan_id) REFERENCES crf_pengajuan(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Pembahasan Level Urgensi & SLA di Forum: CMO mengajukan, Admin mencatat hasil
 -- (Tetap / Diubah). Satu pembahasan terbuka per CRF.
-CREATE TABLE forum_discussions (
+CREATE TABLE crf_forum_pembahasan (
     id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    change_request_id       INT UNSIGNED NOT NULL,
+    pengajuan_id       INT UNSIGNED NOT NULL,
     status                  ENUM('menunggu','selesai','dibatalkan') NOT NULL DEFAULT 'menunggu',
     -- Hasil pembahasan: tetap = nilai sistem dipakai, diubah = nilai kesepakatan.
-    outcome                 ENUM('tetap','diubah') NULL,
+    hasil                 ENUM('tetap','diubah') NULL,
     -- cmo = diajukan CMO saat screening, sistem = dibuka otomatis (SLA default kosong)
-    trigger_source          ENUM('cmo','sistem') NOT NULL DEFAULT 'cmo',
+    sumber_pemicu          ENUM('cmo','sistem') NOT NULL DEFAULT 'cmo',
 
-    opened_by               INT UNSIGNED NULL,
-    opened_by_name          VARCHAR(150) NOT NULL,
-    opened_by_role          VARCHAR(50)  NOT NULL,
-    reason                  TEXT NOT NULL,
+    dibuka_oleh               INT UNSIGNED NULL,
+    dibuka_oleh_nama          VARCHAR(150) NOT NULL,
+    dibuka_oleh_peran          VARCHAR(50)  NOT NULL,
+    alasan                  TEXT NOT NULL,
 
     -- Nilai sebelum dan sesudah hasil pembahasan
-    before_urgency          ENUM('Tinggi','Normal','Rendah') NULL,
-    before_sla_value        DECIMAL(10,2) NULL,
-    before_sla_unit         ENUM('Menit','Jam','Hari') NULL,
-    final_urgency           ENUM('Tinggi','Normal','Rendah') NULL,
-    final_sla_value         DECIMAL(10,2) NULL,
-    final_sla_unit          ENUM('Menit','Jam','Hari') NULL,
+    urgensi_sebelum          ENUM('Tinggi','Normal','Rendah') NULL,
+    sla_nilai_sebelum        DECIMAL(10,2) NULL,
+    sla_satuan_sebelum         ENUM('Menit','Jam','Hari') NULL,
+    urgensi_final           ENUM('Tinggi','Normal','Rendah') NULL,
+    sla_nilai_final         DECIMAL(10,2) NULL,
+    sla_satuan_final          ENUM('Menit','Jam','Hari') NULL,
 
-    decided_by              INT UNSIGNED NULL,
-    decided_by_name         VARCHAR(150) NULL,
-    decision_note           TEXT NULL,
-    decided_at              DATETIME NULL,
+    diputuskan_oleh              INT UNSIGNED NULL,
+    diputuskan_oleh_nama         VARCHAR(150) NULL,
+    catatan_keputusan           TEXT NULL,
+    tgl_diputuskan              DATETIME NULL,
 
-    due_at                  DATETIME NULL,
-    reminded_at             DATETIME NULL,
-    created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tgl_tenggat                  DATETIME NULL,
+    tgl_diingatkan             DATETIME NULL,
+    tgl_dibuat              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     -- Diisi id CRF selama pembahasan terbuka dan di-NULL-kan saat ditutup.
     -- UNIQUE menjamin maksimal satu pembahasan terbuka per CRF.
-    open_crf_id             INT UNSIGNED NULL,
+    crf_terbuka_id             INT UNSIGNED NULL,
 
-    UNIQUE KEY uq_forum_discussions_open (open_crf_id),
-    KEY idx_forum_discussions_crf (change_request_id, created_at),
-    KEY idx_forum_discussions_status_due (status, due_at),
+    UNIQUE KEY uq_forum_discussions_open (crf_terbuka_id),
+    KEY idx_forum_discussions_crf (pengajuan_id, tgl_dibuat),
+    KEY idx_forum_discussions_status_due (status, tgl_tenggat),
     CONSTRAINT fk_forum_discussions_crf
-        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
+        FOREIGN KEY (pengajuan_id) REFERENCES crf_pengajuan(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -325,123 +327,112 @@ DELIMITER ;
 -- ------------------------------------------------------------------
 -- 1. Master Kategori CRF + PIC CRF
 -- ------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS crf_categories (
+CREATE TABLE IF NOT EXISTS crf_kategori (
     id                     INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name                   VARCHAR(100) NOT NULL,
-    description            VARCHAR(255) NULL,
-    legacy_change_category ENUM('Aplikasi','Infrastruktur','Proses','Security','Lainnya') NOT NULL DEFAULT 'Lainnya',
-    sla_value              DECIMAL(10,2) NULL,
-    sla_unit               ENUM('Menit','Jam','Hari') NULL,   -- SLA urgensi Normal
-    sla_tinggi_value       DECIMAL(10,2) NULL,                -- kosong = ikut Normal
-    sla_tinggi_unit        ENUM('Menit','Jam','Hari') NULL,
-    sla_rendah_value       DECIMAL(10,2) NULL,                -- kosong = ikut Normal
-    sla_rendah_unit        ENUM('Menit','Jam','Hari') NULL,
-    is_active              TINYINT(1) NOT NULL DEFAULT 1,
-    sort_order             INT NOT NULL DEFAULT 0,
-    deleted_at             DATETIME NULL,
-    created_at             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    nama                   VARCHAR(100) NOT NULL,
+    deskripsi            VARCHAR(255) NULL,
+    kategori_perubahan_lama ENUM('Aplikasi','Infrastruktur','Proses','Security','Lainnya') NOT NULL DEFAULT 'Lainnya',
+    sla_nilai              DECIMAL(10,2) NULL,
+    sla_satuan               ENUM('Menit','Jam','Hari') NULL,   -- SLA urgensi Normal
+    sla_tinggi_nilai       DECIMAL(10,2) NULL,                -- kosong = ikut Normal
+    sla_tinggi_satuan        ENUM('Menit','Jam','Hari') NULL,
+    sla_rendah_nilai       DECIMAL(10,2) NULL,                -- kosong = ikut Normal
+    sla_rendah_satuan        ENUM('Menit','Jam','Hari') NULL,
+    aktif              TINYINT(1) NOT NULL DEFAULT 1,
+    urutan             INT NOT NULL DEFAULT 0,
+    tgl_dihapus             DATETIME NULL,
+    tgl_dibuat             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tgl_diubah             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_crf_categories_name (name)
+    UNIQUE KEY uq_crf_categories_name (nama)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- PIC CRF per kategori (diisi Admin di Master Kategori CRF).
-CREATE TABLE IF NOT EXISTS crf_category_handlers (
+CREATE TABLE IF NOT EXISTS crf_kategori_pic (
     id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    crf_category_id INT UNSIGNED NOT NULL,
-    user_id         INT UNSIGNED NOT NULL,
-    user_name       VARCHAR(150) NULL,
-    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    kategori_id INT UNSIGNED NOT NULL,
+    pengguna_id         INT UNSIGNED NOT NULL,
+    pengguna_nama       VARCHAR(150) NULL,
+    tgl_dibuat      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_crf_category_handlers (crf_category_id, user_id),
-    KEY idx_crf_category_handlers_user (user_id),
+    UNIQUE KEY uq_crf_category_handlers (kategori_id, pengguna_id),
+    KEY idx_crf_category_handlers_user (pengguna_id),
     CONSTRAINT fk_crf_category_handlers_category
-        FOREIGN KEY (crf_category_id) REFERENCES crf_categories (id)
+        FOREIGN KEY (kategori_id) REFERENCES crf_kategori (id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO crf_categories (name, description, legacy_change_category, sla_value, sla_unit, sort_order)
+INSERT INTO crf_kategori (nama, deskripsi, kategori_perubahan_lama, sla_nilai, sla_satuan, urutan)
 SELECT * FROM (
-    SELECT 'Aplikasi' AS name, 'Perubahan aplikasi (SIAP, database, dan aplikasi lain)' AS description, 'Aplikasi' AS legacy, 2 AS sla_value, 'Hari' AS sla_unit, 1 AS sort_order
+    SELECT 'Aplikasi' AS nama, 'Perubahan aplikasi (SIAP, database, dan aplikasi lain)' AS deskripsi, 'Aplikasi' AS legacy, 2 AS sla_nilai, 'Hari' AS sla_satuan, 1 AS urutan
     UNION ALL SELECT 'Infrastruktur', 'Perubahan infrastruktur (jaringan, server, perangkat)', 'Infrastruktur', 3, 'Hari', 2
     UNION ALL SELECT 'Proses', 'Perubahan proses bisnis pada sistem', 'Proses', 3, 'Hari', 3
     UNION ALL SELECT 'Security', 'Perubahan kewenangan menu, user ID, password', 'Security', 1, 'Hari', 4
     UNION ALL SELECT 'Lainnya', 'Perubahan lain di luar kategori yang tersedia', 'Lainnya', 3, 'Hari', 5
 ) seed
-WHERE NOT EXISTS (SELECT 1 FROM crf_categories existing WHERE existing.name = seed.name);
+WHERE NOT EXISTS (SELECT 1 FROM crf_kategori existing WHERE existing.nama = seed.nama);
 
 -- ------------------------------------------------------------------
 -- 2. Kategori dinamis, handler, hasil SLA
 -- ------------------------------------------------------------------
-CALL crf_add_column('change_requests', 'crf_category_id', 'INT UNSIGNED NULL AFTER change_category');
-CALL crf_add_column('change_requests', 'requester_position', 'VARCHAR(150) NULL AFTER email');
-CALL crf_add_column('change_requests', 'assigned_handler_id', 'INT UNSIGNED NULL AFTER workflow_stage');
-CALL crf_add_column('change_requests', 'assigned_handler_name', 'VARCHAR(150) NULL AFTER assigned_handler_id');
-CALL crf_add_column('change_requests', 'assigned_at', 'DATETIME NULL AFTER assigned_handler_name');
-CALL crf_add_column('change_requests', 'sla_actual_minutes', 'INT UNSIGNED NULL AFTER sla_due_at');
-CALL crf_add_column('change_requests', 'sla_result', 'ENUM(''Sesuai SLA'',''Melebihi SLA'') NULL AFTER sla_actual_minutes');
+CALL crf_add_column('crf_pengajuan', 'kategori_id', 'INT UNSIGNED NULL AFTER kategori_perubahan');
+CALL crf_add_column('crf_pengajuan', 'jabatan_pemohon', 'VARCHAR(150) NULL AFTER email');
+CALL crf_add_column('crf_pengajuan', 'pic_id', 'INT UNSIGNED NULL AFTER tahap_alur');
+CALL crf_add_column('crf_pengajuan', 'pic_nama', 'VARCHAR(150) NULL AFTER pic_id');
+CALL crf_add_column('crf_pengajuan', 'tgl_ditugaskan', 'DATETIME NULL AFTER pic_nama');
+CALL crf_add_column('crf_pengajuan', 'sla_menit_aktual', 'INT UNSIGNED NULL AFTER sla_tenggat');
+CALL crf_add_column('crf_pengajuan', 'sla_hasil', 'ENUM(''Sesuai SLA'',''Melebihi SLA'') NULL AFTER sla_menit_aktual');
 
-CALL crf_add_index('change_requests', 'idx_change_requests_crf_category', 'crf_category_id');
-CALL crf_add_index('change_requests', 'idx_change_requests_assigned_handler', 'assigned_handler_id');
+CALL crf_add_index('crf_pengajuan', 'idx_change_requests_crf_category', 'kategori_id');
+CALL crf_add_index('crf_pengajuan', 'idx_change_requests_assigned_handler', 'pic_id');
 
-CALL crf_add_foreign_key('change_requests', 'fk_change_requests_crf_category',
-    'FOREIGN KEY (crf_category_id) REFERENCES crf_categories (id) ON DELETE RESTRICT ON UPDATE CASCADE');
+CALL crf_add_foreign_key('crf_pengajuan', 'fk_change_requests_crf_category',
+    'FOREIGN KEY (kategori_id) REFERENCES crf_kategori (id) ON DELETE RESTRICT ON UPDATE CASCADE');
 
--- Backfill kategori dinamis dari ENUM lama.
-UPDATE change_requests cr
-JOIN crf_categories c
-  ON c.name = CASE cr.change_category
-                WHEN 'Aplikasi' THEN 'Aplikasi'
-                WHEN 'Infrastruktur' THEN 'Infrastruktur'
-                WHEN 'Proses' THEN 'Proses'
-                WHEN 'Security' THEN 'Security'
-                WHEN 'Lainnya' THEN 'Lainnya'
-              END
-SET cr.crf_category_id = c.id
-WHERE cr.crf_category_id IS NULL
-  AND cr.change_category IS NOT NULL;
+-- (Backfill kategori_id dari ENUM lama tidak diperlukan pada instalasi baru:
+-- tabel crf_pengajuan masih kosong. Untuk database lama, lihat migrasi 010.)
 
 -- ------------------------------------------------------------------
 -- 3. Audit trail CRF: user & perubahan status
 -- ------------------------------------------------------------------
-CALL crf_add_column('crf_activity_logs', 'user_id', 'INT UNSIGNED NULL AFTER change_request_id');
-CALL crf_add_column('crf_activity_logs', 'old_status', 'VARCHAR(50) NULL AFTER actor');
-CALL crf_add_column('crf_activity_logs', 'new_status', 'VARCHAR(50) NULL AFTER old_status');
+CALL crf_add_column('crf_log_aktivitas', 'pengguna_id', 'INT UNSIGNED NULL AFTER pengajuan_id');
+CALL crf_add_column('crf_log_aktivitas', 'status_lama', 'VARCHAR(50) NULL AFTER pelaksana');
+CALL crf_add_column('crf_log_aktivitas', 'status_baru', 'VARCHAR(50) NULL AFTER status_lama');
 
 -- ------------------------------------------------------------------
 -- 4. Notifikasi in-app + status email
 -- ------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS notifications (
+CREATE TABLE IF NOT EXISTS crf_notifikasi (
     id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    user_id            INT UNSIGNED NOT NULL,
-    title              VARCHAR(150) NOT NULL,
-    message            TEXT NULL,
+    pengguna_id            INT UNSIGNED NOT NULL,
+    judul              VARCHAR(150) NOT NULL,
+    pesan            TEXT NULL,
     url                VARCHAR(255) NULL,
-    change_request_id  INT UNSIGNED NULL,
-    read_at            DATETIME NULL,
-    email_status       ENUM('pending','sent','failed','skipped') NOT NULL DEFAULT 'pending',
-    created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    pengajuan_id  INT UNSIGNED NULL,
+    tgl_dibaca            DATETIME NULL,
+    status_email       ENUM('pending','sent','failed','skipped') NOT NULL DEFAULT 'pending',
+    tgl_dibuat         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    KEY idx_notifications_user_read (user_id, read_at),
-    KEY idx_notifications_email_status (email_status),
+    KEY idx_notifications_user_read (pengguna_id, tgl_dibaca),
+    KEY idx_notifications_email_status (status_email),
     CONSTRAINT fk_notifications_change_request
-        FOREIGN KEY (change_request_id) REFERENCES change_requests (id)
+        FOREIGN KEY (pengajuan_id) REFERENCES crf_pengajuan (id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------------
 -- 5. Peringatan SLA untuk PIC CRF (anti kirim ganda)
 -- ------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS crf_sla_alerts (
+CREATE TABLE IF NOT EXISTS crf_peringatan_sla (
     id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    change_request_id INT UNSIGNED NOT NULL,
-    alert_type        ENUM('pengingat','mendesak','terlambat') NOT NULL,
-    alert_seq         SMALLINT UNSIGNED NOT NULL DEFAULT 1,
-    sent_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    pengajuan_id INT UNSIGNED NOT NULL,
+    jenis_peringatan        ENUM('pengingat','mendesak','terlambat') NOT NULL,
+    urutan_peringatan         SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+    tgl_dikirim           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_crf_sla_alert (change_request_id, alert_type, alert_seq),
+    UNIQUE KEY uq_crf_sla_alert (pengajuan_id, jenis_peringatan, urutan_peringatan),
     CONSTRAINT fk_crf_sla_alerts_crf
-        FOREIGN KEY (change_request_id) REFERENCES change_requests (id)
+        FOREIGN KEY (pengajuan_id) REFERENCES crf_pengajuan (id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

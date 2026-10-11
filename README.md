@@ -37,7 +37,7 @@ Forum dan Notifikasi. Helpdesk ditangani modul Helpdesk SIAP (bukan bagian aplik
 | Folder | Isi |
 |--------|-----|
 | `user/` | Pemohon: Form CRF, Pengajuan Saya, detail |
-| `cmo/`, `otomasi/`, `pak_joko/` | Antrean dan detail untuk CMO, PIC CRF (Otomasi), dan Kepala Departemen Operasional; setelah login langsung masuk ke antrean masing-masing |
+| `cmo/`, `otomasi/`, `kadep_operasional/` | Antrean dan detail untuk CMO, PIC CRF (Otomasi), dan Kepala Departemen Operasional; setelah login langsung masuk ke antrean masing-masing |
 | `admin/` | Dashboard dan master Kategori CRF (+ PIC CRF) |
 | `forum/` | Diskusi per CRF dan penetapan urgensi final |
 | `notifications/` | Notifikasi in-app |
@@ -66,4 +66,4 @@ boleh menugaskan ulang atau membatalkan CRF yang sedang ia pegang sebagai Handle
 - Set `CRF_DEMO_MODE = false` di `config/siap.php`.
 - Jangan jalankan migrasi `006_siap_demo_user_migration.sql` (khusus lokal/testing).
 - Perbarui `CRF_SLA_HOLIDAYS` di `config/sla.php` setiap tahun.
-- Folder `database/`, `uploads/`, serta file `.sql/.md/.py/.lock` dilindungi `.htaccess`.
+- Folder `database/` serta file `.sql/.md/.py/.lock` dilindungi `.htaccess`.

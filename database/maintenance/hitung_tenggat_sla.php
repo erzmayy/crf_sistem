@@ -2,9 +2,9 @@
 /**
  * database/maintenance/hitung_tenggat_sla.php
  * ---------------------------------------------------------------
- * Hitung tenggat SLA (sla_due_at) untuk CRF yang SLA-nya sudah dimulai tetapi
+ * Hitung tenggat SLA (sla_tenggat) untuk CRF yang SLA-nya sudah dimulai tetapi
  * tenggatnya masih kosong, misalnya CRF yang sempat "antrean" dan dimulai oleh
- * migrasi 018. Tenggat dihitung dari sla_started_at dengan aturan hari kerja
+ * migrasi 018. Tenggat dihitung dari sla_mulai dengan aturan hari kerja
  * yang sama dengan aplikasi (config/sla.php). Aman dijalankan ulang.
  *
  * Jalankan dari terminal (bukan dari browser):
@@ -21,24 +21,24 @@ require_once __DIR__ . '/../../includes/functions.php';
 
 $pdo = getConnection();
 $rows = $pdo->query("
-    SELECT id, request_number, sla_value, sla_unit, sla_started_at
-    FROM change_requests
-    WHERE sla_started_at IS NOT NULL
-      AND sla_due_at IS NULL
-      AND sla_value IS NOT NULL
+    SELECT id, nomor_register, sla_nilai, sla_satuan, sla_mulai
+    FROM crf_pengajuan
+    WHERE sla_mulai IS NOT NULL
+      AND sla_tenggat IS NULL
+      AND sla_nilai IS NOT NULL
       AND status = 'Dalam Proses'
 ")->fetchAll();
 
-$update = $pdo->prepare('UPDATE change_requests SET sla_due_at = :due WHERE id = :id');
+$update = $pdo->prepare('UPDATE crf_pengajuan SET sla_tenggat = :due WHERE id = :id');
 $done = 0;
 foreach ($rows as $row) {
-    $due = slaDueAt($row['sla_started_at'], $row['sla_value'], $row['sla_unit']);
+    $due = slaDueAt($row['sla_mulai'], $row['sla_nilai'], $row['sla_satuan']);
     if ($due === null) {
-        echo "Dilewati (SLA tidak valid): " . ($row['request_number'] ?: '#' . $row['id']) . "\n";
+        echo "Dilewati (SLA tidak valid): " . ($row['nomor_register'] ?: '#' . $row['id']) . "\n";
         continue;
     }
     $update->execute(['due' => $due, 'id' => (int) $row['id']]);
-    echo ($row['request_number'] ?: '#' . $row['id']) . ' -> tenggat ' . $due . "\n";
+    echo ($row['nomor_register'] ?: '#' . $row['id']) . ' -> tenggat ' . $due . "\n";
     $done++;
 }
 

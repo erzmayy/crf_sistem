@@ -146,16 +146,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* 6. Form hasil pembahasan (Admin): Tetap / Diubah + petunjuk SLA standar. */
   (document.querySelector('.crf-module') || document).querySelectorAll('form[data-result-form]').forEach(function (form) {
-    var radios = form.querySelectorAll('input[name="outcome"]');
+    var radios = form.querySelectorAll('input[name="hasil"]');
     var values = form.querySelector('[data-result-values]');
     var urgency = form.querySelector('select[name="urgency"]');
-    var valueInput = form.querySelector('input[name="sla_value"]');
-    var unitSelect = form.querySelector('select[name="sla_unit"]');
+    var valueInput = form.querySelector('input[name="sla_nilai"]');
+    var unitSelect = form.querySelector('select[name="sla_satuan"]');
     var hint = form.querySelector('[data-standard-hint]');
     var useButton = form.querySelector('[data-use-standard]');
 
     function isChanged() {
-      var checked = form.querySelector('input[name="outcome"]:checked');
+      var checked = form.querySelector('input[name="hasil"]:checked');
       return !!checked && checked.value === 'diubah';
     }
 

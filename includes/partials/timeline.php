@@ -4,7 +4,7 @@
  *
  * Variabel yang HARUS sudah ada di scope pemanggil:
  *   array $crf
- *   array $timeline   hasil query dari crf_activity_logs
+ *   array $timeline   hasil query dari crf_log_aktivitas
  */
 
 $activityLabels = [
@@ -43,70 +43,102 @@ $legacyTerms = [
 ];
 $modernizeTerm = static fn(?string $text): string => strtr((string) $text, $legacyTerms);
 
+/*
+ * Tampilan untuk Pemohon ($timelineHideSla = true): SLA dan Forum adalah
+ * urusan internal, jadi entri dan kalimat yang memuat SLA tidak ditampilkan.
+ * Pemohon hanya melihat Level Urgensi dan tahap CRF.
+ */
+if (!empty($timelineHideSla)) {
+    $slaHiddenActivities = [
+        'SLA Otomatis', 'Otomasi - SLA Ditentukan', 'SLA Disesuaikan Handler', 'Peringatan SLA',
+        'Kesepakatan Urgensi dan SLA Forum', 'Pembahasan Forum Diajukan', 'Hasil Pembahasan Forum',
+        'Pembahasan Forum Dibatalkan',
+    ];
+    $timeline = array_values(array_filter(
+        $timeline ?? [],
+        static fn(array $item): bool => !in_array((string) ($item['aktivitas'] ?? ''), $slaHiddenActivities, true)
+    ));
+
+    $modernizeTerm = static fn(?string $text): string => crfStripSlaText(strtr((string) $text, $legacyTerms));
+}
+
 $pendingStep = null;
-$workflowStage = (string) ($crf['workflow_stage'] ?? '');
+$workflowStage = (string) ($crf['tahap_alur'] ?? '');
 $requestStatus = (string) ($crf['status'] ?? '');
 
 if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
     switch ($workflowStage) {
         case 'PEMOHON':
             $pendingStep = $requestStatus === 'Draft'
-                ? ['title' => 'Pengajuan CRF Diajukan', 'description' => 'Lengkapi dan kirim pengajuan untuk memulai proses.']
-                : ['title' => 'Perbaikan oleh Pemohon', 'description' => 'Menunggu pemohon memperbaiki dan mengirim ulang CRF.'];
+                ? ['title' => 'Pengajuan CRF Diajukan', 'deskripsi' => 'Lengkapi dan kirim pengajuan untuk memulai proses.']
+                : ['title' => 'Perbaikan oleh Pemohon', 'deskripsi' => 'Menunggu pemohon memperbaiki dan mengirim ulang CRF.'];
             break;
         case 'CMO_FILTER':
-            $pendingStep = !empty($crf['forum_discussion_open'])
-                ? ['title' => 'Menunggu Pembahasan Forum', 'description' => 'CMO mengajukan pembahasan Level Urgensi dan SLA. Setelah hasil dicatat CMO atau Admin, CRF langsung diteruskan ke Kepala Departemen Operasional.']
-                : ['title' => 'Verifikasi CMO', 'description' => 'Menunggu verifikasi permohonan oleh CMO.'];
+            // Forum tidak terbuka bagi Pemohon; baginya CRF tetap "Verifikasi CMO".
+            $pendingStep = (!empty($crf['pembahasan_forum_terbuka']) && empty($timelineHideSla))
+                ? ['title' => 'Menunggu Pembahasan Forum', 'deskripsi' => 'CMO mengajukan pembahasan Level Urgensi dan SLA. Setelah hasil dicatat CMO atau Admin, CRF langsung diteruskan ke Kepala Departemen Operasional.']
+                : ['title' => 'Verifikasi CMO', 'deskripsi' => 'Menunggu verifikasi permohonan oleh CMO.'];
             break;
         case 'OTOMASI':
             $otomasiPhase = crfOtomasiPhase($crf);
             $pendingStep = $otomasiPhase === 'perbaikan'
-                ? ['title' => 'Perbaikan Hasil UAT', 'description' => 'CMO meminta perbaikan. Menunggu PIC CRF memperbaiki dan mengirim ulang untuk UAT (tidak dihitung dalam SLA).']
+                ? ['title' => 'Perbaikan Hasil UAT', 'deskripsi' => 'CMO meminta perbaikan. Menunggu PIC CRF memperbaiki dan mengirim ulang untuk UAT (tidak dihitung dalam SLA).']
                 : ($otomasiPhase === 'implementasi'
-                    ? ['title' => 'Isi Implementasi', 'description' => 'UAT lulus. Menunggu PIC CRF mencatat Tanggal Implementasi dan hasil implementasi.']
-                    : ['title' => 'Tindak Lanjut Divisi Otomasi', 'description' => 'SLA berjalan sejak persetujuan. Menunggu PIC CRF menyelesaikan eksekusi.']);
+                    ? ['title' => 'Isi Implementasi', 'deskripsi' => 'UAT lulus. Menunggu PIC CRF mencatat Tanggal Implementasi dan hasil implementasi.']
+                    : ['title' => 'Tindak Lanjut Divisi Otomasi', 'deskripsi' => 'SLA berjalan sejak persetujuan. Menunggu PIC CRF menyelesaikan eksekusi.']);
             break;
         case 'UAT':
-            $pendingStep = ['title' => 'UAT oleh CMO', 'description' => 'Eksekusi selesai dan SLA berhenti. Menunggu CMO menguji bersama PIC CRF (tidak dihitung dalam SLA).'];
+            $pendingStep = ['title' => 'UAT oleh CMO', 'deskripsi' => 'Eksekusi selesai dan SLA berhenti. Menunggu CMO menguji bersama PIC CRF (tidak dihitung dalam SLA).'];
             break;
         case 'kadep_operasional':
-            $pendingStep = ['title' => 'Persetujuan Kepala Departemen Operasional', 'description' => 'Menunggu persetujuan Kepala Departemen Operasional.'];
+            $pendingStep = ['title' => 'Persetujuan Kepala Departemen Operasional', 'deskripsi' => 'Menunggu persetujuan Kepala Departemen Operasional.'];
             break;
         case 'PEMOHON_PIR':
-            $pendingStep = ['title' => 'Post Implementation Review', 'description' => 'Menunggu Pemohon mengisi Post Implementation Review.'];
+            $pendingStep = ['title' => 'Post Implementation Review', 'deskripsi' => 'Menunggu Pemohon mengisi Post Implementation Review.'];
             break;
         case 'CMO_FINAL':
-            $pendingStep = ['title' => 'Finalisasi CMO', 'description' => 'Menunggu CMO menyelesaikan atau menutup CRF.'];
+            $pendingStep = ['title' => 'Finalisasi CMO', 'deskripsi' => 'Menunggu CMO menyelesaikan atau menutup CRF.'];
             break;
     }
 }
 
 if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus !== 'Cancel') {
-    $pendingStep = ['title' => 'Penyelesaian CRF', 'description' => 'Proses pengajuan telah mencapai tahap akhir.'];
+    $pendingStep = ['title' => 'Penyelesaian CRF', 'deskripsi' => 'Proses pengajuan telah mencapai tahap akhir.'];
 }
 ?>
 <section class="crf-section crf-detail-timeline" aria-labelledby="crf-timeline-title">
     <div class="crf-section-header">
-        <span class="crf-section-number"><i class="bi bi-clock-history"></i></span>
-        <h2 id="crf-timeline-title">Riwayat Alur Proses (Timeline)</h2>
+        <span class="crf-section-number"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+        <h2 id="crf-timeline-title">Riwayat</h2>
     </div>
 
     <div class="crf-section-body">
         <?php if (empty($timeline) && $pendingStep === null): ?>
             <div class="text-muted">Belum ada riwayat proses pengajuan.</div>
         <?php else: ?>
-            <ol class="crf-timeline">
-                <?php foreach ($timeline as $item): ?>
+            <?php
+            // Hanya entri terbaru yang ditampilkan; yang lebih lama bisa dibuka.
+            $timelineKeep = 4;
+            $timelineOlder = max(0, count($timeline) - $timelineKeep);
+            ?>
+            <?php if ($timelineOlder > 0): ?>
+                <button type="button" class="crf-timeline-toggle" data-timeline-toggle
+                        data-label-open="Sembunyikan entri lama" data-label-closed="Tampilkan <?= (int) $timelineOlder ?> entri sebelumnya"
+                        aria-expanded="false" aria-controls="crf-timeline-list">
+                    Tampilkan <?= (int) $timelineOlder ?> entri sebelumnya
+                </button>
+            <?php endif; ?>
+            <ol id="crf-timeline-list" class="crf-timeline<?= $timelineOlder > 0 ? ' is-trimmed' : '' ?>">
+                <?php foreach ($timeline as $timelineIndex => $item): ?>
                     <?php
-                    $activity = (string) ($item['activity'] ?? '');
+                    $activity = (string) ($item['aktivitas'] ?? '');
                     $isAttention = $activity === 'Perlu Revisi';
                     $isCancelled = $activity === 'Cancel';
                     $itemClass = $isAttention ? 'is-attention' : ($isCancelled ? 'is-cancelled' : 'is-complete');
                     $activityTitle = $activityLabels[$activity] ?? $activity;
-                    $createdAt = strtotime((string) ($item['created_at'] ?? ''));
+                    $createdAt = strtotime((string) ($item['tgl_dibuat'] ?? ''));
                     ?>
-                    <li class="crf-timeline-item <?= h($itemClass) ?>">
+                    <li class="crf-timeline-item <?= h($itemClass) ?><?= $timelineIndex < $timelineOlder ? ' crf-timeline-older' : '' ?>">
                         <span class="crf-timeline-dot" aria-hidden="true">
                             <?php if ($isAttention): ?>
                                 <i class="bi bi-exclamation"></i>
@@ -123,19 +155,19 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
                                     <?= h(date('d M Y, h:i A', $createdAt)) ?>
                                 </time>
                             <?php endif; ?>
-                            <?php if (!empty($item['description'])): ?>
-                                <div class="crf-timeline-description"><?= nl2br(h($modernizeTerm($item['description']))) ?></div>
+                            <?php if (!empty($item['deskripsi'])): ?>
+                                <div class="crf-timeline-description"><?= nl2br(h($modernizeTerm($item['deskripsi']))) ?></div>
                             <?php endif; ?>
-                            <?php if (!empty($item['new_status']) && ($item['old_status'] ?? '') !== $item['new_status']): ?>
+                            <?php if (!empty($item['status_baru']) && ($item['status_lama'] ?? '') !== $item['status_baru']): ?>
                                 <div class="crf-timeline-status">
-                                    <?php if (!empty($item['old_status'])): ?>
-                                        <span><?= h($modernizeTerm($item['old_status'])) ?></span> <i class="bi bi-arrow-right"></i>
+                                    <?php if (!empty($item['status_lama'])): ?>
+                                        <span><?= h($modernizeTerm($item['status_lama'])) ?></span> <i class="bi bi-arrow-right"></i>
                                     <?php endif; ?>
-                                    <strong><?= h($modernizeTerm($item['new_status'])) ?></strong>
+                                    <strong><?= h($modernizeTerm($item['status_baru'])) ?></strong>
                                 </div>
                             <?php endif; ?>
-                            <?php if (!empty($item['actor'])): ?>
-                                <div class="crf-timeline-actor">Dilakukan oleh <?= h($item['actor']) ?></div>
+                            <?php if (!empty($item['pelaksana'])): ?>
+                                <div class="crf-timeline-actor">Dilakukan oleh <?= h($item['pelaksana']) ?></div>
                             <?php endif; ?>
                         </div>
                     </li>
@@ -147,7 +179,7 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
                         <div class="crf-timeline-content">
                             <strong class="crf-timeline-title"><?= h($pendingStep['title']) ?></strong>
                             <span class="crf-timeline-date">-</span>
-                            <div class="crf-timeline-description"><?= h($pendingStep['description']) ?></div>
+                            <div class="crf-timeline-description"><?= h(!empty($timelineHideSla) ? $modernizeTerm($pendingStep['deskripsi']) : $pendingStep['deskripsi']) ?></div>
                         </div>
                     </li>
                 <?php endif; ?>
@@ -156,4 +188,4 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
     </div>
 </section>
 <?php
-unset($activityLabels, $pendingStep, $workflowStage, $requestStatus);
+unset($timelineKeep, $timelineOlder, $timelineIndex, $activityLabels, $pendingStep, $workflowStage, $requestStatus);

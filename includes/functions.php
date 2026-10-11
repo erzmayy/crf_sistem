@@ -26,7 +26,7 @@ use Aws\Exception\AwsException;
  * menjelaskan arti tiap segmen angka. Sesuai brief (butir 10), kita
  * TIDAK mengarang arti "02" dan "4" - keduanya dipertahankan persis
  * seperti contoh. Bagian yang dibuat dinamis (agar nomor unik) adalah:
- *   - 4 digit urut, diambil dari next AUTO_INCREMENT tabel change_requests
+ *   - 4 digit urut, diambil dari next AUTO_INCREMENT tabel crf_pengajuan
  *   - bulan & tahun pengajuan (2 digit)
  */
 /**
@@ -63,33 +63,33 @@ function generateRequestNumber(PDO $pdo, DateTime $date, ?array $user = null): s
     $year = $date->format('y');
 
     $ensureStmt = $pdo->prepare(
-        'INSERT INTO crf_sequence (year, last_number)
-         VALUES (:year, 0)
-         ON DUPLICATE KEY UPDATE year = year'
+        'INSERT INTO crf_nomor_urut (tahun, nomor_terakhir)
+         VALUES (:tahun, 0)
+         ON DUPLICATE KEY UPDATE tahun = tahun'
     );
-    $ensureStmt->execute(['year' => $year]);
+    $ensureStmt->execute(['tahun' => $year]);
 
     $stmt = $pdo->prepare(
-        'UPDATE crf_sequence
-         SET last_number = LAST_INSERT_ID(
+        'UPDATE crf_nomor_urut
+         SET nomor_terakhir = LAST_INSERT_ID(
              GREATEST(
-                 last_number,
+                 nomor_terakhir,
                  COALESCE((
                      SELECT MAX(
                          CAST(
                              SUBSTRING_INDEX(
-                                 SUBSTRING_INDEX(request_number, ".", 3),
+                                 SUBSTRING_INDEX(nomor_register, ".", 3),
                                  ".",
                                  -1
                              ) AS UNSIGNED
                          )
                      )
-                     FROM change_requests
-                     WHERE request_number LIKE CONCAT("PPU-%.4.%.", :year1)
+                     FROM crf_pengajuan
+                     WHERE nomor_register LIKE CONCAT("PPU-%.4.%.", :year1)
                  ), 0)
              ) + 1
          )
-         WHERE year = :year2'
+         WHERE tahun = :year2'
     );
 
     $stmt->execute([
@@ -99,7 +99,7 @@ function generateRequestNumber(PDO $pdo, DateTime $date, ?array $user = null): s
 
     if ($stmt->rowCount() === 0) {
         throw new RuntimeException(
-            'Penghitung nomor register belum tersedia (tabel crf_sequence).'
+            'Penghitung nomor register belum tersedia (tabel crf_nomor_urut).'
         );
     }
 
@@ -125,9 +125,9 @@ function previewRequestNumber(PDO $pdo, DateTime $date, ?array $user = null): st
     $year = $date->format('y');
 
     $stmt = $pdo->prepare(
-        'SELECT last_number FROM crf_sequence WHERE year = :year'
+        'SELECT nomor_terakhir FROM crf_nomor_urut WHERE tahun = :tahun'
     );
-    $stmt->execute(['year' => $year]);
+    $stmt->execute(['tahun' => $year]);
 
     $lastNumber = (int) $stmt->fetchColumn();
 
@@ -272,14 +272,14 @@ function workflowStageLabel(string $stage): string
  */
 function crfOtomasiPhase(array $crf): string
 {
-    if (($crf['workflow_stage'] ?? '') !== 'OTOMASI') {
+    if (($crf['tahap_alur'] ?? '') !== 'OTOMASI') {
         return '';
     }
-    if (empty($crf['automation_completed_at'])) {
+    if (empty($crf['otomasi_selesai'])) {
         return 'eksekusi';
     }
 
-    return empty($crf['uat_passed_at']) ? 'perbaikan' : 'implementasi';
+    return empty($crf['tgl_uat_lulus']) ? 'perbaikan' : 'implementasi';
 }
 
 function workflowStageBadgeClass(string $stage): string
@@ -294,7 +294,7 @@ function workflowStageBadgeClass(string $stage): string
         case 'PEMOHON_PIR':
             return 'badge-stage-pir';
         case 'kadep_operasional':
-            return 'badge-stage-joko';
+            return 'badge-stage-kadep';
         case 'CMO_FINAL':
             return 'badge-stage-cmo-final';
         case 'SELESAI':
@@ -430,14 +430,14 @@ function crfSlaUrgentSeconds(int $totalSeconds): int
 function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
 {
     $now = $now ?? new DateTimeImmutable('now');
-    $startedAt = !empty($crf['sla_started_at'])
-        ? new DateTimeImmutable($crf['sla_started_at'])
+    $startedAt = !empty($crf['sla_mulai'])
+        ? new DateTimeImmutable($crf['sla_mulai'])
         : null;
-    $dueAt = !empty($crf['sla_due_at'])
-        ? new DateTimeImmutable($crf['sla_due_at'])
+    $dueAt = !empty($crf['sla_tenggat'])
+        ? new DateTimeImmutable($crf['sla_tenggat'])
         : null;
-    $completedAt = !empty($crf['automation_completed_at'])
-        ? new DateTimeImmutable($crf['automation_completed_at'])
+    $completedAt = !empty($crf['otomasi_selesai'])
+        ? new DateTimeImmutable($crf['otomasi_selesai'])
         : null;
     $isCancelled = ($crf['status'] ?? '') === 'Cancel';
 
@@ -545,7 +545,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
 /**
  * Catat timeline/audit trail CRF. $oldStatus/$newStatus opsional
  * (label status tampilan, lihat crfDisplayStatus()).
- * user_id diambil dari session bila tersedia.
+ * pengguna_id diambil dari session bila tersedia.
  */
 function logCrfActivity(
     PDO $pdo,
@@ -557,47 +557,67 @@ function logCrfActivity(
     ?string $newStatus = null
 ): void {
     $stmt = $pdo->prepare("
-        INSERT INTO crf_activity_logs (
-            change_request_id,
-            user_id,
-            activity,
-            description,
-            actor,
-            old_status,
-            new_status
+        INSERT INTO crf_log_aktivitas (
+            pengajuan_id,
+            pengguna_id,
+            aktivitas,
+            deskripsi,
+            pelaksana,
+            status_lama,
+            status_baru
         ) VALUES (
-            :change_request_id,
-            :user_id,
-            :activity,
-            :description,
-            :actor,
-            :old_status,
-            :new_status
+            :pengajuan_id,
+            :pengguna_id,
+            :aktivitas,
+            :deskripsi,
+            :pelaksana,
+            :status_lama,
+            :status_baru
         )
     ");
 
     $stmt->execute([
-        'change_request_id' => $crfId,
-        'user_id' => isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null,
-        'activity' => $activity,
-        'description' => $description,
-        'actor' => $actor,
-        'old_status' => $oldStatus,
-        'new_status' => $newStatus,
+        'pengajuan_id' => $crfId,
+        'pengguna_id' => isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null,
+        'aktivitas' => $activity,
+        'deskripsi' => $description,
+        'pelaksana' => $actor,
+        'status_lama' => $oldStatus,
+        'status_baru' => $newStatus,
     ]);
 }
 
 /**
+ * Buang informasi SLA dari sebuah teks untuk tampilan Pemohon.
+ * Pemohon hanya melihat Level Urgensi dan tahap CRF; SLA adalah urusan
+ * internal (CMO, Kadep, PIC CRF, Admin). Data yang tersimpan tidak diubah.
+ */
+function crfStripSlaText(?string $text): string
+{
+    $text = strtr((string) $text, [
+        ' dan SLA berhenti' => '',
+        'SLA berhenti; ' => '',
+        'SLA berjalan sejak persetujuan. ' => '',
+        ' (tidak dihitung dalam SLA)' => '',
+        '(tidak dihitung dalam SLA)' => '',
+    ]);
+    $sentences = preg_split('/(?<=[.!?])\s+/u', trim($text)) ?: [];
+    $sentences = array_filter($sentences, static fn(string $s): bool => !preg_match('/\bSLA\b/u', $s));
+
+    return trim(implode(' ', $sentences));
+}
+
+/**
  * Status tampilan CRF (label sesuai alur Helpdesk/CRF) yang diturunkan
- * dari kombinasi status + workflow_stage. ENUM database tidak diubah.
+ * dari kombinasi status + tahap_alur. ENUM database tidak diubah.
  *
  * @return array{key:string,label:string,class:string}
  */
 function crfDisplayStatus(array $crf): array
 {
     $status = (string) ($crf['status'] ?? '');
-    $stage = (string) ($crf['workflow_stage'] ?? '');
-    $approved = !empty($crf['kadep_operasional_approved_at']);
+    $stage = (string) ($crf['tahap_alur'] ?? '');
+    $approved = !empty($crf['tgl_disetujui_kadep']);
 
     if ($status === 'Draft') {
         return ['key' => 'draft', 'label' => 'Draft', 'class' => 'badge-status-draft'];
@@ -611,14 +631,14 @@ function crfDisplayStatus(array $crf): array
     if ($status === 'Perlu Revisi') {
         return ['key' => 'revisi', 'label' => 'Ditolak / Perlu Revisi', 'class' => 'badge-status-revisi'];
     }
-    if ($stage === 'CMO_FILTER' && !empty($crf['forum_discussion_open'])) {
+    if ($stage === 'CMO_FILTER' && !empty($crf['pembahasan_forum_terbuka'])) {
         return ['key' => 'pembahasan', 'label' => 'Menunggu Pembahasan Forum', 'class' => 'badge-status-pembahasan'];
     }
     if ($stage === 'CMO_FILTER') {
         return ['key' => 'review', 'label' => 'Menunggu Verifikasi', 'class' => 'badge-status-belum'];
     }
     if ($stage === 'kadep_operasional') {
-        return ['key' => 'approval', 'label' => 'Menunggu Persetujuan', 'class' => 'badge-stage-joko'];
+        return ['key' => 'approval', 'label' => 'Menunggu Persetujuan', 'class' => 'badge-stage-kadep'];
     }
     if ($stage === 'OTOMASI' && $approved) {
         $phase = crfOtomasiPhase($crf);
@@ -652,10 +672,10 @@ function crfDisplayStatusConditions(string $alias = 'cr'): array
 
     return [
         'draft'      => ['label' => 'Draft', 'sql' => "{$a}status = 'Draft'"],
-        'review'     => ['label' => 'Menunggu Verifikasi', 'sql' => "{$a}status = 'Belum Ditindak Lanjuti' AND {$a}workflow_stage = 'CMO_FILTER' AND {$a}forum_discussion_open = 0"],
-        'pembahasan' => ['label' => 'Menunggu Pembahasan Forum', 'sql' => "{$a}workflow_stage = 'CMO_FILTER' AND {$a}forum_discussion_open = 1 AND {$a}status NOT IN ('Draft','Solve','Cancel')"],
-        'approval'   => ['label' => 'Menunggu Persetujuan', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage = 'kadep_operasional'"],
-        'disetujui'  => ['label' => 'Disetujui · Eksekusi', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}workflow_stage IN ('OTOMASI','UAT','PEMOHON_PIR','CMO_FINAL') AND {$a}kadep_operasional_approved_at IS NOT NULL"],
+        'review'     => ['label' => 'Menunggu Verifikasi', 'sql' => "{$a}status = 'Belum Ditindak Lanjuti' AND {$a}tahap_alur = 'CMO_FILTER' AND {$a}pembahasan_forum_terbuka = 0"],
+        'pembahasan' => ['label' => 'Menunggu Pembahasan Forum', 'sql' => "{$a}tahap_alur = 'CMO_FILTER' AND {$a}pembahasan_forum_terbuka = 1 AND {$a}status NOT IN ('Draft','Solve','Cancel')"],
+        'approval'   => ['label' => 'Menunggu Persetujuan', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}tahap_alur = 'kadep_operasional'"],
+        'disetujui'  => ['label' => 'Disetujui · Eksekusi', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}tahap_alur IN ('OTOMASI','UAT','PEMOHON_PIR','CMO_FINAL') AND {$a}tgl_disetujui_kadep IS NOT NULL"],
         'revisi'     => ['label' => 'Ditolak / Perlu Revisi', 'sql' => "{$a}status = 'Perlu Revisi'"],
         'selesai'    => ['label' => 'Selesai', 'sql' => "{$a}status = 'Solve'"],
         'dibatalkan' => ['label' => 'Dibatalkan', 'sql' => "{$a}status = 'Cancel'"],
@@ -669,30 +689,30 @@ function crfDisplayStatusConditions(string $alias = 'cr'): array
 function finalizeCrfSla(PDO $pdo, int $crfId): void
 {
     $stmt = $pdo->prepare('
-        SELECT sla_started_at, sla_due_at, automation_completed_at
-        FROM change_requests
+        SELECT sla_mulai, sla_tenggat, otomasi_selesai
+        FROM crf_pengajuan
         WHERE id = :id
     ');
     $stmt->execute(['id' => $crfId]);
     $row = $stmt->fetch();
 
-    if (!$row || empty($row['sla_started_at']) || empty($row['automation_completed_at'])) {
+    if (!$row || empty($row['sla_mulai']) || empty($row['otomasi_selesai'])) {
         return;
     }
 
-    $started = new DateTimeImmutable($row['sla_started_at']);
-    $completed = new DateTimeImmutable($row['automation_completed_at']);
+    $started = new DateTimeImmutable($row['sla_mulai']);
+    $completed = new DateTimeImmutable($row['otomasi_selesai']);
     // Durasi aktual hanya menghitung hari kerja, sama seperti batas SLA.
     $minutes = (int) round(slaWorkingSecondsBetween($started, $completed) / 60);
     $result = null;
 
-    if (!empty($row['sla_due_at'])) {
-        $result = $completed->getTimestamp() <= strtotime($row['sla_due_at']) ? 'Sesuai SLA' : 'Melebihi SLA';
+    if (!empty($row['sla_tenggat'])) {
+        $result = $completed->getTimestamp() <= strtotime($row['sla_tenggat']) ? 'Sesuai SLA' : 'Melebihi SLA';
     }
 
     $update = $pdo->prepare('
-        UPDATE change_requests
-        SET sla_actual_minutes = :minutes, sla_result = :result
+        UPDATE crf_pengajuan
+        SET sla_menit_aktual = :minutes, sla_hasil = :result
         WHERE id = :id
     ');
     $update->execute(['minutes' => $minutes, 'result' => $result, 'id' => $crfId]);
@@ -709,9 +729,9 @@ const CRF_PIR_REMINDER_INTERVAL = 86400;
 function crfPirReminderInfo(PDO $pdo, array $crf): array
 {
     $stmt = $pdo->prepare("
-        SELECT COUNT(*) AS total, MAX(created_at) AS last_at
-        FROM crf_activity_logs
-        WHERE change_request_id = :id AND activity = 'Pengingat PIR'
+        SELECT COUNT(*) AS total, MAX(tgl_dibuat) AS last_at
+        FROM crf_log_aktivitas
+        WHERE pengajuan_id = :id AND aktivitas = 'Pengingat PIR'
     ");
     $stmt->execute(['id' => (int) $crf['id']]);
     $row = $stmt->fetch() ?: ['total' => 0, 'last_at' => null];
@@ -719,7 +739,7 @@ function crfPirReminderInfo(PDO $pdo, array $crf): array
     $lastAt = $row['last_at'] ?: null;
     $nextAt = $lastAt !== null ? date('Y-m-d H:i:s', strtotime($lastAt) + CRF_PIR_REMINDER_INTERVAL) : null;
     // Penantian PIR dimulai saat Otomasi mengisi implementasi; data lama memakai waktu eksekusi selesai.
-    $pirStartedAt = $crf['implementation_submitted_at'] ?? $crf['automation_completed_at'] ?? null;
+    $pirStartedAt = $crf['tgl_implementasi_diisi'] ?? $crf['otomasi_selesai'] ?? null;
     $waitingDays = !empty($pirStartedAt)
         ? (int) floor(slaWorkingSecondsBetween(new DateTimeImmutable($pirStartedAt), new DateTimeImmutable()) / 86400)
         : null;
@@ -727,7 +747,7 @@ function crfPirReminderInfo(PDO $pdo, array $crf): array
     return [
         'count' => (int) $row['total'],
         'last_at' => $lastAt,
-        'can_send' => ($crf['workflow_stage'] ?? '') === 'PEMOHON_PIR' && ($nextAt === null || time() >= strtotime($nextAt)),
+        'can_send' => ($crf['tahap_alur'] ?? '') === 'PEMOHON_PIR' && ($nextAt === null || time() >= strtotime($nextAt)),
         'next_at' => $nextAt,
         'waiting_days' => $waitingDays,
     ];
@@ -754,9 +774,9 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
 
     if ($search !== '') {
         $where[] = '(
-            cr.request_number LIKE :list_search_request
-            OR cr.full_name LIKE :list_search_name
-            OR cr.change_description LIKE :list_search_description
+            cr.nomor_register LIKE :list_search_request
+            OR cr.nama_pemohon LIKE :list_search_name
+            OR cr.deskripsi_perubahan LIKE :list_search_description
         )';
         $searchValue = '%' . $search . '%';
         $params['list_search_request'] = $searchValue;
@@ -772,7 +792,7 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
     }
 
     if ($department !== '') {
-        $where[] = 'cr.from_department = :list_department';
+        $where[] = 'cr.dept_asal = :list_department';
         $params['list_department'] = $department;
     }
 
@@ -794,17 +814,17 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
     $dateTo = $normalizeDate($dateTo);
 
     if ($dateFrom !== '') {
-        $where[] = 'cr.submission_date >= :list_date_from';
+        $where[] = 'cr.tgl_pengajuan >= :list_date_from';
         $params['list_date_from'] = $dateFrom;
     }
     if ($dateTo !== '') {
-        $where[] = 'cr.submission_date <= :list_date_to';
+        $where[] = 'cr.tgl_pengajuan <= :list_date_to';
         $params['list_date_to'] = $dateTo;
     }
 
     $categoryId = (int) $filterString($filters['category_id'] ?? '');
     if ($categoryId > 0) {
-        $where[] = 'cr.crf_category_id = :list_category_id';
+        $where[] = 'cr.kategori_id = :list_category_id';
         $params['list_category_id'] = $categoryId;
     } else {
         $categoryId = 0;
@@ -819,20 +839,20 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
     }
 
     $departmentStmt = $pdo->query("
-        SELECT DISTINCT from_department
-        FROM change_requests
+        SELECT DISTINCT dept_asal
+        FROM crf_pengajuan
         WHERE status <> 'Draft'
-          AND from_department IS NOT NULL
-          AND from_department <> ''
-        ORDER BY from_department
+          AND dept_asal IS NOT NULL
+          AND dept_asal <> ''
+        ORDER BY dept_asal
     ");
 
     $categories = [];
     try {
         $categories = $pdo->query('
-            SELECT id, name FROM crf_categories
-            WHERE deleted_at IS NULL
-            ORDER BY sort_order, name
+            SELECT id, nama FROM crf_kategori
+            WHERE tgl_dihapus IS NULL
+            ORDER BY urutan, nama
         ')->fetchAll();
     } catch (Throwable $e) {
         error_log('applyCrfRequestFilters categories: ' . $e->getMessage());
@@ -939,9 +959,216 @@ function crfUrgencyForImpact(?string $impact): ?string
     return $urgencyByImpact[$impact ?? ''] ?? null;
 }
 
+/* ---------------------------------------------------------------------
+ * Penilaian urgensi berbobot (lihat config/urgensi.php)
+ * ------------------------------------------------------------------- */
+
+/** Konfigurasi bobot, ambang, dan pagar pengaman urgensi. */
+function crfUrgencyConfig(): array
+{
+    static $config = null;
+
+    if ($config === null) {
+        $path = __DIR__ . '/../config/urgensi.php';
+        $loaded = is_file($path) ? require $path : [];
+        $config = is_array($loaded) ? $loaded : [];
+    }
+
+    return $config;
+}
+
+/**
+ * Daftar kunci dampak yang valid dari input pemohon.
+ * Menerima array (checkbox), string dipisah koma (kolom database), atau
+ * satu kunci (nilai lama). Kunci tak dikenal dan duplikat dibuang.
+ *
+ * @param mixed $raw
+ * @return string[]
+ */
+function crfDampakDipilih($raw): array
+{
+    if (is_string($raw)) {
+        $raw = explode(',', $raw);
+    }
+    if (!is_array($raw)) {
+        return [];
+    }
+
+    $valid = crfImpactOptions();
+    $keys = [];
+    foreach ($raw as $item) {
+        $key = trim((string) $item);
+        if ($key !== '' && isset($valid[$key]) && !in_array($key, $keys, true)) {
+            $keys[] = $key;
+        }
+    }
+
+    return $keys;
+}
+
+/**
+ * Hitung skor dan Level Urgensi dari pernyataan dampak yang dipilih.
+ *
+ * @param string[]   $keys    hasil crfDampakDipilih()
+ * @param array|null $config  menimpa config/urgensi.php (untuk uji)
+ * @return array{skor:float,level:?string,dikunci:bool,rincian:array<string,float>}
+ */
+function crfHitungUrgensi(array $keys, ?array $config = null): array
+{
+    $config = array_replace_recursive(crfUrgencyConfig(), $config ?? []);
+    $bobot = (array) ($config['bobot'] ?? []);
+    $maks = (float) ($config['maks'] ?? 100);
+    $ambangTinggi = (float) ($config['ambang']['Tinggi'] ?? 35);
+    $ambangNormal = (float) ($config['ambang']['Normal'] ?? 10);
+    $wajibTinggi = (array) ($config['wajib_tinggi'] ?? []);
+
+    $rincian = [];
+    $dikunci = false;
+    foreach (crfDampakDipilih($keys) as $key) {
+        $rincian[$key] = (float) ($bobot[$key] ?? 0);
+        if (in_array($key, $wajibTinggi, true)) {
+            $dikunci = true;
+        }
+    }
+
+    if (!$rincian) {
+        return ['skor' => 0.0, 'level' => null, 'dikunci' => false, 'rincian' => []];
+    }
+
+    $skor = min($maks, array_sum($rincian));
+    if ($dikunci || $skor >= $ambangTinggi) {
+        $level = 'Tinggi';
+    } elseif ($skor >= $ambangNormal) {
+        $level = 'Normal';
+    } else {
+        $level = 'Rendah';
+    }
+
+    return ['skor' => (float) $skor, 'level' => $level, 'dikunci' => $dikunci, 'rincian' => $rincian];
+}
+
+/**
+ * Pasangan pernyataan yang saling bertentangan (config 'bertentangan').
+ *
+ * @param string[] $keys
+ * @return array<int,array{0:string,1:string}>
+ */
+function crfDampakBertentangan(array $keys): array
+{
+    $keys = crfDampakDipilih($keys);
+    $peta = (array) (crfUrgencyConfig()['bertentangan'] ?? []);
+    $pasangan = [];
+    foreach ($peta as $a => $lawan) {
+        if (!in_array($a, $keys, true)) {
+            continue;
+        }
+        foreach ((array) $lawan as $b) {
+            if (in_array($b, $keys, true)) {
+                $pasangan[] = [$a, $b];
+            }
+        }
+    }
+    return $pasangan;
+}
+
+/**
+ * Tipe Pengajuan mustahil dikombinasikan dengan pernyataan dampak ini
+ * (config 'tipe_pengajuan' => ... => 'tolak').
+ *
+ * @param string[] $keys
+ */
+function crfTipeBertentangan(?string $tipe, array $keys): bool
+{
+    $tipe = trim((string) $tipe);
+    $aturan = (array) ((crfUrgencyConfig()['tipe_pengajuan'][$tipe] ?? [])['tolak'] ?? []);
+    return (bool) array_intersect($aturan, crfDampakDipilih($keys));
+}
+
+/**
+ * Penanda "perlu dicek" untuk CMO: daftar alasan (kosong = wajar).
+ * Hanya untuk peran internal; jangan ditampilkan ke Pemohon.
+ *
+ * @param string[] $keys
+ * @return string[]
+ */
+function crfDampakCatatan(array $keys, ?string $tipe = null): array
+{
+    $keys = crfDampakDipilih($keys);
+    $catatan = [];
+    if (crfDampakBertentangan($keys)) {
+        $catatan[] = 'Ada pernyataan yang saling bertentangan.';
+    }
+    $tipe = trim((string) $tipe);
+    $aturanTipe = (array) (crfUrgencyConfig()['tipe_pengajuan'][$tipe] ?? []);
+    if ($keys && $aturanTipe) {
+        if (crfTipeBertentangan($tipe, $keys)) {
+            $catatan[] = 'Tipe "' . $tipe . '" tidak lazim dengan salah satu pernyataan dampak yang dipilih.';
+        } elseif (array_intersect((array) ($aturanTipe['tandai'] ?? []), $keys)) {
+            $catatan[] = 'Tipe "' . $tipe . '" dengan pernyataan dampak tinggi: periksa apakah dampaknya nyata.';
+        } elseif (!empty($aturanTipe['tandai_hanya']) && !array_diff($keys, (array) $aturanTipe['tandai_hanya'])) {
+            $catatan[] = 'Tipe "' . $tipe . '" tetapi dampak yang dipilih hanya permintaan baru/fitur.';
+        }
+    }    $batas = (int) (crfUrgencyConfig()['batas_banyak'] ?? 0);
+    if ($batas > 0 && count($keys) >= $batas) {
+        $total = count(crfImpactOptions());
+        $catatan[] = 'Pemohon mencentang ' . count($keys) . ' dari ' . $total . ' pernyataan.';
+    }
+    return $catatan;
+}
+
+/** Pernyataan dampak dengan bobot tertinggi (disimpan sebagai kategori_dampak utama). */
+function crfDampakUtama(array $keys): ?string
+{
+    $bobot = (array) (crfUrgencyConfig()['bobot'] ?? []);
+    $utama = null;
+    $tertinggi = -1.0;
+    foreach (crfDampakDipilih($keys) as $key) {
+        $nilai = (float) ($bobot[$key] ?? 0);
+        if ($nilai > $tertinggi) {
+            $tertinggi = $nilai;
+            $utama = $key;
+        }
+    }
+
+    return $utama;
+}
+
+/** Kunci dampak sebuah CRF: dari dampak_dipilih, atau pilihan tunggal lama. */
+function crfDampakKunci(array $crf): array
+{
+    $keys = crfDampakDipilih($crf['dampak_dipilih'] ?? null);
+
+    return $keys ?: crfDampakDipilih($crf['kategori_dampak'] ?? null);
+}
+
+/**
+ * Urgensi menurut sistem (sebelum diubah CMO/Forum). Baris baru memakai skor
+ * berbobot; baris lama (pilihan tunggal) memakai pemetaan lama.
+ */
+function crfUrgensiSistem(array $crf): ?string
+{
+    $keys = crfDampakDipilih($crf['dampak_dipilih'] ?? null);
+    if ($keys) {
+        return crfHitungUrgensi($keys)['level'];
+    }
+
+    return crfUrgencyForImpact($crf['kategori_dampak'] ?? null);
+}
+
+/** Teks pernyataan dampak yang dipilih sebuah CRF. */
+function crfDampakLabels(array $crf): array
+{
+    $options = crfImpactOptions();
+
+    return array_values(array_map(
+        static fn(string $key): string => $options[$key],
+        crfDampakKunci($crf)
+    ));
+}
+
 /**
  * Matriks SLA satu kategori CRF per level urgensi.
- * Kolom sla_value / sla_unit = SLA Normal; Tinggi/Rendah kosong ikut Normal.
+ * Kolom sla_nilai / sla_satuan = SLA Normal; Tinggi/Rendah kosong ikut Normal.
  *
  * @return array<string,?array{value:float,unit:string}>
  */
@@ -952,12 +1179,12 @@ function crfCategorySlaMatrix(array $category): array
             ? ['value' => (float) $value, 'unit' => (string) $unit]
             : null;
     };
-    $normal = $pick($category['sla_value'] ?? null, $category['sla_unit'] ?? null);
+    $normal = $pick($category['sla_nilai'] ?? null, $category['sla_satuan'] ?? null);
 
     return [
-        'Tinggi' => $pick($category['sla_tinggi_value'] ?? null, $category['sla_tinggi_unit'] ?? null) ?? $normal,
+        'Tinggi' => $pick($category['sla_tinggi_nilai'] ?? null, $category['sla_tinggi_satuan'] ?? null) ?? $normal,
         'Normal' => $normal,
-        'Rendah' => $pick($category['sla_rendah_value'] ?? null, $category['sla_rendah_unit'] ?? null) ?? $normal,
+        'Rendah' => $pick($category['sla_rendah_nilai'] ?? null, $category['sla_rendah_satuan'] ?? null) ?? $normal,
     ];
 }
 
@@ -966,9 +1193,9 @@ function crfCategorySlaMatrix(array $category): array
  */
 function crfEffectiveUrgency(array $crf): ?string
 {
-    return ($crf['final_urgency_level'] ?? null)
+    return ($crf['level_urgensi_final'] ?? null)
         ?: ($crf['level'] ?? null)
-        ?: crfUrgencyForImpact($crf['impact_category'] ?? null);
+        ?: crfUrgensiSistem($crf);
 }
 
 /**
@@ -1026,17 +1253,17 @@ const CRF_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB per file
 /**
  * Memproses upload lampiran (Bukti dan Informasi Pendukung).
  * Melakukan validasi extension, MIME type, dan ukuran file sebelum
- * memindahkan file ke folder uploads/ dan mencatatnya ke tabel attachments.
+ * mengunggah file ke Wasabi (private) dan mencatatnya ke tabel crf_lampiran.
  *
  * @return string[] daftar pesan error (kosong jika semua berhasil / tidak ada file)
  */
 function handleAttachmentUploads(PDO $pdo, int $crfId, array $filesInput): array
 {
     $stmt = $pdo->prepare(
-        'INSERT INTO attachments
-        (change_request_id, original_name, stored_name, file_path, file_type, file_size)
+        'INSERT INTO crf_lampiran
+        (pengajuan_id, nama_asli, nama_tersimpan, path_file, tipe_file, ukuran_file)
         VALUES
-        (:owner_id, :original_name, :stored_name, :file_path, :file_type, :file_size)'
+        (:owner_id, :nama_asli, :nama_tersimpan, :path_file, :tipe_file, :ukuran_file)'
     );
 
     return uploadAttachmentsToStorage($filesInput, 'crf_' . $crfId . '_', $stmt, $crfId);
@@ -1051,18 +1278,58 @@ function handleAttachmentUploads(PDO $pdo, int $crfId, array $filesInput): array
 function handleUatDocumentUploads(PDO $pdo, int $crfId, array $filesInput): array
 {
     $stmt = $pdo->prepare(
-        "INSERT INTO attachments
-        (change_request_id, original_name, stored_name, file_path, file_type, file_size, category)
+        "INSERT INTO crf_lampiran
+        (pengajuan_id, nama_asli, nama_tersimpan, path_file, tipe_file, ukuran_file, kategori)
         VALUES
-        (:owner_id, :original_name, :stored_name, :file_path, :file_type, :file_size, 'uat')"
+        (:owner_id, :nama_asli, :nama_tersimpan, :path_file, :tipe_file, :ukuran_file, 'uat')"
     );
 
     return uploadAttachmentsToStorage($filesInput, 'crf_' . $crfId . '_uat_', $stmt, $crfId);
 }
 
 /**
+ * Konfigurasi Wasabi (config/wasabi.php).
+ */
+function crfWasabiConfig(): array
+{
+    static $config = null;
+
+    if ($config === null) {
+        $config = require __DIR__ . '/../config/wasabi.php';
+    }
+
+    return $config;
+}
+
+function crfWasabiClient(): S3Client
+{
+    static $client = null;
+
+    if ($client === null) {
+        $config = crfWasabiConfig();
+        $client = new S3Client([
+            'version' => $config['version'],
+            'region' => $config['region'],
+            'endpoint' => $config['endpoint'],
+            'credentials' => $config['credentials'],
+            'use_path_style_endpoint' => $config['use_path_style_endpoint'],
+        ]);
+    }
+
+    return $client;
+}
+
+/**
+ * Key objek Wasabi untuk sebuah lampiran (upload_path + nama tersimpan).
+ */
+function crfAttachmentKey(string $storedName): string
+{
+    return rtrim(crfWasabiConfig()['upload_path'], '/') . '/' . basename($storedName);
+}
+
+/**
  * Validasi lalu upload file ke Wasabi, dan catat lewat $insertStmt
- * (parameter: owner_id, original_name, stored_name, file_path, file_type, file_size).
+ * (parameter: owner_id, nama_asli, nama_tersimpan, path_file, tipe_file, ukuran_file).
  *
  * @return string[] daftar pesan error
  */
@@ -1074,20 +1341,10 @@ function uploadAttachmentsToStorage(array $filesInput, string $storedPrefix, PDO
         return $errors;
     }
 
-    // Ambil konfigurasi Wasabi
-    $wasabiConfig = require __DIR__ . '/../config/wasabi.php';
-
-    // Inisialisasi S3 Client
-    $s3Client = new S3Client([
-        'version' => $wasabiConfig['version'],
-        'region' => $wasabiConfig['region'],
-        'endpoint' => $wasabiConfig['endpoint'],
-        'credentials' => $wasabiConfig['credentials'],
-        'use_path_style_endpoint' => $wasabiConfig['use_path_style_endpoint'],
-    ]);
+    $wasabiConfig = crfWasabiConfig();
+    $s3Client = crfWasabiClient();
 
     $bucket = $wasabiConfig['bucket'];
-    $uploadPath = rtrim($wasabiConfig['upload_path'], '/') . '/';
 
     $total = count($filesInput['name']);
 
@@ -1138,16 +1395,17 @@ function uploadAttachmentsToStorage(array $filesInput, string $storedPrefix, PDO
         $storedName = uniqid($storedPrefix, true) . '.' . $ext;
 
         // Path file di Wasabi
-        $key = $uploadPath . $storedName;
+        $key = crfAttachmentKey($storedName);
 
         try {
 
-            // Upload file ke Wasabi
+            // Upload ke Wasabi sebagai objek private: file hanya dapat dibuka
+            // lewat actions/download_attachment.php (setelah cek hak akses).
             $result = $s3Client->putObject([
                 'Bucket' => $bucket,
                 'Key' => $key,
                 'SourceFile' => $tmpPath,
-                'ACL' => 'public-read',
+                'ACL' => 'private',
                 'ContentType' => $mimeType ?: 'application/octet-stream',
             ]);
 
@@ -1157,11 +1415,11 @@ function uploadAttachmentsToStorage(array $filesInput, string $storedPrefix, PDO
             // Simpan informasi file ke database
             $insertStmt->execute([
                 'owner_id' => $ownerId,
-                'original_name' => $originalName,
-                'stored_name' => $storedName,
-                'file_path' => $fileUrl,
-                'file_type' => $mimeType ?: null,
-                'file_size' => $size,
+                'nama_asli' => $originalName,
+                'nama_tersimpan' => $storedName,
+                'path_file' => $fileUrl,
+                'tipe_file' => $mimeType ?: null,
+                'ukuran_file' => $size,
             ]);
 
         } catch (AwsException $e) {

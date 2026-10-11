@@ -37,26 +37,29 @@ $id = (int) ($_POST['id'] ?? 0);
  * Ambil data dari form
  * ---------------------------------------------------------------
  */
-$fullName = trim($_POST['full_name'] ?? '');
-$phone    = trim($_POST['phone'] ?? '');
+$fullName = trim($_POST['nama_pemohon'] ?? '');
+$phone    = trim($_POST['telepon'] ?? '');
 $email    = trim($_POST['email'] ?? '');
 
-$fromDepartment = trim($_POST['from_department'] ?? '');
-$fromDivision   = trim($_POST['from_division'] ?? '');
+$fromDepartment = trim($_POST['dept_asal'] ?? '');
+$fromDivision   = trim($_POST['divisi_asal'] ?? '');
 
-$changeDescription = trim($_POST['change_description'] ?? '');
-$benefit           = trim($_POST['benefit'] ?? '');
-$impact            = trim($_POST['impact'] ?? '');
-$requestType       = trim($_POST['request_type'] ?? '');
-$impactCategory    = trim($_POST['impact_category'] ?? '');
-$reason            = trim($_POST['reason'] ?? '');
+$changeDescription = trim($_POST['deskripsi_perubahan'] ?? '');
+$benefit           = trim($_POST['manfaat'] ?? '');
+$impact            = trim($_POST['dampak'] ?? '');
+$requestType       = trim($_POST['jenis_pengajuan'] ?? '');
+// Urgensi berbobot: pemohon mencentang semua pernyataan dampak yang berlaku.
+$dampakKeys     = crfDampakDipilih($_POST['dampak_dipilih'] ?? ($_POST['kategori_dampak'] ?? []));
+$urgensi        = crfHitungUrgensi($dampakKeys);
+$impactCategory = (string) (crfDampakUtama($dampakKeys) ?? '');
+$reason            = trim($_POST['alasan'] ?? '');
 
-$budgetType = $_POST['budget_type'] ?? null;
+$budgetType = $_POST['jenis_anggaran'] ?? null;
 if ($budgetType === 'tidak_ada') {
     $budgetType = null;
 }
 
-$budgetAmountRaw = trim($_POST['budget_amount'] ?? '');
+$budgetAmountRaw = trim($_POST['nilai_anggaran'] ?? '');
 
 if (
     $budgetAmountRaw !== ''
@@ -68,20 +71,20 @@ if (
 }
 
 /*
- * Kategori CRF dinamis (master crf_categories). Kolom ENUM lama
- * change_category tetap diisi dari kelompok laporan kategori.
+ * Kategori CRF dinamis (master crf_kategori). Kolom ENUM lama
+ * kategori_perubahan tetap diisi dari kelompok laporan kategori.
  */
-$crfCategory = resolveActiveCrfCategory($pdo, $_POST['crf_category_id'] ?? null);
+$crfCategory = resolveActiveCrfCategory($pdo, $_POST['kategori_id'] ?? null);
 $crfCategoryId = $crfCategory ? (int) $crfCategory['id'] : null;
-$changeCategory = $crfCategory['legacy_change_category'] ?? '';
-$requesterPosition = mb_substr(trim($_POST['requester_position'] ?? ''), 0, 150);
+$changeCategory = $crfCategory['kategori_perubahan_lama'] ?? '';
+$requesterPosition = mb_substr(trim($_POST['jabatan_pemohon'] ?? ''), 0, 150);
 
 $changeCategoryDetail = trim(
-    $_POST['change_category_detail'] ?? ''
+    $_POST['detail_kategori_perubahan'] ?? ''
 );
 
 $alternativeSuggestion = trim(
-    $_POST['alternative_suggestion'] ?? ''
+    $_POST['saran_alternatif'] ?? ''
 );
 
 
@@ -136,7 +139,7 @@ if (!in_array($impactCategory, $allowedImpactCategories, true)) {
     $impactCategory = '';
 }
 
-$level = crfUrgencyForImpact($impactCategory);
+$level = $urgensi['level'];
 
 
 /*
@@ -162,17 +165,17 @@ try {
          * Pastikan draft benar-benar milik user yang sedang login.
          */
         $checkStmt = $pdo->prepare(
-            'SELECT id, request_number, status
-             FROM change_requests
+            'SELECT id, nomor_register, status
+             FROM crf_pengajuan
              WHERE id = :id
-               AND user_id = :user_id
+               AND pengguna_id = :pengguna_id
                AND status IN (\'Draft\', \'Perlu Revisi\')
              LIMIT 1'
         );
 
         $checkStmt->execute([
             'id'      => $id,
-            'user_id' => $user['id']
+            'pengguna_id' => $user['id']
         ]);
 
         $draft = $checkStmt->fetch();
@@ -195,67 +198,71 @@ try {
          * Update isi draft.
          *
          * Field yang belum diisi disimpan sebagai string kosong.
-         * submission_date tetap NULL karena belum submit.
+         * tgl_pengajuan tetap NULL karena belum submit.
          */
         $stmt = $pdo->prepare("
-            UPDATE change_requests
+            UPDATE crf_pengajuan
              SET
-                full_name = :full_name,
-                phone = :phone,
+                nama_pemohon = :nama_pemohon,
+                telepon = :telepon,
                 email = :email,
-                -- submission_date = NULL,
-                to_department = :to_department,
-                to_division = :to_division,
-                from_department = :from_department,
-                from_division = :from_division,
-                change_description = :change_description,
-                benefit = :benefit,
-                impact = :impact,
-                request_type = :request_type,
-                impact_category = :impact_category,
+                -- tgl_pengajuan = NULL,
+                dept_tujuan = :dept_tujuan,
+                divisi_tujuan = :divisi_tujuan,
+                dept_asal = :dept_asal,
+                divisi_asal = :divisi_asal,
+                deskripsi_perubahan = :deskripsi_perubahan,
+                manfaat = :manfaat,
+                dampak = :dampak,
+                jenis_pengajuan = :jenis_pengajuan,
+                kategori_dampak = :kategori_dampak,
+                dampak_dipilih = :dampak_dipilih,
+                skor_urgensi = :skor_urgensi,
                 level = :level,
-                reason = :reason,
-                budget_type = :budget_type,
-                budget_amount = :budget_amount,
-                change_category = :change_category,
-                crf_category_id = :crf_category_id,
-                requester_position = :requester_position,
-                change_category_detail = :change_category_detail,
-                alternative_suggestion = :alternative_suggestion,
-                workflow_stage = 'PEMOHON'
+                alasan = :alasan,
+                jenis_anggaran = :jenis_anggaran,
+                nilai_anggaran = :nilai_anggaran,
+                kategori_perubahan = :kategori_perubahan,
+                kategori_id = :kategori_id,
+                jabatan_pemohon = :jabatan_pemohon,
+                detail_kategori_perubahan = :detail_kategori_perubahan,
+                saran_alternatif = :saran_alternatif,
+                tahap_alur = 'PEMOHON'
              WHERE id = :id
-               AND user_id = :user_id
+               AND pengguna_id = :pengguna_id
                AND status IN ('Draft', 'Perlu Revisi')
         " );
 
         $stmt->execute([
-            'full_name' => $fullName,
-            'phone' => $phone,
+            'nama_pemohon' => $fullName,
+            'telepon' => $phone,
             'email' => $email,
-            'to_department' => $toDepartment,
-            'to_division' => $toDivision,
-            'from_department' => $fromDepartment,
-            'from_division' => $fromDivision,
-            'change_description' => $changeDescription,
-            'benefit' => $benefit,
-            'impact' => $impact,
-            'request_type' => $requestType !== '' ? $requestType : null,
-            'impact_category' => $impactCategory !== '' ? $impactCategory : null,
+            'dept_tujuan' => $toDepartment,
+            'divisi_tujuan' => $toDivision,
+            'dept_asal' => $fromDepartment,
+            'divisi_asal' => $fromDivision,
+            'deskripsi_perubahan' => $changeDescription,
+            'manfaat' => $benefit,
+            'dampak' => $impact,
+            'jenis_pengajuan' => $requestType !== '' ? $requestType : null,
+            'kategori_dampak' => $impactCategory !== '' ? $impactCategory : null,
+            'dampak_dipilih' => $dampakKeys ? implode(',', $dampakKeys) : null,
+            'skor_urgensi' => $dampakKeys ? $urgensi['skor'] : null,
             'level' => $level,
-            'reason' => $reason,
-            'budget_type' => $budgetType !== '' ? $budgetType : null,
-            'budget_amount' => $budgetAmount,
-            'change_category' => $changeCategory !== '' ? $changeCategory : null,
-            'crf_category_id' => $crfCategoryId,
-            'requester_position' => $requesterPosition !== '' ? $requesterPosition : null,
-            'change_category_detail' => $changeCategoryDetail,
-            'alternative_suggestion' => $alternativeSuggestion !== '' ? $alternativeSuggestion : null,
+            'alasan' => $reason,
+            'jenis_anggaran' => $budgetType !== '' ? $budgetType : null,
+            'nilai_anggaran' => $budgetAmount,
+            'kategori_perubahan' => $changeCategory !== '' ? $changeCategory : null,
+            'kategori_id' => $crfCategoryId,
+            'jabatan_pemohon' => $requesterPosition !== '' ? $requesterPosition : null,
+            'detail_kategori_perubahan' => $changeCategoryDetail,
+            'saran_alternatif' => $alternativeSuggestion !== '' ? $alternativeSuggestion : null,
             'id' => $id,
-            'user_id' => $user['id']
+            'pengguna_id' => $user['id']
         ]);
 
         $draftId = $id;
-        $requestNumber = $draft['request_number'];
+        $requestNumber = $draft['nomor_register'];
 
 
     /*
@@ -273,59 +280,63 @@ try {
 
 
         $stmt = $pdo->prepare("
-            INSERT INTO change_requests (
-                request_number,
-                user_id,
-                full_name,
-                phone,
+            INSERT INTO crf_pengajuan (
+                nomor_register,
+                pengguna_id,
+                nama_pemohon,
+                telepon,
                 email,
-                submission_date,
-                to_department,
-                to_division,
-                from_department,
-                from_division,
-                change_description,
-                benefit,
-                impact,
-                request_type,
-                impact_category,
-                reason,
-                budget_type,
-                budget_amount,
-                change_category,
-                crf_category_id,
-                requester_position,
-                change_category_detail,
-                alternative_suggestion,
-                post_implementation_review,
-                implementation,
+                tgl_pengajuan,
+                dept_tujuan,
+                divisi_tujuan,
+                dept_asal,
+                divisi_asal,
+                deskripsi_perubahan,
+                manfaat,
+                dampak,
+                jenis_pengajuan,
+                kategori_dampak,
+                dampak_dipilih,
+                skor_urgensi,
+                alasan,
+                jenis_anggaran,
+                nilai_anggaran,
+                kategori_perubahan,
+                kategori_id,
+                jabatan_pemohon,
+                detail_kategori_perubahan,
+                saran_alternatif,
+                tinjauan_pasca_implementasi,
+                implementasi,
                 level,
-                workflow_stage,
+                tahap_alur,
                 status
             ) VALUES (
-                :request_number,
-                :user_id,
-                :full_name,
-                :phone,
+                :nomor_register,
+                :pengguna_id,
+                :nama_pemohon,
+                :telepon,
                 :email,
                 NULL,
-                :to_department,
-                :to_division,
-                :from_department,
-                :from_division,
-                :change_description,
-                :benefit,
-                :impact,
-                :request_type,
-                :impact_category,
-                :reason,
-                :budget_type,
-                :budget_amount,
-                :change_category,
-                :crf_category_id,
-                :requester_position,
-                :change_category_detail,
-                :alternative_suggestion,
+                :dept_tujuan,
+                :divisi_tujuan,
+                :dept_asal,
+                :divisi_asal,
+                :deskripsi_perubahan,
+                :manfaat,
+                :dampak,
+                :jenis_pengajuan,
+                :kategori_dampak,
+                :dampak_dipilih,
+                :skor_urgensi,
+                :alasan,
+                :jenis_anggaran,
+                :nilai_anggaran,
+                :kategori_perubahan,
+                :kategori_id,
+                :jabatan_pemohon,
+                :detail_kategori_perubahan,
+                :saran_alternatif,
                 NULL,
                 NULL,
                 :level,
@@ -336,29 +347,31 @@ try {
 
 
                 $stmt->execute([
-                'request_number' => $requestNumber,
-                'user_id' => $user['id'],
-                'full_name' => $fullName,
-                'phone' => $phone,
+                'nomor_register' => $requestNumber,
+                'pengguna_id' => $user['id'],
+                'nama_pemohon' => $fullName,
+                'telepon' => $phone,
                 'email' => $email,
-                'to_department' => $toDepartment,
-                'to_division' => $toDivision,
-                'from_department' => $fromDepartment,
-                'from_division' => $fromDivision,
-                'change_description' => $changeDescription,
-                'benefit' => $benefit,
-                'impact' => $impact,
-                'request_type' => $requestType !== '' ? $requestType : null,
-                'impact_category' => $impactCategory !== '' ? $impactCategory : null,
+                'dept_tujuan' => $toDepartment,
+                'divisi_tujuan' => $toDivision,
+                'dept_asal' => $fromDepartment,
+                'divisi_asal' => $fromDivision,
+                'deskripsi_perubahan' => $changeDescription,
+                'manfaat' => $benefit,
+                'dampak' => $impact,
+                'jenis_pengajuan' => $requestType !== '' ? $requestType : null,
+                'kategori_dampak' => $impactCategory !== '' ? $impactCategory : null,
+                'dampak_dipilih' => $dampakKeys ? implode(',', $dampakKeys) : null,
+                'skor_urgensi' => $dampakKeys ? $urgensi['skor'] : null,
                 'level' => $level,
-                'reason' => $reason,
-                'budget_type' => $budgetType !== '' ? $budgetType : null,
-                'budget_amount' => $budgetAmount,
-                'change_category' => $changeCategory !== '' ? $changeCategory : null,
-                'crf_category_id' => $crfCategoryId,
-                'requester_position' => $requesterPosition !== '' ? $requesterPosition : null,
-                'change_category_detail' => $changeCategoryDetail,
-                'alternative_suggestion' => $alternativeSuggestion !== '' ? $alternativeSuggestion : null
+                'alasan' => $reason,
+                'jenis_anggaran' => $budgetType !== '' ? $budgetType : null,
+                'nilai_anggaran' => $budgetAmount,
+                'kategori_perubahan' => $changeCategory !== '' ? $changeCategory : null,
+                'kategori_id' => $crfCategoryId,
+                'jabatan_pemohon' => $requesterPosition !== '' ? $requesterPosition : null,
+                'detail_kategori_perubahan' => $changeCategoryDetail,
+                'saran_alternatif' => $alternativeSuggestion !== '' ? $alternativeSuggestion : null
             ]);
 
             $draftId = (int) $pdo->lastInsertId();
@@ -371,13 +384,13 @@ try {
             //     : $user['userid'];
 
             // $logStmt = $pdo->prepare("
-            //     INSERT INTO crf_activity_logs (
-            //         change_request_id,
+            //     INSERT INTO crf_log_aktivitas (
+            //         pengajuan_id,
             //         activity,
             //         description,
             //         actor
             //     ) VALUES (
-            //         :change_request_id,
+            //         :pengajuan_id,
             //         :activity,
             //         :description,
             //         :actor
@@ -385,7 +398,7 @@ try {
             // ");
 
             // $logStmt->execute([
-            //     'change_request_id' => $draftId,
+            //     'pengajuan_id' => $draftId,
             //     'activity'          => 'Pengajuan Dibuat',
             //     'description'       => 'Draft pengajuan CRF berhasil dibuat.',
             //     'actor'             => $actor,

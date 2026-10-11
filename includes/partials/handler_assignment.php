@@ -6,22 +6,22 @@
  *
  * Variabel: $crf, $pdo.
  */
-$assignmentCategory = !empty($crf['crf_category_id']) ? findCrfCategory($pdo, (int) $crf['crf_category_id']) : null;
+$assignmentCategory = !empty($crf['kategori_id']) ? findCrfCategory($pdo, (int) $crf['kategori_id']) : null;
 ?>
 <div class="crf-assignment-card">
     <div class="crf-assignment-item">
         <span class="crf-request-caption">Kategori CRF</span>
-        <strong><?= h($assignmentCategory['name'] ?? ($crf['change_category'] ?? '-')) ?></strong>
-        <?php if ($assignmentCategory && $assignmentCategory['sla_value'] !== null): ?>
-            <small class="text-muted">Target SLA kategori <?= h(slaLabel($assignmentCategory['sla_value'], $assignmentCategory['sla_unit'])) ?></small>
+        <strong><?= h($assignmentCategory['nama'] ?? ($crf['kategori_perubahan'] ?? '-')) ?></strong>
+        <?php if ($assignmentCategory && $assignmentCategory['sla_nilai'] !== null): ?>
+            <small class="text-muted">Target SLA kategori <?= h(slaLabel($assignmentCategory['sla_nilai'], $assignmentCategory['sla_satuan'])) ?></small>
         <?php endif; ?>
     </div>
     <div class="crf-assignment-item">
         <span class="crf-request-caption">PIC CRF</span>
-        <?php if (!empty($crf['assigned_handler_id'])): ?>
-            <strong><i class="bi bi-person-check"></i> <?= h($crf['assigned_handler_name'] ?? '-') ?></strong>
-            <?php if (!empty($crf['assigned_at'])): ?>
-                <small class="text-muted">sejak <?= h(date('d-m-Y H:i', strtotime($crf['assigned_at']))) ?></small>
+        <?php if (!empty($crf['pic_id'])): ?>
+            <strong><i class="bi bi-person-check"></i> <?= h($crf['pic_nama'] ?? '-') ?></strong>
+            <?php if (!empty($crf['tgl_ditugaskan'])): ?>
+                <small class="text-muted">sejak <?= h(date('d-m-Y H:i', strtotime($crf['tgl_ditugaskan']))) ?></small>
             <?php endif; ?>
         <?php else: ?>
             <strong class="text-muted"><i class="bi bi-person-dash"></i> Belum ada</strong>

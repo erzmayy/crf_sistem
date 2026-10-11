@@ -20,8 +20,8 @@ verifyCsrf();
 $pdo = getConnection();
 $user = getCurrentUser();
 $id = (int) ($_POST['id'] ?? 0);
-$pir = trim($_POST['post_implementation_review'] ?? '');
-$pirDate = trim($_POST['pir_date'] ?? '');
+$pir = trim($_POST['tinjauan_pasca_implementasi'] ?? '');
+$pirDate = trim($_POST['tgl_pir'] ?? '');
 $redirect = $id > 0 ? '../user/detail.php?id=' . $id . '#implementation-review' : '../user/pengajuan_saya.php';
 
 $parsedPirDate = DateTime::createFromFormat('!Y-m-d', $pirDate);
@@ -46,16 +46,16 @@ try {
     $pdo->beginTransaction();
 
     $stmt = $pdo->prepare("
-        SELECT id, user_id, request_number, workflow_stage, implementation_date
-        FROM change_requests
+        SELECT id, pengguna_id, nomor_register, tahap_alur, tgl_implementasi
+        FROM crf_pengajuan
         WHERE id = :id
-          AND user_id = :user_id
+          AND pengguna_id = :pengguna_id
         FOR UPDATE
     ");
-    $stmt->execute(['id' => $id, 'user_id' => (int) $user['id']]);
+    $stmt->execute(['id' => $id, 'pengguna_id' => (int) $user['id']]);
     $crf = $stmt->fetch();
 
-    if (!$crf || $crf['workflow_stage'] !== 'PEMOHON_PIR') {
+    if (!$crf || $crf['tahap_alur'] !== 'PEMOHON_PIR') {
         $pdo->rollBack();
         $_SESSION['flash'] = [
             'type' => 'danger',
@@ -65,27 +65,27 @@ try {
         exit;
     }
 
-    if (!empty($crf['implementation_date']) && $parsedPirDate->format('Y-m-d') < $crf['implementation_date']) {
+    if (!empty($crf['tgl_implementasi']) && $parsedPirDate->format('Y-m-d') < $crf['tgl_implementasi']) {
         $pdo->rollBack();
         $_SESSION['flash'] = [
             'type' => 'danger',
             'message' => 'Tanggal PIR tidak boleh sebelum Tanggal Implementasi ('
-                . date('d-m-Y', strtotime($crf['implementation_date'])) . ').',
+                . date('d-m-Y', strtotime($crf['tgl_implementasi'])) . ').',
         ];
         header('Location: ' . $redirect);
         exit;
     }
 
     $update = $pdo->prepare("
-        UPDATE change_requests
-        SET pir_date = :pir_date,
-            post_implementation_review = :pir,
-            workflow_stage = 'CMO_FINAL'
+        UPDATE crf_pengajuan
+        SET tgl_pir = :tgl_pir,
+            tinjauan_pasca_implementasi = :pir,
+            tahap_alur = 'CMO_FINAL'
         WHERE id = :id
-          AND workflow_stage = 'PEMOHON_PIR'
+          AND tahap_alur = 'PEMOHON_PIR'
     ");
     $update->execute([
-        'pir_date' => $parsedPirDate->format('Y-m-d'),
+        'tgl_pir' => $parsedPirDate->format('Y-m-d'),
         'pir' => $pir,
         'id' => $id,
     ]);
@@ -108,8 +108,8 @@ try {
     notifyUsers(
         $pdo,
         crfCmoRecipients($pdo, $id),
-        'Finalisasi CRF: ' . $crf['request_number'],
-        'Pemohon sudah mengisi PIR untuk CRF ' . $crf['request_number'] . '. CRF menunggu finalisasi CMO.',
+        'Finalisasi CRF: ' . $crf['nomor_register'],
+        'Pemohon sudah mengisi PIR untuk CRF ' . $crf['nomor_register'] . '. CRF menunggu finalisasi CMO.',
         'crf/open.php?id=' . $id,
         $id,
         (int) $user['id']

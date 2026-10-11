@@ -150,10 +150,10 @@ document.addEventListener('DOMContentLoaded', function () {
   /* -----------------------------------------------------------------
    * 1. Tampilkan field "Detail Kategori" sesuai kategori yang dipilih
    * ----------------------------------------------------------------- */
-  var categorySelect = document.getElementById('change_category');
+  var categorySelect = document.getElementById('kategori_perubahan');
   var categoryDetailWrap = document.getElementById('category-detail-wrap');
   var categoryDetailLabel = document.getElementById('category-detail-label');
-  var categoryDetailInput = document.getElementById('change_category_detail');
+  var categoryDetailInput = document.getElementById('detail_kategori_perubahan');
 
   var categoryHints = {
     'Aplikasi': 'Nama Aplikasi / Modul (contoh: CL, PKS, PKWT, Absensi)',
@@ -195,8 +195,8 @@ document.addEventListener('DOMContentLoaded', function () {
   /* -----------------------------------------------------------------
    * 2. Nominal anggaran hanya wajib jika salah satu pilihan biaya dipilih
    * ----------------------------------------------------------------- */
-  var budgetRadios = crfRoot.querySelectorAll('input[name="budget_type"]');
-  var budgetAmountInput = document.getElementById('budget_amount');
+  var budgetRadios = crfRoot.querySelectorAll('input[name="jenis_anggaran"]');
+  var budgetAmountInput = document.getElementById('nilai_anggaran');
 
   function toggleBudgetAmount() {
     var hasCost = false;
@@ -372,17 +372,16 @@ if (fileInput && fileList) {
 
   function isCrfFormComplete() {
     var requiredFieldIds = [
-      'full_name',
-      'phone',
+      'nama_pemohon',
+      'telepon',
       'email',
-      'from_department',
-      'from_division',
-      'request_type',
-      'change_description',
-      'benefit',
-      'impact_category',
-      'impact',
-      'reason'
+      'dept_asal',
+      'divisi_asal',
+      'jenis_pengajuan',
+      'deskripsi_perubahan',
+      'manfaat',
+      'dampak',
+      'alasan'
     ];
     var isComplete = requiredFieldIds.every(function (id) {
       var field = document.getElementById(id);
@@ -395,22 +394,26 @@ if (fileInput && fileList) {
       isComplete = false;
     }
 
-    var category = document.getElementById('change_category');
+    if (isComplete && !crfRoot.querySelector('input[name="dampak_dipilih[]"]:checked')) {
+      isComplete = false;
+    }
+
+    var category = document.getElementById('kategori_perubahan');
     if (isComplete && category && category.value === '') {
       isComplete = false;
     }
 
-    var categoryDetail = document.getElementById('change_category_detail');
+    var categoryDetail = document.getElementById('detail_kategori_perubahan');
     if (isComplete && category && legacyCategoryValue(category) === 'Lainnya'
       && categoryDetail && categoryDetail.value.trim() === '') {
       isComplete = false;
     }
 
-    var selectedBudget = crfRoot.querySelector('input[name="budget_type"]:checked');
+    var selectedBudget = crfRoot.querySelector('input[name="jenis_anggaran"]:checked');
 
     // Nominal hanya wajib bila ada biaya (bukan "Tidak ada biaya").
     if (isComplete && selectedBudget && selectedBudget.value !== 'tidak_ada') {
-      var budgetAmount = document.getElementById('budget_amount');
+      var budgetAmount = document.getElementById('nilai_anggaran');
       if (!budgetAmount || budgetAmount.value.trim() === ''
         || Number(budgetAmount.value) < 0) {
         isComplete = false;
@@ -448,17 +451,16 @@ if (fileInput && fileList) {
     var errors = [];
 
     [
-      ['full_name', 'Nama lengkap wajib diisi.'],
-      ['phone', 'Nomor handphone/WA wajib diisi.'],
+      ['nama_pemohon', 'Nama lengkap wajib diisi.'],
+      ['telepon', 'Nomor handphone/WA wajib diisi.'],
       ['email', 'Email wajib diisi.'],
-      ['from_department', 'Departemen wajib diisi.'],
-      ['from_division', 'Divisi wajib diisi.'],
-      ['request_type', 'Tipe pengajuan wajib dipilih.'],
-      ['change_description', 'Rincian permohonan perubahan wajib diisi.'],
-      ['benefit', 'Benefit perubahan wajib diisi.'],
-      ['impact_category', 'Dampak jika tidak dilakukan perubahan wajib dipilih.'],
-      ['impact', 'Penjelasan dampak wajib diisi.'],
-      ['reason', 'Alasan permohonan perubahan wajib diisi.']
+      ['dept_asal', 'Departemen wajib diisi.'],
+      ['divisi_asal', 'Divisi wajib diisi.'],
+      ['jenis_pengajuan', 'Tipe pengajuan wajib dipilih.'],
+      ['deskripsi_perubahan', 'Rincian permohonan perubahan wajib diisi.'],
+      ['manfaat', 'Benefit perubahan wajib diisi.'],
+      ['dampak', 'Penjelasan dampak wajib diisi.'],
+      ['alasan', 'Alasan permohonan perubahan wajib diisi.']
     ].forEach(function (item) {
       var field = document.getElementById(item[0]);
       if (field && field.value.trim() === '') {
@@ -472,20 +474,46 @@ if (fileInput && fileList) {
       addInlineError(email, 'Format email belum valid.', errors);
     }
 
-    var category = document.getElementById('change_category');
+    var impactGroup = document.getElementById('dampak_dipilih_group');
+    if (impactGroup && !impactGroup.querySelector('input[type="checkbox"]:checked')) {
+      addInlineError(impactGroup, 'Pilih minimal satu pernyataan dampak.', errors);
+    } else if (impactGroup) {
+      var konflik = {};
+      try { konflik = JSON.parse(impactGroup.getAttribute('data-bertentangan') || '{}'); } catch (e) { konflik = {}; }
+      var dicentang = Array.prototype.map.call(
+        impactGroup.querySelectorAll('input[type="checkbox"]:checked'),
+        function (box) { return box.value; }
+      );
+      var bentrok = dicentang.some(function (key) {
+        return (konflik[key] || []).some(function (lawan) { return dicentang.indexOf(lawan) !== -1; });
+      });
+      if (bentrok) {
+        addInlineError(impactGroup, 'Beberapa pernyataan dampak saling bertentangan. Periksa kembali pilihan Anda.', errors);
+      } else {
+        var tipeTolak = {};
+        try { tipeTolak = JSON.parse(impactGroup.getAttribute('data-tipe-tolak') || '{}'); } catch (e) { tipeTolak = {}; }
+        var tipeField = document.getElementById('jenis_pengajuan');
+        var daftarTolak = (tipeField && tipeTolak[tipeField.value]) || [];
+        if (dicentang.some(function (key) { return daftarTolak.indexOf(key) !== -1; })) {
+          addInlineError(impactGroup, 'Tipe pengajuan dan pernyataan dampak tidak sesuai. Periksa kembali pilihan Anda.', errors);
+        }
+      }
+    }
+
+    var category = document.getElementById('kategori_perubahan');
     if (category && category.value === '') {
       addInlineError(category, 'Kategori perubahan wajib dipilih.', errors);
     }
 
-    var categoryDetail = document.getElementById('change_category_detail');
+    var categoryDetail = document.getElementById('detail_kategori_perubahan');
     if (category && legacyCategoryValue(category) === 'Lainnya'
       && categoryDetail && categoryDetail.value.trim() === '') {
       addInlineError(categoryDetail, 'Detail kategori wajib diisi.', errors);
     }
 
-    var selectedBudget = crfRoot.querySelector('input[name="budget_type"]:checked');
+    var selectedBudget = crfRoot.querySelector('input[name="jenis_anggaran"]:checked');
     if (selectedBudget && selectedBudget.value !== 'tidak_ada') {
-      var budgetAmount = document.getElementById('budget_amount');
+      var budgetAmount = document.getElementById('nilai_anggaran');
       if (!budgetAmount || budgetAmount.value.trim() === '') {
         addInlineError(budgetAmount, 'Nominal biaya / anggaran wajib diisi.', errors);
       } else if (Number(budgetAmount.value) < 0) {
@@ -671,4 +699,29 @@ if (fileInput && fileList) {
       });
     }
   }
+})();
+
+/* Filter daftar CRF: dapat diciutkan di layar kecil (tombol hanya tampil di mobile lewat CSS). */
+(function () {
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest ? event.target.closest('[data-filter-toggle]') : null;
+    if (!button) { return; }
+    var form = document.getElementById(button.getAttribute('aria-controls'));
+    if (!form) { return; }
+    var collapsed = form.classList.toggle('is-collapsed');
+    button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+  });
+})();
+
+/* Halaman detail: buka/tutup entri riwayat yang lebih lama. */
+(function () {
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest ? event.target.closest('[data-timeline-toggle]') : null;
+    if (!button) { return; }
+    var list = document.getElementById(button.getAttribute('aria-controls'));
+    if (!list) { return; }
+    var trimmed = list.classList.toggle('is-trimmed');
+    button.setAttribute('aria-expanded', trimmed ? 'false' : 'true');
+    button.textContent = trimmed ? button.getAttribute('data-label-closed') : button.getAttribute('data-label-open');
+  });
 })();

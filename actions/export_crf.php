@@ -35,7 +35,7 @@ if (!canAccessCrf($pdo, $id)) {
  * --------------------------------------------------------------- */
 $stmt = $pdo->prepare(
     'SELECT cr.*
-     FROM change_requests cr
+     FROM crf_pengajuan cr
      WHERE cr.id = :id
      LIMIT 1'
 );
@@ -52,10 +52,10 @@ if (!$crf) {
  * Ambil attachment
  * --------------------------------------------------------------- */
 $attStmt = $pdo->prepare(
-    'SELECT original_name, file_type, file_size
-     FROM attachments
-     WHERE change_request_id = :id AND category IS NULL
-     ORDER BY uploaded_at ASC'
+    'SELECT nama_asli, tipe_file, ukuran_file
+     FROM crf_lampiran
+     WHERE pengajuan_id = :id AND kategori IS NULL
+     ORDER BY tgl_unggah ASC'
 );
 
 $attStmt->execute(['id' => $id]);
@@ -89,18 +89,18 @@ function pdfValue($value): string
 /* ---------------------------------------------------------------
  * Data tampilan
  * --------------------------------------------------------------- */
-$submissionDate = !empty($crf['submission_date'])
-    ? formatTanggalIndonesia(new DateTime($crf['submission_date']))
+$submissionDate = !empty($crf['tgl_pengajuan'])
+    ? formatTanggalIndonesia(new DateTime($crf['tgl_pengajuan']))
     : '-';
 
 $toValue = trim(
-    ($crf['to_department'] ?? '') .
-    (!empty($crf['to_division']) ? ' (' . $crf['to_division'] . ')' : '')
+    ($crf['dept_tujuan'] ?? '') .
+    (!empty($crf['divisi_tujuan']) ? ' (' . $crf['divisi_tujuan'] . ')' : '')
 );
 
 $fromValue = trim(
-    ($crf['from_department'] ?? '') .
-    (!empty($crf['from_division']) ? ' (' . $crf['from_division'] . ')' : '')
+    ($crf['dept_asal'] ?? '') .
+    (!empty($crf['divisi_asal']) ? ' (' . $crf['divisi_asal'] . ')' : '')
 );
 
 $statusDisplay = statusLabel($crf['status'] ?? '');
@@ -121,16 +121,16 @@ $watermarkHtml = $watermarkText === '' ? '' : '
         . htmlspecialchars($statusDisplay, ENT_QUOTES, 'UTF-8') . ' · dicetak ' . date('d-m-Y H:i') . '
     </div>';
 
-$categoryDisplay = $crf['change_category'] ?? '-';
+$categoryDisplay = $crf['kategori_perubahan'] ?? '-';
 
-if (!empty($crf['change_category_detail'])) {
-    $categoryDisplay .= ' - ' . $crf['change_category_detail'];
+if (!empty($crf['detail_kategori_perubahan'])) {
+    $categoryDisplay .= ' - ' . $crf['detail_kategori_perubahan'];
 }
 
-$budgetDisplay = budgetTypeLabel($crf['budget_type'] ?? null);
+$budgetDisplay = budgetTypeLabel($crf['jenis_anggaran'] ?? null);
 
-if ($crf['budget_amount'] !== null && $crf['budget_amount'] !== '') {
-    $budgetDisplay .= ' - ' . formatRupiah($crf['budget_amount']);
+if ($crf['nilai_anggaran'] !== null && $crf['nilai_anggaran'] !== '') {
+    $budgetDisplay .= ' - ' . formatRupiah($crf['nilai_anggaran']);
 }
 
 /* ---------------------------------------------------------------
@@ -148,12 +148,12 @@ if (!$attachments) {
 
     foreach ($attachments as $file) {
         $name = htmlspecialchars(
-            $file['original_name'],
+            $file['nama_asli'],
             ENT_QUOTES,
             'UTF-8'
         );
 
-        $size = round(((int) $file['file_size']) / 1024);
+        $size = round(((int) $file['ukuran_file']) / 1024);
 
         $items[] = $name . ' (' . $size . ' KB)';
     }
@@ -166,14 +166,14 @@ if (!$attachments) {
  * --------------------------------------------------------------- */
 $levelDisplay = !empty($crf['level'])
     ? $crf['level']
-    : (crfUrgencyForImpact($crf['impact_category'] ?? null) ?? 'Belum ditentukan');
+    : (crfUrgensiSistem($crf) ?? 'Belum ditentukan');
 
-$workflowStageDisplay = !empty($crf['workflow_stage'])
-    ? workflowStageLabel($crf['workflow_stage'])
+$workflowStageDisplay = !empty($crf['tahap_alur'])
+    ? workflowStageLabel($crf['tahap_alur'])
     : '-';
 
-$slaDisplay = (!empty($crf['sla_value']) && !empty($crf['sla_unit']))
-    ? rtrim(rtrim(number_format((float) $crf['sla_value'], 2, '.', ''), '0'), '.') . ' ' . $crf['sla_unit']
+$slaDisplay = (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan']))
+    ? rtrim(rtrim(number_format((float) $crf['sla_nilai'], 2, '.', ''), '0'), '.') . ' ' . $crf['sla_satuan']
     : '-';
 
 /* ---------------------------------------------------------------
@@ -183,13 +183,13 @@ $processDateHtml = '';
 
 if (
     ($crf['status'] ?? '') === 'Solve' &&
-    !empty($crf['solved_at'])
+    !empty($crf['tgl_selesai'])
 ) {
     $processDateHtml = '
         <div class="process-date">
             Diselesaikan pada:
             ' . htmlspecialchars(
-                date('d-m-Y H:i', strtotime($crf['solved_at'])),
+                date('d-m-Y H:i', strtotime($crf['tgl_selesai'])),
                 ENT_QUOTES,
                 'UTF-8'
             ) . '
@@ -199,13 +199,13 @@ if (
 
 if (
     ($crf['status'] ?? '') === 'Cancel' &&
-    !empty($crf['cancelled_at'])
+    !empty($crf['tgl_dibatalkan'])
 ) {
     $processDateHtml = '
         <div class="process-date">
             Dibatalkan pada:
             ' . htmlspecialchars(
-                date('d-m-Y H:i', strtotime($crf['cancelled_at'])),
+                date('d-m-Y H:i', strtotime($crf['tgl_dibatalkan'])),
                 ENT_QUOTES,
                 'UTF-8'
             ) . '
@@ -217,10 +217,10 @@ if (
  * Ambil tanggal aktivitas workflow untuk kebutuhan export PDF
  * --------------------------------------------------------------- */
 $activityStmt = $pdo->prepare("
-    SELECT activity, created_at
-    FROM crf_activity_logs
-    WHERE change_request_id = :id
-    ORDER BY created_at ASC, id ASC
+    SELECT aktivitas, pelaksana, tgl_dibuat
+    FROM crf_log_aktivitas
+    WHERE pengajuan_id = :id
+    ORDER BY tgl_dibuat ASC, id ASC
 ");
 
 $activityStmt->execute(['id' => $id]);
@@ -228,8 +228,8 @@ $activityRows = $activityStmt->fetchAll();
 
 $firstActivityDate = static function (array $rows, array $activities): ?string {
     foreach ($rows as $row) {
-        if (in_array($row['activity'], $activities, true)) {
-            return $row['created_at'];
+        if (in_array($row['aktivitas'], $activities, true)) {
+            return $row['tgl_dibuat'];
         }
     }
 
@@ -256,19 +256,59 @@ $dateOnly = static function (?string $value): ?string {
 
 $shortDate = static fn(?string $value): ?string => !empty($value) ? date('d-m-Y', strtotime($value)) : null;
 
-$implementationDateText = $dateOnly($crf['implementation_date'] ?? null) ?? '-';
-$pirDateText = $dateOnly($crf['pir_date'] ?? null) ?? '-';
+$implementationDateText = $dateOnly($crf['tgl_implementasi'] ?? null) ?? '-';
+$pirDateText = $dateOnly($crf['tgl_pir'] ?? null) ?? '-';
+
+// Nama pelaksana terbaru untuk sebuah aktivitas (dicatat di crf_log_aktivitas).
+$lastActor = static function (array $rows, array $activities): string {
+    $name = '';
+    foreach ($rows as $row) {
+        $actor = trim((string) ($row['pelaksana'] ?? ''));
+        if ($actor !== '' && $actor !== 'Sistem' && in_array($row['aktivitas'], $activities, true)) {
+            $name = $actor;
+        }
+    }
+
+    return $name;
+};
+
+// Nama langkah yang sudah dilalui; bila tidak tercatat, pakai nama jabatan.
+// Langkah yang belum dilalui (tanggal kosong) dibiarkan kosong.
+$stepName = static function (?string $date, string $recorded, string $fallback): string {
+    if (empty($date)) {
+        return '';
+    }
+
+    return $recorded !== '' ? $recorded : $fallback;
+};
+
+$pemohonName = (string) ($crf['nama_pemohon'] ?? '');
 
 // Langkah proses pengajuan (tanggal kosong = belum dilalui).
-$processSteps = [
-    ['role' => 'Pemohon',    'action' => 'Mengajukan CRF', 'name' => $crf['full_name'] ?? '',             'date' => $shortDate($crf['submission_date'] ?? null)],
-    ['role' => 'CMO',        'action' => 'Verifikasi',     'name' => '',                                  'date' => $shortDate($cmoFilterAt ?? null)],
-    ['role' => 'Kadep Ops.', 'action' => 'Persetujuan',    'name' => '',                                  'date' => $shortDate($crf['kadep_operasional_approved_at'] ?? null)],
-    ['role' => 'PIC CRF',    'action' => 'Eksekusi',       'name' => $crf['assigned_handler_name'] ?? '', 'date' => $shortDate($crf['automation_completed_at'] ?? null)],
-    ['role' => 'CMO',        'action' => 'UAT lulus',      'name' => '',                                  'date' => $shortDate($crf['uat_passed_at'] ?? null)],
-    ['role' => 'Pemohon',    'action' => 'PIR',            'name' => '',                                  'date' => $shortDate($crf['pir_date'] ?? null)],
-    ['role' => 'CMO',        'action' => 'Penutupan',      'name' => '',                                  'date' => $shortDate($crf['solved_at'] ?? null)],
-];
+$processSteps = [];
+foreach ([
+    ['Pemohon',    'Mengajukan CRF', $crf['tgl_pengajuan'] ?? null,        $pemohonName,
+        $pemohonName],
+    ['CMO',        'Verifikasi',     $cmoFilterAt,                         $lastActor($activityRows, ['Lolos Filter CMO', 'Diteruskan ke Kepala Departemen']),
+        'Tim CMO'],
+    ['Kadep Ops.', 'Persetujuan',    $crf['tgl_disetujui_kadep'] ?? null,  $lastActor($activityRows, ['Approval Kepala Departemen Operasional']),
+        'Kepala Departemen Operasional'],
+    ['PIC CRF',    'Eksekusi',       $crf['otomasi_selesai'] ?? null,      trim((string) ($crf['pic_nama'] ?? '')) ?: $lastActor($activityRows, ['Eksekusi Selesai']),
+        'PIC CRF'],
+    ['CMO',        'UAT lulus',      $crf['tgl_uat_lulus'] ?? null,        $lastActor($activityRows, ['UAT Lulus']),
+        'Tim CMO'],
+    ['Pemohon',    'PIR',            $crf['tgl_pir'] ?? null,              $lastActor($activityRows, ['PIR Diisi Pemohon']) ?: $pemohonName,
+        $pemohonName],
+    ['CMO',        'Penutupan',      $crf['tgl_selesai'] ?? null,          $lastActor($activityRows, ['Solve']),
+        'Tim CMO'],
+] as [$role, $action, $date, $recorded, $fallback]) {
+    $processSteps[] = [
+        'role' => $role,
+        'action' => $action,
+        'name' => $stepName($date, (string) $recorded, (string) $fallback),
+        'date' => $shortDate($date),
+    ];
+}
 
 $esc = static fn($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 
@@ -287,10 +327,10 @@ $statusColors = [
 [$statusBg, $statusFg] = $statusColors[$crf['status'] ?? ''] ?? ['#e6eff9', '#3c6396'];
 
 $processDateText = '';
-if (($crf['status'] ?? '') === 'Solve' && !empty($crf['solved_at'])) {
-    $processDateText = 'Diselesaikan pada ' . date('d-m-Y H:i', strtotime($crf['solved_at']));
-} elseif (($crf['status'] ?? '') === 'Cancel' && !empty($crf['cancelled_at'])) {
-    $processDateText = 'Dibatalkan pada ' . date('d-m-Y H:i', strtotime($crf['cancelled_at']));
+if (($crf['status'] ?? '') === 'Solve' && !empty($crf['tgl_selesai'])) {
+    $processDateText = 'Diselesaikan pada ' . date('d-m-Y H:i', strtotime($crf['tgl_selesai']));
+} elseif (($crf['status'] ?? '') === 'Cancel' && !empty($crf['tgl_dibatalkan'])) {
+    $processDateText = 'Dibatalkan pada ' . date('d-m-Y H:i', strtotime($crf['tgl_dibatalkan']));
 }
 
 /* ---------------------------------------------------------------
@@ -363,13 +403,14 @@ ob_start();
         </td>
         <td style="width: 38%;">
             <div class="reg-label">Nomor Register</div>
-            <div class="reg-number"><?= pdfValue($crf['request_number']) ?></div>
+            <div class="reg-number"><?= pdfValue($crf['nomor_register']) ?></div>
         </td>
     </tr>
 </table>
 
 <table class="chips">
     <tr>
+<?php if (getCrfRole() !== 'pemohon'): /* Pemohon tidak melihat urgensi maupun SLA. */ ?>
         <td>
             <div class="chip-label">Level Urgensi</div>
             <div class="chip-value"><span class="pill" style="background: <?= $levelBg ?>; color: <?= $levelFg ?>;"><?= $esc($levelDisplay) ?></span></div>
@@ -378,6 +419,7 @@ ob_start();
             <div class="chip-label">SLA</div>
             <div class="chip-value"><?= $esc($slaDisplay) ?></div>
         </td>
+<?php endif; ?>
         <td>
             <div class="chip-label">Status</div>
             <div class="chip-value"><span class="pill" style="background: <?= $statusBg ?>; color: <?= $statusFg ?>;"><?= $esc($statusDisplay) ?></span></div>
@@ -398,13 +440,13 @@ ob_start();
         <td class="lbl4">Hari/Tanggal</td>
         <td class="val4"><?= pdfValue($submissionDate) ?></td>
         <td class="lbl4">Nama Lengkap</td>
-        <td class="val4"><?= pdfValue($crf['full_name']) ?></td>
+        <td class="val4"><?= pdfValue($crf['nama_pemohon']) ?></td>
     </tr>
     <tr>
         <td class="lbl4">Kepada</td>
         <td class="val4"><?= pdfValue($toValue) ?></td>
         <td class="lbl4">No. HP / WA</td>
-        <td class="val4"><?= pdfValue($crf['phone']) ?></td>
+        <td class="val4"><?= pdfValue($crf['telepon']) ?></td>
     </tr>
     <tr>
         <td class="lbl4">Dari</td>
@@ -416,12 +458,12 @@ ob_start();
 
 <div class="section-bar">Change Request Description</div>
 <table class="grid">
-    <tr><td class="lbl">Tipe Pengajuan</td><td class="val"><?= pdfValue($crf['request_type'] ?? '') ?></td></tr>
-    <tr><td class="lbl">Rincian Permohonan Perubahan</td><td class="val"><?= pdfValue($crf['change_description']) ?></td></tr>
-    <tr><td class="lbl">Benefit dari Perubahan yang Diharapkan</td><td class="val"><?= pdfValue($crf['benefit']) ?></td></tr>
-    <tr><td class="lbl">Kategori Dampak</td><td class="val"><?= pdfValue(crfImpactLabel($crf['impact_category'] ?? null)) ?></td></tr>
-    <tr><td class="lbl">Dampak Jika Tidak Dilakukan Perubahan</td><td class="val"><?= pdfValue($crf['impact']) ?></td></tr>
-    <tr><td class="lbl">Alasan Permohonan Perubahan</td><td class="val"><?= pdfValue($crf['reason']) ?></td></tr>
+    <tr><td class="lbl">Tipe Pengajuan</td><td class="val"><?= pdfValue($crf['jenis_pengajuan'] ?? '') ?></td></tr>
+    <tr><td class="lbl">Rincian Permohonan Perubahan</td><td class="val"><?= pdfValue($crf['deskripsi_perubahan']) ?></td></tr>
+    <tr><td class="lbl">Benefit dari Perubahan yang Diharapkan</td><td class="val"><?= pdfValue($crf['manfaat']) ?></td></tr>
+    <tr><td class="lbl">Kategori Dampak</td><td class="val"><?= pdfValue(implode('; ', crfDampakLabels($crf)) ?: crfImpactLabel($crf['kategori_dampak'] ?? null)) ?></td></tr>
+    <tr><td class="lbl">Dampak Jika Tidak Dilakukan Perubahan</td><td class="val"><?= pdfValue($crf['dampak']) ?></td></tr>
+    <tr><td class="lbl">Alasan Permohonan Perubahan</td><td class="val"><?= pdfValue($crf['alasan']) ?></td></tr>
     <tr><td class="lbl">Bukti dan Informasi Pendukung</td><td class="val"><?= $attachmentHtml ?></td></tr>
     <tr><td class="lbl">Biaya / Anggaran</td><td class="val"><?= pdfValue($budgetDisplay) ?></td></tr>
     <tr><td class="lbl">Kategori Perubahan</td><td class="val"><?= pdfValue($categoryDisplay) ?></td></tr>
@@ -429,11 +471,11 @@ ob_start();
 
 <div class="section-bar">Change Request Action</div>
 <table class="grid">
-    <tr><td class="lbl">Saran Alternatif</td><td class="val"><?= pdfValue($crf['alternative_suggestion']) ?></td></tr>
+    <tr><td class="lbl">Saran Alternatif</td><td class="val"><?= pdfValue($crf['saran_alternatif']) ?></td></tr>
     <tr><td class="lbl">Tanggal Implementasi</td><td class="val"><?= $esc($implementationDateText) ?></td></tr>
-    <tr><td class="lbl">Implementasi</td><td class="val"><?= pdfValue($crf['implementation']) ?></td></tr>
+    <tr><td class="lbl">Implementasi</td><td class="val"><?= pdfValue($crf['implementasi']) ?></td></tr>
     <tr><td class="lbl">Tanggal PIR</td><td class="val"><?= $esc($pirDateText) ?></td></tr>
-    <tr><td class="lbl">Post Implementation Review</td><td class="val"><?= pdfValue($crf['post_implementation_review']) ?></td></tr>
+    <tr><td class="lbl">Post Implementation Review</td><td class="val"><?= pdfValue($crf['tinjauan_pasca_implementasi']) ?></td></tr>
 </table>
 
 <div class="section-bar">Proses Pengajuan</div>
@@ -456,7 +498,7 @@ ob_start();
 </table>
 
 <div class="footer-note">
-    Dokumen ini dihasilkan oleh Sistem Helpdesk &amp; CRF PT Persona Prima Utama · dicetak <?= date('d-m-Y H:i') ?>
+    Dokumen ini dihasilkan oleh Sistem CRF PT Persona Prima Utama · dicetak <?= date('d-m-Y H:i') ?>
 </div>
 
 </body>
@@ -493,7 +535,7 @@ $canvas->page_text(
 $fileName = 'CRF-' . preg_replace(
     '/[^A-Za-z0-9._-]/',
     '-',
-    $crf['request_number'] ?? ('DRAFT-' . $crf['id'])
+    $crf['nomor_register'] ?? ('DRAFT-' . $crf['id'])
 ) . '.pdf';
 
 $dompdf->stream($fileName, [

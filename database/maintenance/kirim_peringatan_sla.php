@@ -4,7 +4,7 @@
  * ---------------------------------------------------------------
  * Kirim peringatan SLA ke PIC CRF (pengingat 50%, mendesak, terlambat).
  * Jalankan berkala, disarankan tiap 5 menit, lewat Windows Task Scheduler
- * atau cron. Aman dijalankan berulang (anti kirim ganda lewat crf_sla_alerts).
+ * atau cron. Aman dijalankan berulang (anti kirim ganda lewat crf_peringatan_sla).
  *
  *   php database/maintenance/kirim_peringatan_sla.php
  *

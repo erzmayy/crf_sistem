@@ -34,23 +34,23 @@ function canRecordForumResult(): bool
 function forumActiveCrfCondition(string $alias = 'cr'): string
 {
     return "{$alias}.status NOT IN ('Draft', 'Solve', 'Cancel')"
-        . " AND {$alias}.workflow_stage <> 'SELESAI'";
+        . " AND {$alias}.tahap_alur <> 'SELESAI'";
 }
 
 function forumUnreadCounts(PDO $pdo, int $userId): array
 {
     $stmt = $pdo->prepare(
-        'SELECT comments.change_request_id, COUNT(*) AS unread_count
-         FROM forum_comments comments
-         INNER JOIN change_requests cr
-            ON cr.id = comments.change_request_id
-         LEFT JOIN forum_read_states read_state
-            ON read_state.change_request_id = comments.change_request_id
-           AND read_state.user_id = :read_user_id
+        'SELECT comments.pengajuan_id, COUNT(*) AS unread_count
+         FROM crf_forum_komentar comments
+         INNER JOIN crf_pengajuan cr
+            ON cr.id = comments.pengajuan_id
+         LEFT JOIN crf_forum_status_baca read_state
+            ON read_state.pengajuan_id = comments.pengajuan_id
+           AND read_state.pengguna_id = :read_user_id
          WHERE ' . forumActiveCrfCondition('cr') . '
-           AND comments.user_id <> :comment_user_id
-           AND comments.id > COALESCE(read_state.last_read_comment_id, 0)
-         GROUP BY comments.change_request_id'
+           AND comments.pengguna_id <> :comment_user_id
+           AND comments.id > COALESCE(read_state.komentar_terakhir_dibaca_id, 0)
+         GROUP BY comments.pengajuan_id'
     );
     $stmt->execute([
         'read_user_id' => $userId,
@@ -59,7 +59,7 @@ function forumUnreadCounts(PDO $pdo, int $userId): array
 
     $counts = [];
     foreach ($stmt->fetchAll() as $row) {
-        $counts[(int) $row['change_request_id']] = (int) $row['unread_count'];
+        $counts[(int) $row['pengajuan_id']] = (int) $row['unread_count'];
     }
 
     return $counts;
@@ -78,21 +78,21 @@ function forumUnreadTotal(PDO $pdo, int $userId): int
  */
 function forumCrfSummary(PDO $pdo, int $crfId, int $userId): array
 {
-    $comments = $pdo->prepare('SELECT COUNT(*) FROM forum_comments WHERE change_request_id = :crf_id AND is_system = 0');
+    $comments = $pdo->prepare('SELECT COUNT(*) FROM crf_forum_komentar WHERE pengajuan_id = :crf_id AND dari_sistem = 0');
     $comments->execute(['crf_id' => $crfId]);
 
     $unread = $pdo->prepare(
         'SELECT COUNT(*)
-         FROM forum_comments c
-         LEFT JOIN forum_read_states rs
-                ON rs.change_request_id = c.change_request_id AND rs.user_id = :read_user_id
-         WHERE c.change_request_id = :crf_id
-           AND c.user_id <> :comment_user_id
-           AND c.id > COALESCE(rs.last_read_comment_id, 0)'
+         FROM crf_forum_komentar c
+         LEFT JOIN crf_forum_status_baca rs
+                ON rs.pengajuan_id = c.pengajuan_id AND rs.pengguna_id = :read_user_id
+         WHERE c.pengajuan_id = :crf_id
+           AND c.pengguna_id <> :comment_user_id
+           AND c.id > COALESCE(rs.komentar_terakhir_dibaca_id, 0)'
     );
     $unread->execute(['read_user_id' => $userId, 'crf_id' => $crfId, 'comment_user_id' => $userId]);
 
-    $open = $pdo->prepare("SELECT COUNT(*) FROM forum_discussions WHERE change_request_id = :crf_id AND status = 'menunggu'");
+    $open = $pdo->prepare("SELECT COUNT(*) FROM crf_forum_pembahasan WHERE pengajuan_id = :crf_id AND status = 'menunggu'");
     $open->execute(['crf_id' => $crfId]);
 
     return [
@@ -109,21 +109,21 @@ function markForumRead(PDO $pdo, int $crfId, int $userId, int $lastCommentId): v
     }
 
     $stmt = $pdo->prepare(
-        'INSERT INTO forum_read_states
-            (user_id, change_request_id, last_read_comment_id)
+        'INSERT INTO crf_forum_status_baca
+            (pengguna_id, pengajuan_id, komentar_terakhir_dibaca_id)
          VALUES
-            (:user_id, :change_request_id, :last_read_comment_id)
+            (:pengguna_id, :pengajuan_id, :komentar_terakhir_dibaca_id)
          ON DUPLICATE KEY UPDATE
-            last_read_comment_id = GREATEST(
-                last_read_comment_id,
-                VALUES(last_read_comment_id)
+            komentar_terakhir_dibaca_id = GREATEST(
+                komentar_terakhir_dibaca_id,
+                VALUES(komentar_terakhir_dibaca_id)
             ),
-            updated_at = CURRENT_TIMESTAMP'
+            tgl_diubah = CURRENT_TIMESTAMP'
     );
     $stmt->execute([
-        'user_id' => $userId,
-        'change_request_id' => $crfId,
-        'last_read_comment_id' => $lastCommentId,
+        'pengguna_id' => $userId,
+        'pengajuan_id' => $crfId,
+        'komentar_terakhir_dibaca_id' => $lastCommentId,
     ]);
 }
 
@@ -139,7 +139,7 @@ function canViewForumCrf(PDO $pdo, int $crfId): bool
     }
 
     $stmt = $pdo->prepare(
-        'SELECT 1 FROM change_requests cr
+        'SELECT 1 FROM crf_pengajuan cr
          WHERE cr.id = :id AND ' . forumActiveCrfCondition('cr') . '
          LIMIT 1'
     );
@@ -157,7 +157,7 @@ function canViewForumCrf(PDO $pdo, int $crfId): bool
 function forumProcessLink(PDO $pdo, array $crf): ?array
 {
     $id = (int) $crf['id'];
-    $stage = (string) ($crf['workflow_stage'] ?? '');
+    $stage = (string) ($crf['tahap_alur'] ?? '');
 
     switch (getCrfRole()) {
         case 'demo':
@@ -170,13 +170,13 @@ function forumProcessLink(PDO $pdo, array $crf): ?array
                 : null;
         case 'kadep_operasional':
             return $stage === 'kadep_operasional'
-                ? ['url' => '../pak_joko/detail.php?id=' . $id, 'label' => 'Buka halaman persetujuan']
+                ? ['url' => '../kadep_operasional/detail.php?id=' . $id, 'label' => 'Buka halaman persetujuan']
                 : null;
         case 'otomasi':
             $canProcess = $stage === 'OTOMASI'
-                && !empty($crf['kadep_operasional_approved_at'])
+                && !empty($crf['tgl_disetujui_kadep'])
                 && canHandleCrf($pdo, $crf)
-                && (empty($crf['assigned_handler_id']) || isAssignedCrfHandler($crf));
+                && (empty($crf['pic_id']) || isAssignedCrfHandler($crf));
 
             return $canProcess
                 ? ['url' => '../otomasi/detail.php?id=' . $id, 'label' => 'Buka halaman proses Otomasi']
@@ -194,17 +194,17 @@ function forumProcessLink(PDO $pdo, array $crf): ?array
  */
 function forumParticipantIds(PDO $pdo, int $crfId): array
 {
-    $stmt = $pdo->prepare('SELECT DISTINCT user_id FROM forum_comments WHERE change_request_id = :crf_id');
+    $stmt = $pdo->prepare('SELECT DISTINCT pengguna_id FROM crf_forum_komentar WHERE pengajuan_id = :crf_id');
     $stmt->execute(['crf_id' => $crfId]);
     $ids = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
 
-    $crf = $pdo->prepare('SELECT assigned_handler_id, crf_category_id FROM change_requests WHERE id = :id');
+    $crf = $pdo->prepare('SELECT pic_id, kategori_id FROM crf_pengajuan WHERE id = :id');
     $crf->execute(['id' => $crfId]);
     $row = $crf->fetch();
-    if ($row && !empty($row['assigned_handler_id'])) {
-        $ids[] = (int) $row['assigned_handler_id'];
-    } elseif ($row && !empty($row['crf_category_id'])) {
-        $ids = array_merge($ids, crfCategoryHandlerIds($pdo, (int) $row['crf_category_id']));
+    if ($row && !empty($row['pic_id'])) {
+        $ids[] = (int) $row['pic_id'];
+    } elseif ($row && !empty($row['kategori_id'])) {
+        $ids = array_merge($ids, crfCategoryHandlerIds($pdo, (int) $row['kategori_id']));
     }
 
     return array_values(array_unique($ids));

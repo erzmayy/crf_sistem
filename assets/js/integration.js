@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
       if (!isEdit) {
-        var active = form.querySelector('[name="is_active"]');
+        var active = form.querySelector('[name="aktif"]');
         if (active) { active.checked = true; }
       }
       var title = modal.querySelector('.modal-title');

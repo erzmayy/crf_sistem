@@ -37,19 +37,19 @@ if ($role === 'otomasi') {
 }
 
 $crfCards = $pdo->query("
-    SELECT c.id, c.name, c.description, c.is_active, c.sla_value, c.sla_unit,
+    SELECT c.id, c.nama, c.deskripsi, c.aktif, c.sla_nilai, c.sla_satuan,
         COALESCE(SUM(cr.status <> 'Draft'), 0) AS masuk,
         COALESCE(SUM(CASE WHEN ({$conditions['review']['sql']}) OR ({$conditions['pembahasan']['sql']}) THEN 1 ELSE 0 END), 0) AS review,
         COALESCE(SUM(CASE WHEN {$conditions['disetujui']['sql']} THEN 1 ELSE 0 END), 0) AS diproses,
         COALESCE(SUM(CASE WHEN {$conditions['approval']['sql']} THEN 1 ELSE 0 END), 0) AS approval,
         COALESCE(SUM(CASE WHEN {$conditions['selesai']['sql']} THEN 1 ELSE 0 END), 0) AS selesai,
-        COALESCE(SUM(cr.sla_result = 'Melebihi SLA'), 0) AS lewat_sla,
-        (SELECT COUNT(*) FROM crf_category_handlers h WHERE h.crf_category_id = c.id) AS handler_count
-    FROM crf_categories c
-    LEFT JOIN change_requests cr ON cr.crf_category_id = c.id
-    WHERE c.deleted_at IS NULL AND {$categoryScopeSql}
-    GROUP BY c.id, c.name, c.description, c.is_active, c.sla_value, c.sla_unit, c.sort_order
-    ORDER BY c.sort_order, c.name
+        COALESCE(SUM(cr.sla_hasil = 'Melebihi SLA'), 0) AS lewat_sla,
+        (SELECT COUNT(*) FROM crf_kategori_pic h WHERE h.kategori_id = c.id) AS handler_count
+    FROM crf_kategori c
+    LEFT JOIN crf_pengajuan cr ON cr.kategori_id = c.id
+    WHERE c.tgl_dihapus IS NULL AND {$categoryScopeSql}
+    GROUP BY c.id, c.nama, c.deskripsi, c.aktif, c.sla_nilai, c.sla_satuan, c.urutan
+    ORDER BY c.urutan, c.nama
 ")->fetchAll();
 
 $crfTotals['kategori'] = count($crfCards);
@@ -65,7 +65,7 @@ $crfListPage = [
     'demo' => '../admin/dashboard.php',
     'cmo' => '../cmo/index.php',
     'otomasi' => '../otomasi/index.php',
-    'kadep_operasional' => '../pak_joko/index.php',
+    'kadep_operasional' => '../kadep_operasional/index.php',
 ][$role];
 $crfListExtra = $role === 'otomasi' ? ['queue' => 'all'] : [];
 
@@ -124,8 +124,8 @@ require_once __DIR__ . '/../includes/header.php';
                     <header>
                         <span class="crf-category-icon"><i class="bi bi-bookmark"></i></span>
                         <div>
-                            <span class="crf-category-eyebrow">Kategori CRF<?= !$card['is_active'] ? ' · Nonaktif' : '' ?></span>
-                            <h2><?= h($card['name']) ?></h2>
+                            <span class="crf-category-eyebrow">Kategori CRF<?= !$card['aktif'] ? ' · Nonaktif' : '' ?></span>
+                            <h2><?= h($card['nama']) ?></h2>
                         </div>
                         <span class="crf-category-ring <?= (int) $card['masuk'] - (int) $card['selesai'] > 0 ? 'is-pending' : 'is-done' ?>">
                             <strong><?= (int) $card['masuk'] ?></strong><small>Masuk</small>
@@ -139,7 +139,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </ul>
                     <div class="crf-category-note">
                         <i class="bi bi-people"></i> <?= (int) $card['handler_count'] ?> PIC CRF
-                        · <i class="bi bi-stopwatch"></i> SLA <?= h(slaLabel($card['sla_value'], $card['sla_unit'])) ?>
+                        · <i class="bi bi-stopwatch"></i> SLA <?= h(slaLabel($card['sla_nilai'], $card['sla_satuan'])) ?>
                         <?php if ((int) $card['lewat_sla'] > 0): ?>
                             · <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> <?= (int) $card['lewat_sla'] ?> melebihi SLA</span>
                         <?php endif; ?>

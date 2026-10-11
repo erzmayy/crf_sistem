@@ -37,8 +37,8 @@ try {
     $pdo->beginTransaction();
 
     $stmt = $pdo->prepare('
-        SELECT id, user_id, request_number, status, workflow_stage, assigned_handler_id, kadep_operasional_approved_at
-        FROM change_requests
+        SELECT id, pengguna_id, nomor_register, status, tahap_alur, pic_id, tgl_disetujui_kadep
+        FROM crf_pengajuan
         WHERE id = :id
         FOR UPDATE
     ');
@@ -63,9 +63,9 @@ try {
     $oldDisplayStatus = crfDisplayStatus($crf)['label'];
 
     $pdo->prepare("
-        UPDATE change_requests
-        SET status = 'Cancel', workflow_stage = 'SELESAI',
-            tanggapan_tindak_lanjut = :reason, cancelled_at = NOW(), solved_at = NULL
+        UPDATE crf_pengajuan
+        SET status = 'Cancel', tahap_alur = 'SELESAI',
+            tanggapan_tindak_lanjut = :reason, tgl_dibatalkan = NOW(), tgl_selesai = NULL
         WHERE id = :id
     ")->execute(['reason' => $reason, 'id' => $id]);
 
@@ -73,7 +73,7 @@ try {
         $pdo,
         $id,
         'Cancel',
-        'Dibatalkan secara administratif oleh Admin (tahap terakhir: ' . workflowStageLabel((string) $crf['workflow_stage']) . '). Alasan: ' . $reason,
+        'Dibatalkan secara administratif oleh Admin (tahap terakhir: ' . workflowStageLabel((string) $crf['tahap_alur']) . '). Alasan: ' . $reason,
         $actor,
         $oldDisplayStatus,
         'Dibatalkan'
@@ -81,9 +81,9 @@ try {
 
     notifyUsers(
         $pdo,
-        [(int) $crf['user_id']],
-        'CRF dibatalkan: ' . $crf['request_number'],
-        'CRF ' . $crf['request_number'] . ' dibatalkan oleh Admin. Alasan: ' . $reason,
+        [(int) $crf['pengguna_id']],
+        'CRF dibatalkan: ' . $crf['nomor_register'],
+        'CRF ' . $crf['nomor_register'] . ' dibatalkan oleh Admin. Alasan: ' . $reason,
         'crf/open.php?id=' . $id,
         $id,
         (int) $user['id']
@@ -92,7 +92,7 @@ try {
     forumCloseOpenDiscussions($pdo, $id, 'CRF dibatalkan oleh Admin.');
     $pdo->commit();
     dispatchPendingNotificationEmails($pdo);
-    $_SESSION['flash'] = ['type' => 'success', 'message' => 'CRF ' . $crf['request_number'] . ' berhasil dibatalkan.'];
+    $_SESSION['flash'] = ['type' => 'success', 'message' => 'CRF ' . $crf['nomor_register'] . ' berhasil dibatalkan.'];
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

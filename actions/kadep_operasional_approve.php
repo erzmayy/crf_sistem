@@ -6,7 +6,7 @@ require_once __DIR__ . '/../includes/forum_discussions.php';
 requireCrfRole(['kadep_operasional']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../pak_joko/index.php');
+    header('Location: ../kadep_operasional/index.php');
     exit;
 }
 
@@ -26,13 +26,13 @@ if ($id <= 0) {
         'message' => 'CRF tidak valid.'
     ];
 
-    header('Location: ../pak_joko/index.php');
+    header('Location: ../kadep_operasional/index.php');
     exit;
 }
 
 $stmt = $pdo->prepare("
-    SELECT id, user_id, request_number, assigned_handler_id, crf_category_id, workflow_stage
-    FROM change_requests
+    SELECT id, pengguna_id, nomor_register, pic_id, kategori_id, tahap_alur
+    FROM crf_pengajuan
     WHERE id = :id
     LIMIT 1
 ");
@@ -41,13 +41,13 @@ $stmt->execute(['id' => $id]);
 
 $crf = $stmt->fetch();
 
-if (!$crf || $crf['workflow_stage'] !== 'kadep_operasional') {
+if (!$crf || $crf['tahap_alur'] !== 'kadep_operasional') {
     $_SESSION['flash'] = [
         'type' => 'danger',
         'message' => 'CRF tidak tersedia untuk persetujuan.'
     ];
 
-    header('Location: ../pak_joko/index.php');
+    header('Location: ../kadep_operasional/index.php');
     exit;
 }
 
@@ -59,7 +59,7 @@ if ($note === '') {
         'message' => 'Catatan persetujuan wajib diisi.'
     ];
 
-    header('Location: ../pak_joko/detail.php?id=' . $id);
+    header('Location: ../kadep_operasional/detail.php?id=' . $id);
     exit;
 }
 
@@ -72,12 +72,12 @@ try {
 
     $actor = crfActorName($user);
     $crfLink = 'crf/open.php?id=' . $id;
-    $crfNumber = (string) $crf['request_number'];
+    $crfNumber = (string) $crf['nomor_register'];
 
     // Handler pemegang CRF; bila belum ada, seluruh handler kategori.
-    $handlerRecipients = !empty($crf['assigned_handler_id'])
-        ? [(int) $crf['assigned_handler_id']]
-        : (!empty($crf['crf_category_id']) ? crfCategoryHandlerIds($pdo, (int) $crf['crf_category_id']) : []);
+    $handlerRecipients = !empty($crf['pic_id'])
+        ? [(int) $crf['pic_id']]
+        : (!empty($crf['kategori_id']) ? crfCategoryHandlerIds($pdo, (int) $crf['kategori_id']) : []);
 
 
     /* =====================================================
@@ -90,12 +90,12 @@ try {
         $stmt = $pdo->prepare("
             SELECT
                 id,
-                sla_value,
-                sla_unit,
-                forum_discussion_open
-            FROM change_requests
+                sla_nilai,
+                sla_satuan,
+                pembahasan_forum_terbuka
+            FROM crf_pengajuan
             WHERE id = :id
-              AND workflow_stage = 'kadep_operasional'
+              AND tahap_alur = 'kadep_operasional'
             FOR UPDATE
         ");
 
@@ -106,39 +106,39 @@ try {
             throw new RuntimeException('CRF sudah tidak tersedia untuk persetujuan.');
         }
 
-        if (!crfHasValidSla($approvalCrf) || !empty($approvalCrf['forum_discussion_open'])) {
+        if (!crfHasValidSla($approvalCrf) || !empty($approvalCrf['pembahasan_forum_terbuka'])) {
             $pdo->rollBack();
             $_SESSION['flash'] = [
                 'type' => 'danger',
-                'message' => !empty($approvalCrf['forum_discussion_open'])
+                'message' => !empty($approvalCrf['pembahasan_forum_terbuka'])
                     ? 'CRF ini masih menunggu pembahasan Forum sehingga belum dapat disetujui.'
                     : 'SLA CRF ini belum tersedia, sehingga belum dapat disetujui. Hubungi Admin.',
             ];
-            header('Location: ../pak_joko/detail.php?id=' . $id);
+            header('Location: ../kadep_operasional/detail.php?id=' . $id);
             exit;
         }
 
         // SLA mulai dihitung sejak Kepala Departemen Operasional menyetujui,
         // lalu CRF diserahkan ke PIC CRF untuk dieksekusi.
         $slaStartedAt = $now;
-        $slaDueAt = slaDueAt($slaStartedAt, $approvalCrf['sla_value'], $approvalCrf['sla_unit']);
+        $slaDueAt = slaDueAt($slaStartedAt, $approvalCrf['sla_nilai'], $approvalCrf['sla_satuan']);
         if ($slaDueAt === null) {
             throw new RuntimeException('Tenggat SLA tidak dapat dihitung.');
         }
 
         $stmt = $pdo->prepare("
-            UPDATE change_requests
+            UPDATE crf_pengajuan
             SET
-                kadep_operasional_approved_by = :approved_by,
-                kadep_operasional_approved_at = :approved_at,
-                kadep_operasional_approval_note = :approval_note,
-                sla_started_at = :sla_started_at,
-                sla_due_at = :sla_due_at,
-                automation_started_at = :automation_started_at,
-                workflow_stage = 'OTOMASI',
+                disetujui_kadep_oleh = :approved_by,
+                tgl_disetujui_kadep = :approved_at,
+                catatan_persetujuan_kadep = :approval_note,
+                sla_mulai = :sla_mulai,
+                sla_tenggat = :sla_tenggat,
+                otomasi_mulai = :otomasi_mulai,
+                tahap_alur = 'OTOMASI',
                 status = 'Dalam Proses'
             WHERE id = :id
-              AND workflow_stage = 'kadep_operasional'
+              AND tahap_alur = 'kadep_operasional'
         ");
 
         $stmt->execute([
@@ -147,9 +147,9 @@ try {
             'approval_note' => $note !== ''
                 ? $note
                 : null,
-            'sla_started_at' => $slaStartedAt,
-            'sla_due_at' => $slaDueAt,
-            'automation_started_at' => $slaStartedAt,
+            'sla_mulai' => $slaStartedAt,
+            'sla_tenggat' => $slaDueAt,
+            'otomasi_mulai' => $slaStartedAt,
             'id' => $id,
         ]);
 
@@ -161,7 +161,7 @@ try {
             $pdo,
             $id,
             'Approval Kepala Departemen Operasional',
-            'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. SLA ' . slaLabel($approvalCrf['sla_value'], $approvalCrf['sla_unit'])
+            'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. SLA ' . slaLabel($approvalCrf['sla_nilai'], $approvalCrf['sla_satuan'])
                 . ' mulai dihitung, batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. CRF diserahkan ke PIC CRF untuk dieksekusi.'
                 . ($note !== '' ? ' Catatan: ' . $note : ''),
             $actor,
@@ -169,11 +169,25 @@ try {
             'Disetujui · Eksekusi'
         );
 
+        // PIC CRF menerima rincian SLA; Pemohon hanya diberi tahu CRF-nya disetujui.
+        $picRecipients = array_values(array_diff(
+            array_map('intval', $handlerRecipients ?: crfUserIdsForRole($pdo, 'otomasi')),
+            [(int) $crf['pengguna_id']]
+        ));
         notifyUsers(
             $pdo,
-            array_merge($handlerRecipients ?: crfUserIdsForRole($pdo, 'otomasi'), [(int) $crf['user_id']]),
+            $picRecipients,
             'CRF disetujui: ' . $crfNumber,
             'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional. SLA mulai dihitung dan batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. PIC CRF dapat mengeksekusi CRF.',
+            $crfLink,
+            $id,
+            (int) $user['id']
+        );
+        notifyUsers(
+            $pdo,
+            [(int) $crf['pengguna_id']],
+            'CRF disetujui: ' . $crfNumber,
+            'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional dan diteruskan ke PIC CRF untuk dieksekusi.',
             $crfLink,
             $id,
             (int) $user['id']
@@ -189,7 +203,7 @@ try {
         ];
 
 
-        header('Location: ../pak_joko/index.php');
+        header('Location: ../kadep_operasional/index.php');
         exit;
     }
 
@@ -206,7 +220,7 @@ try {
     }
 
     error_log(
-        'pak_joko_approve error: '
+        'kadep_operasional_approve error: '
         . $e->getMessage()
     );
 
@@ -215,6 +229,6 @@ try {
         'message' => 'Terjadi kesalahan saat memproses persetujuan.'
     ];
 
-    header('Location: ../pak_joko/index.php');
+    header('Location: ../kadep_operasional/index.php');
     exit;
 }

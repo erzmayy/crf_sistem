@@ -50,7 +50,7 @@ $dateTo = $listFilters['date_to'];
 /*
  * Rentang tanggal laporan = satu filter periode untuk kartu ringkasan,
  * grafik, daftar pengajuan, dan ekspor. Tanggal pengajuan memakai
- * submission_date (cadangan: tanggal dibuat), sama dengan laporan.
+ * tgl_pengajuan (cadangan: tanggal dibuat), sama dengan laporan.
  * Tanpa parameter tanggal, kartu dan daftar menampilkan semua data.
  */
 $reportRangeError = '';
@@ -69,7 +69,7 @@ try {
 $reportCarry = $reportFilterActive
     ? ['report_date_from' => $reportDateRange['from'], 'report_date_to' => $reportDateRange['to']]
     : [];
-$submittedDateSql = 'COALESCE(cr.submission_date, DATE(cr.created_at))';
+$submittedDateSql = 'COALESCE(cr.tgl_pengajuan, DATE(cr.tgl_dibuat))';
 $summaryDateSql = '';
 $summaryDateParams = [];
 if ($reportFilterActive) {
@@ -99,7 +99,7 @@ $page = max(
 
 $countSql = "
     SELECT COUNT(*)
-    FROM change_requests cr
+    FROM crf_pengajuan cr
     WHERE " . implode(' AND ', $where);
 
 $countStmt = $pdo->prepare($countSql);
@@ -124,11 +124,11 @@ $offset = ($page - 1) * $perPage;
  * ========================================================= */
 
 $sql = "
-    SELECT cr.*, cc.name AS crf_category_name
-    FROM change_requests cr
-    LEFT JOIN crf_categories cc ON cc.id = cr.crf_category_id
+    SELECT cr.*, cc.nama AS crf_category_name
+    FROM crf_pengajuan cr
+    LEFT JOIN crf_kategori cc ON cc.id = cr.kategori_id
     WHERE " . implode(' AND ', $where) . "
-    ORDER BY cr.created_at DESC
+    ORDER BY cr.tgl_dibuat DESC
     LIMIT {$perPage} OFFSET {$offset}
 ";
 
@@ -150,7 +150,7 @@ $summaryStmt = $pdo->query(
         SUM(status = 'Dalam Proses') AS processing,
         SUM(status = 'Solve') AS solved,
         SUM(status = 'Cancel') AS cancelled
-     FROM change_requests
+     FROM crf_pengajuan
      WHERE status <> 'Draft'"
 );
 
@@ -165,7 +165,7 @@ $displaySumSql = implode(",\n", array_map(
 ));
 $displaySummaryStmt = $pdo->prepare("
     SELECT {$displaySumSql}, SUM(cr.status <> 'Draft') AS total
-    FROM change_requests cr
+    FROM crf_pengajuan cr
     {$summaryDateSql}
 ");
 $displaySummaryStmt->execute($summaryDateParams);

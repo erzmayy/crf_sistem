@@ -13,14 +13,14 @@ $pdo = getConnection();
 
 $crfCategoryRows = $pdo->query('
     SELECT c.*,
-        (SELECT COUNT(*) FROM change_requests cr WHERE cr.crf_category_id = c.id) AS usage_count
-    FROM crf_categories c
-    WHERE c.deleted_at IS NULL
-    ORDER BY c.sort_order, c.name
+        (SELECT COUNT(*) FROM crf_pengajuan cr WHERE cr.kategori_id = c.id) AS usage_count
+    FROM crf_kategori c
+    WHERE c.tgl_dihapus IS NULL
+    ORDER BY c.urutan, c.nama
 ')->fetchAll();
 
 $crfMembers = categoryMembers($pdo);
-$totalHandler = (int) $pdo->query('SELECT COUNT(DISTINCT user_id) FROM crf_category_handlers')->fetchColumn();
+$totalHandler = (int) $pdo->query('SELECT COUNT(DISTINCT pengguna_id) FROM crf_kategori_pic')->fetchColumn();
 
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
@@ -73,38 +73,38 @@ require_once __DIR__ . '/../includes/header.php';
                         $categoryId = (int) $category['id'];
                         $formData = [
                             'id' => $categoryId,
-                            'name' => $category['name'],
-                            'description' => $category['description'],
-                            'sla_value' => $category['sla_value'] !== null ? (float) $category['sla_value'] : '',
-                            'sla_unit' => $category['sla_unit'],
-                            'is_active' => (int) $category['is_active'],
-                            'sla_tinggi_value' => $category['sla_tinggi_value'] !== null ? (float) $category['sla_tinggi_value'] : '',
-                            'sla_tinggi_unit' => $category['sla_tinggi_unit'] ?? 'Hari',
-                            'sla_rendah_value' => $category['sla_rendah_value'] !== null ? (float) $category['sla_rendah_value'] : '',
-                            'sla_rendah_unit' => $category['sla_rendah_unit'] ?? 'Hari',
-                            'legacy_change_category' => $category['legacy_change_category'],
+                            'nama' => $category['nama'],
+                            'deskripsi' => $category['deskripsi'],
+                            'sla_nilai' => $category['sla_nilai'] !== null ? (float) $category['sla_nilai'] : '',
+                            'sla_satuan' => $category['sla_satuan'],
+                            'aktif' => (int) $category['aktif'],
+                            'sla_tinggi_nilai' => $category['sla_tinggi_nilai'] !== null ? (float) $category['sla_tinggi_nilai'] : '',
+                            'sla_tinggi_satuan' => $category['sla_tinggi_satuan'] ?? 'Hari',
+                            'sla_rendah_nilai' => $category['sla_rendah_nilai'] !== null ? (float) $category['sla_rendah_nilai'] : '',
+                            'sla_rendah_satuan' => $category['sla_rendah_satuan'] ?? 'Hari',
+                            'kategori_perubahan_lama' => $category['kategori_perubahan_lama'],
                         ];
                         $slaMatrix = crfCategorySlaMatrix($category);
                         ?>
-                        <section class="crf-category-member-row is-collapsed" id="crf-<?= $categoryId ?>" data-master-name="<?= h(mb_strtolower($category['name'])) ?>">
+                        <section class="crf-category-member-row is-collapsed" id="crf-<?= $categoryId ?>" data-master-name="<?= h(mb_strtolower($category['nama'])) ?>">
                             <div class="crf-category-member-head">
                                 <span class="crf-member-index"><?= $i + 1 ?></span>
                                 <span class="crf-category-icon"><i class="bi bi-bookmark"></i></span>
                                 <div>
-                                    <h2><?= h($category['name']) ?></h2>
+                                    <h2><?= h($category['nama']) ?></h2>
                                     <span class="crf-banner-pill crf-banner-pill--soft">
                                         <i class="bi bi-people"></i> <?= count($crfMembers[$categoryId] ?? []) ?> PIC CRF
                                     </span>
-                                    <?php if (!$category['is_active']): ?>
+                                    <?php if (!$category['aktif']): ?>
                                         <span class="crf-badge badge-status-draft">Nonaktif</span>
                                     <?php endif; ?>
                                     <div class="text-muted small mt-1">
-                                        <?php if (!empty($category['description'])): ?><?= h($category['description']) ?><br><?php endif; ?>
+                                        <?php if (!empty($category['deskripsi'])): ?><?= h($category['deskripsi']) ?><br><?php endif; ?>
                                         SLA<?php foreach ($slaMatrix as $slaLevel => $slaItem): ?>
                                             · <?= h($slaLevel) ?>: <?= $slaItem ? h(slaLabel($slaItem['value'], $slaItem['unit'])) : '-' ?>
                                         <?php endforeach; ?>
                                         · <?= (int) $category['usage_count'] ?> CRF
-                                        · Laporan: <?= h($category['legacy_change_category']) ?>
+                                        · Laporan: <?= h($category['kategori_perubahan_lama']) ?>
                                     </div>
                                     <div class="d-flex gap-1 mt-2">
                                         <button type="button" class="btn btn-sm btn-crf-outline" data-master-toggle aria-expanded="false" title="Tampilkan / sembunyikan PIC CRF">
@@ -117,20 +117,20 @@ require_once __DIR__ . '/../includes/header.php';
                                             data-bs-toggle="modal"
                                             data-bs-target="#crfCategoryModal"
                                             data-category-form="<?= h(json_encode($formData)) ?>"
-                                            aria-label="Edit kategori <?= h($category['name']) ?>"
+                                            aria-label="Edit kategori <?= h($category['nama']) ?>"
                                         >
                                             <i class="bi bi-pencil"></i><span class="visually-hidden-sm"> Edit</span>
                                         </button>
-                                        <form method="POST" action="../actions/category_master.php" data-confirm="<?= $category['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?> kategori <?= h($category['name']) ?>?">
+                                        <form method="POST" action="../actions/category_master.php" data-confirm="<?= $category['aktif'] ? 'Nonaktifkan' : 'Aktifkan' ?> kategori <?= h($category['nama']) ?>?">
                                             <?= csrfField() ?>
                                             <input type="hidden" name="op" value="toggle">
                                             <input type="hidden" name="return" value="master_data.php">
                                             <input type="hidden" name="id" value="<?= $categoryId ?>">
-                                            <button type="submit" class="btn btn-sm btn-crf-outline" aria-label="Ubah status aktif" title="<?= $category['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?>">
-                                                <i class="bi <?= $category['is_active'] ? 'bi-toggle-on' : 'bi-toggle-off' ?>"></i>
+                                            <button type="submit" class="btn btn-sm btn-crf-outline" aria-label="Ubah status aktif" title="<?= $category['aktif'] ? 'Nonaktifkan' : 'Aktifkan' ?>">
+                                                <i class="bi <?= $category['aktif'] ? 'bi-toggle-on' : 'bi-toggle-off' ?>"></i>
                                             </button>
                                         </form>
-                                        <form method="POST" action="../actions/category_master.php" data-confirm="Hapus kategori <?= h($category['name']) ?>?<?= (int) $category['usage_count'] > 0 ? ' Sudah dipakai ' . (int) $category['usage_count'] . ' CRF; data tersebut tetap tersimpan.' : '' ?>">
+                                        <form method="POST" action="../actions/category_master.php" data-confirm="Hapus kategori <?= h($category['nama']) ?>?<?= (int) $category['usage_count'] > 0 ? ' Sudah dipakai ' . (int) $category['usage_count'] . ' CRF; data tersebut tetap tersimpan.' : '' ?>">
                                             <?= csrfField() ?>
                                             <input type="hidden" name="op" value="delete">
                                             <input type="hidden" name="return" value="master_data.php">
@@ -178,15 +178,15 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="modal-body">
                 <div class="mb-3">
                     <label class="crf-field-label" for="crfCategoryName">Nama Kategori<span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="crfCategoryName" name="name" maxlength="100" required>
+                    <input type="text" class="form-control" id="crfCategoryName" name="nama" maxlength="100" required>
                 </div>
                 <div class="mb-3">
                     <label class="crf-field-label" for="crfCategoryDescription">Deskripsi</label>
-                    <input type="text" class="form-control" id="crfCategoryDescription" name="description" maxlength="255">
+                    <input type="text" class="form-control" id="crfCategoryDescription" name="deskripsi" maxlength="255">
                 </div>
                 <div class="mb-3">
                     <label class="crf-field-label" for="crfCategoryLegacy">Kelompok Laporan</label>
-                    <select class="form-select" id="crfCategoryLegacy" name="legacy_change_category">
+                    <select class="form-select" id="crfCategoryLegacy" name="kategori_perubahan_lama">
                         <?php foreach (['Aplikasi', 'Infrastruktur', 'Proses', 'Security', 'Lainnya'] as $legacy): ?>
                             <option value="<?= h($legacy) ?>"><?= h($legacy) ?></option>
                         <?php endforeach; ?>
@@ -201,9 +201,9 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                     <?php
                     $slaMatrixFields = [
-                        'Tinggi' => ['sla_tinggi_value', 'sla_tinggi_unit'],
-                        'Normal' => ['sla_value', 'sla_unit'],
-                        'Rendah' => ['sla_rendah_value', 'sla_rendah_unit'],
+                        'Tinggi' => ['sla_tinggi_nilai', 'sla_tinggi_satuan'],
+                        'Normal' => ['sla_nilai', 'sla_satuan'],
+                        'Rendah' => ['sla_rendah_nilai', 'sla_rendah_satuan'],
                     ];
                     foreach ($slaMatrixFields as $slaLevel => [$slaValueField, $slaUnitField]): ?>
                         <div class="row g-2 align-items-center mb-2">
@@ -224,7 +224,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <?php endforeach; ?>
                 </div>
                 <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" role="switch" id="crfCategoryActive" name="is_active" value="1" checked>
+                    <input class="form-check-input" type="checkbox" role="switch" id="crfCategoryActive" name="aktif" value="1" checked>
                     <label class="form-check-label" for="crfCategoryActive">Aktif</label>
                 </div>
             </div>

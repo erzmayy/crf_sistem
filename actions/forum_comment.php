@@ -11,8 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 verifyCsrf();
 
 $crfId = filter_input(INPUT_POST, 'crf_id', FILTER_VALIDATE_INT) ?: 0;
-$replyToId = filter_input(INPUT_POST, 'reply_to_comment_id', FILTER_VALIDATE_INT) ?: 0;
-$comment = $_POST['comment'] ?? null;
+$replyToId = filter_input(INPUT_POST, 'balasan_untuk_id', FILTER_VALIDATE_INT) ?: 0;
+$comment = $_POST['komentar'] ?? null;
 
 if ($crfId <= 0 || !is_string($comment) || trim($comment) === '' || mb_strlen($comment) > 5000) {
     $_SESSION['flash'] = [
@@ -25,8 +25,8 @@ if ($crfId <= 0 || !is_string($comment) || trim($comment) === '' || mb_strlen($c
 
 $pdo = getConnection();
 $crfStmt = $pdo->prepare(
-    'SELECT id, request_number, assigned_handler_id
-     FROM change_requests cr
+    'SELECT id, nomor_register, pic_id
+     FROM crf_pengajuan cr
      WHERE cr.id = :id
        AND ' . forumActiveCrfCondition('cr') . '
      LIMIT 1'
@@ -46,9 +46,9 @@ if (!$crf) {
 $replyTarget = null;
 if ($replyToId > 0) {
     $replyStmt = $pdo->prepare(
-        'SELECT id, user_id
-         FROM forum_comments
-         WHERE id = :comment_id AND change_request_id = :crf_id
+        'SELECT id, pengguna_id
+         FROM crf_forum_komentar
+         WHERE id = :comment_id AND pengajuan_id = :crf_id
          LIMIT 1'
     );
     $replyStmt->execute([
@@ -72,22 +72,22 @@ $user = getCurrentUser();
 $actorId = (int) $user['id'];
 $actorName = (string) ($user['nama'] ?? 'User');
 $insertStmt = $pdo->prepare(
-    'INSERT INTO forum_comments
-        (change_request_id, user_id, user_name, user_role, comment, reply_to_comment_id)
+    'INSERT INTO crf_forum_komentar
+        (pengajuan_id, pengguna_id, pengguna_nama, pengguna_peran, komentar, balasan_untuk_id)
      VALUES
-        (:change_request_id, :user_id, :user_name, :user_role, :comment, :reply_to_comment_id)'
+        (:pengajuan_id, :pengguna_id, :pengguna_nama, :pengguna_peran, :komentar, :balasan_untuk_id)'
 );
 try {
     $insertStmt->execute([
-        'change_request_id' => $crfId,
-        'user_id' => $actorId,
-        'user_name' => $actorName,
-        'user_role' => getCrfRole(),
-        'comment' => trim($comment),
-        'reply_to_comment_id' => $replyToId,
+        'pengajuan_id' => $crfId,
+        'pengguna_id' => $actorId,
+        'pengguna_nama' => $actorName,
+        'pengguna_peran' => getCrfRole(),
+        'komentar' => trim($comment),
+        'balasan_untuk_id' => $replyToId,
     ]);
 } catch (PDOException $exception) {
-    error_log('Forum comment insert failed: ' . $exception->getMessage());
+    error_log('Forum komentar insert failed: ' . $exception->getMessage());
     $_SESSION['flash'] = [
         'type' => 'danger',
         'message' => 'Komentar gagal disimpan. Silakan coba lagi atau hubungi administrator.',
@@ -97,9 +97,9 @@ try {
 }
 
 $commentId = (int) $pdo->lastInsertId();
-$crfNumber = $crf['request_number'] ?: 'CRF #' . $crfId;
+$crfNumber = $crf['nomor_register'] ?: 'CRF #' . $crfId;
 $preview = mb_strimwidth(trim($comment), 0, 160, '...');
-$replyAuthorId = $replyTarget ? (int) $replyTarget['user_id'] : 0;
+$replyAuthorId = $replyTarget ? (int) $replyTarget['pengguna_id'] : 0;
 
 // Penulis komentar yang dibalas mendapat notifikasi khusus balasan.
 if ($replyAuthorId > 0) {

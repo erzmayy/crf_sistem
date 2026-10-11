@@ -7,8 +7,22 @@
  */
 
 $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
+
+// Di layar kecil, filter diciutkan agar daftar CRF langsung terlihat; tetap
+// terbuka bila ada filter yang sedang aktif.
+$filtersActive = ($listFilters['search'] ?? '') !== ''
+    || ($listFilters['status'] ?? '') !== ''
+    || ($listFilters['level'] ?? '') !== ''
+    || (int) ($listFilters['category_id'] ?? 0) > 0;
+$filterFormId = 'crf-list-filters-' . substr(md5($listResetUrl . '|' . ($listContextValue ?? '')), 0, 6);
 ?>
-<form method="GET" class="crf-list-filters <?= !empty($listFilters['categories']) ? 'crf-list-filters-with-category' : '' ?>">
+<button type="button" class="btn btn-crf-outline crf-filter-toggle"
+        data-filter-toggle aria-controls="<?= h($filterFormId) ?>"
+        aria-expanded="<?= $filtersActive ? 'true' : 'false' ?>">
+    <i class="bi bi-funnel" aria-hidden="true"></i>
+    <span>Filter dan pencarian<?= $filtersActive ? ' (aktif)' : '' ?></span>
+</button>
+<form id="<?= h($filterFormId) ?>" method="GET" class="crf-list-filters <?= !empty($listFilters['categories']) ? 'crf-list-filters-with-category' : '' ?> <?= $filtersActive ? '' : 'is-collapsed' ?>">
     <?php if (!empty($listContextName)): ?>
         <input type="hidden" name="<?= h($listContextName) ?>" value="<?= h($listContextValue ?? '') ?>">
     <?php endif; ?>
@@ -60,7 +74,7 @@ $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
                 <option value="">Semua Kategori</option>
                 <?php foreach ($listFilters['categories'] as $categoryOption): ?>
                     <option value="<?= (int) $categoryOption['id'] ?>" <?= (int) ($listFilters['category_id'] ?? 0) === (int) $categoryOption['id'] ? 'selected' : '' ?>>
-                        <?= h($categoryOption['name']) ?>
+                        <?= h($categoryOption['nama']) ?>
                     </option>
                 <?php endforeach; ?>
             </select>
@@ -78,4 +92,4 @@ $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
     </div>
 </form>
 <?php
-unset($listResetUrl);
+unset($listResetUrl, $filtersActive, $filterFormId);

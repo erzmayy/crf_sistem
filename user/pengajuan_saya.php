@@ -19,13 +19,13 @@ $summaryStmt = $pdo->prepare("
         SUM(status = 'Dalam Proses') AS processing,
         SUM(status = 'Solve') AS solved,
         SUM(status = 'Cancel') AS cancelled
-    FROM change_requests
-    WHERE user_id = :user_id
+    FROM crf_pengajuan
+    WHERE pengguna_id = :pengguna_id
       AND status <> 'Draft'
 ");
 
 $summaryStmt->execute([
-    'user_id' => $user['id']
+    'pengguna_id' => $user['id']
 ]);
 
 $summary = $summaryStmt->fetch();
@@ -47,8 +47,8 @@ $allowedStatuses = [
     'Cancel'
 ];
 
-// Kategori CRF dinamis (master crf_categories): [id => nama].
-$allowedCategories = array_column(crfCategories(getConnection(), false), 'name', 'id');
+// Kategori CRF dinamis (master crf_kategori): [id => nama].
+$allowedCategories = array_column(crfCategories(getConnection(), false), 'nama', 'id');
 
 /*
  * Kalau filter tidak valid, kosongkan.
@@ -73,11 +73,11 @@ if (
  * ========================================================= */
 
 $where = [
-    'user_id = :user_id'
+    'pengguna_id = :pengguna_id'
 ];
 
 $params = [
-    'user_id' => $user['id']
+    'pengguna_id' => $user['id']
 ];
 
 
@@ -88,9 +88,9 @@ $params = [
 if ($search !== '') {
 
     $where[] = '(
-        request_number LIKE :search_request
-        OR full_name LIKE :search_name
-        OR change_description LIKE :search_description
+        nomor_register LIKE :search_request
+        OR nama_pemohon LIKE :search_name
+        OR deskripsi_perubahan LIKE :search_description
     )';
 
     $searchValue = '%' . $search . '%';
@@ -116,7 +116,7 @@ if ($statusFilter !== '') {
  */
 if ($categoryFilter !== 0) {
 
-    $where[] = 'crf_category_id = :category';
+    $where[] = 'kategori_id = :category';
 
     $params['category'] = $categoryFilter;
 }
@@ -140,7 +140,7 @@ $page = max(
 
 $countSql = "
     SELECT COUNT(*)
-    FROM change_requests
+    FROM crf_pengajuan
     WHERE " . implode(' AND ', $where);
 
 $countStmt = $pdo->prepare($countSql);
@@ -173,18 +173,18 @@ $offset = ($page - 1) * $perPage;
 $sql = "
     SELECT
         id,
-        request_number,
-        full_name,
-        from_department,
-        submission_date,
-        change_category,
-        crf_category_id,
+        nomor_register,
+        nama_pemohon,
+        dept_asal,
+        tgl_pengajuan,
+        kategori_perubahan,
+        kategori_id,
         level,
         status,
-        workflow_stage,
-        change_description,
+        tahap_alur,
+        deskripsi_perubahan,
         tanggapan_tindak_lanjut
-    FROM change_requests
+    FROM crf_pengajuan
     WHERE " . implode(' AND ', $where) . "
     ORDER BY id DESC
     LIMIT {$perPage} OFFSET {$offset}
@@ -228,7 +228,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <h1>Pengajuan Saya</h1>
 
                 <p class="text-muted mb-0">
-                    Pantau status, urgensi, dan tindak lanjut pengajuan perubahan Anda.
+                    Pantau status dan tindak lanjut pengajuan perubahan Anda.
                 </p>
             </div>
 
@@ -418,7 +418,6 @@ require_once __DIR__ . '/../includes/header.php';
                                     <th>No</th>
                                     <th>Pengajuan</th>
                                     <th>Isi Pengajuan</th>
-                                    <th>Urgensi</th>
                                     <th>Status</th>
                                     <th>Aksi</th>
                                 </tr>
@@ -429,7 +428,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <?php if (empty($pengajuan)): ?>
                                 <tr>
-                                    <td data-label="Pengajuan" colspan="6" class="crf-empty-cell">
+                                    <td data-label="Pengajuan" colspan="5" class="crf-empty-cell">
                                         <div class="crf-empty-state crf-empty-state-compact">
                                             <div class="crf-empty-icon">
                                                 <i class="bi bi-search"></i>
@@ -451,7 +450,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                     <?php $rowCategoryEmpty = 'Kategori belum dipilih'; require __DIR__ . '/../includes/partials/crf_row_request.php'; ?>
-                                    <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
+                                    <?php $rowPemohonView = true; require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
 
                                    <!-- AKSI -->
                                 <td data-label="Aksi">
@@ -487,7 +486,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                         <!-- ISI POST IMPLEMENTATION REVIEW -->
-                                        <?php if (($row['workflow_stage'] ?? '') === 'PEMOHON_PIR'): ?>
+                                        <?php if (($row['tahap_alur'] ?? '') === 'PEMOHON_PIR'): ?>
 
                                             <a
                                                 href="detail.php?id=<?= (int) $row['id'] ?>#implementation-review"

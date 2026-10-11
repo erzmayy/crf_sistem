@@ -11,8 +11,8 @@ $pdo = getConnection();
 $id = (int) ($_GET['id'] ?? 0);
 $userId = (int) $_SESSION['user_id'];
 
-$stmt = $pdo->prepare('SELECT url FROM notifications WHERE id = :id AND user_id = :user_id LIMIT 1');
-$stmt->execute(['id' => $id, 'user_id' => $userId]);
+$stmt = $pdo->prepare('SELECT url FROM crf_notifikasi WHERE id = :id AND pengguna_id = :pengguna_id LIMIT 1');
+$stmt->execute(['id' => $id, 'pengguna_id' => $userId]);
 $url = $stmt->fetchColumn();
 
 if ($url === false) {
@@ -20,8 +20,8 @@ if ($url === false) {
     exit;
 }
 
-$pdo->prepare('UPDATE notifications SET read_at = COALESCE(read_at, NOW()) WHERE id = :id AND user_id = :user_id')
-    ->execute(['id' => $id, 'user_id' => $userId]);
+$pdo->prepare('UPDATE crf_notifikasi SET tgl_dibaca = COALESCE(tgl_dibaca, NOW()) WHERE id = :id AND pengguna_id = :pengguna_id')
+    ->execute(['id' => $id, 'pengguna_id' => $userId]);
 
 // Hanya tautan relatif internal aplikasi.
 $url = (string) $url;

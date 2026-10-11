@@ -22,16 +22,16 @@ $id = (int) ($_POST['id'] ?? 0);
 
 $stmt = $pdo->prepare(
     'SELECT id
-     FROM change_requests
+     FROM crf_pengajuan
      WHERE id = :id
-       AND user_id = :user_id
+       AND pengguna_id = :pengguna_id
        AND status = \'Draft\'
      LIMIT 1'
 );
 
 $stmt->execute([
     'id'      => $id,
-    'user_id' => $user['id'],
+    'pengguna_id' => $user['id'],
 ]);
 
 $draft = $stmt->fetch();
@@ -48,15 +48,15 @@ if (!$draft) {
 
 try {
     $del = $pdo->prepare(
-        'DELETE FROM change_requests
+        'DELETE FROM crf_pengajuan
          WHERE id = :id
-           AND user_id = :user_id
+           AND pengguna_id = :pengguna_id
            AND status = \'Draft\''
     );
 
     $del->execute([
         'id'      => $id,
-        'user_id' => $user['id'],
+        'pengguna_id' => $user['id'],
     ]);
 
     // Lampiran dan riwayat timeline ikut terhapus otomatis

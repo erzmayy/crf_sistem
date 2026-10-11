@@ -40,11 +40,11 @@ function crfQueueCounts(PDO $pdo, bool $cmo, bool $kadep, bool $pic): array
 
     if ($cmo) {
         $row = $pdo->query("
-            SELECT SUM(cr.workflow_stage = 'CMO_FILTER') AS verifikasi,
-                   SUM(cr.workflow_stage = 'UAT')        AS uat,
-                   SUM(cr.workflow_stage = 'CMO_FINAL')  AS finalisasi
-            FROM change_requests cr
-            WHERE {$open} AND cr.workflow_stage IN ('CMO_FILTER','UAT','CMO_FINAL')
+            SELECT SUM(cr.tahap_alur = 'CMO_FILTER') AS verifikasi,
+                   SUM(cr.tahap_alur = 'UAT')        AS uat,
+                   SUM(cr.tahap_alur = 'CMO_FINAL')  AS finalisasi
+            FROM crf_pengajuan cr
+            WHERE {$open} AND cr.tahap_alur IN ('CMO_FILTER','UAT','CMO_FINAL')
         ")->fetch() ?: [];
         $counts['cmo_verifikasi'] = (int) ($row['verifikasi'] ?? 0);
         $counts['cmo_uat'] = (int) ($row['uat'] ?? 0);
@@ -54,18 +54,18 @@ function crfQueueCounts(PDO $pdo, bool $cmo, bool $kadep, bool $pic): array
 
     if ($kadep) {
         $counts['kadep'] = (int) $pdo->query("
-            SELECT COUNT(*) FROM change_requests cr
-            WHERE {$open} AND cr.workflow_stage = 'kadep_operasional'
+            SELECT COUNT(*) FROM crf_pengajuan cr
+            WHERE {$open} AND cr.tahap_alur = 'kadep_operasional'
         ")->fetchColumn();
     }
 
     if ($pic) {
         $row = $pdo->query("
             SELECT COUNT(*) AS total,
-                   SUM(cr.sla_due_at IS NOT NULL AND cr.sla_due_at < NOW()) AS terlambat
-            FROM change_requests cr
+                   SUM(cr.sla_tenggat IS NOT NULL AND cr.sla_tenggat < NOW()) AS terlambat
+            FROM crf_pengajuan cr
             WHERE {$open} AND " . crfHandlerScopeSql($pdo, 'cr') . "
-              AND cr.workflow_stage = 'OTOMASI' AND cr.kadep_operasional_approved_at IS NOT NULL
+              AND cr.tahap_alur = 'OTOMASI' AND cr.tgl_disetujui_kadep IS NOT NULL
         ")->fetch() ?: [];
         $counts['pic'] = (int) ($row['total'] ?? 0);
         $counts['pic_overdue'] = (int) ($row['terlambat'] ?? 0);
@@ -114,7 +114,7 @@ function crfNavGroups(): array
                 ['label' => 'Kategori CRF', 'url' => '/admin/master_data.php', 'show' => $isAdminUser, 'active' => $isNav('admin', 'master_data.php')],
                 ['label' => 'Verifikasi CMO', 'url' => '/cmo/index.php', 'show' => $canRole('cmo'), 'active' => $currentFolder === 'cmo', 'badge' => $queue['cmo'], 'badge_label' => $queue['cmo'] . ' CRF menunggu tindakan CMO (verifikasi ' . $queue['cmo_verifikasi'] . ', UAT ' . $queue['cmo_uat'] . ', finalisasi ' . $queue['cmo_final'] . ')'],
                 ['label' => 'Tindak Lanjut Otomasi', 'url' => '/otomasi/index.php', 'show' => $canRole('otomasi'), 'active' => $currentFolder === 'otomasi', 'badge' => $queue['pic'], 'badge_label' => $queue['pic'] . ' CRF menunggu implementasi' . ($queue['pic_overdue'] > 0 ? ', ' . $queue['pic_overdue'] . ' melewati SLA' : '')],
-                ['label' => 'Persetujuan Kepala Departemen Operasional', 'url' => '/pak_joko/index.php', 'show' => $canRole('kadep_operasional'), 'active' => $currentFolder === 'pak_joko', 'badge' => $queue['kadep'], 'badge_label' => $queue['kadep'] . ' CRF menunggu persetujuan'],
+                ['label' => 'Persetujuan Kepala Departemen Operasional', 'url' => '/kadep_operasional/index.php', 'show' => $canRole('kadep_operasional'), 'active' => $currentFolder === 'kadep_operasional', 'badge' => $queue['kadep'], 'badge_label' => $queue['kadep'] . ' CRF menunggu persetujuan'],
                 ['label' => 'Handling CRF', 'url' => '/crf/handling.php', 'show' => $isAdminUser || in_array($crfRole, ['cmo', 'otomasi', 'kadep_operasional', 'demo'], true), 'active' => $isNav('crf', 'handling.php')],
                 ['label' => 'Form CRF', 'url' => '/user/form_crf.php', 'show' => true, 'active' => $isNav('user', 'form_crf.php')],
                 ['label' => 'Pengajuan CRF Saya', 'url' => '/user/pengajuan_saya.php', 'show' => in_array($crfRole, ['pemohon', 'demo'], true), 'active' => $isNav('user', 'pengajuan_saya.php') || $isNav('user', 'detail.php')],

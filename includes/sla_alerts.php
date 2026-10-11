@@ -11,7 +11,7 @@
  *   terlambat : melewati batas SLA, lalu diulang tiap hari kerja
  *
  * Yang dikirim hanya tahap tertinggi yang sedang berlaku. Penanda anti
- * kirim ganda ada di tabel crf_sla_alerts. Dijalankan berkala oleh
+ * kirim ganda ada di tabel crf_peringatan_sla. Dijalankan berkala oleh
  * database/maintenance/kirim_peringatan_sla.php.
  * ---------------------------------------------------------------
  */
@@ -31,13 +31,13 @@ const CRF_SLA_REMINDER_MIN_SECONDS = 3600;
  */
 function crfSlaAlertStage(array $crf, ?DateTimeImmutable $now = null): ?array
 {
-    if (empty($crf['sla_started_at']) || empty($crf['sla_due_at'])) {
+    if (empty($crf['sla_mulai']) || empty($crf['sla_tenggat'])) {
         return null;
     }
 
     $now = $now ?? new DateTimeImmutable('now');
-    $started = new DateTimeImmutable($crf['sla_started_at']);
-    $due = new DateTimeImmutable($crf['sla_due_at']);
+    $started = new DateTimeImmutable($crf['sla_mulai']);
+    $due = new DateTimeImmutable($crf['sla_tenggat']);
 
     $total = slaWorkingSecondsBetween($started, $due);
     if ($total <= 0) {
@@ -64,12 +64,12 @@ function crfSlaAlertStage(array $crf, ?DateTimeImmutable $now = null): ?array
 /** PIC CRF penerima: pemegang CRF, atau seluruh PIC kategori. */
 function crfSlaAlertRecipients(PDO $pdo, array $crf): array
 {
-    if (!empty($crf['assigned_handler_id'])) {
-        return [(int) $crf['assigned_handler_id']];
+    if (!empty($crf['pic_id'])) {
+        return [(int) $crf['pic_id']];
     }
 
-    $ids = !empty($crf['crf_category_id'])
-        ? crfCategoryHandlerIds($pdo, (int) $crf['crf_category_id'])
+    $ids = !empty($crf['kategori_id'])
+        ? crfCategoryHandlerIds($pdo, (int) $crf['kategori_id'])
         : [];
 
     return $ids ?: crfUserIdsForRole($pdo, 'otomasi');
@@ -85,25 +85,25 @@ function crfSendSlaAlerts(PDO $pdo, ?DateTimeImmutable $now = null): int
     $now = $now ?? new DateTimeImmutable('now');
 
     $rows = $pdo->query("
-        SELECT id, request_number, crf_category_id, assigned_handler_id,
-               sla_started_at, sla_due_at
-        FROM change_requests
+        SELECT id, nomor_register, kategori_id, pic_id,
+               sla_mulai, sla_tenggat
+        FROM crf_pengajuan
         WHERE status = 'Dalam Proses'
-          AND workflow_stage = 'OTOMASI'
-          AND kadep_operasional_approved_at IS NOT NULL
-          AND automation_completed_at IS NULL
-          AND sla_started_at IS NOT NULL
-          AND sla_due_at IS NOT NULL
+          AND tahap_alur = 'OTOMASI'
+          AND tgl_disetujui_kadep IS NOT NULL
+          AND otomasi_selesai IS NULL
+          AND sla_mulai IS NOT NULL
+          AND sla_tenggat IS NOT NULL
     ")->fetchAll();
 
     $lastStmt = $pdo->prepare('
-        SELECT MAX(alert_seq) AS seq, MAX(sent_at) AS last_at
-        FROM crf_sla_alerts
-        WHERE change_request_id = :id AND alert_type = :type
+        SELECT MAX(urutan_peringatan) AS seq, MAX(tgl_dikirim) AS last_at
+        FROM crf_peringatan_sla
+        WHERE pengajuan_id = :id AND jenis_peringatan = :type
     ');
     $insert = $pdo->prepare('
-        INSERT INTO crf_sla_alerts (change_request_id, alert_type, alert_seq, sent_at)
-        VALUES (:id, :type, :seq, :sent_at)
+        INSERT INTO crf_peringatan_sla (pengajuan_id, jenis_peringatan, urutan_peringatan, tgl_dikirim)
+        VALUES (:id, :type, :seq, :tgl_dikirim)
     ');
 
     $sent = 0;
@@ -135,8 +135,8 @@ function crfSendSlaAlerts(PDO $pdo, ?DateTimeImmutable $now = null): int
             continue;
         }
 
-        $number = (string) ($crf['request_number'] ?: 'CRF #' . $crfId);
-        $due = date('d-m-Y H:i', strtotime($crf['sla_due_at']));
+        $number = (string) ($crf['nomor_register'] ?: 'CRF #' . $crfId);
+        $due = date('d-m-Y H:i', strtotime($crf['sla_tenggat']));
 
         if ($type === 'terlambat') {
             $title = 'SLA terlewati: ' . $number;
@@ -155,7 +155,7 @@ function crfSendSlaAlerts(PDO $pdo, ?DateTimeImmutable $now = null): int
         try {
             $pdo->beginTransaction();
             // Penanda lebih dulu: UNIQUE mencegah kirim ganda bila skrip jalan bersamaan.
-            $insert->execute(['id' => $crfId, 'type' => $type, 'seq' => $seq, 'sent_at' => $now->format('Y-m-d H:i:s')]);
+            $insert->execute(['id' => $crfId, 'type' => $type, 'seq' => $seq, 'tgl_dikirim' => $now->format('Y-m-d H:i:s')]);
             notifyUsers($pdo, $recipients, $title, $message, 'crf/open.php?id=' . $crfId, $crfId);
             logCrfActivity($pdo, $crfId, 'Peringatan SLA', $title . '. ' . $message, 'Sistem');
             $pdo->commit();

@@ -1,8 +1,11 @@
 <?php
 /**
  * actions/download_attachment.php
- * Download lampiran CRF. Untuk user yang boleh mengakses CRF (lihat
- * canAccessCrf) dan peran Forum selama CRF masih dibahas di Forum.
+ * Download / tampilkan lampiran CRF. Untuk user yang boleh mengakses CRF
+ * (lihat canAccessCrf) dan peran Forum selama CRF masih dibahas di Forum.
+ *
+ * Objek di Wasabi bersifat private; satu-satunya jalur membuka file
+ * adalah endpoint ini. ?inline=1 menampilkan PDF/gambar di browser.
  */
 
 require_once __DIR__ . '/../includes/auth.php';
@@ -21,8 +24,8 @@ if ($id <= 0) {
 }
 
 $stmt = $pdo->prepare(
-    'SELECT change_request_id, original_name, file_path, file_type, file_size
-     FROM attachments
+    'SELECT pengajuan_id, nama_asli, nama_tersimpan, path_file, tipe_file, ukuran_file
+     FROM crf_lampiran
      WHERE id = :id
      LIMIT 1'
 );
@@ -36,34 +39,33 @@ if (!$file) {
 }
 
 if (
-    !canAccessCrf($pdo, (int) $file['change_request_id'])
-    && !canViewForumCrf($pdo, (int) $file['change_request_id'])
+    !canAccessCrf($pdo, (int) $file['pengajuan_id'])
+    && !canViewForumCrf($pdo, (int) $file['pengajuan_id'])
 ) {
     http_response_code(403);
     exit('Anda tidak memiliki akses ke file ini.');
 }
 
-$fileUrl = $file['file_path'];
+$storedName = (string) ($file['nama_tersimpan'] ?? '');
+if ($storedName === '') {
+    // Baris lama tanpa nama_tersimpan: ambil nama file dari URL yang tersimpan.
+    $storedName = basename((string) parse_url((string) $file['path_file'], PHP_URL_PATH));
+}
 
-// Ambil file dari Wasabi
-$ch = curl_init($fileUrl);
+if ($storedName === '') {
+    http_response_code(404);
+    exit('File tidak ditemukan.');
+}
 
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_TIMEOUT => 60,
-    CURLOPT_SSL_VERIFYPEER => true,
-    CURLOPT_SSL_VERIFYHOST => 2,
-]);
-
-$fileContent = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch);
-
-curl_close($ch);
-
-if ($fileContent === false || $httpCode !== 200) {
-    error_log('download_attachment error: ' . $curlError . ' (HTTP ' . $httpCode . ')');
+// Ambil file dari Wasabi memakai kredensial server (bukan URL publik).
+try {
+    $object = crfWasabiClient()->getObject([
+        'Bucket' => crfWasabiConfig()['bucket'],
+        'Key' => crfAttachmentKey($storedName),
+    ]);
+    $fileContent = (string) $object['Body'];
+} catch (Throwable $e) {
+    error_log('download_attachment error: ' . $e->getMessage());
     http_response_code(500);
     exit('Gagal mengambil file. Silakan coba lagi atau hubungi administrator.');
 }
@@ -72,13 +74,20 @@ if ($fileContent === false || $httpCode !== 200) {
 $downloadName = str_replace(
     ['"', '\\', "\r", "\n"],
     '',
-    basename($file['original_name'])
+    basename($file['nama_asli'])
 );
 
-header('Content-Type: ' . ($file['file_type'] ?: 'application/octet-stream'));
-header('Content-Disposition: attachment; filename="' . $downloadName . '"');
+// Hanya tipe yang lolos validasi upload yang boleh tampil inline.
+$mimeType = in_array($file['tipe_file'], CRF_ALLOWED_MIME_TYPES, true)
+    ? $file['tipe_file']
+    : 'application/octet-stream';
+$inline = isset($_GET['inline']) && $mimeType !== 'application/octet-stream';
+
+header('Content-Type: ' . $mimeType);
+header('Content-Disposition: ' . ($inline ? 'inline' : 'attachment') . '; filename="' . $downloadName . '"');
 header('Content-Length: ' . strlen($fileContent));
-header('Cache-Control: no-cache, no-store, must-revalidate');
+header('X-Content-Type-Options: nosniff');
+header('Cache-Control: private, no-store, must-revalidate');
 header('Pragma: no-cache');
 
 echo $fileContent;

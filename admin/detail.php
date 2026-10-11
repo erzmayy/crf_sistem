@@ -19,7 +19,7 @@ $id = (int) ($_GET['id'] ?? 0);
 
 $stmt = $pdo->prepare(
     'SELECT cr.*
-     FROM change_requests cr
+     FROM crf_pengajuan cr
      WHERE cr.id = :id
        AND cr.status <> \'Draft\'
      LIMIT 1'
@@ -34,13 +34,13 @@ if (!$crf) {
     require_once __DIR__ . '/../includes/header.php';
     echo '<div class="crf-page"><div class="container">';
     echo '<div class="alert alert-danger">Pengajuan CRF dengan ID tersebut tidak ditemukan.</div>';
-    echo '<a href="dashboard.php" class="btn btn-crf-outline"><i class="bi bi-arrow-left"></i> Kembali ke Dashboard</a>';
+    echo '<a href="dashboard.php" class="crf-back-btn"><i class="bi bi-arrow-left"></i> Kembali ke Dashboard</a>';
     echo '</div></div>';
     require_once __DIR__ . '/../includes/footer.php';
     exit;
 }
 
-$attStmt = $pdo->prepare('SELECT * FROM attachments WHERE change_request_id = :id ORDER BY uploaded_at ASC');
+$attStmt = $pdo->prepare('SELECT * FROM crf_lampiran WHERE pengajuan_id = :id ORDER BY tgl_unggah ASC');
 $attStmt->execute(['id' => $id]);
 $attachments = $attStmt->fetchAll();
 
@@ -49,15 +49,15 @@ $attachments = $attStmt->fetchAll();
  */
 $timelineStmt = $pdo->prepare("
     SELECT
-        activity,
-        description,
-        actor,
-        old_status,
-        new_status,
-        created_at
-    FROM crf_activity_logs
-    WHERE change_request_id = :id
-    ORDER BY created_at ASC, id ASC
+        aktivitas,
+        deskripsi,
+        pelaksana,
+        status_lama,
+        status_baru,
+        tgl_dibuat
+    FROM crf_log_aktivitas
+    WHERE pengajuan_id = :id
+    ORDER BY tgl_dibuat ASC, id ASC
 ");
 
 $timelineStmt->execute([
@@ -72,73 +72,50 @@ unset($_SESSION['flash']);
 // Admin: pembatalan administratif.
 $canAdminCancel = !in_array($crf['status'], ['Solve', 'Cancel'], true) && !isOwnHandledCrf($crf);
 
-$pageTitle = 'Detail CRF - ' . $crf['request_number'];
+$pageTitle = 'Detail CRF - ' . $crf['nomor_register'];
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="crf-page crf-detail-page">
   <div class="container">
 
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 crf-page-header">
-      <div>
-        <h1>Detail CRF</h1>
-        <p>Nomor Register: <strong><?= h($crf['request_number']) ?></strong></p>
-      </div>
-      <div class="d-flex gap-2">
-          <?php require __DIR__ . '/../includes/partials/forum_button.php'; ?>
-        <a
-          href="../actions/export_crf.php?id=<?= (int) $crf['id'] ?>"
-          class="btn btn-crf-primary"
-        >
-          <i class="bi bi-file-earmark-pdf"></i> Export PDF
-        </a>
+    <?php
+    $dhEyebrow = 'Detail CRF';
+    require __DIR__ . '/../includes/partials/detail_header.php';
+    ?>
 
-        <a
-          href="dashboard.php"
-          class="btn btn-crf-outline"
-        >
-          <i class="bi bi-arrow-left"></i> Dashboard
-        </a>
-      </div>
-    </div>
-
-    <?php if ($flash): ?>
-      <div class="alert alert-<?= h($flash['type']) ?> crf-alert" role="alert">
-        <?= h($flash['message']) ?>
-      </div>
-    <?php endif; ?>
-
-    <div class="crf-status-strip mb-4">
-      <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>">
-        Level Urgensi: <?= h($crf['level'] ?? 'Belum ditentukan') ?>
-      </span>
-      <span class="crf-badge <?= statusBadgeClass($crf['status']) ?>">
-        Status: <?= h(statusLabel($crf['status'])) ?>
-      </span>
-    </div>
-
-    <?php if ($crf['workflow_stage'] === 'OTOMASI'): ?>
+    <?php if ($crf['tahap_alur'] === 'OTOMASI'): ?>
       <?php require __DIR__ . '/../includes/partials/handler_assignment.php'; ?>
     <?php endif; ?>
 
     <div class="crf-detail-layout">
-      <main class="crf-detail-main">
+      <div class="crf-detail-main">
 
-    <?php if ($crf['status'] === 'Solve' && $crf['solved_at']): ?>
+    <?php if ($crf['status'] === 'Solve' && $crf['tgl_selesai']): ?>
       <div class="crf-readonly-note mb-3">
         <i class="bi bi-check-circle"></i>
         Diselesaikan pada:
-        <?= h(date('d-m-Y H:i', strtotime($crf['solved_at']))) ?>
+        <?= h(date('d-m-Y H:i', strtotime($crf['tgl_selesai']))) ?>
       </div>
     <?php endif; ?>
 
-    <?php if ($crf['status'] === 'Cancel' && $crf['cancelled_at']): ?>
+    <?php if ($crf['status'] === 'Cancel' && $crf['tgl_dibatalkan']): ?>
       <div class="crf-readonly-note mb-3">
         <i class="bi bi-x-circle"></i>
         Dibatalkan pada:
-        <?= h(date('d-m-Y H:i', strtotime($crf['cancelled_at']))) ?>
+        <?= h(date('d-m-Y H:i', strtotime($crf['tgl_dibatalkan']))) ?>
       </div>
     <?php endif; ?>
+
+    <!-- Informasi Pengajuan -->
+    <?php
+    require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
+    ?>
+
+    <!-- Detail Pengajuan -->
+    <?php
+    require __DIR__ . '/../includes/partials/detail_permintaan.php';
+    ?>
 
     <!-- Tanggapan / Tindak Lanjut -->
     <div class="crf-section crf-response-card mb-4">
@@ -156,17 +133,7 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
     </div>
 
-    <!-- Informasi Pengajuan -->
-    <?php
-    require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
-    ?>
-
-    <!-- Detail Pengajuan -->
-    <?php
-    require __DIR__ . '/../includes/partials/detail_permintaan.php';
-    ?>
-
-    <?php if (!empty($crf['automation_completed_at']) && $crf['status'] !== 'Cancel'): ?>
+    <?php if (!empty($crf['otomasi_selesai']) && $crf['status'] !== 'Cancel'): ?>
         <div class="crf-section crf-detail-card mb-4">
             <div class="crf-section-header">
                 <span class="crf-section-number"><i class="bi bi-clipboard2-check"></i></span>
@@ -193,26 +160,26 @@ require_once __DIR__ . '/../includes/header.php';
           <div class="crf-info-row">
             <span class="crf-info-label">Tanggal Implementasi</span>
             <div class="crf-info-value">
-              <?= !empty($crf['implementation_date'])
-                  ? h(date('d-m-Y', strtotime($crf['implementation_date'])))
+              <?= !empty($crf['tgl_implementasi'])
+                  ? h(date('d-m-Y', strtotime($crf['tgl_implementasi'])))
                   : '-' ?>
             </div>
           </div>
           <div class="crf-info-row crf-request-row-long">
             <span class="crf-info-label">Implementasi / Hasil Perubahan</span>
-            <div class="crf-info-value"><?= nl2br(h($crf['implementation'] ?? '-')) ?></div>
+            <div class="crf-info-value"><?= nl2br(h($crf['implementasi'] ?? '-')) ?></div>
           </div>
           <div class="crf-info-row">
             <span class="crf-info-label">Tanggal PIR</span>
             <div class="crf-info-value">
-              <?= !empty($crf['pir_date'])
-                  ? h(date('d-m-Y', strtotime($crf['pir_date'])))
+              <?= !empty($crf['tgl_pir'])
+                  ? h(date('d-m-Y', strtotime($crf['tgl_pir'])))
                   : '-' ?>
             </div>
           </div>
           <div class="crf-info-row crf-request-row-long">
             <span class="crf-info-label">Post Implementation Review</span>
-            <div class="crf-info-value"><?= nl2br(h($crf['post_implementation_review'] ?? '-')) ?></div>
+            <div class="crf-info-value"><?= nl2br(h($crf['tinjauan_pasca_implementasi'] ?? '-')) ?></div>
           </div>
         </div>
       </div>
@@ -231,7 +198,7 @@ require_once __DIR__ . '/../includes/header.php';
           </p>
           <details class="crf-danger-zone">
           <summary class="btn btn-outline-danger btn-sm"><i class="bi bi-x-octagon"></i> Batalkan CRF secara administratif</summary>
-          <form class="mt-3" method="POST" action="../actions/admin_cancel_crf.php" data-confirm="Batalkan CRF <?= h($crf['request_number']) ?> secara administratif? Tindakan ini tidak bisa diurungkan.">
+          <form class="mt-3" method="POST" action="../actions/admin_cancel_crf.php" data-confirm="Batalkan CRF <?= h($crf['nomor_register']) ?> secara administratif? Tindakan ini tidak bisa diurungkan.">
             <?= csrfField() ?>
             <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
             <label for="admin_cancel_reason" class="form-label fw-semibold">Alasan Pembatalan <span class="text-danger">*</span></label>
@@ -243,7 +210,7 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
     <?php endif; ?>
 
-      </main>
+      </div><!-- /.crf-detail-main -->
       <aside class="crf-detail-sidebar">
         <?php require __DIR__ . '/../includes/partials/timeline.php'; ?>
 
