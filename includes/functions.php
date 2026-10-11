@@ -1072,20 +1072,43 @@ function crfDampakBertentangan(array $keys): array
 }
 
 /**
+ * Tipe Pengajuan mustahil dikombinasikan dengan pernyataan dampak ini
+ * (config 'tipe_pengajuan' => ... => 'tolak').
+ *
+ * @param string[] $keys
+ */
+function crfTipeBertentangan(?string $tipe, array $keys): bool
+{
+    $tipe = trim((string) $tipe);
+    $aturan = (array) ((crfUrgencyConfig()['tipe_pengajuan'][$tipe] ?? [])['tolak'] ?? []);
+    return (bool) array_intersect($aturan, crfDampakDipilih($keys));
+}
+
+/**
  * Penanda "perlu dicek" untuk CMO: daftar alasan (kosong = wajar).
  * Hanya untuk peran internal; jangan ditampilkan ke Pemohon.
  *
  * @param string[] $keys
  * @return string[]
  */
-function crfDampakCatatan(array $keys): array
+function crfDampakCatatan(array $keys, ?string $tipe = null): array
 {
     $keys = crfDampakDipilih($keys);
     $catatan = [];
     if (crfDampakBertentangan($keys)) {
         $catatan[] = 'Ada pernyataan yang saling bertentangan.';
     }
-    $batas = (int) (crfUrgencyConfig()['batas_banyak'] ?? 0);
+    $tipe = trim((string) $tipe);
+    $aturanTipe = (array) (crfUrgencyConfig()['tipe_pengajuan'][$tipe] ?? []);
+    if ($keys && $aturanTipe) {
+        if (crfTipeBertentangan($tipe, $keys)) {
+            $catatan[] = 'Tipe "' . $tipe . '" tidak lazim dengan salah satu pernyataan dampak yang dipilih.';
+        } elseif (array_intersect((array) ($aturanTipe['tandai'] ?? []), $keys)) {
+            $catatan[] = 'Tipe "' . $tipe . '" dengan pernyataan dampak tinggi: periksa apakah dampaknya nyata.';
+        } elseif (!empty($aturanTipe['tandai_hanya']) && !array_diff($keys, (array) $aturanTipe['tandai_hanya'])) {
+            $catatan[] = 'Tipe "' . $tipe . '" tetapi dampak yang dipilih hanya permintaan baru/fitur.';
+        }
+    }    $batas = (int) (crfUrgencyConfig()['batas_banyak'] ?? 0);
     if ($batas > 0 && count($keys) >= $batas) {
         $total = count(crfImpactOptions());
         $catatan[] = 'Pemohon mencentang ' . count($keys) . ' dari ' . $total . ' pernyataan.';

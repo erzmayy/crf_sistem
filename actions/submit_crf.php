@@ -112,6 +112,8 @@ if (!in_array($impactCategory, $allowedImpactCategories, true)) {
     $errors[] = 'Pilih minimal satu pernyataan dampak.';
 } elseif (crfDampakBertentangan($dampakKeys)) {
     $errors[] = 'Beberapa pernyataan dampak saling bertentangan. Periksa kembali pilihan Anda.';
+} elseif (crfTipeBertentangan($requestType, $dampakKeys)) {
+    $errors[] = 'Tipe pengajuan dan pernyataan dampak tidak sesuai. Periksa kembali pilihan Anda.';
 }
 
 /* Change Request Description */

@@ -242,6 +242,9 @@ pernyataan dampak yang dicentang Pemohon.
   "tidak ada risiko" dengan "risiko likuiditas dan hukum") ditolak saat kirim, diatur di
   `bertentangan` pada `config/urgensi.php`. Jika pemohon mencentang banyak pernyataan
   (`batas_banyak`, bawaan 7), CMO melihat penanda "Perlu dicek" di detail; pemohon tidak melihatnya.
+- **Tipe Pengajuan vs dampak** (tidak mengubah skor): `tipe_pengajuan` di `config/urgensi.php`.
+  Permohonan Tambahan + "berhenti total" ditolak; Permohonan Tambahan + dampak tinggi lain, atau
+  Problem dengan dampak hanya "permintaan baru/fitur", ditandai "Perlu dicek" untuk CMO.
 - CMO atau hasil Forum tetap dapat menetapkan Level akhir (`level_urgensi_final`).
 - CRF lama tetap memakai pemetaan satu pilihan lama; skornya tidak dihitung ulang.
 - Uji: `php tools/uji_urgensi.php`.

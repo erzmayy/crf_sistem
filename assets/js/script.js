@@ -489,6 +489,14 @@ if (fileInput && fileList) {
       });
       if (bentrok) {
         addInlineError(impactGroup, 'Beberapa pernyataan dampak saling bertentangan. Periksa kembali pilihan Anda.', errors);
+      } else {
+        var tipeTolak = {};
+        try { tipeTolak = JSON.parse(impactGroup.getAttribute('data-tipe-tolak') || '{}'); } catch (e) { tipeTolak = {}; }
+        var tipeField = document.getElementById('jenis_pengajuan');
+        var daftarTolak = (tipeField && tipeTolak[tipeField.value]) || [];
+        if (dicentang.some(function (key) { return daftarTolak.indexOf(key) !== -1; })) {
+          addInlineError(impactGroup, 'Tipe pengajuan dan pernyataan dampak tidak sesuai. Periksa kembali pilihan Anda.', errors);
+        }
       }
     }
 

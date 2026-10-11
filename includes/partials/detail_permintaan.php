@@ -85,7 +85,7 @@ if ($showUrgencyScore) {
         'dikunci' => !empty($hasilSkor['dikunci']),
     ];
 }
-$impactCatatan = $showUrgencyScore ? crfDampakCatatan($impactKeys) : [];
+$impactCatatan = $showUrgencyScore ? crfDampakCatatan($impactKeys, (string) ($crf['jenis_pengajuan'] ?? '')) : [];
 $formatSkor = static fn(float $v): string => rtrim(rtrim(number_format($v, 1, ',', ''), '0'), ',');
 
 $renderFiles = static function (array $files, bool $showDate) use ($attachmentIcon, $attachmentSize): void {

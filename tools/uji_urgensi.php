@@ -96,5 +96,16 @@ $cek('catatan: centang semua -> ada catatan', count(crfDampakCatatan($semua)) >=
 $cek('catatan: pilihan wajar -> kosong', crfDampakCatatan(['normal_operations_disrupted', 'high_no_alternative']), []);
 $cek('catatan: 7 centang tanpa konflik -> 1 catatan',
     count(crfDampakCatatan(['high_system_stopped', 'high_liquidity_legal_risk', 'high_no_alternative', 'normal_operations_disrupted', 'normal_operational_risk', 'normal_partial_access', 'normal_temporary_workaround'])), 1);
+$cek('tipe: Tambahan + berhenti total ditolak', crfTipeBertentangan('Permohonan Tambahan', ['high_system_stopped']), true);
+$cek('tipe: Problem + berhenti total boleh', crfTipeBertentangan('Problem', ['high_system_stopped']), false);
+$cek('tipe: tanpa tipe tidak menolak', crfTipeBertentangan('', ['high_system_stopped']), false);
+$cek('tipe: Tambahan + dampak tinggi lain ditandai',
+    count(crfDampakCatatan(['high_no_alternative'], 'Permohonan Tambahan')), 1);
+$cek('tipe: Tambahan + dampak normal wajar', crfDampakCatatan(['normal_partial_access'], 'Permohonan Tambahan'), []);
+$cek('tipe: Problem hanya fitur baru ditandai', count(crfDampakCatatan(['low_new_issue_or_feature'], 'Problem')), 1);
+$cek('tipe: Problem fitur baru + operasional terganggu wajar',
+    crfDampakCatatan(['low_new_issue_or_feature', 'normal_operations_disrupted'], 'Problem'), []);
+$cek('tipe: tidak mengubah skor',
+    crfHitungUrgensi(['high_no_alternative'])['skor'], 25.0);
 echo "\n$total pemeriksaan, $gagal gagal\n";
 exit($gagal > 0 ? 1 : 0);

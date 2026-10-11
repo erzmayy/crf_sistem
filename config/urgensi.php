@@ -65,4 +65,18 @@ return [
     ],
 
     'batas_banyak' => 7,
+
+    // Kecocokan Tipe Pengajuan dengan pernyataan dampak (tidak mengubah skor).
+    // 'tolak'  : kombinasi mustahil, pengajuan ditolak.
+    // 'tandai' : kombinasi janggal, CMO diberi penanda "Perlu dicek".
+    // 'tandai_hanya': ditandai bila SEMUA pernyataan yang dipilih ada di daftar ini.
+    'tipe_pengajuan' => [
+        'Permohonan Tambahan' => [
+            'tolak'  => ['high_system_stopped'],
+            'tandai' => ['high_liquidity_legal_risk', 'high_no_alternative'],
+        ],
+        'Problem' => [
+            'tandai_hanya' => ['low_new_issue_or_feature'],
+        ],
+    ],
 ];

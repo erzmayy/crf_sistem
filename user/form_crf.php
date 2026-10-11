@@ -368,7 +368,7 @@ require_once __DIR__ . '/../includes/header.php';
             $dampakOpsi = crfImpactOptions();
             uasort($dampakOpsi, static fn(string $a, string $b): int => strcasecmp($a, $b));
             ?>
-            <fieldset class="crf-impact-fieldset" id="dampak_dipilih_group" aria-describedby="dampak_dipilih_hint" data-bertentangan="<?= h(json_encode((object) (crfUrgencyConfig()['bertentangan'] ?? []), JSON_UNESCAPED_UNICODE)) ?>">
+            <fieldset class="crf-impact-fieldset" id="dampak_dipilih_group" aria-describedby="dampak_dipilih_hint" data-bertentangan="<?= h(json_encode((object) (crfUrgencyConfig()['bertentangan'] ?? []), JSON_UNESCAPED_UNICODE)) ?>" data-tipe-tolak="<?= h(json_encode((object) array_map(static fn(array $a): array => $a['tolak'] ?? [], (array) (crfUrgencyConfig()['tipe_pengajuan'] ?? [])), JSON_UNESCAPED_UNICODE)) ?>">
               <legend class="crf-field-label">Dampak Jika Tidak Dilakukan Perubahan<span class="text-danger">*</span></legend>
               <p class="crf-hint" id="dampak_dipilih_hint">
                 Centang <strong>semua</strong> pernyataan yang sesuai dengan kondisi sebenarnya.
