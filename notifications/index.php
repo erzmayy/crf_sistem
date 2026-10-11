@@ -13,7 +13,7 @@ $userId = (int) $_SESSION['user_id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
-    $pdo->prepare('UPDATE notifications SET read_at = NOW() WHERE user_id = :user_id AND read_at IS NULL')
+    $pdo->prepare('UPDATE crf_notifikasi SET read_at = NOW() WHERE user_id = :user_id AND read_at IS NULL')
         ->execute(['user_id' => $userId]);
     $_SESSION['flash'] = ['type' => 'success', 'message' => 'Semua notifikasi ditandai sudah dibaca.'];
     header('Location: index.php');
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $perPage = 20;
 $page = max(1, (int) ($_GET['page'] ?? 1));
-$countStmt = $pdo->prepare('SELECT COUNT(*) FROM notifications WHERE user_id = :user_id');
+$countStmt = $pdo->prepare('SELECT COUNT(*) FROM crf_notifikasi WHERE user_id = :user_id');
 $countStmt->execute(['user_id' => $userId]);
 $totalRows = (int) $countStmt->fetchColumn();
 $totalPages = max(1, (int) ceil($totalRows / $perPage));
@@ -30,7 +30,7 @@ $page = min($page, $totalPages);
 $offset = ($page - 1) * $perPage;
 
 $stmt = $pdo->prepare("
-    SELECT * FROM notifications
+    SELECT * FROM crf_notifikasi
     WHERE user_id = :user_id
     ORDER BY id DESC
     LIMIT {$perPage} OFFSET {$offset}

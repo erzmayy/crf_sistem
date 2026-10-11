@@ -4,7 +4,7 @@
  * ---------------------------------------------------------------
  * Kelola master Kategori CRF (Admin):
  *   op = save | toggle | delete | add_member | remove_member
- * Anggota kategori = PIC CRF (tabel crf_category_handlers).
+ * Anggota kategori = PIC CRF (tabel crf_kategori_pic).
  * Hapus kategori = soft delete (deleted_at), data CRF lama aman.
  * ---------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ function categoryMasterFinish(string $type, string $message, string $redirect): 
 }
 
 $categoryId = (int) ($_POST['id'] ?? 0);
-$table = 'crf_categories';
+$table = 'crf_kategori';
 
 try {
     switch ($op) {
@@ -172,13 +172,13 @@ try {
 
             if ($op === 'add_member') {
                 $pdo->prepare('
-                    INSERT INTO crf_category_handlers (crf_category_id, user_id, user_name)
+                    INSERT INTO crf_kategori_pic (crf_category_id, user_id, user_name)
                     VALUES (:category_id, :user_id, :user_name)
                     ON DUPLICATE KEY UPDATE user_name = VALUES(user_name)
                 ')->execute(['category_id' => $categoryId, 'user_id' => $userId, 'user_name' => $memberName]);
                 $message = $memberName . ' ditambahkan sebagai PIC CRF kategori ' . $category['name'] . '.';
             } else {
-                $pdo->prepare('DELETE FROM crf_category_handlers WHERE crf_category_id = :category_id AND user_id = :user_id')
+                $pdo->prepare('DELETE FROM crf_kategori_pic WHERE crf_category_id = :category_id AND user_id = :user_id')
                     ->execute(['category_id' => $categoryId, 'user_id' => $userId]);
                 $message = $memberName . ' dihapus dari PIC CRF kategori ' . $category['name'] . '.';
             }

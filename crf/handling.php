@@ -44,9 +44,9 @@ $crfCards = $pdo->query("
         COALESCE(SUM(CASE WHEN {$conditions['approval']['sql']} THEN 1 ELSE 0 END), 0) AS approval,
         COALESCE(SUM(CASE WHEN {$conditions['selesai']['sql']} THEN 1 ELSE 0 END), 0) AS selesai,
         COALESCE(SUM(cr.sla_result = 'Melebihi SLA'), 0) AS lewat_sla,
-        (SELECT COUNT(*) FROM crf_category_handlers h WHERE h.crf_category_id = c.id) AS handler_count
-    FROM crf_categories c
-    LEFT JOIN change_requests cr ON cr.crf_category_id = c.id
+        (SELECT COUNT(*) FROM crf_kategori_pic h WHERE h.crf_category_id = c.id) AS handler_count
+    FROM crf_kategori c
+    LEFT JOIN crf_pengajuan cr ON cr.crf_category_id = c.id
     WHERE c.deleted_at IS NULL AND {$categoryScopeSql}
     GROUP BY c.id, c.name, c.description, c.is_active, c.sla_value, c.sla_unit, c.sort_order
     ORDER BY c.sort_order, c.name

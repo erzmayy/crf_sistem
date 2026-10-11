@@ -19,7 +19,7 @@ $params = [];
 if ($view === 'history') {
     $where[] = "EXISTS (
         SELECT 1
-        FROM crf_activity_logs activity_log
+        FROM crf_log_aktivitas activity_log
         WHERE activity_log.change_request_id = cr.id
           AND (
               activity_log.activity = 'Approval Kepala Departemen Operasional'
@@ -53,7 +53,7 @@ $page = max(1, (int) ($_GET['page'] ?? 1));
 
 $countSql = "
     SELECT COUNT(*)
-    FROM change_requests cr
+    FROM crf_pengajuan cr
     WHERE " . implode(' AND ', $where);
 
 $countStmt = $pdo->prepare($countSql);
@@ -73,7 +73,7 @@ $offset = ($page - 1) * $perPage;
 
 $sql = "
     SELECT cr.*
-    FROM change_requests cr
+    FROM crf_pengajuan cr
     WHERE " . implode(' AND ', $where) . "
     ORDER BY " . ($view === 'history'
         ? 'cr.updated_at DESC'
@@ -95,7 +95,7 @@ $requests = $stmt->fetchAll();
 
 $summaryStmt = $pdo->query(" 
     SELECT COUNT(*)
-    FROM change_requests
+    FROM crf_pengajuan
     WHERE workflow_stage = 'kadep_operasional'
       AND status <> 'Draft'
 ");

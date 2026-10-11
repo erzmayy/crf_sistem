@@ -99,7 +99,7 @@ $page = max(
 
 $countSql = "
     SELECT COUNT(*)
-    FROM change_requests cr
+    FROM crf_pengajuan cr
     WHERE " . implode(' AND ', $where);
 
 $countStmt = $pdo->prepare($countSql);
@@ -125,8 +125,8 @@ $offset = ($page - 1) * $perPage;
 
 $sql = "
     SELECT cr.*, cc.name AS crf_category_name
-    FROM change_requests cr
-    LEFT JOIN crf_categories cc ON cc.id = cr.crf_category_id
+    FROM crf_pengajuan cr
+    LEFT JOIN crf_kategori cc ON cc.id = cr.crf_category_id
     WHERE " . implode(' AND ', $where) . "
     ORDER BY cr.created_at DESC
     LIMIT {$perPage} OFFSET {$offset}
@@ -150,7 +150,7 @@ $summaryStmt = $pdo->query(
         SUM(status = 'Dalam Proses') AS processing,
         SUM(status = 'Solve') AS solved,
         SUM(status = 'Cancel') AS cancelled
-     FROM change_requests
+     FROM crf_pengajuan
      WHERE status <> 'Draft'"
 );
 
@@ -165,7 +165,7 @@ $displaySumSql = implode(",\n", array_map(
 ));
 $displaySummaryStmt = $pdo->prepare("
     SELECT {$displaySumSql}, SUM(cr.status <> 'Draft') AS total
-    FROM change_requests cr
+    FROM crf_pengajuan cr
     {$summaryDateSql}
 ");
 $displaySummaryStmt->execute($summaryDateParams);

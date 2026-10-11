@@ -24,7 +24,7 @@ $params = [];
 if ($queue === 'history') {
     $where[] = "EXISTS (
         SELECT 1
-        FROM crf_activity_logs activity_log
+        FROM crf_log_aktivitas activity_log
         WHERE activity_log.change_request_id = cr.id
           AND activity_log.activity IN (
               'Eksekusi Selesai',
@@ -66,7 +66,7 @@ $page = max(1, (int) ($_GET['page'] ?? 1));
 
 $countSql = "
     SELECT COUNT(*)
-    FROM change_requests cr
+    FROM crf_pengajuan cr
     WHERE " . implode(' AND ', $where);
 
 $countStmt = $pdo->prepare($countSql);
@@ -86,8 +86,8 @@ $offset = ($page - 1) * $perPage;
 
 $sql = "
     SELECT cr.*, cc.name AS crf_category_name
-    FROM change_requests cr
-    LEFT JOIN crf_categories cc ON cc.id = cr.crf_category_id
+    FROM crf_pengajuan cr
+    LEFT JOIN crf_kategori cc ON cc.id = cr.crf_category_id
     WHERE " . implode(' AND ', $where) . "
     ORDER BY " . ($queue === 'history'
         ? 'cr.updated_at DESC'
@@ -112,7 +112,7 @@ $summaryStmt = $pdo->query("
     SELECT
         COUNT(*) AS in_execution,
         SUM(CASE WHEN sla_due_at IS NOT NULL AND sla_due_at < NOW() THEN 1 ELSE 0 END) AS overdue
-    FROM change_requests cr
+    FROM crf_pengajuan cr
     WHERE cr.workflow_stage = 'OTOMASI'
       AND cr.kadep_operasional_approved_at IS NOT NULL
       AND cr.status <> 'Draft'

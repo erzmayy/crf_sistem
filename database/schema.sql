@@ -16,10 +16,10 @@ USE crf_sistem;
 -- ---------------------------------------------------------------------
 
 -- ---------------------------------------------------------------------
--- Tabel: change_requests
+-- Tabel: crf_pengajuan
 -- Tabel utama, satu baris = satu pengajuan Change Request Form.
 -- ---------------------------------------------------------------------
-CREATE TABLE change_requests (
+CREATE TABLE crf_pengajuan (
     id                          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     request_number              VARCHAR(50)     NULL UNIQUE,
     user_id                     INT UNSIGNED    NOT NULL,
@@ -112,22 +112,22 @@ CREATE TABLE change_requests (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
--- Tabel: crf_sequence
+-- Tabel: crf_nomor_urut
 -- Penghitung nomor register yang aman untuk pengajuan bersamaan.
 -- ---------------------------------------------------------------------
-CREATE TABLE crf_sequence (
+CREATE TABLE crf_nomor_urut (
     year        CHAR(2) NOT NULL PRIMARY KEY,
     last_number INT UNSIGNED NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- INSERT INTO crf_sequence (id, last_number) VALUES (1, 0);
+-- INSERT INTO crf_nomor_urut (id, last_number) VALUES (1, 0);
 
 -- ---------------------------------------------------------------------
 -- Tabel: attachments
 -- Bukti dan informasi pendukung yang diupload user. Satu CRF bisa
 -- punya beberapa file, karena itu dipisah ke tabel sendiri.
 -- ---------------------------------------------------------------------
-CREATE TABLE attachments (
+CREATE TABLE crf_lampiran (
     id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     change_request_id   INT UNSIGNED    NOT NULL,
     original_name       VARCHAR(255)    NOT NULL,
@@ -139,15 +139,15 @@ CREATE TABLE attachments (
     uploaded_at         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_attachment_crf
-        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
+        FOREIGN KEY (change_request_id) REFERENCES crf_pengajuan(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
--- Tabel: crf_activity_logs
+-- Tabel: crf_log_aktivitas
 -- Timeline aktivitas setiap pengajuan CRF.
 -- ---------------------------------------------------------------------
-CREATE TABLE crf_activity_logs (
+CREATE TABLE crf_log_aktivitas (
     id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     change_request_id   INT UNSIGNED NOT NULL,
     activity            VARCHAR(100) NOT NULL,
@@ -156,15 +156,15 @@ CREATE TABLE crf_activity_logs (
     created_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_activity_crf
-        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
+        FOREIGN KEY (change_request_id) REFERENCES crf_pengajuan(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
--- Tabel: crf_user_roles
+-- Tabel: crf_peran_pengguna
 -- Mapping role workflow CRF terhadap akun prototype.
 -- ---------------------------------------------------------------------
-CREATE TABLE crf_user_roles (
+CREATE TABLE crf_peran_pengguna (
     id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id             INT UNSIGNED NOT NULL,
     role                ENUM('pemohon','cmo','otomasi','kadep_operasional','admin') NOT NULL,
@@ -174,10 +174,10 @@ CREATE TABLE crf_user_roles (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
--- Tabel: forum_comments dan forum_read_states
+-- Tabel: crf_forum_komentar dan crf_forum_status_baca
 -- Komentar diskusi CRF dan posisi baca terakhir per user.
 -- ---------------------------------------------------------------------
-CREATE TABLE forum_comments (
+CREATE TABLE crf_forum_komentar (
     id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     change_request_id       INT UNSIGNED NOT NULL,
     user_id                 INT UNSIGNED NOT NULL,
@@ -191,14 +191,14 @@ CREATE TABLE forum_comments (
     KEY idx_forum_comments_crf_created (change_request_id, created_at, id),
     KEY idx_forum_comments_user (user_id),
     CONSTRAINT fk_forum_comments_crf
-        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
+        FOREIGN KEY (change_request_id) REFERENCES crf_pengajuan(id)
         ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_forum_comments_reply
-        FOREIGN KEY (reply_to_comment_id) REFERENCES forum_comments(id)
+        FOREIGN KEY (reply_to_comment_id) REFERENCES crf_forum_komentar(id)
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE forum_read_states (
+CREATE TABLE crf_forum_status_baca (
     user_id                     INT UNSIGNED NOT NULL,
     change_request_id           INT UNSIGNED NOT NULL,
     last_read_comment_id        INT UNSIGNED NOT NULL DEFAULT 0,
@@ -207,13 +207,13 @@ CREATE TABLE forum_read_states (
 
     PRIMARY KEY (user_id, change_request_id),
     CONSTRAINT fk_forum_read_states_crf
-        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
+        FOREIGN KEY (change_request_id) REFERENCES crf_pengajuan(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Pembahasan Level Urgensi & SLA di Forum: CMO mengajukan, Admin mencatat hasil
 -- (Tetap / Diubah). Satu pembahasan terbuka per CRF.
-CREATE TABLE forum_discussions (
+CREATE TABLE crf_forum_pembahasan (
     id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     change_request_id       INT UNSIGNED NOT NULL,
     status                  ENUM('menunggu','selesai','dibatalkan') NOT NULL DEFAULT 'menunggu',
@@ -252,7 +252,7 @@ CREATE TABLE forum_discussions (
     KEY idx_forum_discussions_crf (change_request_id, created_at),
     KEY idx_forum_discussions_status_due (status, due_at),
     CONSTRAINT fk_forum_discussions_crf
-        FOREIGN KEY (change_request_id) REFERENCES change_requests(id)
+        FOREIGN KEY (change_request_id) REFERENCES crf_pengajuan(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -325,7 +325,7 @@ DELIMITER ;
 -- ------------------------------------------------------------------
 -- 1. Master Kategori CRF + PIC CRF
 -- ------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS crf_categories (
+CREATE TABLE IF NOT EXISTS crf_kategori (
     id                     INT UNSIGNED NOT NULL AUTO_INCREMENT,
     name                   VARCHAR(100) NOT NULL,
     description            VARCHAR(255) NULL,
@@ -346,7 +346,7 @@ CREATE TABLE IF NOT EXISTS crf_categories (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- PIC CRF per kategori (diisi Admin di Master Kategori CRF).
-CREATE TABLE IF NOT EXISTS crf_category_handlers (
+CREATE TABLE IF NOT EXISTS crf_kategori_pic (
     id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
     crf_category_id INT UNSIGNED NOT NULL,
     user_id         INT UNSIGNED NOT NULL,
@@ -356,11 +356,11 @@ CREATE TABLE IF NOT EXISTS crf_category_handlers (
     UNIQUE KEY uq_crf_category_handlers (crf_category_id, user_id),
     KEY idx_crf_category_handlers_user (user_id),
     CONSTRAINT fk_crf_category_handlers_category
-        FOREIGN KEY (crf_category_id) REFERENCES crf_categories (id)
+        FOREIGN KEY (crf_category_id) REFERENCES crf_kategori (id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO crf_categories (name, description, legacy_change_category, sla_value, sla_unit, sort_order)
+INSERT INTO crf_kategori (name, description, legacy_change_category, sla_value, sla_unit, sort_order)
 SELECT * FROM (
     SELECT 'Aplikasi' AS name, 'Perubahan aplikasi (SIAP, database, dan aplikasi lain)' AS description, 'Aplikasi' AS legacy, 2 AS sla_value, 'Hari' AS sla_unit, 1 AS sort_order
     UNION ALL SELECT 'Infrastruktur', 'Perubahan infrastruktur (jaringan, server, perangkat)', 'Infrastruktur', 3, 'Hari', 2
@@ -368,28 +368,28 @@ SELECT * FROM (
     UNION ALL SELECT 'Security', 'Perubahan kewenangan menu, user ID, password', 'Security', 1, 'Hari', 4
     UNION ALL SELECT 'Lainnya', 'Perubahan lain di luar kategori yang tersedia', 'Lainnya', 3, 'Hari', 5
 ) seed
-WHERE NOT EXISTS (SELECT 1 FROM crf_categories existing WHERE existing.name = seed.name);
+WHERE NOT EXISTS (SELECT 1 FROM crf_kategori existing WHERE existing.name = seed.name);
 
 -- ------------------------------------------------------------------
 -- 2. Kategori dinamis, handler, hasil SLA
 -- ------------------------------------------------------------------
-CALL crf_add_column('change_requests', 'crf_category_id', 'INT UNSIGNED NULL AFTER change_category');
-CALL crf_add_column('change_requests', 'requester_position', 'VARCHAR(150) NULL AFTER email');
-CALL crf_add_column('change_requests', 'assigned_handler_id', 'INT UNSIGNED NULL AFTER workflow_stage');
-CALL crf_add_column('change_requests', 'assigned_handler_name', 'VARCHAR(150) NULL AFTER assigned_handler_id');
-CALL crf_add_column('change_requests', 'assigned_at', 'DATETIME NULL AFTER assigned_handler_name');
-CALL crf_add_column('change_requests', 'sla_actual_minutes', 'INT UNSIGNED NULL AFTER sla_due_at');
-CALL crf_add_column('change_requests', 'sla_result', 'ENUM(''Sesuai SLA'',''Melebihi SLA'') NULL AFTER sla_actual_minutes');
+CALL crf_add_column('crf_pengajuan', 'crf_category_id', 'INT UNSIGNED NULL AFTER change_category');
+CALL crf_add_column('crf_pengajuan', 'requester_position', 'VARCHAR(150) NULL AFTER email');
+CALL crf_add_column('crf_pengajuan', 'assigned_handler_id', 'INT UNSIGNED NULL AFTER workflow_stage');
+CALL crf_add_column('crf_pengajuan', 'assigned_handler_name', 'VARCHAR(150) NULL AFTER assigned_handler_id');
+CALL crf_add_column('crf_pengajuan', 'assigned_at', 'DATETIME NULL AFTER assigned_handler_name');
+CALL crf_add_column('crf_pengajuan', 'sla_actual_minutes', 'INT UNSIGNED NULL AFTER sla_due_at');
+CALL crf_add_column('crf_pengajuan', 'sla_result', 'ENUM(''Sesuai SLA'',''Melebihi SLA'') NULL AFTER sla_actual_minutes');
 
-CALL crf_add_index('change_requests', 'idx_change_requests_crf_category', 'crf_category_id');
-CALL crf_add_index('change_requests', 'idx_change_requests_assigned_handler', 'assigned_handler_id');
+CALL crf_add_index('crf_pengajuan', 'idx_change_requests_crf_category', 'crf_category_id');
+CALL crf_add_index('crf_pengajuan', 'idx_change_requests_assigned_handler', 'assigned_handler_id');
 
-CALL crf_add_foreign_key('change_requests', 'fk_change_requests_crf_category',
-    'FOREIGN KEY (crf_category_id) REFERENCES crf_categories (id) ON DELETE RESTRICT ON UPDATE CASCADE');
+CALL crf_add_foreign_key('crf_pengajuan', 'fk_change_requests_crf_category',
+    'FOREIGN KEY (crf_category_id) REFERENCES crf_kategori (id) ON DELETE RESTRICT ON UPDATE CASCADE');
 
 -- Backfill kategori dinamis dari ENUM lama.
-UPDATE change_requests cr
-JOIN crf_categories c
+UPDATE crf_pengajuan cr
+JOIN crf_kategori c
   ON c.name = CASE cr.change_category
                 WHEN 'Aplikasi' THEN 'Aplikasi'
                 WHEN 'Infrastruktur' THEN 'Infrastruktur'
@@ -404,14 +404,14 @@ WHERE cr.crf_category_id IS NULL
 -- ------------------------------------------------------------------
 -- 3. Audit trail CRF: user & perubahan status
 -- ------------------------------------------------------------------
-CALL crf_add_column('crf_activity_logs', 'user_id', 'INT UNSIGNED NULL AFTER change_request_id');
-CALL crf_add_column('crf_activity_logs', 'old_status', 'VARCHAR(50) NULL AFTER actor');
-CALL crf_add_column('crf_activity_logs', 'new_status', 'VARCHAR(50) NULL AFTER old_status');
+CALL crf_add_column('crf_log_aktivitas', 'user_id', 'INT UNSIGNED NULL AFTER change_request_id');
+CALL crf_add_column('crf_log_aktivitas', 'old_status', 'VARCHAR(50) NULL AFTER actor');
+CALL crf_add_column('crf_log_aktivitas', 'new_status', 'VARCHAR(50) NULL AFTER old_status');
 
 -- ------------------------------------------------------------------
 -- 4. Notifikasi in-app + status email
 -- ------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS notifications (
+CREATE TABLE IF NOT EXISTS crf_notifikasi (
     id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
     user_id            INT UNSIGNED NOT NULL,
     title              VARCHAR(150) NOT NULL,
@@ -425,14 +425,14 @@ CREATE TABLE IF NOT EXISTS notifications (
     KEY idx_notifications_user_read (user_id, read_at),
     KEY idx_notifications_email_status (email_status),
     CONSTRAINT fk_notifications_change_request
-        FOREIGN KEY (change_request_id) REFERENCES change_requests (id)
+        FOREIGN KEY (change_request_id) REFERENCES crf_pengajuan (id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------------
 -- 5. Peringatan SLA untuk PIC CRF (anti kirim ganda)
 -- ------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS crf_sla_alerts (
+CREATE TABLE IF NOT EXISTS crf_peringatan_sla (
     id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
     change_request_id INT UNSIGNED NOT NULL,
     alert_type        ENUM('pengingat','mendesak','terlambat') NOT NULL,
@@ -441,7 +441,7 @@ CREATE TABLE IF NOT EXISTS crf_sla_alerts (
     PRIMARY KEY (id),
     UNIQUE KEY uq_crf_sla_alert (change_request_id, alert_type, alert_seq),
     CONSTRAINT fk_crf_sla_alerts_crf
-        FOREIGN KEY (change_request_id) REFERENCES change_requests (id)
+        FOREIGN KEY (change_request_id) REFERENCES crf_pengajuan (id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

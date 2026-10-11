@@ -22,7 +22,7 @@ $id = (int) ($_POST['id'] ?? 0);
 
 $stmt = $pdo->prepare(
     'SELECT id
-     FROM change_requests
+     FROM crf_pengajuan
      WHERE id = :id
        AND user_id = :user_id
        AND status = \'Draft\'
@@ -48,7 +48,7 @@ if (!$draft) {
 
 try {
     $del = $pdo->prepare(
-        'DELETE FROM change_requests
+        'DELETE FROM crf_pengajuan
          WHERE id = :id
            AND user_id = :user_id
            AND status = \'Draft\''

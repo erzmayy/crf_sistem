@@ -10,7 +10,7 @@ $id = (int) ($_GET['id'] ?? 0);
 
 $stmt = $pdo->prepare("
     SELECT cr.*
-    FROM change_requests cr
+    FROM crf_pengajuan cr
     WHERE cr.id = :id
       AND cr.workflow_stage = 'OTOMASI'
       AND cr.kadep_operasional_approved_at IS NOT NULL
@@ -56,7 +56,7 @@ if (!$crf) {
 
 $attStmt = $pdo->prepare(
     'SELECT *
-     FROM attachments
+     FROM crf_lampiran
      WHERE change_request_id = :id
      ORDER BY uploaded_at ASC'
 );
@@ -65,7 +65,7 @@ $attachments = $attStmt->fetchAll();
 
 $timelineStmt = $pdo->prepare("
     SELECT activity, description, actor, old_status, new_status, created_at
-    FROM crf_activity_logs
+    FROM crf_log_aktivitas
     WHERE change_request_id = :id
     ORDER BY created_at ASC, id ASC
 ");
@@ -87,7 +87,7 @@ $uatFailNote = null;
 if ($otomasiPhase === 'perbaikan') {
     $uatFailStmt = $pdo->prepare("
         SELECT description, actor, created_at
-        FROM crf_activity_logs
+        FROM crf_log_aktivitas
         WHERE change_request_id = :id AND activity = 'UAT Perlu Perbaikan'
         ORDER BY id DESC
         LIMIT 1

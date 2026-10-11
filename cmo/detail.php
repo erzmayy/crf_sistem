@@ -28,13 +28,13 @@ $id = (int) ($_GET['id'] ?? 0);
  * ========================================================= */
 $stmt = $pdo->prepare("
     SELECT cr.*
-    FROM change_requests cr
+    FROM crf_pengajuan cr
     WHERE cr.id = :id
       AND (
           cr.workflow_stage IN ('CMO_FILTER', 'UAT', 'PEMOHON_PIR', 'CMO_FINAL')
           OR EXISTS (
               SELECT 1
-              FROM crf_activity_logs activity_log
+              FROM crf_log_aktivitas activity_log
               WHERE activity_log.change_request_id = cr.id
                 AND (
                     activity_log.activity = 'Lolos Filter CMO'
@@ -87,7 +87,7 @@ if (!$crf) {
  * ========================================================= */
 $attStmt = $pdo->prepare("
     SELECT *
-    FROM attachments
+    FROM crf_lampiran
     WHERE change_request_id = :id
     ORDER BY uploaded_at ASC
 ");
@@ -108,7 +108,7 @@ $logStmt = $pdo->prepare("
         old_status,
         new_status,
         created_at
-    FROM crf_activity_logs
+    FROM crf_log_aktivitas
     WHERE change_request_id = :id
     ORDER BY created_at ASC, id ASC
 ");
@@ -449,14 +449,14 @@ require_once __DIR__ . '/../includes/header.php';
             // Catatan serah terima terakhir dari PIC CRF (eksekusi selesai / dikirim ulang).
             $uatHandoffStmt = $pdo->prepare("
                 SELECT activity, description, actor, created_at
-                FROM crf_activity_logs
+                FROM crf_log_aktivitas
                 WHERE change_request_id = :id AND activity IN ('Eksekusi Selesai', 'UAT Dikirim Ulang')
                 ORDER BY id DESC
                 LIMIT 1
             ");
             $uatHandoffStmt->execute(['id' => (int) $crf['id']]);
             $uatHandoff = $uatHandoffStmt->fetch() ?: null;
-            $uatRoundStmt = $pdo->prepare("SELECT COUNT(*) FROM crf_activity_logs WHERE change_request_id = :id AND activity = 'UAT Perlu Perbaikan'");
+            $uatRoundStmt = $pdo->prepare("SELECT COUNT(*) FROM crf_log_aktivitas WHERE change_request_id = :id AND activity = 'UAT Perlu Perbaikan'");
             $uatRoundStmt->execute(['id' => (int) $crf['id']]);
             $uatRound = (int) $uatRoundStmt->fetchColumn() + 1;
             ?>

@@ -4,7 +4,7 @@
  *
  * Variabel yang HARUS sudah ada di scope pemanggil:
  *   array $crf
- *   array $timeline   hasil query dari crf_activity_logs
+ *   array $timeline   hasil query dari crf_log_aktivitas
  */
 
 $activityLabels = [

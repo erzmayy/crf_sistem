@@ -11,7 +11,7 @@
  *   terlambat : melewati batas SLA, lalu diulang tiap hari kerja
  *
  * Yang dikirim hanya tahap tertinggi yang sedang berlaku. Penanda anti
- * kirim ganda ada di tabel crf_sla_alerts. Dijalankan berkala oleh
+ * kirim ganda ada di tabel crf_peringatan_sla. Dijalankan berkala oleh
  * database/maintenance/kirim_peringatan_sla.php.
  * ---------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ function crfSendSlaAlerts(PDO $pdo, ?DateTimeImmutable $now = null): int
     $rows = $pdo->query("
         SELECT id, request_number, crf_category_id, assigned_handler_id,
                sla_started_at, sla_due_at
-        FROM change_requests
+        FROM crf_pengajuan
         WHERE status = 'Dalam Proses'
           AND workflow_stage = 'OTOMASI'
           AND kadep_operasional_approved_at IS NOT NULL
@@ -98,11 +98,11 @@ function crfSendSlaAlerts(PDO $pdo, ?DateTimeImmutable $now = null): int
 
     $lastStmt = $pdo->prepare('
         SELECT MAX(alert_seq) AS seq, MAX(sent_at) AS last_at
-        FROM crf_sla_alerts
+        FROM crf_peringatan_sla
         WHERE change_request_id = :id AND alert_type = :type
     ');
     $insert = $pdo->prepare('
-        INSERT INTO crf_sla_alerts (change_request_id, alert_type, alert_seq, sent_at)
+        INSERT INTO crf_peringatan_sla (change_request_id, alert_type, alert_seq, sent_at)
         VALUES (:id, :type, :seq, :sent_at)
     ');
 

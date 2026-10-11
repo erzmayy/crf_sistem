@@ -7,7 +7,7 @@
  * - siap_db  : baca user dari tabel siap.tbl_user (mode integrasi awal)
  *
  * CRF_ROLE_SOURCE:
- * - table    : role dibaca dari crf_user_roles
+ * - table    : role dibaca dari crf_peran_pengguna
  * - resolver : role ditentukan dari userid/dept/divisi user SIAP
  */
 const CRF_USER_SOURCE = 'siap_db';

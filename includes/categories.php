@@ -14,7 +14,7 @@ require_once __DIR__ . '/session.php';
  */
 function crfCategories(PDO $pdo, bool $onlyActive = true): array
 {
-    $sql = 'SELECT * FROM crf_categories WHERE deleted_at IS NULL';
+    $sql = 'SELECT * FROM crf_kategori WHERE deleted_at IS NULL';
     if ($onlyActive) {
         $sql .= ' AND is_active = 1';
     }
@@ -25,7 +25,7 @@ function crfCategories(PDO $pdo, bool $onlyActive = true): array
 
 function findCrfCategory(PDO $pdo, int $id): ?array
 {
-    $stmt = $pdo->prepare('SELECT * FROM crf_categories WHERE id = :id AND deleted_at IS NULL LIMIT 1');
+    $stmt = $pdo->prepare('SELECT * FROM crf_kategori WHERE id = :id AND deleted_at IS NULL LIMIT 1');
     $stmt->execute(['id' => $id]);
     $row = $stmt->fetch();
 
@@ -61,7 +61,7 @@ function crfCategoryName(array $crf, string $fallback = '-'): string
     if (!empty($crf['crf_category_id'])) {
         if ($names === null) {
             try {
-                $names = getConnection()->query('SELECT id, name FROM crf_categories')->fetchAll(PDO::FETCH_KEY_PAIR);
+                $names = getConnection()->query('SELECT id, name FROM crf_kategori')->fetchAll(PDO::FETCH_KEY_PAIR);
             } catch (Throwable $e) {
                 $names = [];
             }
@@ -81,7 +81,7 @@ function crfCategoryName(array $crf, string $fallback = '-'): string
  */
 function crfCategoryHandlerIds(PDO $pdo, int $categoryId): array
 {
-    $stmt = $pdo->prepare('SELECT user_id FROM crf_category_handlers WHERE crf_category_id = :id');
+    $stmt = $pdo->prepare('SELECT user_id FROM crf_kategori_pic WHERE crf_category_id = :id');
     $stmt->execute(['id' => $categoryId]);
 
     return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
@@ -97,7 +97,7 @@ function handledCrfCategoryIds(PDO $pdo, int $userId): array
     static $cache = [];
 
     if (!isset($cache[$userId])) {
-        $stmt = $pdo->prepare('SELECT crf_category_id FROM crf_category_handlers WHERE user_id = :user_id');
+        $stmt = $pdo->prepare('SELECT crf_category_id FROM crf_kategori_pic WHERE user_id = :user_id');
         $stmt->execute(['user_id' => $userId]);
         $cache[$userId] = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
@@ -115,9 +115,9 @@ function unhandledCrfCategoryIds(PDO $pdo): array
 {
     return array_map('intval', $pdo->query('
         SELECT c.id
-        FROM crf_categories c
+        FROM crf_kategori c
         WHERE NOT EXISTS (
-            SELECT 1 FROM crf_category_handlers h WHERE h.crf_category_id = c.id
+            SELECT 1 FROM crf_kategori_pic h WHERE h.crf_category_id = c.id
         )
     ')->fetchAll(PDO::FETCH_COLUMN));
 }
@@ -136,7 +136,7 @@ function categoryMembers(PDO $pdo): array
     $rows = $pdo->query("
         SELECT p.id AS pivot_id, p.crf_category_id AS category_id, p.user_id,
                COALESCE(u.nama, p.user_name) AS user_name, u.userid, u.email, u.no_wa
-        FROM crf_category_handlers p
+        FROM crf_kategori_pic p
         LEFT JOIN {$userTable} u ON u.id = p.user_id
         ORDER BY p.id
     ")->fetchAll();

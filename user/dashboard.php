@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/functions.php';
 requireLogin();
 $pdo=getConnection();
 $user=getCurrentUser();
-$stmt=$pdo->prepare("SELECT COUNT(*) total, SUM(status='Draft') draft, SUM(status='Belum Ditindak Lanjuti') pending, SUM(status='Perlu Revisi') revision, SUM(status='Dalam Proses') processing, SUM(status='Solve') solved, SUM(status='Cancel') cancelled FROM change_requests WHERE user_id=:user_id");
+$stmt=$pdo->prepare("SELECT COUNT(*) total, SUM(status='Draft') draft, SUM(status='Belum Ditindak Lanjuti') pending, SUM(status='Perlu Revisi') revision, SUM(status='Dalam Proses') processing, SUM(status='Solve') solved, SUM(status='Cancel') cancelled FROM crf_pengajuan WHERE user_id=:user_id");
 $stmt->execute(['user_id'=>$user['id']]);
 $summary=$stmt->fetch() ?: [];
 $flash=$_SESSION['flash']??null; unset($_SESSION['flash']);

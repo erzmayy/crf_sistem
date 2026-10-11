@@ -16,7 +16,7 @@ function requireLogin(): void
 }
 
 /**
- * Mengambil role workflow CRF dari tabel crf_user_roles.
+ * Mengambil role workflow CRF dari tabel crf_peran_pengguna.
  * Ini satu-satunya sumber kebenaran untuk role user.
  * Jika user belum punya baris role aktif, dianggap 'pemohon'.
  */
@@ -38,7 +38,7 @@ function getCrfRole(): string
     try {
         $stmt = getConnection()->prepare(
             'SELECT role
-             FROM crf_user_roles
+             FROM crf_peran_pengguna
              WHERE user_id = :user_id
                AND is_active = 1
              ORDER BY id ASC
@@ -125,7 +125,7 @@ function crfHandlerScope(PDO $pdo): array
 }
 
 /**
- * Kondisi SQL lingkup handler untuk query list/summary (alias tabel change_requests).
+ * Kondisi SQL lingkup handler untuk query list/summary (alias tabel crf_pengajuan).
  */
 function crfHandlerScopeSql(PDO $pdo, string $alias = 'cr'): string
 {
@@ -315,7 +315,7 @@ function canAccessCrf(PDO $pdo, int $crfId): bool
 
     $stmt = $pdo->prepare(
         'SELECT user_id, status, crf_category_id
-         FROM change_requests
+         FROM crf_pengajuan
          WHERE id = :id
          LIMIT 1'
     );

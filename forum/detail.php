@@ -24,17 +24,17 @@ if (!canViewForumCrf($pdo, $crfId)) {
     exit;
 }
 
-$crfStmt = $pdo->prepare('SELECT * FROM change_requests WHERE id = :id LIMIT 1');
+$crfStmt = $pdo->prepare('SELECT * FROM crf_pengajuan WHERE id = :id LIMIT 1');
 $crfStmt->execute(['id' => $crfId]);
 $crf = $crfStmt->fetch();
 
-$attStmt = $pdo->prepare('SELECT * FROM attachments WHERE change_request_id = :id ORDER BY uploaded_at ASC');
+$attStmt = $pdo->prepare('SELECT * FROM crf_lampiran WHERE change_request_id = :id ORDER BY uploaded_at ASC');
 $attStmt->execute(['id' => $crfId]);
 $attachments = $attStmt->fetchAll();
 
 $timelineStmt = $pdo->prepare('
     SELECT activity, description, actor, old_status, new_status, created_at
-    FROM crf_activity_logs
+    FROM crf_log_aktivitas
     WHERE change_request_id = :id
     ORDER BY created_at ASC, id ASC
 ');

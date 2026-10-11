@@ -22,7 +22,7 @@ $pdo = getConnection();
 $client = crfWasabiClient();
 $bucket = crfWasabiConfig()['bucket'];
 
-$rows = $pdo->query('SELECT id, stored_name, file_path FROM attachments ORDER BY id')->fetchAll();
+$rows = $pdo->query('SELECT id, stored_name, file_path FROM crf_lampiran ORDER BY id')->fetchAll();
 
 $done = 0;
 $failed = 0;

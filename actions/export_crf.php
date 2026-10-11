@@ -35,7 +35,7 @@ if (!canAccessCrf($pdo, $id)) {
  * --------------------------------------------------------------- */
 $stmt = $pdo->prepare(
     'SELECT cr.*
-     FROM change_requests cr
+     FROM crf_pengajuan cr
      WHERE cr.id = :id
      LIMIT 1'
 );
@@ -53,7 +53,7 @@ if (!$crf) {
  * --------------------------------------------------------------- */
 $attStmt = $pdo->prepare(
     'SELECT original_name, file_type, file_size
-     FROM attachments
+     FROM crf_lampiran
      WHERE change_request_id = :id AND category IS NULL
      ORDER BY uploaded_at ASC'
 );
@@ -218,7 +218,7 @@ if (
  * --------------------------------------------------------------- */
 $activityStmt = $pdo->prepare("
     SELECT activity, created_at
-    FROM crf_activity_logs
+    FROM crf_log_aktivitas
     WHERE change_request_id = :id
     ORDER BY created_at ASC, id ASC
 ");

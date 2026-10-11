@@ -26,7 +26,7 @@ use Aws\Exception\AwsException;
  * menjelaskan arti tiap segmen angka. Sesuai brief (butir 10), kita
  * TIDAK mengarang arti "02" dan "4" - keduanya dipertahankan persis
  * seperti contoh. Bagian yang dibuat dinamis (agar nomor unik) adalah:
- *   - 4 digit urut, diambil dari next AUTO_INCREMENT tabel change_requests
+ *   - 4 digit urut, diambil dari next AUTO_INCREMENT tabel crf_pengajuan
  *   - bulan & tahun pengajuan (2 digit)
  */
 /**
@@ -63,14 +63,14 @@ function generateRequestNumber(PDO $pdo, DateTime $date, ?array $user = null): s
     $year = $date->format('y');
 
     $ensureStmt = $pdo->prepare(
-        'INSERT INTO crf_sequence (year, last_number)
+        'INSERT INTO crf_nomor_urut (year, last_number)
          VALUES (:year, 0)
          ON DUPLICATE KEY UPDATE year = year'
     );
     $ensureStmt->execute(['year' => $year]);
 
     $stmt = $pdo->prepare(
-        'UPDATE crf_sequence
+        'UPDATE crf_nomor_urut
          SET last_number = LAST_INSERT_ID(
              GREATEST(
                  last_number,
@@ -84,7 +84,7 @@ function generateRequestNumber(PDO $pdo, DateTime $date, ?array $user = null): s
                              ) AS UNSIGNED
                          )
                      )
-                     FROM change_requests
+                     FROM crf_pengajuan
                      WHERE request_number LIKE CONCAT("PPU-%.4.%.", :year1)
                  ), 0)
              ) + 1
@@ -99,7 +99,7 @@ function generateRequestNumber(PDO $pdo, DateTime $date, ?array $user = null): s
 
     if ($stmt->rowCount() === 0) {
         throw new RuntimeException(
-            'Penghitung nomor register belum tersedia (tabel crf_sequence).'
+            'Penghitung nomor register belum tersedia (tabel crf_nomor_urut).'
         );
     }
 
@@ -125,7 +125,7 @@ function previewRequestNumber(PDO $pdo, DateTime $date, ?array $user = null): st
     $year = $date->format('y');
 
     $stmt = $pdo->prepare(
-        'SELECT last_number FROM crf_sequence WHERE year = :year'
+        'SELECT last_number FROM crf_nomor_urut WHERE year = :year'
     );
     $stmt->execute(['year' => $year]);
 
@@ -557,7 +557,7 @@ function logCrfActivity(
     ?string $newStatus = null
 ): void {
     $stmt = $pdo->prepare("
-        INSERT INTO crf_activity_logs (
+        INSERT INTO crf_log_aktivitas (
             change_request_id,
             user_id,
             activity,
@@ -670,7 +670,7 @@ function finalizeCrfSla(PDO $pdo, int $crfId): void
 {
     $stmt = $pdo->prepare('
         SELECT sla_started_at, sla_due_at, automation_completed_at
-        FROM change_requests
+        FROM crf_pengajuan
         WHERE id = :id
     ');
     $stmt->execute(['id' => $crfId]);
@@ -691,7 +691,7 @@ function finalizeCrfSla(PDO $pdo, int $crfId): void
     }
 
     $update = $pdo->prepare('
-        UPDATE change_requests
+        UPDATE crf_pengajuan
         SET sla_actual_minutes = :minutes, sla_result = :result
         WHERE id = :id
     ');
@@ -710,7 +710,7 @@ function crfPirReminderInfo(PDO $pdo, array $crf): array
 {
     $stmt = $pdo->prepare("
         SELECT COUNT(*) AS total, MAX(created_at) AS last_at
-        FROM crf_activity_logs
+        FROM crf_log_aktivitas
         WHERE change_request_id = :id AND activity = 'Pengingat PIR'
     ");
     $stmt->execute(['id' => (int) $crf['id']]);
@@ -820,7 +820,7 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
 
     $departmentStmt = $pdo->query("
         SELECT DISTINCT from_department
-        FROM change_requests
+        FROM crf_pengajuan
         WHERE status <> 'Draft'
           AND from_department IS NOT NULL
           AND from_department <> ''
@@ -830,7 +830,7 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
     $categories = [];
     try {
         $categories = $pdo->query('
-            SELECT id, name FROM crf_categories
+            SELECT id, name FROM crf_kategori
             WHERE deleted_at IS NULL
             ORDER BY sort_order, name
         ')->fetchAll();
@@ -1026,14 +1026,14 @@ const CRF_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB per file
 /**
  * Memproses upload lampiran (Bukti dan Informasi Pendukung).
  * Melakukan validasi extension, MIME type, dan ukuran file sebelum
- * memindahkan file ke folder uploads/ dan mencatatnya ke tabel attachments.
+ * mengunggah file ke Wasabi (private) dan mencatatnya ke tabel crf_lampiran.
  *
  * @return string[] daftar pesan error (kosong jika semua berhasil / tidak ada file)
  */
 function handleAttachmentUploads(PDO $pdo, int $crfId, array $filesInput): array
 {
     $stmt = $pdo->prepare(
-        'INSERT INTO attachments
+        'INSERT INTO crf_lampiran
         (change_request_id, original_name, stored_name, file_path, file_type, file_size)
         VALUES
         (:owner_id, :original_name, :stored_name, :file_path, :file_type, :file_size)'
@@ -1051,7 +1051,7 @@ function handleAttachmentUploads(PDO $pdo, int $crfId, array $filesInput): array
 function handleUatDocumentUploads(PDO $pdo, int $crfId, array $filesInput): array
 {
     $stmt = $pdo->prepare(
-        "INSERT INTO attachments
+        "INSERT INTO crf_lampiran
         (change_request_id, original_name, stored_name, file_path, file_type, file_size, category)
         VALUES
         (:owner_id, :original_name, :stored_name, :file_path, :file_type, :file_size, 'uat')"

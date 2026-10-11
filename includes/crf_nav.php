@@ -43,7 +43,7 @@ function crfQueueCounts(PDO $pdo, bool $cmo, bool $kadep, bool $pic): array
             SELECT SUM(cr.workflow_stage = 'CMO_FILTER') AS verifikasi,
                    SUM(cr.workflow_stage = 'UAT')        AS uat,
                    SUM(cr.workflow_stage = 'CMO_FINAL')  AS finalisasi
-            FROM change_requests cr
+            FROM crf_pengajuan cr
             WHERE {$open} AND cr.workflow_stage IN ('CMO_FILTER','UAT','CMO_FINAL')
         ")->fetch() ?: [];
         $counts['cmo_verifikasi'] = (int) ($row['verifikasi'] ?? 0);
@@ -54,7 +54,7 @@ function crfQueueCounts(PDO $pdo, bool $cmo, bool $kadep, bool $pic): array
 
     if ($kadep) {
         $counts['kadep'] = (int) $pdo->query("
-            SELECT COUNT(*) FROM change_requests cr
+            SELECT COUNT(*) FROM crf_pengajuan cr
             WHERE {$open} AND cr.workflow_stage = 'kadep_operasional'
         ")->fetchColumn();
     }
@@ -63,7 +63,7 @@ function crfQueueCounts(PDO $pdo, bool $cmo, bool $kadep, bool $pic): array
         $row = $pdo->query("
             SELECT COUNT(*) AS total,
                    SUM(cr.sla_due_at IS NOT NULL AND cr.sla_due_at < NOW()) AS terlambat
-            FROM change_requests cr
+            FROM crf_pengajuan cr
             WHERE {$open} AND " . crfHandlerScopeSql($pdo, 'cr') . "
               AND cr.workflow_stage = 'OTOMASI' AND cr.kadep_operasional_approved_at IS NOT NULL
         ")->fetch() ?: [];

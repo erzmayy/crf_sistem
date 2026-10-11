@@ -25,7 +25,7 @@ if ($id <= 0) {
 
 $stmt = $pdo->prepare(
     'SELECT change_request_id, original_name, stored_name, file_path, file_type, file_size
-     FROM attachments
+     FROM crf_lampiran
      WHERE id = :id
      LIMIT 1'
 );

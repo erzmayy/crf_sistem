@@ -50,7 +50,7 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
 
     $monthlyStmt = $pdo->prepare(
         "SELECT DATE_FORMAT({$submittedDate}, '%Y-%m') AS report_month, COUNT(*) AS total
-         FROM change_requests
+         FROM crf_pengajuan
          WHERE {$baseWhere}
          GROUP BY DATE_FORMAT({$submittedDate}, '%Y-%m')"
     );
@@ -77,7 +77,7 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
     $statusCounts = array_fill_keys(array_keys($statusLabels), 0);
     $statusStmt = $pdo->prepare(
         "SELECT status, COUNT(*) AS total
-         FROM change_requests
+         FROM crf_pengajuan
          WHERE {$baseWhere}
          GROUP BY status"
     );
@@ -113,7 +113,7 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
     $urgencyCounts = array_fill_keys(array_keys($urgencyMeta), 0);
     $urgencyStmt = $pdo->prepare(
         "SELECT final_urgency_level, level, impact_category
-         FROM change_requests
+         FROM crf_pengajuan
          WHERE {$baseWhere}"
     );
     $urgencyStmt->execute($params);
@@ -156,7 +156,7 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
         "SELECT id, request_number, full_name, from_department, change_category,
                 status, change_description, {$submittedDate} AS report_date,
                 DATE_FORMAT({$submittedDate}, '%Y-%m') AS report_month
-         FROM change_requests
+         FROM crf_pengajuan
          WHERE {$baseWhere}
          ORDER BY report_month ASC, report_date ASC, id ASC"
     );

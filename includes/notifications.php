@@ -42,7 +42,7 @@ function notifyUsers(
     }
 
     $stmt = $pdo->prepare('
-        INSERT INTO notifications (user_id, title, message, url, change_request_id)
+        INSERT INTO crf_notifikasi (user_id, title, message, url, change_request_id)
         VALUES (:user_id, :title, :message, :url, :crf_id)
     ');
 
@@ -68,7 +68,7 @@ function crfCmoRecipients(PDO $pdo, int $crfId): array
     $allCmo = crfUserIdsForRole($pdo, 'cmo');
 
     $stmt = $pdo->prepare("
-        SELECT user_id FROM crf_activity_logs
+        SELECT user_id FROM crf_log_aktivitas
         WHERE change_request_id = :id AND activity = 'Lolos Filter CMO' AND user_id IS NOT NULL
         ORDER BY id DESC LIMIT 1
     ");
@@ -94,7 +94,7 @@ function filterUsersWithoutUnread(PDO $pdo, array $userIds, int $crfId, string $
 
     $in = implode(',', $userIds);
     $stmt = $pdo->prepare("
-        SELECT DISTINCT user_id FROM notifications
+        SELECT DISTINCT user_id FROM crf_notifikasi
         WHERE change_request_id = :crf AND title = :title AND read_at IS NULL AND user_id IN ($in)
     ");
     $stmt->execute(['crf' => $crfId, 'title' => mb_substr($title, 0, 150)]);
@@ -110,7 +110,7 @@ function filterUsersWithoutUnread(PDO $pdo, array $userIds, int $crfId, string $
 function crfUserIdsForRole(PDO $pdo, string $role): array
 {
     if (CRF_ROLE_SOURCE !== 'resolver') {
-        $stmt = $pdo->prepare('SELECT user_id FROM crf_user_roles WHERE role = :role AND is_active = 1');
+        $stmt = $pdo->prepare('SELECT user_id FROM crf_peran_pengguna WHERE role = :role AND is_active = 1');
         $stmt->execute(['role' => $role]);
 
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
@@ -153,7 +153,7 @@ function crfUserIdsForRole(PDO $pdo, string $role): array
 function unreadNotificationCount(PDO $pdo, int $userId): int
 {
     try {
-        $stmt = $pdo->prepare('SELECT COUNT(*) FROM notifications WHERE user_id = :user_id AND read_at IS NULL');
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM crf_notifikasi WHERE user_id = :user_id AND read_at IS NULL');
         $stmt->execute(['user_id' => $userId]);
 
         return (int) $stmt->fetchColumn();
@@ -169,7 +169,7 @@ function recentNotifications(PDO $pdo, int $userId, int $limit = 6): array
     try {
         $limit = max(1, min(50, $limit));
         $stmt = $pdo->prepare("
-            SELECT * FROM notifications
+            SELECT * FROM crf_notifikasi
             WHERE user_id = :user_id
             ORDER BY id DESC
             LIMIT {$limit}
@@ -207,7 +207,7 @@ function dispatchPendingNotificationEmails(PDO $pdo, int $limit = 30): void
         $config = crfMailConfig();
 
         if ($config === null) {
-            $pdo->exec("UPDATE notifications SET email_status = 'skipped' WHERE email_status = 'pending'");
+            $pdo->exec("UPDATE crf_notifikasi SET email_status = 'skipped' WHERE email_status = 'pending'");
             return;
         }
 
@@ -215,14 +215,14 @@ function dispatchPendingNotificationEmails(PDO $pdo, int $limit = 30): void
         $userTable = crfUserTable();
         $rows = $pdo->query("
             SELECT n.*, u.email AS recipient_email, u.nama AS recipient_name
-            FROM notifications n
+            FROM crf_notifikasi n
             LEFT JOIN {$userTable} u ON u.id = n.user_id
             WHERE n.email_status = 'pending'
             ORDER BY n.id
             LIMIT {$limit}
         ")->fetchAll();
 
-        $update = $pdo->prepare('UPDATE notifications SET email_status = :status WHERE id = :id');
+        $update = $pdo->prepare('UPDATE crf_notifikasi SET email_status = :status WHERE id = :id');
 
         foreach ($rows as $row) {
             $email = trim((string) ($row['recipient_email'] ?? ''));

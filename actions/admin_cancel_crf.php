@@ -38,7 +38,7 @@ try {
 
     $stmt = $pdo->prepare('
         SELECT id, user_id, request_number, status, workflow_stage, assigned_handler_id, kadep_operasional_approved_at
-        FROM change_requests
+        FROM crf_pengajuan
         WHERE id = :id
         FOR UPDATE
     ');
@@ -63,7 +63,7 @@ try {
     $oldDisplayStatus = crfDisplayStatus($crf)['label'];
 
     $pdo->prepare("
-        UPDATE change_requests
+        UPDATE crf_pengajuan
         SET status = 'Cancel', workflow_stage = 'SELESAI',
             tanggapan_tindak_lanjut = :reason, cancelled_at = NOW(), solved_at = NULL
         WHERE id = :id

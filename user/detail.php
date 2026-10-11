@@ -31,7 +31,7 @@ $id = (int) ($_GET['id'] ?? 0);
  */
 $stmt = $pdo->prepare(
     'SELECT cr.*
-     FROM change_requests cr
+     FROM crf_pengajuan cr
      WHERE cr.id = :id
        AND cr.user_id = :user_id
      LIMIT 1'
@@ -70,7 +70,7 @@ if (!$crf) {
  */
 $attStmt = $pdo->prepare(
     'SELECT *
-     FROM attachments
+     FROM crf_lampiran
      WHERE change_request_id = :id
      ORDER BY uploaded_at ASC'
 );
@@ -92,7 +92,7 @@ $timelineStmt = $pdo->prepare("
         old_status,
         new_status,
         created_at
-    FROM crf_activity_logs
+    FROM crf_log_aktivitas
     WHERE change_request_id = :id
     ORDER BY created_at ASC, id ASC
 ");

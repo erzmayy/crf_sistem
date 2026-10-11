@@ -120,7 +120,7 @@ function forumParseText($value, int $max, bool $required, string $label): string
 function forumOpenDiscussion(PDO $pdo, int $crfId): ?array
 {
     $stmt = $pdo->prepare(
-        "SELECT * FROM forum_discussions
+        "SELECT * FROM crf_forum_pembahasan
          WHERE change_request_id = :id AND status = 'menunggu'
          ORDER BY id DESC LIMIT 1"
     );
@@ -133,7 +133,7 @@ function forumOpenDiscussion(PDO $pdo, int $crfId): ?array
 function forumDiscussionHistory(PDO $pdo, int $crfId, int $limit = 15): array
 {
     $stmt = $pdo->prepare(
-        "SELECT * FROM forum_discussions
+        "SELECT * FROM crf_forum_pembahasan
          WHERE change_request_id = :id AND status <> 'menunggu'
          ORDER BY id DESC
          LIMIT " . max(1, min(50, $limit))
@@ -148,8 +148,8 @@ function forumOpenDiscussionTotal(PDO $pdo): int
     try {
         return (int) $pdo->query(
             "SELECT COUNT(*)
-             FROM forum_discussions d
-             INNER JOIN change_requests cr ON cr.id = d.change_request_id
+             FROM crf_forum_pembahasan d
+             INNER JOIN crf_pengajuan cr ON cr.id = d.change_request_id
              WHERE d.status = 'menunggu' AND " . forumActiveCrfCondition('cr')
         )->fetchColumn();
     } catch (Throwable $e) {
@@ -233,7 +233,7 @@ function forumNotify(PDO $pdo, array $userIds, string $title, string $message, i
 function forumAddSystemComment(PDO $pdo, int $crfId, array $user, string $text): int
 {
     $stmt = $pdo->prepare(
-        'INSERT INTO forum_comments
+        'INSERT INTO crf_forum_komentar
             (change_request_id, user_id, user_name, user_role, comment, is_system)
          VALUES
             (:crf_id, :user_id, :user_name, :user_role, :comment, 1)'
@@ -262,7 +262,7 @@ function forumLockCrf(PDO $pdo, int $crfId): ?array
         'SELECT id, user_id, request_number, crf_category_id, assigned_handler_id,
                 status, workflow_stage, level, impact_category, final_urgency_level,
                 sla_value, sla_unit, kadep_operasional_approved_at, forum_discussion_open
-         FROM change_requests cr
+         FROM crf_pengajuan cr
          WHERE cr.id = :id AND ' . forumActiveCrfCondition('cr') . '
          FOR UPDATE'
     );
@@ -273,7 +273,7 @@ function forumLockCrf(PDO $pdo, int $crfId): ?array
 
 function forumSetOpenFlag(PDO $pdo, int $crfId, bool $open): void
 {
-    $pdo->prepare('UPDATE change_requests SET forum_discussion_open = :flag WHERE id = :id')
+    $pdo->prepare('UPDATE crf_pengajuan SET forum_discussion_open = :flag WHERE id = :id')
         ->execute(['flag' => $open ? 1 : 0, 'id' => $crfId]);
 }
 
@@ -324,7 +324,7 @@ function forumRequestDiscussion(PDO $pdo, int $crfId, array $user, string $reaso
 
         try {
             $pdo->prepare(
-                "INSERT INTO forum_discussions
+                "INSERT INTO crf_forum_pembahasan
                     (change_request_id, status, trigger_source,
                      opened_by, opened_by_name, opened_by_role, reason,
                      before_urgency, before_sla_value, before_sla_unit, due_at, open_crf_id)
@@ -400,7 +400,7 @@ function forumRaiseSystemDiscussion(PDO $pdo, array $crf, array $actingUser, str
     $dueAt = forumDiscussionDueAt();
     try {
         $pdo->prepare(
-            "INSERT INTO forum_discussions
+            "INSERT INTO crf_forum_pembahasan
                 (change_request_id, status, trigger_source,
                  opened_by, opened_by_name, opened_by_role, reason,
                  before_urgency, before_sla_value, before_sla_unit, due_at, open_crf_id)
@@ -462,7 +462,7 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
     try {
         $pdo->beginTransaction();
 
-        $stmt = $pdo->prepare('SELECT * FROM forum_discussions WHERE id = :id FOR UPDATE');
+        $stmt = $pdo->prepare('SELECT * FROM crf_forum_pembahasan WHERE id = :id FOR UPDATE');
         $stmt->execute(['id' => $discussionId]);
         $discussion = $stmt->fetch();
         if (!$discussion || $discussion['status'] !== 'menunggu') {
@@ -497,7 +497,7 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
             }
 
             $pdo->prepare(
-                'UPDATE change_requests
+                'UPDATE crf_pengajuan
                  SET final_urgency_level = :final_urgency, level = :level_urgency,
                      sla_value = :value, sla_unit = :unit
                  WHERE id = :id'
@@ -513,7 +513,7 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
         $afterText = forumValuesText($final['urgency'], $final['sla_value'], $final['sla_unit']);
 
         $pdo->prepare(
-            "UPDATE forum_discussions
+            "UPDATE crf_forum_pembahasan
              SET status = 'selesai', outcome = :outcome, open_crf_id = NULL,
                  before_urgency = :b_urgency, before_sla_value = :b_value, before_sla_unit = :b_unit,
                  final_urgency = :f_urgency, final_sla_value = :f_value, final_sla_unit = :f_unit,
@@ -538,7 +538,7 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
         $forwarded = false;
         if ($crf['workflow_stage'] === 'CMO_FILTER') {
             $advance = $pdo->prepare("
-                UPDATE change_requests
+                UPDATE crf_pengajuan
                 SET status = 'Dalam Proses', workflow_stage = 'kadep_operasional',
                     automation_started_at = NULL, sla_started_at = NULL, sla_due_at = NULL
                 WHERE id = :id AND workflow_stage = 'CMO_FILTER' AND forum_discussion_open = 0
@@ -584,7 +584,7 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
             );
         }
         // Hanya yang terlibat: pengaju (atau seluruh CMO bila dibuka sistem) dan pemberi komentar.
-        $commenters = $pdo->prepare('SELECT DISTINCT user_id FROM forum_comments WHERE change_request_id = :id AND is_system = 0');
+        $commenters = $pdo->prepare('SELECT DISTINCT user_id FROM crf_forum_komentar WHERE change_request_id = :id AND is_system = 0');
         $commenters->execute(['id' => $crfId]);
         $recipients = array_map('intval', $commenters->fetchAll(PDO::FETCH_COLUMN));
         if (!empty($discussion['opened_by'])) {
@@ -631,7 +631,7 @@ function forumCancelDiscussion(PDO $pdo, int $discussionId, array $user): int
     try {
         $pdo->beginTransaction();
 
-        $stmt = $pdo->prepare('SELECT * FROM forum_discussions WHERE id = :id FOR UPDATE');
+        $stmt = $pdo->prepare('SELECT * FROM crf_forum_pembahasan WHERE id = :id FOR UPDATE');
         $stmt->execute(['id' => $discussionId]);
         $discussion = $stmt->fetch();
         if (!$discussion || $discussion['status'] !== 'menunggu') {
@@ -649,7 +649,7 @@ function forumCancelDiscussion(PDO $pdo, int $discussionId, array $user): int
 
         $actor = crfActorName($user);
         $pdo->prepare(
-            "UPDATE forum_discussions
+            "UPDATE crf_forum_pembahasan
              SET status = 'dibatalkan', open_crf_id = NULL,
                  decided_by = :by, decided_by_name = :by_name,
                  decision_note = 'Pembahasan dibatalkan.', decided_at = NOW()
@@ -686,7 +686,7 @@ function forumCloseOpenDiscussions(PDO $pdo, int $crfId, string $note): int
         }
 
         $pdo->prepare(
-            "UPDATE forum_discussions
+            "UPDATE crf_forum_pembahasan
              SET status = 'dibatalkan', open_crf_id = NULL, decided_by_name = 'Sistem',
                  decision_note = :note, decided_at = NOW()
              WHERE id = :id AND status = 'menunggu'"
@@ -717,8 +717,8 @@ function forumSendDueReminders(PDO $pdo): void
     try {
         $rows = $pdo->query(
             "SELECT d.id, d.change_request_id, d.opened_by_name, d.due_at, cr.request_number
-             FROM forum_discussions d
-             INNER JOIN change_requests cr ON cr.id = d.change_request_id
+             FROM crf_forum_pembahasan d
+             INNER JOIN crf_pengajuan cr ON cr.id = d.change_request_id
              WHERE d.status = 'menunggu' AND d.reminded_at IS NULL
                AND d.due_at IS NOT NULL AND d.due_at < NOW()
              LIMIT 20"
@@ -726,7 +726,7 @@ function forumSendDueReminders(PDO $pdo): void
 
         $sent = false;
         foreach ($rows as $row) {
-            $mark = $pdo->prepare('UPDATE forum_discussions SET reminded_at = NOW() WHERE id = :id AND reminded_at IS NULL');
+            $mark = $pdo->prepare('UPDATE crf_forum_pembahasan SET reminded_at = NOW() WHERE id = :id AND reminded_at IS NULL');
             $mark->execute(['id' => (int) $row['id']]);
             if ($mark->rowCount() !== 1) {
                 continue;
@@ -766,7 +766,7 @@ function forumSendDueReminders(PDO $pdo): void
  */
 function forumApplyDefaultSla(PDO $pdo, int $crfId, array $actingUser): void
 {
-    $stmt = $pdo->prepare('SELECT * FROM change_requests WHERE id = :id');
+    $stmt = $pdo->prepare('SELECT * FROM crf_pengajuan WHERE id = :id');
     $stmt->execute(['id' => $crfId]);
     $crf = $stmt->fetch();
     if (!$crf) {
@@ -777,7 +777,7 @@ function forumApplyDefaultSla(PDO $pdo, int $crfId, array $actingUser): void
         $urgency = crfEffectiveUrgency($crf);
         $standard = crfStandardSla($pdo, (int) ($crf['crf_category_id'] ?? 0), $urgency);
         if ($standard !== null && !crfSlaEquals($standard, $crf['sla_value'], $crf['sla_unit'])) {
-            $pdo->prepare('UPDATE change_requests SET sla_value = :value, sla_unit = :unit WHERE id = :id')
+            $pdo->prepare('UPDATE crf_pengajuan SET sla_value = :value, sla_unit = :unit WHERE id = :id')
                 ->execute(['value' => $standard['value'], 'unit' => $standard['unit'], 'id' => $crfId]);
             $crf['sla_value'] = $standard['value'];
             $crf['sla_unit'] = $standard['unit'];

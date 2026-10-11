@@ -26,7 +26,7 @@ $stmt = $pdo->prepare('
     SELECT id, user_id, request_number, crf_category_id, assigned_handler_id,
            status, workflow_stage, kadep_operasional_approved_at, automation_completed_at,
            level, impact_category, final_urgency_level, sla_value, sla_unit, forum_discussion_open
-    FROM change_requests
+    FROM crf_pengajuan
     WHERE id = :id
     LIMIT 1
 ');
@@ -68,7 +68,7 @@ if (in_array($action, ['revision','cancel','request_discussion','uat_fail'], tru
  * UAT lulus: bukti pengujian wajib sudah diunggah.
  */
 if ($action === 'uat_pass') {
-    $docStmt = $pdo->prepare("SELECT COUNT(*) FROM attachments WHERE change_request_id = :id AND category = 'uat'");
+    $docStmt = $pdo->prepare("SELECT COUNT(*) FROM crf_lampiran WHERE change_request_id = :id AND category = 'uat'");
     $docStmt->execute(['id' => $id]);
     if ((int) $docStmt->fetchColumn() === 0) {
         $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Unggah minimal satu dokumen hasil UAT sebelum menyatakan UAT lulus.'];
@@ -185,7 +185,7 @@ if ($action === 'to_approval') {
             error_log('cmo_action default SLA error: ' . $e->getMessage());
         }
 
-        $freshStmt = $pdo->prepare('SELECT sla_value, sla_unit, forum_discussion_open FROM change_requests WHERE id = :id');
+        $freshStmt = $pdo->prepare('SELECT sla_value, sla_unit, forum_discussion_open FROM crf_pengajuan WHERE id = :id');
         $freshStmt->execute(['id' => $id]);
         $fresh = $freshStmt->fetch() ?: [];
         if (!crfHasValidSla($fresh)) {
@@ -212,7 +212,7 @@ try {
     if ($action === 'to_approval') {
         // SLA belum berjalan: dimulai saat Kepala Departemen Operasional menyetujui.
         $stmt = $pdo->prepare("
-            UPDATE change_requests
+            UPDATE crf_pengajuan
             SET
                 status = 'Dalam Proses',
                 workflow_stage = 'kadep_operasional',
@@ -250,14 +250,14 @@ try {
 
         $message = 'CRF berhasil diteruskan ke Kepala Departemen Operasional untuk persetujuan.';
     } elseif ($action === 'revision') {
-        $stmt = $pdo->prepare("UPDATE change_requests SET status = 'Perlu Revisi', workflow_stage = 'PEMOHON', tanggapan_tindak_lanjut = :tanggapan WHERE id = :id AND workflow_stage = 'CMO_FILTER'");
+        $stmt = $pdo->prepare("UPDATE crf_pengajuan SET status = 'Perlu Revisi', workflow_stage = 'PEMOHON', tanggapan_tindak_lanjut = :tanggapan WHERE id = :id AND workflow_stage = 'CMO_FILTER'");
         $stmt->execute(['tanggapan' => $tanggapan, 'id' => $id]);
         logCrfActivity($pdo, $id, 'Perlu Revisi', $tanggapan, $actor, $oldDisplayStatus, 'Ditolak / Perlu Revisi');
         notifyUsers($pdo, [(int) $crf['user_id']], 'CRF perlu revisi: ' . $crfNumber,
             'CMO mengembalikan CRF Anda untuk diperbaiki: ' . $tanggapan, $crfLink, $id, (int) $user['id']);
         $message = 'CRF dikembalikan ke Pemohon untuk revisi.';
     } elseif ($action === 'cancel') {
-        $stmt = $pdo->prepare("UPDATE change_requests SET status = 'Cancel', workflow_stage = 'SELESAI', tanggapan_tindak_lanjut = :tanggapan, cancelled_at = :now, solved_at = NULL WHERE id = :id");
+        $stmt = $pdo->prepare("UPDATE crf_pengajuan SET status = 'Cancel', workflow_stage = 'SELESAI', tanggapan_tindak_lanjut = :tanggapan, cancelled_at = :now, solved_at = NULL WHERE id = :id");
         $stmt->execute(['tanggapan' => $tanggapan, 'now' => $now, 'id' => $id]);
         forumCloseOpenDiscussions($pdo, $id, 'CRF dibatalkan oleh CMO.');
         logCrfActivity($pdo, $id, 'Cancel', $tanggapan, $actor, $oldDisplayStatus, 'Dibatalkan');
@@ -268,7 +268,7 @@ try {
         // UAT dilakukan CMO bersama Otomasi; hasilnya mengembalikan CRF ke Otomasi (SLA tidak berjalan lagi).
         $passed = $action === 'uat_pass';
         $stmt = $pdo->prepare(
-            "UPDATE change_requests
+            "UPDATE crf_pengajuan
              SET workflow_stage = 'OTOMASI', status = 'Dalam Proses', uat_passed_at = " . ($passed ? ':now' : 'NULL') . "
              WHERE id = :id AND workflow_stage = 'UAT'"
         );
@@ -308,7 +308,7 @@ try {
             ? 'UAT dinyatakan lulus. CRF dikembalikan ke Otomasi untuk mengisi implementasi.'
             : 'CRF dikembalikan ke Otomasi untuk diperbaiki. Lakukan UAT ulang setelah dikirim kembali.';
     } else {
-        $stmt = $pdo->prepare("UPDATE change_requests SET status = 'Solve', workflow_stage = 'SELESAI', solved_at = :now, cancelled_at = NULL WHERE id = :id AND workflow_stage = 'CMO_FINAL'");
+        $stmt = $pdo->prepare("UPDATE crf_pengajuan SET status = 'Solve', workflow_stage = 'SELESAI', solved_at = :now, cancelled_at = NULL WHERE id = :id AND workflow_stage = 'CMO_FINAL'");
         $stmt->execute(['now' => $now, 'id' => $id]);
         logCrfActivity($pdo, $id, 'Solve', 'CMO menyelesaikan dan menutup CRF setelah persetujuan Kepala Departemen Operasional.', $actor, $oldDisplayStatus, 'Selesai');
         notifyUsers($pdo, [(int) $crf['user_id'], (int) $crf['assigned_handler_id']], 'CRF selesai: ' . $crfNumber,

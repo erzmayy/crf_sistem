@@ -11,7 +11,7 @@ requireLogin();
 $pdo = getConnection();
 $id = (int) ($_GET['id'] ?? 0);
 
-$stmt = $pdo->prepare('SELECT id, user_id, status, workflow_stage, crf_category_id FROM change_requests WHERE id = :id LIMIT 1');
+$stmt = $pdo->prepare('SELECT id, user_id, status, workflow_stage, crf_category_id FROM crf_pengajuan WHERE id = :id LIMIT 1');
 $stmt->execute(['id' => $id]);
 $crf = $stmt->fetch();
 

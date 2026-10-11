@@ -65,7 +65,7 @@ try {
             kadep_operasional_approved_at,
             automation_completed_at,
             uat_passed_at
-        FROM change_requests
+        FROM crf_pengajuan
         WHERE id = :id
         FOR UPDATE
     ");
@@ -125,7 +125,7 @@ try {
     // PIC CRF yang memproses tercatat sebagai pemegang CRF.
     if (empty($crf['assigned_handler_id'])) {
         $pdo->prepare('
-            UPDATE change_requests
+            UPDATE crf_pengajuan
             SET assigned_handler_id = :handler_id, assigned_handler_name = :handler_name, assigned_at = NOW()
             WHERE id = :id
         ')->execute(['handler_id' => (int) $user['id'], 'handler_name' => $actor, 'id' => $id]);
@@ -134,7 +134,7 @@ try {
     if ($action === 'execute') {
         // Eksekusi selesai: SLA berhenti di sini dan tidak dihitung ulang.
         $stmt = $pdo->prepare("
-            UPDATE change_requests
+            UPDATE crf_pengajuan
             SET automation_completed_at = :now, workflow_stage = 'UAT', status = 'Dalam Proses'
             WHERE id = :id
               AND workflow_stage = 'OTOMASI'
@@ -162,7 +162,7 @@ try {
         $redirect = '../otomasi/index.php';
     } elseif ($action === 'resubmit_uat') {
         $stmt = $pdo->prepare("
-            UPDATE change_requests
+            UPDATE crf_pengajuan
             SET workflow_stage = 'UAT', status = 'Dalam Proses'
             WHERE id = :id
               AND workflow_stage = 'OTOMASI'
@@ -189,7 +189,7 @@ try {
         $redirect = '../otomasi/index.php';
     } else {
         $stmt = $pdo->prepare("
-            UPDATE change_requests
+            UPDATE crf_pengajuan
             SET
                 implementation_date = :implementation_date,
                 implementation = :implementation,

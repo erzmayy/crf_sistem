@@ -68,7 +68,7 @@ if (
 }
 
 /*
- * Kategori CRF dinamis (master crf_categories). Kolom ENUM lama
+ * Kategori CRF dinamis (master crf_kategori). Kolom ENUM lama
  * change_category tetap diisi dari kelompok laporan kategori.
  */
 $crfCategory = resolveActiveCrfCategory($pdo, $_POST['crf_category_id'] ?? null);
@@ -163,7 +163,7 @@ try {
          */
         $checkStmt = $pdo->prepare(
             'SELECT id, request_number, status
-             FROM change_requests
+             FROM crf_pengajuan
              WHERE id = :id
                AND user_id = :user_id
                AND status IN (\'Draft\', \'Perlu Revisi\')
@@ -198,7 +198,7 @@ try {
          * submission_date tetap NULL karena belum submit.
          */
         $stmt = $pdo->prepare("
-            UPDATE change_requests
+            UPDATE crf_pengajuan
              SET
                 full_name = :full_name,
                 phone = :phone,
@@ -273,7 +273,7 @@ try {
 
 
         $stmt = $pdo->prepare("
-            INSERT INTO change_requests (
+            INSERT INTO crf_pengajuan (
                 request_number,
                 user_id,
                 full_name,
@@ -371,7 +371,7 @@ try {
             //     : $user['userid'];
 
             // $logStmt = $pdo->prepare("
-            //     INSERT INTO crf_activity_logs (
+            //     INSERT INTO crf_log_aktivitas (
             //         change_request_id,
             //         activity,
             //         description,

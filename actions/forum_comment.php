@@ -26,7 +26,7 @@ if ($crfId <= 0 || !is_string($comment) || trim($comment) === '' || mb_strlen($c
 $pdo = getConnection();
 $crfStmt = $pdo->prepare(
     'SELECT id, request_number, assigned_handler_id
-     FROM change_requests cr
+     FROM crf_pengajuan cr
      WHERE cr.id = :id
        AND ' . forumActiveCrfCondition('cr') . '
      LIMIT 1'
@@ -47,7 +47,7 @@ $replyTarget = null;
 if ($replyToId > 0) {
     $replyStmt = $pdo->prepare(
         'SELECT id, user_id
-         FROM forum_comments
+         FROM crf_forum_komentar
          WHERE id = :comment_id AND change_request_id = :crf_id
          LIMIT 1'
     );
@@ -72,7 +72,7 @@ $user = getCurrentUser();
 $actorId = (int) $user['id'];
 $actorName = (string) ($user['nama'] ?? 'User');
 $insertStmt = $pdo->prepare(
-    'INSERT INTO forum_comments
+    'INSERT INTO crf_forum_komentar
         (change_request_id, user_id, user_name, user_role, comment, reply_to_comment_id)
      VALUES
         (:change_request_id, :user_id, :user_name, :user_role, :comment, :reply_to_comment_id)'

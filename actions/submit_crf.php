@@ -230,7 +230,7 @@ try {
          */
         $checkStmt = $pdo->prepare("
             SELECT id, request_number, status
-            FROM change_requests
+            FROM crf_pengajuan
             WHERE id = :id
               AND user_id = :user_id
               AND status IN ('Draft', 'Perlu Revisi')
@@ -267,7 +267,7 @@ try {
             : generateRequestNumber($pdo, $today, $user);
 
         $stmt = $pdo->prepare("
-            UPDATE change_requests
+            UPDATE crf_pengajuan
             SET
                 request_number = :request_number,
                 full_name = :full_name,
@@ -339,7 +339,7 @@ try {
         $requestNumber = generateRequestNumber($pdo, $today, $user);
 
         $stmt = $pdo->prepare("
-            INSERT INTO change_requests (
+            INSERT INTO crf_pengajuan (
                 request_number,
                 user_id,
                 full_name,

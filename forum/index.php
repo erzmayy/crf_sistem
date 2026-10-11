@@ -27,19 +27,19 @@ $crfSql = "SELECT cr.id, cr.request_number, cr.full_name, cr.status, cr.workflow
             (open_discussion.change_request_id IS NOT NULL) AS has_open_discussion,
             open_discussion.due_at AS open_discussion_due_at,
             EXISTS (
-                SELECT 1 FROM forum_discussions agreed
+                SELECT 1 FROM crf_forum_pembahasan agreed
                 WHERE agreed.change_request_id = cr.id AND agreed.status = 'selesai'
             ) AS has_result
-     FROM change_requests cr
+     FROM crf_pengajuan cr
      LEFT JOIN (
         SELECT change_request_id, COUNT(*) AS comment_count, MAX(id) AS last_comment_id
-        FROM forum_comments
+        FROM crf_forum_komentar
         GROUP BY change_request_id
      ) stats ON stats.change_request_id = cr.id
-     LEFT JOIN forum_comments last_comment ON last_comment.id = stats.last_comment_id
+     LEFT JOIN crf_forum_komentar last_comment ON last_comment.id = stats.last_comment_id
      LEFT JOIN (
         SELECT change_request_id, MIN(due_at) AS due_at
-        FROM forum_discussions
+        FROM crf_forum_pembahasan
         WHERE status = 'menunggu'
         GROUP BY change_request_id
      ) open_discussion ON open_discussion.change_request_id = cr.id
@@ -78,7 +78,7 @@ if ($crfId > 0) {
                 cr.kadep_operasional_approved_at, cr.automation_completed_at, cr.forum_discussion_open,
                 cr.assigned_handler_name, cr.assigned_handler_id, cr.crf_category_id,
                 cr.request_type, cr.from_department, cr.change_description
-         FROM change_requests cr
+         FROM crf_pengajuan cr
          WHERE cr.id = :id AND {$activeCondition}
          LIMIT 1"
     );
@@ -95,7 +95,7 @@ if ($crfId > 0) {
             if ($replyId) {
                 $replyStmt = $pdo->prepare(
                     'SELECT id, user_name, comment
-                     FROM forum_comments
+                     FROM crf_forum_komentar
                      WHERE id = :id AND change_request_id = :crf_id
                      LIMIT 1'
                 );
@@ -106,7 +106,7 @@ if ($crfId > 0) {
 
         $readStmt = $pdo->prepare(
             'SELECT last_read_comment_id
-             FROM forum_read_states
+             FROM crf_forum_status_baca
              WHERE user_id = :user_id AND change_request_id = :crf_id'
         );
         $readStmt->execute(['user_id' => $userId, 'crf_id' => $crfId]);
@@ -118,8 +118,8 @@ if ($crfId > 0) {
                     comments.reply_to_comment_id, comments.created_at,
                     parent.user_name AS reply_user_name,
                     parent.comment AS reply_comment
-             FROM forum_comments comments
-             LEFT JOIN forum_comments parent
+             FROM crf_forum_komentar comments
+             LEFT JOIN crf_forum_komentar parent
                 ON parent.id = comments.reply_to_comment_id
              WHERE comments.change_request_id = :crf_id
              ORDER BY comments.created_at ASC, comments.id ASC'

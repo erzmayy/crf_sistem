@@ -19,7 +19,7 @@ $summaryStmt = $pdo->prepare("
         SUM(status = 'Dalam Proses') AS processing,
         SUM(status = 'Solve') AS solved,
         SUM(status = 'Cancel') AS cancelled
-    FROM change_requests
+    FROM crf_pengajuan
     WHERE user_id = :user_id
       AND status <> 'Draft'
 ");
@@ -47,7 +47,7 @@ $allowedStatuses = [
     'Cancel'
 ];
 
-// Kategori CRF dinamis (master crf_categories): [id => nama].
+// Kategori CRF dinamis (master crf_kategori): [id => nama].
 $allowedCategories = array_column(crfCategories(getConnection(), false), 'name', 'id');
 
 /*
@@ -140,7 +140,7 @@ $page = max(
 
 $countSql = "
     SELECT COUNT(*)
-    FROM change_requests
+    FROM crf_pengajuan
     WHERE " . implode(' AND ', $where);
 
 $countStmt = $pdo->prepare($countSql);
@@ -184,7 +184,7 @@ $sql = "
         workflow_stage,
         change_description,
         tanggapan_tindak_lanjut
-    FROM change_requests
+    FROM crf_pengajuan
     WHERE " . implode(' AND ', $where) . "
     ORDER BY id DESC
     LIMIT {$perPage} OFFSET {$offset}

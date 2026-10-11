@@ -22,14 +22,14 @@ require_once __DIR__ . '/../../includes/functions.php';
 $pdo = getConnection();
 $rows = $pdo->query("
     SELECT id, request_number, sla_value, sla_unit, sla_started_at
-    FROM change_requests
+    FROM crf_pengajuan
     WHERE sla_started_at IS NOT NULL
       AND sla_due_at IS NULL
       AND sla_value IS NOT NULL
       AND status = 'Dalam Proses'
 ")->fetchAll();
 
-$update = $pdo->prepare('UPDATE change_requests SET sla_due_at = :due WHERE id = :id');
+$update = $pdo->prepare('UPDATE crf_pengajuan SET sla_due_at = :due WHERE id = :id');
 $done = 0;
 foreach ($rows as $row) {
     $due = slaDueAt($row['sla_started_at'], $row['sla_value'], $row['sla_unit']);

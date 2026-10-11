@@ -22,7 +22,7 @@ $params = [];
 if ($filter === 'history') {
     $where[] = "EXISTS (
         SELECT 1
-        FROM crf_activity_logs activity_log
+        FROM crf_log_aktivitas activity_log
         WHERE activity_log.change_request_id = cr.id
           AND (
               activity_log.activity = 'Lolos Filter CMO'
@@ -78,7 +78,7 @@ $page = max(
 
 $countSql = "
     SELECT COUNT(*)
-    FROM change_requests cr
+    FROM crf_pengajuan cr
     WHERE " . implode(' AND ', $where);
 
 $countStmt = $pdo->prepare($countSql);
@@ -104,7 +104,7 @@ $offset = ($page - 1) * $perPage;
 
 $sql = "
     SELECT cr.*
-    FROM change_requests cr
+    FROM crf_pengajuan cr
     WHERE " . implode(' AND ', $where) . "
     ORDER BY " . ($filter === 'history'
         ? 'cr.updated_at DESC'
@@ -125,7 +125,7 @@ $requests = $stmt->fetchAll();
  * SUMMARY
  * ========================================================= */
 
-$countStmt = $pdo->query("SELECT workflow_stage, COUNT(*) total FROM change_requests WHERE workflow_stage IN ('CMO_FILTER','UAT','PEMOHON_PIR','CMO_FINAL') AND status <> 'Draft' GROUP BY workflow_stage");
+$countStmt = $pdo->query("SELECT workflow_stage, COUNT(*) total FROM crf_pengajuan WHERE workflow_stage IN ('CMO_FILTER','UAT','PEMOHON_PIR','CMO_FINAL') AND status <> 'Draft' GROUP BY workflow_stage");
 $counts = ['CMO_FILTER' => 0, 'UAT' => 0, 'PEMOHON_PIR' => 0, 'CMO_FINAL' => 0];
 foreach ($countStmt->fetchAll() as $row) {
     $counts[$row['workflow_stage']] = (int) $row['total'];

@@ -41,10 +41,10 @@ function forumUnreadCounts(PDO $pdo, int $userId): array
 {
     $stmt = $pdo->prepare(
         'SELECT comments.change_request_id, COUNT(*) AS unread_count
-         FROM forum_comments comments
-         INNER JOIN change_requests cr
+         FROM crf_forum_komentar comments
+         INNER JOIN crf_pengajuan cr
             ON cr.id = comments.change_request_id
-         LEFT JOIN forum_read_states read_state
+         LEFT JOIN crf_forum_status_baca read_state
             ON read_state.change_request_id = comments.change_request_id
            AND read_state.user_id = :read_user_id
          WHERE ' . forumActiveCrfCondition('cr') . '
@@ -78,13 +78,13 @@ function forumUnreadTotal(PDO $pdo, int $userId): int
  */
 function forumCrfSummary(PDO $pdo, int $crfId, int $userId): array
 {
-    $comments = $pdo->prepare('SELECT COUNT(*) FROM forum_comments WHERE change_request_id = :crf_id AND is_system = 0');
+    $comments = $pdo->prepare('SELECT COUNT(*) FROM crf_forum_komentar WHERE change_request_id = :crf_id AND is_system = 0');
     $comments->execute(['crf_id' => $crfId]);
 
     $unread = $pdo->prepare(
         'SELECT COUNT(*)
-         FROM forum_comments c
-         LEFT JOIN forum_read_states rs
+         FROM crf_forum_komentar c
+         LEFT JOIN crf_forum_status_baca rs
                 ON rs.change_request_id = c.change_request_id AND rs.user_id = :read_user_id
          WHERE c.change_request_id = :crf_id
            AND c.user_id <> :comment_user_id
@@ -92,7 +92,7 @@ function forumCrfSummary(PDO $pdo, int $crfId, int $userId): array
     );
     $unread->execute(['read_user_id' => $userId, 'crf_id' => $crfId, 'comment_user_id' => $userId]);
 
-    $open = $pdo->prepare("SELECT COUNT(*) FROM forum_discussions WHERE change_request_id = :crf_id AND status = 'menunggu'");
+    $open = $pdo->prepare("SELECT COUNT(*) FROM crf_forum_pembahasan WHERE change_request_id = :crf_id AND status = 'menunggu'");
     $open->execute(['crf_id' => $crfId]);
 
     return [
@@ -109,7 +109,7 @@ function markForumRead(PDO $pdo, int $crfId, int $userId, int $lastCommentId): v
     }
 
     $stmt = $pdo->prepare(
-        'INSERT INTO forum_read_states
+        'INSERT INTO crf_forum_status_baca
             (user_id, change_request_id, last_read_comment_id)
          VALUES
             (:user_id, :change_request_id, :last_read_comment_id)
@@ -139,7 +139,7 @@ function canViewForumCrf(PDO $pdo, int $crfId): bool
     }
 
     $stmt = $pdo->prepare(
-        'SELECT 1 FROM change_requests cr
+        'SELECT 1 FROM crf_pengajuan cr
          WHERE cr.id = :id AND ' . forumActiveCrfCondition('cr') . '
          LIMIT 1'
     );
@@ -194,11 +194,11 @@ function forumProcessLink(PDO $pdo, array $crf): ?array
  */
 function forumParticipantIds(PDO $pdo, int $crfId): array
 {
-    $stmt = $pdo->prepare('SELECT DISTINCT user_id FROM forum_comments WHERE change_request_id = :crf_id');
+    $stmt = $pdo->prepare('SELECT DISTINCT user_id FROM crf_forum_komentar WHERE change_request_id = :crf_id');
     $stmt->execute(['crf_id' => $crfId]);
     $ids = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
 
-    $crf = $pdo->prepare('SELECT assigned_handler_id, crf_category_id FROM change_requests WHERE id = :id');
+    $crf = $pdo->prepare('SELECT assigned_handler_id, crf_category_id FROM crf_pengajuan WHERE id = :id');
     $crf->execute(['id' => $crfId]);
     $row = $crf->fetch();
     if ($row && !empty($row['assigned_handler_id'])) {

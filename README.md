@@ -66,4 +66,4 @@ boleh menugaskan ulang atau membatalkan CRF yang sedang ia pegang sebagai Handle
 - Set `CRF_DEMO_MODE = false` di `config/siap.php`.
 - Jangan jalankan migrasi `006_siap_demo_user_migration.sql` (khusus lokal/testing).
 - Perbarui `CRF_SLA_HOLIDAYS` di `config/sla.php` setiap tahun.
-- Folder `database/`, `uploads/`, serta file `.sql/.md/.py/.lock` dilindungi `.htaccess`.
+- Folder `database/` serta file `.sql/.md/.py/.lock` dilindungi `.htaccess`.

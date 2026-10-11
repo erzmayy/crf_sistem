@@ -32,7 +32,7 @@ if ($id <= 0) {
 
 $stmt = $pdo->prepare("
     SELECT id, user_id, request_number, assigned_handler_id, crf_category_id, workflow_stage
-    FROM change_requests
+    FROM crf_pengajuan
     WHERE id = :id
     LIMIT 1
 ");
@@ -93,7 +93,7 @@ try {
                 sla_value,
                 sla_unit,
                 forum_discussion_open
-            FROM change_requests
+            FROM crf_pengajuan
             WHERE id = :id
               AND workflow_stage = 'kadep_operasional'
             FOR UPDATE
@@ -127,7 +127,7 @@ try {
         }
 
         $stmt = $pdo->prepare("
-            UPDATE change_requests
+            UPDATE crf_pengajuan
             SET
                 kadep_operasional_approved_by = :approved_by,
                 kadep_operasional_approved_at = :approved_at,

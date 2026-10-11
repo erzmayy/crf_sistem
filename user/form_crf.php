@@ -26,7 +26,7 @@ $draftData = null;
 if ($draftId > 0) {
     $stmt = $pdo->prepare("
         SELECT *
-        FROM change_requests
+        FROM crf_pengajuan
         WHERE id = :id
           AND user_id = :user_id
           AND status IN ('Draft', 'Perlu Revisi')
@@ -88,7 +88,7 @@ if ($phone === '') {
 if ($phone === '') {
     $stmt = $pdo->prepare("
         SELECT phone
-        FROM change_requests
+        FROM crf_pengajuan
         WHERE user_id = :user_id
           AND phone IS NOT NULL
           AND TRIM(phone) <> ''

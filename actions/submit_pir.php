@@ -47,7 +47,7 @@ try {
 
     $stmt = $pdo->prepare("
         SELECT id, user_id, request_number, workflow_stage, implementation_date
-        FROM change_requests
+        FROM crf_pengajuan
         WHERE id = :id
           AND user_id = :user_id
         FOR UPDATE
@@ -77,7 +77,7 @@ try {
     }
 
     $update = $pdo->prepare("
-        UPDATE change_requests
+        UPDATE crf_pengajuan
         SET pir_date = :pir_date,
             post_implementation_review = :pir,
             workflow_stage = 'CMO_FINAL'

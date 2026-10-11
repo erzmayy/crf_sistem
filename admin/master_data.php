@@ -13,14 +13,14 @@ $pdo = getConnection();
 
 $crfCategoryRows = $pdo->query('
     SELECT c.*,
-        (SELECT COUNT(*) FROM change_requests cr WHERE cr.crf_category_id = c.id) AS usage_count
-    FROM crf_categories c
+        (SELECT COUNT(*) FROM crf_pengajuan cr WHERE cr.crf_category_id = c.id) AS usage_count
+    FROM crf_kategori c
     WHERE c.deleted_at IS NULL
     ORDER BY c.sort_order, c.name
 ')->fetchAll();
 
 $crfMembers = categoryMembers($pdo);
-$totalHandler = (int) $pdo->query('SELECT COUNT(DISTINCT user_id) FROM crf_category_handlers')->fetchColumn();
+$totalHandler = (int) $pdo->query('SELECT COUNT(DISTINCT user_id) FROM crf_kategori_pic')->fetchColumn();
 
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
