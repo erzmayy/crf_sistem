@@ -1,6 +1,8 @@
 <?php
 /**
- * Partial: Informasi SLA.
+ * Partial: Informasi SLA (hanya untuk peran internal).
+ * Satu baris ringkas (target, batas, status); rincian waktu bisa dibuka.
+ * Atribut data-sla-* dipertahankan karena dipakai script.js untuk hitung mundur.
  *
  * Variabel yang HARUS sudah ada di scope pemanggil:
  *   array $crf
@@ -23,105 +25,61 @@ $slaStartedEpoch = !empty($crf['sla_mulai'])
 $slaDueEpoch = !empty($crf['sla_tenggat'])
     ? strtotime($crf['sla_tenggat'])
     : false;
+$slaDate = static fn(?string $v): string => !empty($v) ? date('d-m-Y H:i', strtotime($v)) : '-';
 ?>
-<div class="crf-section crf-detail-card mb-4">
+<section class="crf-section crf-detail-card crf-sla-card mb-4" aria-labelledby="crf-sla-title">
     <div class="crf-section-header">
-        <span class="crf-section-number"><i class="bi bi-hourglass-split"></i></span>
-        <h2>Informasi SLA</h2>
+        <span class="crf-section-number"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span>
+        <h2 id="crf-sla-title">Informasi SLA</h2>
     </div>
 
     <div class="crf-section-body">
         <div
-            class="crf-sla-grid row g-2"
+            class="crf-sla-compact"
             <?= $slaIsLive && $slaDueEpoch !== false
                 ? 'data-sla-live="true" data-sla-started-at="' . (int) $slaStartedEpoch . '" data-sla-due-at="' . (int) $slaDueEpoch . '"'
                 : '' ?>
         >
-
-            <div class="col-md-3 crf-sla-item">
-                <div class="crf-detail-label">LEVEL URGENSI</div>
-                <div class="crf-detail-value">
-                    <?php if (!empty($crf['level'])): ?>
-                        <span class="crf-sla-value"><?= h($crf['level']) ?></span>
-                    <?php else: ?>
-                        <span class="crf-sla-empty">Belum ditentukan</span>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <div class="col-md-3 crf-sla-item">
-                <div class="crf-detail-label">SLA</div>
-                <div class="crf-detail-value">
+            <div class="crf-sla-line">
+                <span class="crf-sla-target">
                     <?php if ($slaValueDisplay !== null): ?>
-                        <span class="crf-sla-value"><?= h($slaValueDisplay) ?></span>
-                        <small class="d-block text-muted">hari kerja</small>
-                        <?php if ($slaAdjusted): ?>
-                            <small class="d-block text-warning-emphasis">
-                                <i class="bi bi-pencil"></i> Disesuaikan dari standar <?= h(slaLabel($slaStandard['value'], $slaStandard['unit'])) ?> (alasan di timeline)
-                            </small>
-                        <?php endif; ?>
+                        <strong><?= h($slaValueDisplay) ?></strong> <small>(dihitung pada hari kerja)</small>
                     <?php else: ?>
-                        <span class="crf-sla-empty">Belum ditentukan</span>
+                        <span class="crf-sla-empty">SLA belum ditentukan</span>
                     <?php endif; ?>
-                </div>
-            </div>
+                </span>
 
-            <div class="col-md-3 crf-sla-item">
-                <div class="crf-detail-label">MULAI SLA</div>
-                <div class="crf-detail-value">
-                    <?php if (!empty($crf['sla_mulai'])): ?>
-                        <span class="crf-info-date"><?= h(date('d-m-Y H:i', strtotime($crf['sla_mulai']))) ?></span>
-                    <?php else: ?>
-                        <span class="crf-sla-empty">-</span>
-                    <?php endif; ?>
-                </div>
-            </div>
+                <?php if (!empty($crf['sla_tenggat'])): ?>
+                    <span class="crf-sla-due">Batas <?= h($slaDate($crf['sla_tenggat'])) ?></span>
+                <?php endif; ?>
 
-            <div class="col-md-3 crf-sla-item">
-                <div class="crf-detail-label">BATAS SLA</div>
-                <div class="crf-detail-value">
-                    <?php if (!empty($crf['sla_tenggat'])): ?>
-                        <span class="crf-info-date"><?= h(date('d-m-Y H:i', strtotime($crf['sla_tenggat']))) ?></span>
-                    <?php else: ?>
-                        <span class="crf-sla-empty">-</span>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <div class="col-md-3 crf-sla-item">
-                <div class="crf-detail-label">WAKTU SELESAI</div>
-                <div class="crf-detail-value">
-                    <?php if (!empty($crf['otomasi_selesai'])): ?>
-                        <span class="crf-info-date"><?= h(date('d-m-Y H:i', strtotime($crf['otomasi_selesai']))) ?></span>
-                    <?php else: ?>
-                        <span class="crf-sla-empty">Belum selesai</span>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <div class="col-md-3 crf-sla-item">
-                <div class="crf-detail-label">DURASI PENGERJAAN</div>
-                <div class="crf-detail-value">
-                    <?php if ($slaStatus['elapsed'] !== null): ?>
-                        <span class="crf-sla-value"><?= h($slaStatus['elapsed']) ?></span>
-                    <?php else: ?>
-                        <span class="crf-sla-empty">-</span>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <div class="col-md-6 crf-sla-item">
-                <div class="crf-detail-label">STATUS SLA</div>
-                <div class="crf-detail-value">
+                <span class="crf-sla-state">
                     <span
                         class="badge text-bg-<?= h($slaStatus['class']) ?>"
                         data-sla-status-label
                         <?= $slaIsLive ? 'data-sla-started-at="' . (int) $slaStartedEpoch . '" data-sla-due-at="' . (int) $slaDueEpoch . '"' : '' ?>
                     ><?= h($slaStatus['label']) ?></span>
                     <span class="crf-sla-status-detail" data-sla-status-detail><?= h($slaStatus['detail']) ?></span>
-                </div>
+                </span>
             </div>
 
+            <?php if ($slaAdjusted): ?>
+                <p class="crf-sla-note">
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                    Disesuaikan dari standar <?= h(slaLabel($slaStandard['value'], $slaStandard['unit'])) ?> (alasan di riwayat).
+                </p>
+            <?php endif; ?>
+
+            <details class="crf-sla-details">
+                <summary>Rincian waktu</summary>
+                <dl class="crf-meta-row">
+                    <div><dt>Level urgensi</dt><dd><?= h($crf['level'] ?? 'Belum ditentukan') ?></dd></div>
+                    <div><dt>Mulai SLA</dt><dd><?= h($slaDate($crf['sla_mulai'] ?? null)) ?></dd></div>
+                    <div><dt>Batas SLA</dt><dd><?= h($slaDate($crf['sla_tenggat'] ?? null)) ?></dd></div>
+                    <div><dt>Waktu selesai</dt><dd><?= !empty($crf['otomasi_selesai']) ? h($slaDate($crf['otomasi_selesai'])) : 'Belum selesai' ?></dd></div>
+                    <div><dt>Durasi pengerjaan</dt><dd><?= $slaStatus['elapsed'] !== null ? h($slaStatus['elapsed']) : '-' ?></dd></div>
+                </dl>
+            </details>
         </div>
 
         <?php if (!empty($crf['sla_hasil'])): ?>
@@ -140,11 +98,11 @@ $slaDueEpoch = !empty($crf['sla_tenggat'])
                 data-sla-alert
                 data-sla-alert-state="<?= h($slaStatus['alert'] ?? '') ?>"
             >
-                <i class="bi bi-<?= $slaStatus['alert'] === 'overdue' ? 'exclamation-triangle-fill' : 'clock-fill' ?>" data-sla-alert-icon></i>
+                <i class="bi bi-<?= $slaStatus['alert'] === 'overdue' ? 'exclamation-triangle-fill' : 'clock-fill' ?>" data-sla-alert-icon aria-hidden="true"></i>
                 <span data-sla-alert-message><?= $slaStatus['alert'] === 'overdue' ? 'Peringatan: batas SLA telah terlewati.' : 'Perhatian: batas waktu SLA hampir terlewati.' ?></span>
             </div>
         <?php endif; ?>
     </div>
-</div>
+</section>
 <?php
-unset($slaValueDisplay, $slaStatus, $slaStandard, $slaAdjusted, $slaIsLive, $slaStartedEpoch, $slaDueEpoch);
+unset($slaValueDisplay, $slaStatus, $slaStandard, $slaAdjusted, $slaIsLive, $slaStartedEpoch, $slaDueEpoch, $slaDate, $slaOnTime);

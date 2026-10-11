@@ -684,3 +684,16 @@ if (fileInput && fileList) {
     button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
   });
 })();
+
+/* Halaman detail: buka/tutup entri riwayat yang lebih lama. */
+(function () {
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest ? event.target.closest('[data-timeline-toggle]') : null;
+    if (!button) { return; }
+    var list = document.getElementById(button.getAttribute('aria-controls'));
+    if (!list) { return; }
+    var trimmed = list.classList.toggle('is-trimmed');
+    button.setAttribute('aria-expanded', trimmed ? 'false' : 'true');
+    button.textContent = trimmed ? button.getAttribute('data-label-closed') : button.getAttribute('data-label-open');
+  });
+})();

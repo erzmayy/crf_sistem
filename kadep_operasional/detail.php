@@ -70,7 +70,7 @@ if (!$crf) {
                 CRF tidak ditemukan pada antrean persetujuan Kepala Departemen Operasional.
             </div>
 
-            <a href="index.php" class="btn btn-crf-outline">
+            <a href="index.php" class="crf-back-btn">
                 <i class="bi bi-arrow-left"></i>
                 Kembali
             </a>
@@ -137,71 +137,10 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="container">
 
 
-        <!-- =====================================================
-             HEADER
-             ===================================================== -->
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 crf-page-header">
-
-            <div>
-                <h1>Persetujuan Kepala Departemen Operasional</h1>
-
-                <p>
-                    Nomor Register:
-                    <strong><?= h($crf['nomor_register'] ?? '-') ?></strong>
-                </p>
-            </div>
-
-            <div class="d-flex gap-2">
-                <?php require __DIR__ . '/../includes/partials/forum_button.php'; ?>
-                <a href="../actions/export_crf.php?id=<?= (int) $crf['id'] ?>" class="btn btn-crf-primary" target="_blank" rel="noopener">
-                    <i class="bi bi-file-earmark-pdf"></i> Export PDF
-                </a>
-                <a href="index.php" class="btn btn-crf-outline">
-                    <i class="bi bi-arrow-left"></i>
-                    Kembali
-                </a>
-            </div>
-
-        </div>
-
-
-        <!-- =====================================================
-             FLASH MESSAGE
-             ===================================================== -->
-        <?php if ($flash): ?>
-            <div class="alert alert-<?= h($flash['type']) ?> crf-alert" role="alert">
-                <?= h($flash['message']) ?>
-            </div>
-        <?php endif; ?>
-
-
-        <!-- =====================================================
-             STATUS
-             ===================================================== -->
-        <div class="crf-status-strip mb-4">
-
-            <span class="crf-badge <?= statusBadgeClass($crf['status']) ?>">
-                Status: <?= h(statusLabel($crf['status'] ?? '')) ?>
-            </span>
-
-            <span class="crf-badge <?= workflowStageBadgeClass($crf['tahap_alur'] ?? 'kadep_operasional') ?>">
-                Tahap: <?= h(workflowStageLabel($crf['tahap_alur'] ?? 'kadep_operasional')) ?>
-            </span>
-
-            <?php $approvalUrgency = crfEffectiveUrgency($crf); ?>
-            <span class="crf-badge <?= levelBadgeClass($approvalUrgency) ?>">
-                Level Urgensi: <?= h($approvalUrgency ?? 'Belum ditentukan') ?>
-            </span>
-
-            <?php if (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan'])): ?>
-                <span class="crf-badge badge-stage-pir">
-                    SLA:
-                    <?= h(rtrim(rtrim(number_format((float) $crf['sla_nilai'], 2, '.', ''), '0'), '.')) ?>
-                    <?= h($crf['sla_satuan']) ?>
-                </span>
-            <?php endif; ?>
-
-        </div>
+        <?php
+        $dhEyebrow = 'Persetujuan Kepala Departemen Operasional';
+        require __DIR__ . '/../includes/partials/detail_header.php';
+        ?>
 
         <div class="crf-detail-layout">
           <div class="crf-detail-main">
@@ -226,11 +165,11 @@ require_once __DIR__ . '/../includes/header.php';
              4. APPROVAL KEPALA DEPARTEMEN OPERASIONAL (khusus)
              ===================================================== -->
         <?php if ($crf['tahap_alur'] === 'kadep_operasional'): ?>
-        <div class="crf-section mb-4">
+        <div class="crf-section crf-detail-card crf-action-card mb-4">
 
             <div class="crf-section-header">
                 <span class="crf-section-number"><i class="bi bi-person-check"></i></span>
-                <h2>Persetujuan Kepala Departemen Operasional</h2>
+                <h2>Tindakan Anda: setujui CRF ini</h2>
             </div>
 
             <div class="crf-section-body">
@@ -272,7 +211,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                     </div>
 
-                    <button type="submit" class="btn btn-success" <?= $approvalHasSla ? '' : 'disabled' ?>>
+                    <button type="submit" class="btn btn-crf-primary" <?= $approvalHasSla ? '' : 'disabled' ?>>
                         <i class="bi bi-check-circle"></i>
                         Setujui
                     </button>

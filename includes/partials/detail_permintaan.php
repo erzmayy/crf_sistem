@@ -1,6 +1,7 @@
 <?php
 /**
- * Partial: Detail Pengajuan.
+ * Partial: Isi permintaan (rincian, alasan, manfaat, dampak, lampiran).
+ * Ditampilkan sebagai teks bacaan; isian kosong tidak ditampilkan.
  *
  * Variabel yang HARUS sudah ada di scope pemanggil:
  *   array $crf
@@ -10,16 +11,9 @@
  *   string $sectionTitle
  */
 
-$sectionTitle = $sectionTitle ?? 'Detail Pengajuan';
-$systemUrgencyLevel = crfUrgencyForImpact($crf['kategori_dampak'] ?? null)
-    ?: ($crf['level'] ?? null);
-$urgencyLevel = !empty($crf['level_urgensi_final'])
-    ? $crf['level_urgensi_final']
-    : $systemUrgencyLevel;
-$urgencyLabel = !empty($crf['level_urgensi_final'])
-    ? 'Level Urgensi Final'
-    : 'Level Urgensi';
-// Dokumen hasil UAT (category 'uat') ditampilkan terpisah dari lampiran pengajuan.
+$sectionTitle = $sectionTitle ?? 'Isi Permintaan';
+
+// Dokumen hasil UAT (kategori 'uat') ditampilkan terpisah dari lampiran pengajuan.
 $requestAttachments = array_values(array_filter($attachments ?? [], static fn(array $file): bool => empty($file['kategori'])));
 $uatDocuments = array_values(array_filter($attachments ?? [], static fn(array $file): bool => ($file['kategori'] ?? '') === 'uat'));
 $attachmentIcon = static function (array $file): string {
@@ -37,142 +31,126 @@ $attachmentSize = static function (array $file): string {
     $bytes = (int) ($file['ukuran_file'] ?? 0);
     return $bytes >= 1048576 ? number_format($bytes / 1048576, 1, ',', '.') . ' MB' : max(1, (int) round($bytes / 1024)) . ' KB';
 };
+
+// Blok teks bacaan: [label, isi]. Isian kosong dilewati.
+$filled = static fn($v): bool => trim((string) $v) !== '';
+$impactLabel = crfImpactLabel($crf['kategori_dampak'] ?? null);
+$proseBlocks = [];
+foreach ([
+    'Rincian perubahan' => $crf['deskripsi_perubahan'] ?? '',
+    'Alasan permohonan' => $crf['alasan'] ?? '',
+    'Manfaat yang diharapkan' => $crf['manfaat'] ?? '',
+] as $label => $value) {
+    if ($filled($value)) {
+        $proseBlocks[$label] = $value;
+    }
+}
+
+// Rincian singkat (tipe, biaya, kategori) sebagai baris meta.
+$metaItems = [];
+if ($filled($crf['jenis_pengajuan'] ?? '')) {
+    $metaItems['Tipe pengajuan'] = (string) $crf['jenis_pengajuan'];
+}
+$budgetText = budgetTypeLabel($crf['jenis_anggaran'] ?? null);
+if (isset($crf['nilai_anggaran']) && $crf['nilai_anggaran'] !== '' && $crf['nilai_anggaran'] !== null) {
+    $budgetText .= ' — ' . formatRupiah($crf['nilai_anggaran']);
+}
+if ($filled($budgetText)) {
+    $metaItems['Biaya / anggaran'] = $budgetText;
+}
+if ($filled($crf['detail_kategori_perubahan'] ?? '')) {
+    $metaItems['Detail kategori'] = (string) $crf['detail_kategori_perubahan'];
+}
+
+$renderFiles = static function (array $files, bool $showDate) use ($attachmentIcon, $attachmentSize): void {
+    ?>
+    <ul class="crf-file-list">
+        <?php foreach ($files as $file): ?>
+            <li class="crf-file-item">
+                <i class="bi <?= h($attachmentIcon($file)) ?>" aria-hidden="true"></i>
+                <span class="crf-file-name" title="<?= h($file['nama_asli'] ?? '-') ?>"><?= h($file['nama_asli'] ?? '-') ?></span>
+                <small class="crf-file-size">
+                    <?= h($attachmentSize($file)) ?>
+                    <?php if ($showDate && !empty($file['tgl_unggah'])): ?>· <?= h(date('d-m-Y H:i', strtotime($file['tgl_unggah']))) ?><?php endif; ?>
+                </small>
+                <span class="crf-file-actions">
+                    <?php if (!empty($file['path_file'])): ?>
+                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>&amp;inline=1" target="_blank" rel="noopener"
+                           class="btn btn-sm btn-crf-outline" aria-label="Lihat <?= h($file['nama_asli'] ?? '') ?>">
+                            <i class="bi bi-eye" aria-hidden="true"></i> Lihat
+                        </a>
+                    <?php endif; ?>
+                    <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-outline"
+                       aria-label="Unduh <?= h($file['nama_asli'] ?? '') ?>">
+                        <i class="bi bi-download" aria-hidden="true"></i> Unduh
+                    </a>
+                </span>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+    <?php
+};
 ?>
-<div class="crf-section crf-detail-card mb-4">
+<section class="crf-section crf-detail-card crf-request-card mb-4" aria-labelledby="crf-request-title">
     <div class="crf-section-header">
-        <span class="crf-section-number"><i class="bi bi-card-checklist"></i></span>
-        <h2><?= h($sectionTitle) ?></h2>
+        <span class="crf-section-number"><i class="bi bi-card-checklist" aria-hidden="true"></i></span>
+        <h2 id="crf-request-title"><?= h($sectionTitle) ?></h2>
     </div>
 
     <div class="crf-section-body">
-        <div class="crf-info-rows">
-            <div class="crf-info-row">
-                <span class="crf-info-label">Tipe Pengajuan</span>
-                <div class="crf-info-value"><?= h($crf['jenis_pengajuan'] ?? '-') ?></div>
+        <?php foreach ($proseBlocks as $label => $value): ?>
+            <div class="crf-prose-block">
+                <h3 class="crf-prose-label"><?= h($label) ?></h3>
+                <p class="crf-prose-text"><?= nl2br(h($value)) ?></p>
             </div>
-            <div class="crf-info-row crf-request-row-long">
-                <span class="crf-info-label">Rincian Permohonan Perubahan</span>
-                <div class="crf-info-value"><?= nl2br(h($crf['deskripsi_perubahan'] ?? '-')) ?></div>
+        <?php endforeach; ?>
+
+        <?php if ($impactLabel !== '' || $filled($crf['dampak'] ?? '')): ?>
+            <div class="crf-prose-block">
+                <h3 class="crf-prose-label">Dampak</h3>
+                <?php if ($impactLabel !== ''): ?>
+                    <p class="crf-prose-text crf-prose-strong"><?= h($impactLabel) ?></p>
+                <?php endif; ?>
+                <?php if ($filled($crf['dampak'] ?? '')): ?>
+                    <p class="crf-prose-text"><?= nl2br(h($crf['dampak'])) ?></p>
+                <?php endif; ?>
             </div>
-            <div class="crf-info-row crf-request-row-long">
-                <span class="crf-info-label">Benefit dari Perubahan yang Diharapkan</span>
-                <div class="crf-info-value"><?= nl2br(h($crf['manfaat'] ?? '-')) ?></div>
+        <?php endif; ?>
+
+        <?php if ($filled($crf['saran_alternatif'] ?? '')): ?>
+            <div class="crf-prose-block">
+                <h3 class="crf-prose-label">Saran alternatif</h3>
+                <p class="crf-prose-text"><?= nl2br(h($crf['saran_alternatif'])) ?></p>
             </div>
-            <div class="crf-info-row crf-request-row-long">
-                <span class="crf-info-label">Dampak Terpilih</span>
-                <div class="crf-info-value">
-                    <?= h(crfImpactLabel($crf['kategori_dampak'] ?? null) ?: '-') ?>
-                </div>
-            </div>
-            <div class="crf-info-row crf-urgency-detail-row">
-                <span class="crf-info-label"><?= h($urgencyLabel) ?></span>
-                <div class="crf-info-value crf-urgency-detail-value">
-                    <?php if ($urgencyLevel !== null): ?>
-                        <span class="crf-badge crf-urgency-detail-badge <?= h(levelBadgeClass($urgencyLevel)) ?>">
-                            <?= h($urgencyLevel) ?>
-                        </span>
-                    <?php else: ?>
-                        <span class="text-muted">Belum ditentukan.</span>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <div class="crf-info-row crf-request-row-long">
-                <span class="crf-info-label">Penjelasan Dampak yang Dipilih</span>
-                <div class="crf-info-value"><?= nl2br(h($crf['dampak'] ?? '-')) ?></div>
-            </div>
-            <div class="crf-info-row crf-request-row-long">
-                <span class="crf-info-label">Alasan Permohonan Perubahan</span>
-                <div class="crf-info-value"><?= nl2br(h($crf['alasan'] ?? '-')) ?></div>
-            </div>
-            <div class="crf-info-row crf-request-row-long">
-                <span class="crf-info-label">Bukti dan Informasi Pendukung</span>
-                <div class="crf-info-value">
-                    <?php if (empty($requestAttachments)): ?>
-                        <span class="text-muted">Tidak ada file yang dilampirkan.</span>
-                    <?php else: ?>
-                        <div class="crf-attachment-list">
-                            <?php foreach ($requestAttachments as $file): ?>
-                                <div class="crf-attachment-row">
-                                    <div class="crf-attachment-name">
-                                        <i class="bi <?= h($attachmentIcon($file)) ?>"></i>
-                                        <span title="<?= h($file['nama_asli'] ?? '-') ?>"><?= h($file['nama_asli'] ?? '-') ?></span>
-                                        <small class="text-muted">
-                                            <?= h($attachmentSize($file)) ?>
-                                        </small>
-                                    </div>
-                                    <div class="d-flex gap-1 flex-shrink-0">
-                                        <?php if (!empty($file['path_file'])): ?>
-                                            <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>&amp;inline=1" target="_blank" rel="noopener" class="btn btn-sm btn-crf-outline py-1 px-2">
-                                                <i class="bi bi-eye"></i> Lihat
-                                            </a>
-                                        <?php endif; ?>
-                                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-outline py-1 px-2" title="Unduh <?= h($file['nama_asli'] ?? '') ?>">
-                                            <i class="bi bi-download"></i> Unduh
-                                        </a>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <?php if ($uatDocuments): ?>
-                <div class="crf-info-row crf-request-row-long">
-                    <span class="crf-info-label">Dokumen Hasil UAT</span>
-                    <div class="crf-info-value">
-                        <div class="crf-attachment-list">
-                            <?php foreach ($uatDocuments as $file): ?>
-                                <div class="crf-attachment-row">
-                                    <div class="crf-attachment-name">
-                                        <i class="bi <?= h($attachmentIcon($file)) ?>"></i>
-                                        <span title="<?= h($file['nama_asli'] ?? '-') ?>"><?= h($file['nama_asli'] ?? '-') ?></span>
-                                        <small class="text-muted">
-                                            <?= h($attachmentSize($file)) ?>
-                                            <?php if (!empty($file['tgl_unggah'])): ?>· <?= h(date('d-m-Y H:i', strtotime($file['tgl_unggah']))) ?><?php endif; ?>
-                                        </small>
-                                    </div>
-                                    <div class="d-flex gap-1 flex-shrink-0">
-                                        <?php if (!empty($file['path_file'])): ?>
-                                            <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>&amp;inline=1" target="_blank" rel="noopener" class="btn btn-sm btn-crf-outline py-1 px-2">
-                                                <i class="bi bi-eye"></i> Lihat
-                                            </a>
-                                        <?php endif; ?>
-                                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-outline py-1 px-2" title="Unduh <?= h($file['nama_asli'] ?? '') ?>">
-                                            <i class="bi bi-download"></i> Unduh
-                                        </a>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
+        <?php endif; ?>
+
+        <?php if ($metaItems): ?>
+            <dl class="crf-meta-row">
+                <?php foreach ($metaItems as $label => $value): ?>
+                    <div>
+                        <dt><?= h($label) ?></dt>
+                        <dd><?= h($value) ?></dd>
                     </div>
-                </div>
+                <?php endforeach; ?>
+            </dl>
+        <?php endif; ?>
+
+        <div class="crf-prose-block crf-prose-files">
+            <h3 class="crf-prose-label">Bukti dan informasi pendukung</h3>
+            <?php if (empty($requestAttachments)): ?>
+                <p class="crf-prose-text text-muted">Tidak ada file yang dilampirkan.</p>
+            <?php else: ?>
+                <?php $renderFiles($requestAttachments, false); ?>
             <?php endif; ?>
-            <div class="crf-info-row">
-                <span class="crf-info-label">Biaya / Anggaran</span>
-                <div class="crf-info-value">
-                    <?= h(budgetTypeLabel($crf['jenis_anggaran'] ?? null)) ?>
-                    <?php if (isset($crf['nilai_anggaran']) && $crf['nilai_anggaran'] !== ''): ?>
-                        &mdash; <?= h(formatRupiah($crf['nilai_anggaran'])) ?>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <div class="crf-info-row">
-                <span class="crf-info-label">Kategori Perubahan</span>
-                <div class="crf-info-value">
-                    <?= h(crfCategoryName($crf)) ?>
-                    <?php if (!empty($crf['detail_kategori_perubahan'])): ?>
-                        &mdash; <?= h($crf['detail_kategori_perubahan']) ?>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <div class="crf-info-row crf-request-row-long">
-                <span class="crf-info-label">Saran Alternatif</span>
-                <div class="crf-info-value"><?= nl2br(h($crf['saran_alternatif'] ?? '-')) ?></div>
-            </div>
         </div>
+
+        <?php if ($uatDocuments): ?>
+            <div class="crf-prose-block crf-prose-files">
+                <h3 class="crf-prose-label">Dokumen hasil UAT</h3>
+                <?php $renderFiles($uatDocuments, true); ?>
+            </div>
+        <?php endif; ?>
     </div>
-</div>
+</section>
 <?php
-unset($sectionTitle, $attachmentIcon, $attachmentSize);
-unset($urgencyLevel);
-unset($systemUrgencyLevel, $urgencyLabel);
+unset($sectionTitle, $attachmentIcon, $attachmentSize, $filled, $impactLabel, $proseBlocks, $metaItems, $budgetText, $renderFiles, $label, $value);

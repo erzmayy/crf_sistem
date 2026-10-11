@@ -68,7 +68,7 @@ if (!$crf) {
                 CRF tidak ditemukan pada antrean Otomasi.
             </div>
 
-            <a href="index.php" class="btn btn-crf-outline">
+            <a href="index.php" class="crf-back-btn">
                 <i class="bi bi-arrow-left"></i>
                 Kembali
             </a>
@@ -127,72 +127,14 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="container">
 
 
-        <!-- =====================================================
-             HEADER
-             ===================================================== -->
-        <div class="crf-page-header d-flex justify-content-between align-items-start gap-2 flex-wrap">
-
-            <div>
-                <h1>Detail CRF</h1>
-
-                <p class="mb-0">
-                    Nomor Register:
-                    <strong><?= h($crf['nomor_register'] ?? '-') ?></strong>
-                    &middot;
-                    Pengaju:
-                    <?= h($crf['nama_pemohon'] ?? '-') ?>
-                </p>
-            </div>
-
-            <div class="d-flex gap-2">
-                <?php require __DIR__ . '/../includes/partials/forum_button.php'; ?>
-
-                <a href="index.php" class="btn btn-crf-outline">
-                    <i class="bi bi-arrow-left"></i>
-                    Kembali
-                </a>
-
-                <?php if ($crf['tahap_alur'] === 'OTOMASI' && !empty($crf['tgl_disetujui_kadep'])): ?>
-                    <a
-                        href="detail.php?id=<?= (int) $crf['id'] ?>"
-                        class="btn btn-crf-primary"
-                    >
-                        <i class="bi bi-gear"></i>
-                        Proses CRF
-                    </a>
-                <?php endif; ?>
-
-            </div>
-
-        </div>
-
-
-        <!-- =====================================================
-             STATUS
-             ===================================================== -->
-        <div class="crf-status-strip mb-4">
-
-            <span class="crf-badge <?= statusBadgeClass($crf['status']) ?>">
-                Status: <?= h(statusLabel($crf['status'] ?? '')) ?>
-            </span>
-
-            <span class="crf-badge <?= workflowStageBadgeClass($crf['tahap_alur']) ?>">
-                Tahap: <?= h(workflowStageLabel($crf['tahap_alur'])) ?>
-            </span>
-
-            <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>">
-                Level: <?= h($crf['level'] ?? 'Belum ditentukan') ?>
-            </span>
-
-            <?php if (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan'])): ?>
-                <span class="crf-badge badge-stage-pir">
-                    SLA:
-                    <?= h(rtrim(rtrim(number_format((float) $crf['sla_nilai'], 2, '.', ''), '0'), '.')) ?>
-                    <?= h($crf['sla_satuan']) ?>
-                </span>
-            <?php endif; ?>
-
-        </div>
+        <?php
+        $dhEyebrow = 'Detail CRF';
+        $dhShowExport = false;
+        $dhExtraHtml = ($crf['tahap_alur'] === 'OTOMASI' && !empty($crf['tgl_disetujui_kadep']))
+            ? '<a href="detail.php?id=' . (int) $crf['id'] . '" class="btn btn-crf-primary"><i class="bi bi-gear" aria-hidden="true"></i> Proses CRF</a>'
+            : '';
+        require __DIR__ . '/../includes/partials/detail_header.php';
+        ?>
 
         <div class="crf-detail-layout">
           <div class="crf-detail-main">

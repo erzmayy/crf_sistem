@@ -41,7 +41,7 @@ if (!$crf) {
                     CRF tidak ditemukan pada antrean Otomasi.
                 </div>
 
-                <a href="index.php" class="btn btn-crf-outline">
+                <a href="index.php" class="crf-back-btn">
                     <i class="bi bi-arrow-left"></i>
                     Kembali
                 </a>
@@ -108,86 +108,11 @@ require_once __DIR__ . '/../includes/header.php';
 
     <div class="container">
 
-        <div class="crf-page-header d-flex justify-content-between align-items-start gap-2 flex-wrap">
-
-            <div>
-
-                <h1>Tindak Lanjut Otomasi · Implementasi</h1>
-
-                <p>
-                    Nomor Register:
-                    <strong><?= h($crf['nomor_register']) ?></strong>
-                    ·
-                    Pengaju:
-                    <?= h($crf['nama_pemohon']) ?>
-                </p>
-
-            </div>
-
-            <div class="d-flex gap-2">
-                <?php require __DIR__ . '/../includes/partials/forum_button.php'; ?>
-                <a
-                    href="index.php"
-                    class="btn btn-crf-outline"
-                >
-                    <i class="bi bi-arrow-left"></i>
-                    Kembali
-                </a>
-            </div>
-
-        </div>
-
-
-        <?php if ($flash): ?>
-
-            <div class="alert alert-<?= h($flash['type']) ?> crf-alert">
-                <?= h($flash['message']) ?>
-            </div>
-
-        <?php endif; ?>
-
-
-        <div class="d-flex gap-2 flex-wrap mb-4">
-            <?php $resolvedUrgencyLevel = crfEffectiveUrgency($crf); ?>
-
-            <span class="crf-badge <?= workflowStageBadgeClass($crf['tahap_alur']) ?>">
-                Tahap:
-                <?= h(workflowStageLabel($crf['tahap_alur'])) ?>
-            </span>
-
-            <?php if ($resolvedUrgencyLevel !== null): ?>
-                <span class="crf-badge <?= levelBadgeClass($resolvedUrgencyLevel) ?>">
-                    Level Urgensi: <?= h($resolvedUrgencyLevel) ?>
-                </span>
-            <?php endif; ?>
-
-            <?php if (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan'])): ?>
-
-                <span class="crf-badge badge-stage-pir">
-
-                    SLA:
-                    <?= h(
-                        rtrim(
-                            rtrim(
-                                number_format(
-                                    (float) $crf['sla_nilai'],
-                                    2,
-                                    '.',
-                                    ''
-                                ),
-                                '0'
-                            ),
-                            '.'
-                        )
-                    ) ?>
-
-                    <?= h($crf['sla_satuan']) ?>
-
-                </span>
-
-            <?php endif; ?>
-
-        </div>
+        <?php
+        $dhEyebrow = 'Eksekusi PIC CRF';
+        $dhShowExport = false;
+        require __DIR__ . '/../includes/partials/detail_header.php';
+        ?>
 
         <?php require __DIR__ . '/../includes/partials/handler_assignment.php'; ?>
 
@@ -241,7 +166,7 @@ require_once __DIR__ . '/../includes/header.php';
                      2. EKSEKUSI PERUBAHAN
                      ================================================= -->
 
-                <div class="crf-section mb-4">
+                <div class="crf-section crf-detail-card crf-action-card mb-4">
 
                     <div class="crf-section-header">
 
@@ -250,7 +175,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </span>
 
                         <h2>
-                            <?= h($otomasiPhaseMeta['title']) ?>
+                            Tindakan Anda: <?= h($otomasiPhaseMeta['title']) ?>
                         </h2>
 
                     </div>

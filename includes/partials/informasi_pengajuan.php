@@ -1,96 +1,72 @@
 <?php
 /**
- * Partial: Informasi Pengajuan.
+ * Partial: Ringkasan pengajuan (siapa, dari mana, ke mana, kapan).
+ * Menggantikan daftar 11 baris dengan satu kartu ringkas. Status, urgensi,
+ * dan kategori sudah ada di header halaman (detail_header.php).
  *
  * Variabel yang HARUS sudah ada di scope pemanggil:
  *   array $crf
  *
- * Variabel OPSIONAL:
- *   bool $showStatusInGrid
+ * Variabel OPSIONAL (dipertahankan agar pemanggil lama tetap kompatibel):
+ *   bool $showStatusInGrid  tidak dipakai lagi; status ada di header
  */
 
-$showStatusInGrid = $showStatusInGrid ?? false;
+$unit = static function (?string $dept, ?string $div): string {
+    $dept = trim((string) $dept);
+    $div = trim((string) $div);
 
-$infoDisplayStatus = crfDisplayStatus($crf);
+    return $dept === '' && $div === '' ? '' : ($dept . ($div !== '' ? ' (' . $div . ')' : ''));
+};
+$unitAsal = $unit($crf['dept_asal'] ?? '', $crf['divisi_asal'] ?? '');
+$unitTujuan = $unit($crf['dept_tujuan'] ?? '', $crf['divisi_tujuan'] ?? '');
+$kontak = array_filter([trim((string) ($crf['telepon'] ?? '')), trim((string) ($crf['email'] ?? ''))]);
+$picNama = trim((string) ($crf['pic_nama'] ?? ''));
 ?>
-<div class="crf-section crf-detail-card mb-4">
+<section class="crf-section crf-detail-card crf-summary-card mb-4" aria-labelledby="crf-summary-title">
     <div class="crf-section-header">
-        <span class="crf-section-number"><i class="bi bi-person-lines-fill"></i></span>
-        <h2>Informasi Pengajuan</h2>
+        <span class="crf-section-number"><i class="bi bi-person-lines-fill" aria-hidden="true"></i></span>
+        <h2 id="crf-summary-title">Ringkasan</h2>
     </div>
 
     <div class="crf-section-body">
-        <div class="crf-info-rows">
-            <div class="crf-info-row">
-                <span class="crf-info-label">Nama Lengkap</span>
-                <span class="crf-info-value"><?= h($crf['nama_pemohon'] ?? '-') ?></span>
+        <dl class="crf-summary-grid">
+            <div>
+                <dt>Pemohon</dt>
+                <dd>
+                    <?= h($crf['nama_pemohon'] ?? '-') ?>
+                    <?php if (!empty($crf['jabatan_pemohon'])): ?>
+                        <span class="crf-summary-sub"><?= h($crf['jabatan_pemohon']) ?></span>
+                    <?php endif; ?>
+                </dd>
             </div>
-            <div class="crf-info-row">
-                <span class="crf-info-label">No. Handphone / WA</span>
-                <span class="crf-info-value"><?= h($crf['telepon'] ?? '-') ?></span>
+            <div>
+                <dt>Kontak</dt>
+                <dd><?= $kontak ? h(implode(' · ', $kontak)) : '<span class="text-muted">-</span>' ?></dd>
             </div>
-            <div class="crf-info-row">
-                <span class="crf-info-label">Email Pemohon</span>
-                <span class="crf-info-value"><?= h($crf['email'] ?? '-') ?></span>
+            <div>
+                <dt>Unit asal</dt>
+                <dd><?= $unitAsal !== '' ? h($unitAsal) : '<span class="text-muted">-</span>' ?></dd>
             </div>
-            <?php if (!empty($crf['jabatan_pemohon'])): ?>
-                <div class="crf-info-row">
-                    <span class="crf-info-label">Jabatan</span>
-                    <span class="crf-info-value"><?= h($crf['jabatan_pemohon']) ?></span>
-                </div>
-            <?php endif; ?>
-            <div class="crf-info-row">
-                <span class="crf-info-label">Nomor Register</span>
-                <span class="crf-info-value crf-info-register"><?= h($crf['nomor_register'] ?? '-') ?></span>
+            <div>
+                <dt>Tujuan</dt>
+                <dd><?= $unitTujuan !== '' ? h($unitTujuan) : '<span class="text-muted">-</span>' ?></dd>
             </div>
-            <div class="crf-info-row">
-                <span class="crf-info-label">Kategori CRF</span>
-                <span class="crf-info-value"><?= h(crfCategoryName($crf)) ?></span>
-            </div>
-            <div class="crf-info-row">
-                <span class="crf-info-label">PIC CRF</span>
-                <span class="crf-info-value"><?= h($crf['pic_nama'] ?? '') ?: '<span class="text-muted">Belum ada</span>' ?></span>
-            </div>
-            <div class="crf-info-row">
-                <span class="crf-info-label">Tanggal Pengajuan</span>
-                <span class="crf-info-value">
+            <div>
+                <dt>Diajukan</dt>
+                <dd>
                     <?php if (!empty($crf['tgl_pengajuan'])): ?>
                         <?= h(formatTanggalIndonesia(new DateTime($crf['tgl_pengajuan']))) ?>
                     <?php else: ?>
                         <span class="text-muted">Belum diajukan</span>
                     <?php endif; ?>
-                </span>
+                </dd>
             </div>
-            <div class="crf-info-row">
-                <span class="crf-info-label">Kepada</span>
-                <span class="crf-info-value">
-                    <?= h($crf['dept_tujuan'] ?? '-') ?>
-                    <?php if (!empty($crf['divisi_tujuan'])): ?>
-                        <span class="crf-info-sub"><?= h($crf['divisi_tujuan']) ?></span>
-                    <?php endif; ?>
-                </span>
+            <div>
+                <dt>PIC CRF</dt>
+                <dd><?= $picNama !== '' ? h($picNama) : '<span class="text-muted">Belum ada</span>' ?></dd>
             </div>
-            <div class="crf-info-row">
-                <span class="crf-info-label">Dari</span>
-                <span class="crf-info-value">
-                    <?= h($crf['dept_asal'] ?? '-') ?>
-                    <?php if (!empty($crf['divisi_asal'])): ?>
-                        <span class="crf-info-sub"><?= h($crf['divisi_asal']) ?></span>
-                    <?php endif; ?>
-                </span>
-            </div>
-            <?php if ($showStatusInGrid): ?>
-                <div class="crf-info-row">
-                    <span class="crf-info-label">Status</span>
-                    <span class="crf-info-value">
-                        <span class="crf-badge crf-info-status <?= h($infoDisplayStatus['class']) ?>">
-                            <?= h($infoDisplayStatus['label']) ?>
-                        </span>
-                    </span>
-                </div>
-            <?php endif; ?>
-        </div>
+        </dl>
     </div>
-</div>
+</section>
 <?php
-unset($showStatusInGrid, $infoTicket, $infoTicketStmt, $infoDisplayStatus);
+unset($showStatusInGrid, $unit, $unitAsal, $unitTujuan, $kontak, $picNama);

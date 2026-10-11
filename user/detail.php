@@ -55,7 +55,7 @@ if (!$crf) {
     echo 'Pengajuan CRF tidak ditemukan atau bukan milik Anda.';
     echo '</div>';
 
-    echo '<a href="pengajuan_saya.php" class="btn btn-crf-outline">';
+    echo '<a href="pengajuan_saya.php" class="crf-back-btn">';
     echo '<i class="bi bi-arrow-left"></i> Kembali ke Pengajuan Saya';
     echo '</a>';
 
@@ -121,81 +121,17 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="crf-page crf-detail-page">
     <div class="container">
 
-        <!-- HEADER -->
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 crf-page-header">
-
-            <div>
-                <h1>Detail CRF</h1>
-
-                <p>
-                    Nomor Register:
-                    <strong><?= h($requestNumberDisplay) ?></strong>
-                </p>
-            </div>
-
-            <div class="d-flex gap-2">
-
-                <a
-                    href="../actions/export_crf.php?id=<?= (int) $crf['id'] ?>"
-                    class="btn btn-crf-primary"
-                >
-                    <i class="bi bi-file-earmark-pdf"></i>
-                    Export PDF
-                </a>
-
-                <a
-                    href="pengajuan_saya.php"
-                    class="btn btn-crf-outline"
-                >
-                    <i class="bi bi-arrow-left"></i>
-                    Pengajuan Saya
-                </a>
-
-                <?php if (($crf['status'] ?? '') === 'Perlu Revisi'): ?>
-                    <a
-                        href="form_crf.php?id=<?= (int) $crf['id'] ?>"
-                        class="btn btn-warning"
-                    >
-                        <i class="bi bi-pencil-square"></i>
-                        Perbaiki Pengajuan
-                    </a>
-                <?php endif; ?>
-
-            </div>
-
-        </div>
-
-        <!-- FLASH MESSAGE -->
-        <?php if ($flash): ?>
-
-            <div
-                class="alert alert-<?= h($flash['type']) ?> crf-alert"
-                role="alert"
-            >
-                <?= h($flash['message']) ?>
-            </div>
-
-        <?php endif; ?>
-
-
-        <!-- STATUS -->
-        <div class="crf-status-strip mb-4">
-
-            <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>"
-                  title="Berdasarkan dampak yang Anda pilih; dapat disesuaikan oleh CMO">
-                Level Urgensi:
-                <?= h($crf['level'] ?? 'Belum ditentukan') ?>
-            </span>
-
-            <span class="crf-badge <?= statusBadgeClass($crf['status']) ?>">
-                Status: <?= h(statusLabel($crf['status'])) ?>
-            </span>
-
-            <span class="crf-badge <?= workflowStageBadgeClass($crf['tahap_alur'] ?? 'PEMOHON') ?>">
-                Tahap: <?= h(workflowStageLabel($crf['tahap_alur'] ?? 'PEMOHON')) ?>
-            </span>
-
-        </div>
+        <?php
+        $dhEyebrow = 'Detail pengajuan';
+        $dhShowForum = false;
+        $dhShowSla = false;
+        $dhNumber = $requestNumberDisplay;
+        $dhLevelHint = 'Berdasarkan dampak yang Anda pilih; dapat disesuaikan oleh CMO';
+        $dhExtraHtml = (($crf['status'] ?? '') === 'Perlu Revisi')
+            ? '<a href="form_crf.php?id=' . (int) $crf['id'] . '" class="btn btn-warning"><i class="bi bi-pencil-square" aria-hidden="true"></i> Perbaiki pengajuan</a>'
+            : '';
+        require __DIR__ . '/../includes/partials/detail_header.php';
+        ?>
 
         <!-- INFO SOLVE -->
         <?php if ($crf['status'] === 'Solve' && $crf['tgl_selesai']): ?>
@@ -275,14 +211,14 @@ require_once __DIR__ . '/../includes/header.php';
 
 
         <!-- IMPLEMENTASI & POST IMPLEMENTATION REVIEW -->
-        <div id="implementation-review" class="crf-section crf-detail-card mb-4">
+        <div id="implementation-review" class="crf-section crf-detail-card mb-4<?= (($crf['tahap_alur'] ?? '') === 'PEMOHON_PIR') ? ' crf-action-card' : '' ?>">
 
             <div class="crf-section-header">
                 <span class="crf-section-number">
                     <i class="bi bi-clipboard-check"></i>
                 </span>
 
-                <h2>Implementasi & Post Implementation Review</h2>
+                <h2><?= (($crf['tahap_alur'] ?? '') === 'PEMOHON_PIR') ? 'Tindakan Anda: isi Post Implementation Review' : 'Implementasi & Post Implementation Review' ?></h2>
             </div>
 
             <div class="crf-section-body">

@@ -336,7 +336,7 @@ require_once __DIR__ . '/../includes/header.php';
                     $slaStatus = getCrfSlaStatus($selectedCrf);
                     ?>
                     <header class="crf-forum-discussion-header">
-                        <a class="crf-forum-back" href="<?= h($forumUrl()) ?>">
+                        <a class="crf-back-btn crf-forum-back" href="<?= h($forumUrl()) ?>">
                             <i class="bi bi-arrow-left" aria-hidden="true"></i> Daftar ruang
                         </a>
                         <div class="crf-forum-title">

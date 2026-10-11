@@ -68,7 +68,7 @@ if (!$crf) {
                     CRF tidak ditemukan pada antrean CMO.
                 </div>
 
-                <a href="index.php" class="btn btn-crf-outline">
+                <a href="index.php" class="crf-back-btn">
                     <i class="bi bi-arrow-left"></i>
                     Kembali
                 </a>
@@ -135,70 +135,10 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="container">
 
 
-        <!-- =====================================================
-             HEADER
-             ===================================================== -->
-        <div class="crf-page-header d-flex justify-content-between align-items-start gap-2 flex-wrap">
-
-            <div>
-                <h1>Verifikasi Permohonan Perubahan</h1>
-
-                <p class="mb-0">
-                    Nomor Register:
-                    <strong><?= h($crf['nomor_register'] ?? '-') ?></strong>
-                </p>
-            </div>
-
-            <div class="d-flex gap-2">
-                <?php require __DIR__ . '/../includes/partials/forum_button.php'; ?>
-                <a href="../actions/export_crf.php?id=<?= (int) $crf['id'] ?>" class="btn btn-crf-primary" target="_blank" rel="noopener">
-                    <i class="bi bi-file-earmark-pdf"></i> Export PDF
-                </a>
-                <a href="index.php" class="btn btn-crf-outline">
-                    <i class="bi bi-arrow-left"></i>
-                    Kembali
-                </a>
-            </div>
-
-        </div>
-
-
-        <!-- =====================================================
-             FLASH
-             ===================================================== -->
-        <?php if ($flash): ?>
-            <div class="alert alert-<?= h($flash['type']) ?> crf-alert" role="alert">
-                <?= h($flash['message']) ?>
-            </div>
-        <?php endif; ?>
-
-
-        <!-- =====================================================
-             STATUS
-             ===================================================== -->
-        <div class="crf-status-strip mb-4">
-
-            <span class="crf-badge <?= statusBadgeClass($crf['status']) ?>">
-                Status: <?= h(statusLabel($crf['status'])) ?>
-            </span>
-
-            <span class="crf-badge <?= workflowStageBadgeClass($crf['tahap_alur']) ?>">
-                Tahap: <?= h(workflowStageLabel($crf['tahap_alur'])) ?>
-            </span>
-
-            <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>">
-                Level: <?= h($crf['level'] ?? 'Belum ditentukan') ?>
-            </span>
-
-            <?php if (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan'])): ?>
-                <span class="crf-badge badge-stage-pir">
-                    SLA:
-                    <?= h(rtrim(rtrim(number_format((float) $crf['sla_nilai'], 2, '.', ''), '0'), '.')) ?>
-                    <?= h($crf['sla_satuan']) ?>
-                </span>
-            <?php endif; ?>
-
-        </div>
+        <?php
+        $dhEyebrow = 'Verifikasi CMO';
+        require __DIR__ . '/../includes/partials/detail_header.php';
+        ?>
 
         <div class="crf-detail-layout">
           <div class="crf-detail-main">
@@ -214,16 +154,17 @@ require_once __DIR__ . '/../includes/header.php';
         require __DIR__ . '/../includes/partials/detail_permintaan.php';
         ?>
 
+        <?php ob_start(); ?>
         <!-- =====================================================
              5. REVIEW CMO / FINALISASI (khusus CMO)
              ===================================================== -->
         <?php if ($crf['tahap_alur'] === 'CMO_FILTER'): ?>
 
-            <div class="crf-section crf-detail-card mb-4">
+            <div class="crf-section crf-detail-card crf-action-card mb-4">
 
                 <div class="crf-section-header">
                     <span class="crf-section-number"><i class="bi bi-chat-square-text"></i></span>
-                    <h2>Verifikasi CMO</h2>
+                    <h2>Tindakan Anda: verifikasi permintaan ini</h2>
                 </div>
 
                 <div class="crf-section-body">
@@ -288,40 +229,40 @@ require_once __DIR__ . '/../includes/header.php';
                                 <button
                                     name="action"
                                     value="request_discussion"
-                                    class="btn btn-outline-secondary"
+                                    class="btn btn-crf-outline"
                                     title="Bahas di Forum apakah Level Urgensi dan SLA default tetap atau perlu diubah"
                                 >
                                     <i class="bi bi-flag"></i>
-                                    Ajukan Pembahasan Forum
+                                    Bahas di Forum
                                 </button>
                             <?php elseif ($cmoCanCancelDiscussion): ?>
                                 <button
                                     name="action"
                                     value="cancel_discussion"
-                                    class="btn btn-outline-secondary"
+                                    class="btn btn-crf-outline"
                                     formnovalidate
                                 >
                                     <i class="bi bi-flag"></i>
-                                    Batalkan Pembahasan Forum
+                                    Batalkan pembahasan Forum
                                 </button>
                             <?php endif; ?>
 
                             <button
                                 name="action"
                                 value="revision"
-                                class="btn btn-warning"
+                                class="btn btn-crf-outline"
                             >
                                 <i class="bi bi-pencil-square"></i>
-                                Kembalikan untuk Perbaikan
+                                Minta revisi
                             </button>
 
                             <button
                                 name="action"
                                 value="cancel"
-                                class="btn btn-outline-danger"
+                                class="btn btn-link crf-action-danger"
                             >
                                 <i class="bi bi-x-circle"></i>
-                                Batalkan Permohonan
+                                Batalkan CRF
                             </button>
 
                         </div>
@@ -334,11 +275,11 @@ require_once __DIR__ . '/../includes/header.php';
 
         <?php elseif ($crf['tahap_alur'] === 'CMO_FINAL'): ?>
 
-            <div class="crf-section crf-detail-card mb-4">
+            <div class="crf-section crf-detail-card crf-action-card mb-4">
 
                 <div class="crf-section-header">
                     <span class="crf-section-number"><i class="bi bi-check2-circle"></i></span>
-                    <h2>Finalisasi</h2>
+                    <h2>Tindakan Anda: tutup CRF</h2>
                 </div>
 
                 <div class="crf-section-body">
@@ -358,10 +299,10 @@ require_once __DIR__ . '/../includes/header.php';
                             <button
                                 name="action"
                                 value="complete"
-                                class="btn btn-success"
+                                class="btn btn-crf-primary"
                             >
                                 <i class="bi bi-check-circle"></i>
-                                Tandai Selesai
+                                Tandai selesai
                             </button>
 
                         </div>
@@ -390,11 +331,11 @@ require_once __DIR__ . '/../includes/header.php';
             $uatRoundStmt->execute(['id' => (int) $crf['id']]);
             $uatRound = (int) $uatRoundStmt->fetchColumn() + 1;
             ?>
-            <div class="crf-section crf-detail-card mb-4">
+            <div class="crf-section crf-detail-card crf-action-card mb-4">
 
                 <div class="crf-section-header">
                     <span class="crf-section-number"><i class="bi bi-clipboard2-check"></i></span>
-                    <h2>UAT (User Acceptance Test) · Putaran <?= $uatRound ?></h2>
+                    <h2>Tindakan Anda: uji hasil eksekusi · Putaran <?= $uatRound ?></h2>
                 </div>
 
                 <div class="crf-section-body">
@@ -446,13 +387,13 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
 
                         <div class="d-flex gap-2 flex-wrap">
-                            <button name="action" value="uat_pass" class="btn btn-success">
+                            <button name="action" value="uat_pass" class="btn btn-crf-primary">
                                 <i class="bi bi-check-circle"></i>
                                 Lulus UAT
                             </button>
-                            <button name="action" value="uat_fail" class="btn btn-outline-danger">
+                            <button name="action" value="uat_fail" class="btn btn-crf-outline">
                                 <i class="bi bi-arrow-counterclockwise"></i>
-                                Perlu Perbaikan
+                                Perlu perbaikan
                             </button>
                         </div>
 
@@ -464,11 +405,11 @@ require_once __DIR__ . '/../includes/header.php';
         <?php elseif ($crf['tahap_alur'] === 'PEMOHON_PIR'): ?>
 
             <?php $pirReminder = crfPirReminderInfo($pdo, $crf); ?>
-            <div class="crf-section crf-detail-card mb-4">
+            <div class="crf-section crf-detail-card crf-action-card mb-4">
 
                 <div class="crf-section-header">
                     <span class="crf-section-number"><i class="bi bi-bell"></i></span>
-                    <h2>Menunggu PIR Pemohon</h2>
+                    <h2>Tindakan Anda: ingatkan pemohon mengisi PIR</h2>
                 </div>
 
                 <div class="crf-section-body">
@@ -519,7 +460,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <?= $pirReminder['can_send'] ? '' : 'disabled' ?>
                         >
                             <i class="bi bi-bell"></i>
-                            Kirim Pengingat ke Pemohon
+                            Kirim pengingat ke pemohon
                         </button>
 
                         <?php if (!$pirReminder['can_send'] && $pirReminder['next_at']): ?>
@@ -535,6 +476,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
         <?php endif; ?>
+        <?php $blokAksi = ob_get_clean(); ob_start(); ?>
 
         <!-- =====================================================
              3. IMPLEMENTASI & PIR (khusus tampilan CMO, read-only)
@@ -598,11 +540,37 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
         </div>
-
+        <?php $blokImpl = ob_get_clean(); ob_start(); ?>
 
         <!-- 4. INFORMASI SLA -->
         <?php
         require __DIR__ . '/../includes/partials/informasi_sla.php';
+        ?>
+        <?php
+        $blokSla = ob_get_clean();
+
+        // Urutan menurut tahap: baca konteks keputusan lebih dulu, lalu bertindak.
+        //  - Verifikasi : SLA (dasar keputusan Forum) -> aksi
+        //  - Finalisasi / PIR : Implementasi & PIR (yang diperiksa) -> aksi -> SLA
+        //  - Lainnya (mis. UAT) : aksi -> SLA
+        // Kartu Implementasi & PIR disembunyikan selama belum ada isinya.
+        $implTerisi = !empty($crf['tgl_implementasi']) || !empty($crf['implementasi'])
+            || !empty($crf['tgl_pir']) || !empty($crf['tinjauan_pasca_implementasi']);
+        if (!$implTerisi) {
+            $blokImpl = '';
+        }
+        $tahapCmo = (string) ($crf['tahap_alur'] ?? '');
+        if ($tahapCmo === 'CMO_FILTER') {
+            $urutanKartu = ['sla', 'aksi', 'impl'];
+        } elseif (in_array($tahapCmo, ['CMO_FINAL', 'PEMOHON_PIR'], true)) {
+            $urutanKartu = ['impl', 'aksi', 'sla'];
+        } else {
+            $urutanKartu = ['aksi', 'impl', 'sla'];
+        }
+        $kartuCmo = ['aksi' => $blokAksi, 'impl' => $blokImpl, 'sla' => $blokSla];
+        foreach ($urutanKartu as $kunciKartu) {
+            echo $kartuCmo[$kunciKartu];
+        }
         ?>
 
           </div><!-- /.crf-detail-main -->

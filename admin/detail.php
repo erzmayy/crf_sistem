@@ -34,7 +34,7 @@ if (!$crf) {
     require_once __DIR__ . '/../includes/header.php';
     echo '<div class="crf-page"><div class="container">';
     echo '<div class="alert alert-danger">Pengajuan CRF dengan ID tersebut tidak ditemukan.</div>';
-    echo '<a href="dashboard.php" class="btn btn-crf-outline"><i class="bi bi-arrow-left"></i> Kembali ke Dashboard</a>';
+    echo '<a href="dashboard.php" class="crf-back-btn"><i class="bi bi-arrow-left"></i> Kembali ke Dashboard</a>';
     echo '</div></div>';
     require_once __DIR__ . '/../includes/footer.php';
     exit;
@@ -79,43 +79,10 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="crf-page crf-detail-page">
   <div class="container">
 
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 crf-page-header">
-      <div>
-        <h1>Detail CRF</h1>
-        <p>Nomor Register: <strong><?= h($crf['nomor_register']) ?></strong></p>
-      </div>
-      <div class="d-flex gap-2">
-          <?php require __DIR__ . '/../includes/partials/forum_button.php'; ?>
-        <a
-          href="../actions/export_crf.php?id=<?= (int) $crf['id'] ?>"
-          class="btn btn-crf-primary"
-        >
-          <i class="bi bi-file-earmark-pdf"></i> Export PDF
-        </a>
-
-        <a
-          href="dashboard.php"
-          class="btn btn-crf-outline"
-        >
-          <i class="bi bi-arrow-left"></i> Dashboard
-        </a>
-      </div>
-    </div>
-
-    <?php if ($flash): ?>
-      <div class="alert alert-<?= h($flash['type']) ?> crf-alert" role="alert">
-        <?= h($flash['message']) ?>
-      </div>
-    <?php endif; ?>
-
-    <div class="crf-status-strip mb-4">
-      <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>">
-        Level Urgensi: <?= h($crf['level'] ?? 'Belum ditentukan') ?>
-      </span>
-      <span class="crf-badge <?= statusBadgeClass($crf['status']) ?>">
-        Status: <?= h(statusLabel($crf['status'])) ?>
-      </span>
-    </div>
+    <?php
+    $dhEyebrow = 'Detail CRF';
+    require __DIR__ . '/../includes/partials/detail_header.php';
+    ?>
 
     <?php if ($crf['tahap_alur'] === 'OTOMASI'): ?>
       <?php require __DIR__ . '/../includes/partials/handler_assignment.php'; ?>

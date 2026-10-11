@@ -6378,3 +6378,292 @@ body.crf-module {
     scroll-behavior: auto !important;
   }
 }
+
+/* =====================================================================
+   8. Halaman detail CRF disederhanakan
+   Header ringkas, ringkasan, isi permintaan sebagai teks bacaan,
+   SLA satu baris, dan riwayat singkat.
+   ===================================================================== */
+.crf-module .crf-dh { margin-bottom: 1.25rem; }
+.crf-module .crf-dh-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.9rem;
+}
+.crf-module .crf-dh-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.crf-module .crf-dh-eyebrow {
+  margin: 0;
+  color: #4b5666;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.crf-module .crf-dh-title {
+  margin: 0.15rem 0 0.2rem;
+  color: #172b4d;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.crf-module .crf-dh-subject {
+  max-width: 72ch;
+  margin: 0 0 0.75rem;
+  color: #3f4a5a;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.crf-module .crf-dh-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.crf-module .crf-dh-badge-muted { background: #eef1f5; color: #3f4a5a; }
+
+/* Kartu lebih tenang: tanpa ikon bernomor di judul bagian */
+.crf-module .crf-detail-page .crf-section-number { display: none; }
+.crf-module .crf-detail-page .crf-section-header { gap: 0; }
+.crf-module .crf-detail-page .crf-section-header h2 { font-size: 1rem; font-weight: 700; }
+
+/* Navigasi anchor tidak diperlukan lagi pada kartu yang lebih sedikit */
+.crf-module .crf-detail-nav { display: none; }
+
+/* Ringkasan */
+.crf-module .crf-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1rem 1.5rem;
+  margin: 0;
+}
+.crf-module .crf-summary-grid dt,
+.crf-module .crf-meta-row dt {
+  margin: 0 0 0.15rem;
+  color: #5b6878;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.crf-module .crf-summary-grid dd,
+.crf-module .crf-meta-row dd {
+  margin: 0;
+  color: #1f2a3d;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+.crf-module .crf-summary-sub { display: block; color: #5b6878; font-size: 0.82rem; }
+
+/* Isi permintaan */
+.crf-module .crf-prose-block + .crf-prose-block { margin-top: 1.2rem; }
+.crf-module .crf-prose-label {
+  margin: 0 0 0.25rem;
+  color: #5b6878;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.crf-module .crf-prose-text {
+  max-width: 75ch;
+  margin: 0;
+  color: #1f2a3d;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.crf-module .crf-prose-text + .crf-prose-text { margin-top: 0.4rem; }
+.crf-module .crf-prose-strong { font-weight: 600; }
+.crf-module .crf-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem 2rem;
+  margin: 1.2rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid #e7ebf0;
+}
+.crf-module .crf-sla-details .crf-meta-row { margin-top: 0.6rem; border-top: 0; padding-top: 0; }
+.crf-module .crf-prose-files { margin-top: 1.2rem; }
+.crf-module .crf-file-list { display: flex; flex-direction: column; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.crf-module .crf-file-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #e7ebf0;
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+.crf-module .crf-file-name {
+  flex: 1 1 10rem;
+  min-width: 0;
+  overflow: hidden;
+  color: #1f2a3d;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.crf-module .crf-file-size { color: #5b6878; }
+.crf-module .crf-file-actions { display: flex; gap: 0.35rem; }
+
+/* SLA satu baris */
+.crf-module .crf-sla-line { display: flex; align-items: center; gap: 0.5rem 1.25rem; flex-wrap: wrap; }
+.crf-module .crf-sla-target strong { font-size: 1.05rem; color: #1f2a3d; }
+.crf-module .crf-sla-due,
+.crf-module .crf-sla-note { margin: 0; color: #4b5666; font-size: 0.88rem; }
+.crf-module .crf-sla-note { margin-top: 0.5rem; }
+.crf-module .crf-sla-details { margin-top: 0.75rem; }
+.crf-module .crf-sla-details > summary {
+  display: inline-block;
+  min-height: 2rem;
+  color: #1d4ed8;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+/* Riwayat: tanpa gulir bersarang, entri lama bisa dibuka */
+.crf-module .crf-detail-page .crf-detail-sidebar { position: static; }
+.crf-module .crf-detail-page .crf-detail-sidebar > .crf-detail-timeline { max-height: none; overflow: visible; }
+.crf-module .crf-timeline.is-trimmed .crf-timeline-older { display: none; }
+.crf-module .crf-timeline-toggle {
+  display: inline-block;
+  min-height: 2.25rem;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #1d4ed8;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media (max-width: 767.98px) {
+  .crf-module .crf-dh-title { font-size: 1.3rem; }
+  .crf-module .crf-dh-actions { width: 100%; }
+  .crf-module .crf-dh-actions > .btn { flex: 1 1 auto; }
+  .crf-module .crf-file-actions { width: 100%; }
+  .crf-module .crf-file-actions > .btn { flex: 1 1 0; }
+}
+
+/* --- 9. Kartu aksi seragam ("Tindakan Anda") ------------------------- */
+.crf-module .crf-action-card {
+  border: 1px solid #93b4e6;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.06);
+}
+.crf-module .crf-detail-page .crf-action-card > .crf-section-header {
+  background: #f3f7fd;
+  border-bottom-color: #d6e2f5;
+}
+.crf-module .crf-detail-page .crf-action-card > .crf-section-header h2 {
+  color: #1b4fb0;
+  font-size: 0.95rem;
+}
+.crf-module .crf-action-card .btn-crf-primary,
+.crf-module .crf-action-card .btn-crf-outline { min-height: 2.5rem; }
+.crf-module .crf-action-card .crf-action-danger {
+  margin-left: auto;
+  padding: 0.4rem 0.25rem;
+  color: #b3261e;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.crf-module .crf-action-card .crf-action-danger:hover { color: #8c1d18; }
+@media (max-width: 767.98px) {
+  .crf-module .crf-action-card .d-flex.flex-wrap > .btn { flex: 1 1 100%; }
+  .crf-module .crf-action-card .crf-action-danger { margin-left: 0; }
+}
+
+/* --- 10. Tombol kembali modern ---------------------------------------
+   Pil dengan ikon panah dalam lingkaran; panah bergeser sedikit saat
+   disorot. Dipakai di semua halaman detail, halaman galat, dan Forum. */
+.crf-module .crf-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 1rem 0.25rem 0.3rem;
+  border: 1px solid #d3deec;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f2a3d;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(15, 39, 66, 0.05);
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+.crf-module .crf-back-btn > .bi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: #eaf1fc;
+  color: #1d4ed8;
+  font-size: 1rem;
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.crf-module .crf-back-btn:hover {
+  border-color: #93b4e6;
+  background: #f5f8fe;
+  color: #1b4fb0;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.12);
+}
+.crf-module .crf-back-btn:hover > .bi {
+  background: #1d4ed8;
+  color: #ffffff;
+  transform: translateX(-2px);
+}
+.crf-module .crf-back-btn:active { transform: scale(0.98); }
+
+/* Forum: "Daftar ruang" hanya muncul di layar kecil (aturan lama display:none) */
+.crf-module .crf-forum-back.crf-back-btn { display: none; margin-bottom: 0.75rem; }
+@media (max-width: 991px) {
+  .crf-module .crf-forum-back.crf-back-btn { display: inline-flex; }
+}
+@media (max-width: 767.98px) {
+  .crf-module .crf-back-btn { min-height: 2.75rem; }
+}
+
+/* --- 11. Header halaman detail: kartu banner (tidak flat) -------------
+   Mengembalikan tampilan banner: kartu putih, garis aksen biru di kiri,
+   bayangan halus, dan eyebrow "PORTAL CRF · ...". */
+.crf-module .crf-dh {
+  margin-bottom: 1.15rem;
+  padding: 1.1rem 1.3rem 1.15rem;
+  border: 1px solid #e5ebf1;
+  border-left: 3px solid #69acd2;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 3px 12px rgba(20, 45, 70, 0.04);
+}
+.crf-module .crf-dh-top { margin-bottom: 0.95rem; }
+.crf-module .crf-dh-eyebrow {
+  color: #3977a5;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.crf-module .crf-dh-title { color: #1e3048; }
+.crf-module .crf-dh-subject { color: #64748b; }
+@media (max-width: 767.98px) {
+  .crf-module .crf-dh { padding: 0.95rem 1rem 1rem; }
+}
+
+/* --- 12. Header detail tanpa tombol kembali: judul kiri, aksi kanan ----- */
+.crf-module .crf-dh-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.2rem;
+}
+.crf-module .crf-dh-heading { flex: 1 1 18rem; min-width: 0; }
+.crf-module .crf-dh-head .crf-dh-actions { flex: 0 0 auto; }
+.crf-module .crf-dh-badges { margin-top: 0.4rem; }
+@media (max-width: 767.98px) {
+  .crf-module .crf-dh-head .crf-dh-actions { width: 100%; }
+}

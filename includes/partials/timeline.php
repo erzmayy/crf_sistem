@@ -108,16 +108,28 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
 ?>
 <section class="crf-section crf-detail-timeline" aria-labelledby="crf-timeline-title">
     <div class="crf-section-header">
-        <span class="crf-section-number"><i class="bi bi-clock-history"></i></span>
-        <h2 id="crf-timeline-title">Riwayat Alur Proses (Timeline)</h2>
+        <span class="crf-section-number"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+        <h2 id="crf-timeline-title">Riwayat</h2>
     </div>
 
     <div class="crf-section-body">
         <?php if (empty($timeline) && $pendingStep === null): ?>
             <div class="text-muted">Belum ada riwayat proses pengajuan.</div>
         <?php else: ?>
-            <ol class="crf-timeline">
-                <?php foreach ($timeline as $item): ?>
+            <?php
+            // Hanya entri terbaru yang ditampilkan; yang lebih lama bisa dibuka.
+            $timelineKeep = 4;
+            $timelineOlder = max(0, count($timeline) - $timelineKeep);
+            ?>
+            <?php if ($timelineOlder > 0): ?>
+                <button type="button" class="crf-timeline-toggle" data-timeline-toggle
+                        data-label-open="Sembunyikan entri lama" data-label-closed="Tampilkan <?= (int) $timelineOlder ?> entri sebelumnya"
+                        aria-expanded="false" aria-controls="crf-timeline-list">
+                    Tampilkan <?= (int) $timelineOlder ?> entri sebelumnya
+                </button>
+            <?php endif; ?>
+            <ol id="crf-timeline-list" class="crf-timeline<?= $timelineOlder > 0 ? ' is-trimmed' : '' ?>">
+                <?php foreach ($timeline as $timelineIndex => $item): ?>
                     <?php
                     $activity = (string) ($item['aktivitas'] ?? '');
                     $isAttention = $activity === 'Perlu Revisi';
@@ -126,7 +138,7 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
                     $activityTitle = $activityLabels[$activity] ?? $activity;
                     $createdAt = strtotime((string) ($item['tgl_dibuat'] ?? ''));
                     ?>
-                    <li class="crf-timeline-item <?= h($itemClass) ?>">
+                    <li class="crf-timeline-item <?= h($itemClass) ?><?= $timelineIndex < $timelineOlder ? ' crf-timeline-older' : '' ?>">
                         <span class="crf-timeline-dot" aria-hidden="true">
                             <?php if ($isAttention): ?>
                                 <i class="bi bi-exclamation"></i>
@@ -176,4 +188,4 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
     </div>
 </section>
 <?php
-unset($activityLabels, $pendingStep, $workflowStage, $requestStatus);
+unset($timelineKeep, $timelineOlder, $timelineIndex, $activityLabels, $pendingStep, $workflowStage, $requestStatus);
