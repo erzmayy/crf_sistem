@@ -37,7 +37,7 @@ Forum dan Notifikasi. Helpdesk ditangani modul Helpdesk SIAP (bukan bagian aplik
 | Folder | Isi |
 |--------|-----|
 | `user/` | Pemohon: Form CRF, Pengajuan Saya, detail |
-| `cmo/`, `otomasi/`, `pak_joko/` | Antrean dan detail untuk CMO, PIC CRF (Otomasi), dan Kepala Departemen Operasional; setelah login langsung masuk ke antrean masing-masing |
+| `cmo/`, `otomasi/`, `kadep_operasional/` | Antrean dan detail untuk CMO, PIC CRF (Otomasi), dan Kepala Departemen Operasional; setelah login langsung masuk ke antrean masing-masing |
 | `admin/` | Dashboard dan master Kategori CRF (+ PIC CRF) |
 | `forum/` | Diskusi per CRF dan penetapan urgensi final |
 | `notifications/` | Notifikasi in-app |

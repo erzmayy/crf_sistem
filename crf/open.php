@@ -32,14 +32,14 @@ if ($role === 'demo') {
         'PEMOHON_PIR' => 'cmo/detail.php',
         'CMO_FINAL' => 'cmo/detail.php',
         'OTOMASI' => 'otomasi/detail.php',
-        'kadep_operasional' => 'pak_joko/detail.php',
+        'kadep_operasional' => 'kadep_operasional/detail.php',
     ][$crf['workflow_stage']] ?? 'admin/detail.php';
 } elseif ($role === 'admin') {
     $target = 'admin/detail.php';
 } elseif ($role === 'cmo') {
     $target = 'cmo/detail.php';
 } elseif ($role === 'kadep_operasional') {
-    $target = 'pak_joko/detail.php';
+    $target = 'kadep_operasional/detail.php';
 } elseif ($role === 'otomasi' && canHandleCrf($pdo, $crf)) {
     $target = $crf['workflow_stage'] === 'OTOMASI' ? 'otomasi/detail.php' : 'otomasi/view_detail.php';
 } elseif (isAdmin()) {

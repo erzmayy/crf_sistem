@@ -170,7 +170,7 @@ function forumProcessLink(PDO $pdo, array $crf): ?array
                 : null;
         case 'kadep_operasional':
             return $stage === 'kadep_operasional'
-                ? ['url' => '../pak_joko/detail.php?id=' . $id, 'label' => 'Buka halaman persetujuan']
+                ? ['url' => '../kadep_operasional/detail.php?id=' . $id, 'label' => 'Buka halaman persetujuan']
                 : null;
         case 'otomasi':
             $canProcess = $stage === 'OTOMASI'

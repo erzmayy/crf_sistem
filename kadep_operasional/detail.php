@@ -1,6 +1,6 @@
 <?php
 /**
- * pak_joko/detail.php
+ * kadep_operasional/detail.php
  * ---------------------------------------------------------------
  * Halaman review & approval CRF oleh Kepala Departemen Operasional.
  *
@@ -248,7 +248,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                 <?php endif; ?>
 
-                <form action="../actions/pak_joko_approve.php" method="POST">
+                <form action="../actions/kadep_operasional_approve.php" method="POST">
 
                     <?= csrfField() ?>
 

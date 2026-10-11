@@ -65,7 +65,7 @@ $crfListPage = [
     'demo' => '../admin/dashboard.php',
     'cmo' => '../cmo/index.php',
     'otomasi' => '../otomasi/index.php',
-    'kadep_operasional' => '../pak_joko/index.php',
+    'kadep_operasional' => '../kadep_operasional/index.php',
 ][$role];
 $crfListExtra = $role === 'otomasi' ? ['queue' => 'all'] : [];
 

@@ -6,7 +6,7 @@ require_once __DIR__ . '/../includes/forum_discussions.php';
 requireCrfRole(['kadep_operasional']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../pak_joko/index.php');
+    header('Location: ../kadep_operasional/index.php');
     exit;
 }
 
@@ -26,7 +26,7 @@ if ($id <= 0) {
         'message' => 'CRF tidak valid.'
     ];
 
-    header('Location: ../pak_joko/index.php');
+    header('Location: ../kadep_operasional/index.php');
     exit;
 }
 
@@ -47,7 +47,7 @@ if (!$crf || $crf['workflow_stage'] !== 'kadep_operasional') {
         'message' => 'CRF tidak tersedia untuk persetujuan.'
     ];
 
-    header('Location: ../pak_joko/index.php');
+    header('Location: ../kadep_operasional/index.php');
     exit;
 }
 
@@ -59,7 +59,7 @@ if ($note === '') {
         'message' => 'Catatan persetujuan wajib diisi.'
     ];
 
-    header('Location: ../pak_joko/detail.php?id=' . $id);
+    header('Location: ../kadep_operasional/detail.php?id=' . $id);
     exit;
 }
 
@@ -114,7 +114,7 @@ try {
                     ? 'CRF ini masih menunggu pembahasan Forum sehingga belum dapat disetujui.'
                     : 'SLA CRF ini belum tersedia, sehingga belum dapat disetujui. Hubungi Admin.',
             ];
-            header('Location: ../pak_joko/detail.php?id=' . $id);
+            header('Location: ../kadep_operasional/detail.php?id=' . $id);
             exit;
         }
 
@@ -189,7 +189,7 @@ try {
         ];
 
 
-        header('Location: ../pak_joko/index.php');
+        header('Location: ../kadep_operasional/index.php');
         exit;
     }
 
@@ -206,7 +206,7 @@ try {
     }
 
     error_log(
-        'pak_joko_approve error: '
+        'kadep_operasional_approve error: '
         . $e->getMessage()
     );
 
@@ -215,6 +215,6 @@ try {
         'message' => 'Terjadi kesalahan saat memproses persetujuan.'
     ];
 
-    header('Location: ../pak_joko/index.php');
+    header('Location: ../kadep_operasional/index.php');
     exit;
 }

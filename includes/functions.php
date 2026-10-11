@@ -294,7 +294,7 @@ function workflowStageBadgeClass(string $stage): string
         case 'PEMOHON_PIR':
             return 'badge-stage-pir';
         case 'kadep_operasional':
-            return 'badge-stage-joko';
+            return 'badge-stage-kadep';
         case 'CMO_FINAL':
             return 'badge-stage-cmo-final';
         case 'SELESAI':
@@ -618,7 +618,7 @@ function crfDisplayStatus(array $crf): array
         return ['key' => 'review', 'label' => 'Menunggu Verifikasi', 'class' => 'badge-status-belum'];
     }
     if ($stage === 'kadep_operasional') {
-        return ['key' => 'approval', 'label' => 'Menunggu Persetujuan', 'class' => 'badge-stage-joko'];
+        return ['key' => 'approval', 'label' => 'Menunggu Persetujuan', 'class' => 'badge-stage-kadep'];
     }
     if ($stage === 'OTOMASI' && $approved) {
         $phase = crfOtomasiPhase($crf);

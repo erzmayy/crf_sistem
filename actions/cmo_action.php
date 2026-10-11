@@ -326,7 +326,7 @@ try {
 }
 
 if ($action === 'to_approval' && isDemoUser()) {
-    header('Location: ../pak_joko/index.php');
+    header('Location: ../kadep_operasional/index.php');
 } else {
     header('Location: ../cmo/index.php');
 }

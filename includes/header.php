@@ -27,7 +27,7 @@ $navUserId = (int) ($currentUser['id'] ?? 0);
 $notificationUnread = unreadNotificationCount(getConnection(), $navUserId);
 $notificationItems = $crfEmbedded ? [] : recentNotifications(getConnection(), $navUserId, 6);
 
-$appBasePath = preg_replace('#/(?:admin|user|cmo|otomasi|pak_joko|forum|crf|notifications)/[^/]+$#', '', $scriptPath) ?: '';
+$appBasePath = preg_replace('#/(?:admin|user|cmo|otomasi|kadep_operasional|forum|crf|notifications)/[^/]+$#', '', $scriptPath) ?: '';
 $appBasePath = rtrim($appBasePath, '/');
 // Di dalam SIAP, awalan URL modul diatur dari config/siap.php.
 if (defined('CRF_BASE_URL') && CRF_BASE_URL !== '') {
