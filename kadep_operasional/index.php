@@ -20,17 +20,17 @@ if ($view === 'history') {
     $where[] = "EXISTS (
         SELECT 1
         FROM crf_log_aktivitas activity_log
-        WHERE activity_log.change_request_id = cr.id
+        WHERE activity_log.pengajuan_id = cr.id
           AND (
-              activity_log.activity = 'Approval Kepala Departemen Operasional'
+              activity_log.aktivitas = 'Approval Kepala Departemen Operasional'
               OR (
-                  activity_log.activity = 'Perlu Revisi'
-                  AND activity_log.description LIKE 'Kepala Departemen Operasional mengembalikan CRF ke Otomasi%'
+                  activity_log.aktivitas = 'Perlu Revisi'
+                  AND activity_log.deskripsi LIKE 'Kepala Departemen Operasional mengembalikan CRF ke Otomasi%'
               )
           )
     )";
 } else {
-    $where[] = "cr.workflow_stage = 'kadep_operasional'";
+    $where[] = "cr.tahap_alur = 'kadep_operasional'";
 }
 
 $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
@@ -76,11 +76,11 @@ $sql = "
     FROM crf_pengajuan cr
     WHERE " . implode(' AND ', $where) . "
     ORDER BY " . ($view === 'history'
-        ? 'cr.updated_at DESC'
+        ? 'cr.tgl_diubah DESC'
         // Antrean persetujuan: urgensi (Tinggi dulu), lalu yang paling lama menunggu.
-        : "FIELD(COALESCE(cr.final_urgency_level, cr.level), 'Tinggi', 'Normal', 'Rendah') = 0,
-        FIELD(COALESCE(cr.final_urgency_level, cr.level), 'Tinggi', 'Normal', 'Rendah'),
-        cr.updated_at ASC,
+        : "FIELD(COALESCE(cr.level_urgensi_final, cr.level), 'Tinggi', 'Normal', 'Rendah') = 0,
+        FIELD(COALESCE(cr.level_urgensi_final, cr.level), 'Tinggi', 'Normal', 'Rendah'),
+        cr.tgl_diubah ASC,
         cr.id ASC") . "
     LIMIT {$perPage} OFFSET {$offset}
 ";
@@ -96,7 +96,7 @@ $requests = $stmt->fetchAll();
 $summaryStmt = $pdo->query(" 
     SELECT COUNT(*)
     FROM crf_pengajuan
-    WHERE workflow_stage = 'kadep_operasional'
+    WHERE tahap_alur = 'kadep_operasional'
       AND status <> 'Draft'
 ");
 
@@ -211,8 +211,8 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
 
                                 <td data-label="SLA">
-                                    <?= $row['sla_value'] !== null && $row['sla_unit']
-                                        ? h(rtrim(rtrim(number_format((float) $row['sla_value'], 2, '.', ''), '0'), '.')) . ' ' . h($row['sla_unit'])
+                                    <?= $row['sla_nilai'] !== null && $row['sla_satuan']
+                                        ? h(rtrim(rtrim(number_format((float) $row['sla_nilai'], 2, '.', ''), '0'), '.')) . ' ' . h($row['sla_satuan'])
                                         : '-' ?>
                                 </td>
 

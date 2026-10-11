@@ -1,7 +1,7 @@
 <?php
 /**
- * Set timezone Indonesia supaya tanggal/waktu (Hari/Tanggal, solved_at,
- * cancelled_at, dsb.) selalu konsisten walau php.ini XAMPP default
+ * Set timezone Indonesia supaya tanggal/waktu (Hari/Tanggal, tgl_selesai,
+ * tgl_dibatalkan, dsb.) selalu konsisten walau php.ini XAMPP default
  * belum diatur ke Asia/Jakarta.
  */
 date_default_timezone_set('Asia/Jakarta');

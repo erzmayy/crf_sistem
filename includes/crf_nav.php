@@ -40,11 +40,11 @@ function crfQueueCounts(PDO $pdo, bool $cmo, bool $kadep, bool $pic): array
 
     if ($cmo) {
         $row = $pdo->query("
-            SELECT SUM(cr.workflow_stage = 'CMO_FILTER') AS verifikasi,
-                   SUM(cr.workflow_stage = 'UAT')        AS uat,
-                   SUM(cr.workflow_stage = 'CMO_FINAL')  AS finalisasi
+            SELECT SUM(cr.tahap_alur = 'CMO_FILTER') AS verifikasi,
+                   SUM(cr.tahap_alur = 'UAT')        AS uat,
+                   SUM(cr.tahap_alur = 'CMO_FINAL')  AS finalisasi
             FROM crf_pengajuan cr
-            WHERE {$open} AND cr.workflow_stage IN ('CMO_FILTER','UAT','CMO_FINAL')
+            WHERE {$open} AND cr.tahap_alur IN ('CMO_FILTER','UAT','CMO_FINAL')
         ")->fetch() ?: [];
         $counts['cmo_verifikasi'] = (int) ($row['verifikasi'] ?? 0);
         $counts['cmo_uat'] = (int) ($row['uat'] ?? 0);
@@ -55,17 +55,17 @@ function crfQueueCounts(PDO $pdo, bool $cmo, bool $kadep, bool $pic): array
     if ($kadep) {
         $counts['kadep'] = (int) $pdo->query("
             SELECT COUNT(*) FROM crf_pengajuan cr
-            WHERE {$open} AND cr.workflow_stage = 'kadep_operasional'
+            WHERE {$open} AND cr.tahap_alur = 'kadep_operasional'
         ")->fetchColumn();
     }
 
     if ($pic) {
         $row = $pdo->query("
             SELECT COUNT(*) AS total,
-                   SUM(cr.sla_due_at IS NOT NULL AND cr.sla_due_at < NOW()) AS terlambat
+                   SUM(cr.sla_tenggat IS NOT NULL AND cr.sla_tenggat < NOW()) AS terlambat
             FROM crf_pengajuan cr
             WHERE {$open} AND " . crfHandlerScopeSql($pdo, 'cr') . "
-              AND cr.workflow_stage = 'OTOMASI' AND cr.kadep_operasional_approved_at IS NOT NULL
+              AND cr.tahap_alur = 'OTOMASI' AND cr.tgl_disetujui_kadep IS NOT NULL
         ")->fetch() ?: [];
         $counts['pic'] = (int) ($row['total'] ?? 0);
         $counts['pic_overdue'] = (int) ($row['terlambat'] ?? 0);

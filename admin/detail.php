@@ -40,7 +40,7 @@ if (!$crf) {
     exit;
 }
 
-$attStmt = $pdo->prepare('SELECT * FROM crf_lampiran WHERE change_request_id = :id ORDER BY uploaded_at ASC');
+$attStmt = $pdo->prepare('SELECT * FROM crf_lampiran WHERE pengajuan_id = :id ORDER BY tgl_unggah ASC');
 $attStmt->execute(['id' => $id]);
 $attachments = $attStmt->fetchAll();
 
@@ -49,15 +49,15 @@ $attachments = $attStmt->fetchAll();
  */
 $timelineStmt = $pdo->prepare("
     SELECT
-        activity,
-        description,
-        actor,
-        old_status,
-        new_status,
-        created_at
+        aktivitas,
+        deskripsi,
+        pelaksana,
+        status_lama,
+        status_baru,
+        tgl_dibuat
     FROM crf_log_aktivitas
-    WHERE change_request_id = :id
-    ORDER BY created_at ASC, id ASC
+    WHERE pengajuan_id = :id
+    ORDER BY tgl_dibuat ASC, id ASC
 ");
 
 $timelineStmt->execute([
@@ -72,7 +72,7 @@ unset($_SESSION['flash']);
 // Admin: pembatalan administratif.
 $canAdminCancel = !in_array($crf['status'], ['Solve', 'Cancel'], true) && !isOwnHandledCrf($crf);
 
-$pageTitle = 'Detail CRF - ' . $crf['request_number'];
+$pageTitle = 'Detail CRF - ' . $crf['nomor_register'];
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -82,7 +82,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 crf-page-header">
       <div>
         <h1>Detail CRF</h1>
-        <p>Nomor Register: <strong><?= h($crf['request_number']) ?></strong></p>
+        <p>Nomor Register: <strong><?= h($crf['nomor_register']) ?></strong></p>
       </div>
       <div class="d-flex gap-2">
           <?php require __DIR__ . '/../includes/partials/forum_button.php'; ?>
@@ -117,26 +117,26 @@ require_once __DIR__ . '/../includes/header.php';
       </span>
     </div>
 
-    <?php if ($crf['workflow_stage'] === 'OTOMASI'): ?>
+    <?php if ($crf['tahap_alur'] === 'OTOMASI'): ?>
       <?php require __DIR__ . '/../includes/partials/handler_assignment.php'; ?>
     <?php endif; ?>
 
     <div class="crf-detail-layout">
       <main class="crf-detail-main">
 
-    <?php if ($crf['status'] === 'Solve' && $crf['solved_at']): ?>
+    <?php if ($crf['status'] === 'Solve' && $crf['tgl_selesai']): ?>
       <div class="crf-readonly-note mb-3">
         <i class="bi bi-check-circle"></i>
         Diselesaikan pada:
-        <?= h(date('d-m-Y H:i', strtotime($crf['solved_at']))) ?>
+        <?= h(date('d-m-Y H:i', strtotime($crf['tgl_selesai']))) ?>
       </div>
     <?php endif; ?>
 
-    <?php if ($crf['status'] === 'Cancel' && $crf['cancelled_at']): ?>
+    <?php if ($crf['status'] === 'Cancel' && $crf['tgl_dibatalkan']): ?>
       <div class="crf-readonly-note mb-3">
         <i class="bi bi-x-circle"></i>
         Dibatalkan pada:
-        <?= h(date('d-m-Y H:i', strtotime($crf['cancelled_at']))) ?>
+        <?= h(date('d-m-Y H:i', strtotime($crf['tgl_dibatalkan']))) ?>
       </div>
     <?php endif; ?>
 
@@ -166,7 +166,7 @@ require_once __DIR__ . '/../includes/header.php';
     require __DIR__ . '/../includes/partials/detail_permintaan.php';
     ?>
 
-    <?php if (!empty($crf['automation_completed_at']) && $crf['status'] !== 'Cancel'): ?>
+    <?php if (!empty($crf['otomasi_selesai']) && $crf['status'] !== 'Cancel'): ?>
         <div class="crf-section crf-detail-card mb-4">
             <div class="crf-section-header">
                 <span class="crf-section-number"><i class="bi bi-clipboard2-check"></i></span>
@@ -193,26 +193,26 @@ require_once __DIR__ . '/../includes/header.php';
           <div class="crf-info-row">
             <span class="crf-info-label">Tanggal Implementasi</span>
             <div class="crf-info-value">
-              <?= !empty($crf['implementation_date'])
-                  ? h(date('d-m-Y', strtotime($crf['implementation_date'])))
+              <?= !empty($crf['tgl_implementasi'])
+                  ? h(date('d-m-Y', strtotime($crf['tgl_implementasi'])))
                   : '-' ?>
             </div>
           </div>
           <div class="crf-info-row crf-request-row-long">
             <span class="crf-info-label">Implementasi / Hasil Perubahan</span>
-            <div class="crf-info-value"><?= nl2br(h($crf['implementation'] ?? '-')) ?></div>
+            <div class="crf-info-value"><?= nl2br(h($crf['implementasi'] ?? '-')) ?></div>
           </div>
           <div class="crf-info-row">
             <span class="crf-info-label">Tanggal PIR</span>
             <div class="crf-info-value">
-              <?= !empty($crf['pir_date'])
-                  ? h(date('d-m-Y', strtotime($crf['pir_date'])))
+              <?= !empty($crf['tgl_pir'])
+                  ? h(date('d-m-Y', strtotime($crf['tgl_pir'])))
                   : '-' ?>
             </div>
           </div>
           <div class="crf-info-row crf-request-row-long">
             <span class="crf-info-label">Post Implementation Review</span>
-            <div class="crf-info-value"><?= nl2br(h($crf['post_implementation_review'] ?? '-')) ?></div>
+            <div class="crf-info-value"><?= nl2br(h($crf['tinjauan_pasca_implementasi'] ?? '-')) ?></div>
           </div>
         </div>
       </div>
@@ -231,7 +231,7 @@ require_once __DIR__ . '/../includes/header.php';
           </p>
           <details class="crf-danger-zone">
           <summary class="btn btn-outline-danger btn-sm"><i class="bi bi-x-octagon"></i> Batalkan CRF secara administratif</summary>
-          <form class="mt-3" method="POST" action="../actions/admin_cancel_crf.php" data-confirm="Batalkan CRF <?= h($crf['request_number']) ?> secara administratif? Tindakan ini tidak bisa diurungkan.">
+          <form class="mt-3" method="POST" action="../actions/admin_cancel_crf.php" data-confirm="Batalkan CRF <?= h($crf['nomor_register']) ?> secara administratif? Tindakan ini tidak bisa diurungkan.">
             <?= csrfField() ?>
             <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
             <label for="admin_cancel_reason" class="form-label fw-semibold">Alasan Pembatalan <span class="text-danger">*</span></label>

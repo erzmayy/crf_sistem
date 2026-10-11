@@ -20,12 +20,12 @@ $summaryStmt = $pdo->prepare("
         SUM(status = 'Solve') AS solved,
         SUM(status = 'Cancel') AS cancelled
     FROM crf_pengajuan
-    WHERE user_id = :user_id
+    WHERE pengguna_id = :pengguna_id
       AND status <> 'Draft'
 ");
 
 $summaryStmt->execute([
-    'user_id' => $user['id']
+    'pengguna_id' => $user['id']
 ]);
 
 $summary = $summaryStmt->fetch();
@@ -48,7 +48,7 @@ $allowedStatuses = [
 ];
 
 // Kategori CRF dinamis (master crf_kategori): [id => nama].
-$allowedCategories = array_column(crfCategories(getConnection(), false), 'name', 'id');
+$allowedCategories = array_column(crfCategories(getConnection(), false), 'nama', 'id');
 
 /*
  * Kalau filter tidak valid, kosongkan.
@@ -73,11 +73,11 @@ if (
  * ========================================================= */
 
 $where = [
-    'user_id = :user_id'
+    'pengguna_id = :pengguna_id'
 ];
 
 $params = [
-    'user_id' => $user['id']
+    'pengguna_id' => $user['id']
 ];
 
 
@@ -88,9 +88,9 @@ $params = [
 if ($search !== '') {
 
     $where[] = '(
-        request_number LIKE :search_request
-        OR full_name LIKE :search_name
-        OR change_description LIKE :search_description
+        nomor_register LIKE :search_request
+        OR nama_pemohon LIKE :search_name
+        OR deskripsi_perubahan LIKE :search_description
     )';
 
     $searchValue = '%' . $search . '%';
@@ -116,7 +116,7 @@ if ($statusFilter !== '') {
  */
 if ($categoryFilter !== 0) {
 
-    $where[] = 'crf_category_id = :category';
+    $where[] = 'kategori_id = :category';
 
     $params['category'] = $categoryFilter;
 }
@@ -173,16 +173,16 @@ $offset = ($page - 1) * $perPage;
 $sql = "
     SELECT
         id,
-        request_number,
-        full_name,
-        from_department,
-        submission_date,
-        change_category,
-        crf_category_id,
+        nomor_register,
+        nama_pemohon,
+        dept_asal,
+        tgl_pengajuan,
+        kategori_perubahan,
+        kategori_id,
         level,
         status,
-        workflow_stage,
-        change_description,
+        tahap_alur,
+        deskripsi_perubahan,
         tanggapan_tindak_lanjut
     FROM crf_pengajuan
     WHERE " . implode(' AND ', $where) . "
@@ -487,7 +487,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                                         <!-- ISI POST IMPLEMENTATION REVIEW -->
-                                        <?php if (($row['workflow_stage'] ?? '') === 'PEMOHON_PIR'): ?>
+                                        <?php if (($row['tahap_alur'] ?? '') === 'PEMOHON_PIR'): ?>
 
                                             <a
                                                 href="detail.php?id=<?= (int) $row['id'] ?>#implementation-review"

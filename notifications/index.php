@@ -13,8 +13,8 @@ $userId = (int) $_SESSION['user_id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
-    $pdo->prepare('UPDATE crf_notifikasi SET read_at = NOW() WHERE user_id = :user_id AND read_at IS NULL')
-        ->execute(['user_id' => $userId]);
+    $pdo->prepare('UPDATE crf_notifikasi SET tgl_dibaca = NOW() WHERE pengguna_id = :pengguna_id AND tgl_dibaca IS NULL')
+        ->execute(['pengguna_id' => $userId]);
     $_SESSION['flash'] = ['type' => 'success', 'message' => 'Semua notifikasi ditandai sudah dibaca.'];
     header('Location: index.php');
     exit;
@@ -22,8 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $perPage = 20;
 $page = max(1, (int) ($_GET['page'] ?? 1));
-$countStmt = $pdo->prepare('SELECT COUNT(*) FROM crf_notifikasi WHERE user_id = :user_id');
-$countStmt->execute(['user_id' => $userId]);
+$countStmt = $pdo->prepare('SELECT COUNT(*) FROM crf_notifikasi WHERE pengguna_id = :pengguna_id');
+$countStmt->execute(['pengguna_id' => $userId]);
 $totalRows = (int) $countStmt->fetchColumn();
 $totalPages = max(1, (int) ceil($totalRows / $perPage));
 $page = min($page, $totalPages);
@@ -31,11 +31,11 @@ $offset = ($page - 1) * $perPage;
 
 $stmt = $pdo->prepare("
     SELECT * FROM crf_notifikasi
-    WHERE user_id = :user_id
+    WHERE pengguna_id = :pengguna_id
     ORDER BY id DESC
     LIMIT {$perPage} OFFSET {$offset}
 ");
-$stmt->execute(['user_id' => $userId]);
+$stmt->execute(['pengguna_id' => $userId]);
 $items = $stmt->fetchAll();
 
 $flash = $_SESSION['flash'] ?? null;
@@ -62,7 +62,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
 
         <?php if ($flash): ?>
-            <div class="alert alert-<?= h($flash['type']) ?> crf-alert"><?= h($flash['message']) ?></div>
+            <div class="alert alert-<?= h($flash['type']) ?> crf-alert"><?= h($flash['pesan']) ?></div>
         <?php endif; ?>
 
         <div class="crf-table-card">
@@ -74,10 +74,10 @@ require_once __DIR__ . '/../includes/header.php';
             <?php else: ?>
                 <div class="crf-notification-list">
                     <?php foreach ($items as $item): ?>
-                        <a class="crf-notification-item <?= $item['read_at'] === null ? 'unread' : '' ?>" href="open.php?id=<?= (int) $item['id'] ?>">
-                            <strong><?= h($item['title']) ?></strong>
-                            <span><?= nl2br(h((string) $item['message'])) ?></span>
-                            <small><?= h(date('d M Y H:i', strtotime($item['created_at']))) ?></small>
+                        <a class="crf-notification-item <?= $item['tgl_dibaca'] === null ? 'unread' : '' ?>" href="open.php?id=<?= (int) $item['id'] ?>">
+                            <strong><?= h($item['judul']) ?></strong>
+                            <span><?= nl2br(h((string) $item['pesan'])) ?></span>
+                            <small><?= h(date('d M Y H:i', strtotime($item['tgl_dibuat']))) ?></small>
                         </a>
                     <?php endforeach; ?>
                 </div>

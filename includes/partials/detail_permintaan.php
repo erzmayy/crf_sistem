@@ -11,19 +11,19 @@
  */
 
 $sectionTitle = $sectionTitle ?? 'Detail Pengajuan';
-$systemUrgencyLevel = crfUrgencyForImpact($crf['impact_category'] ?? null)
+$systemUrgencyLevel = crfUrgencyForImpact($crf['kategori_dampak'] ?? null)
     ?: ($crf['level'] ?? null);
-$urgencyLevel = !empty($crf['final_urgency_level'])
-    ? $crf['final_urgency_level']
+$urgencyLevel = !empty($crf['level_urgensi_final'])
+    ? $crf['level_urgensi_final']
     : $systemUrgencyLevel;
-$urgencyLabel = !empty($crf['final_urgency_level'])
+$urgencyLabel = !empty($crf['level_urgensi_final'])
     ? 'Level Urgensi Final'
     : 'Level Urgensi';
 // Dokumen hasil UAT (category 'uat') ditampilkan terpisah dari lampiran pengajuan.
-$requestAttachments = array_values(array_filter($attachments ?? [], static fn(array $file): bool => empty($file['category'])));
-$uatDocuments = array_values(array_filter($attachments ?? [], static fn(array $file): bool => ($file['category'] ?? '') === 'uat'));
+$requestAttachments = array_values(array_filter($attachments ?? [], static fn(array $file): bool => empty($file['kategori'])));
+$uatDocuments = array_values(array_filter($attachments ?? [], static fn(array $file): bool => ($file['kategori'] ?? '') === 'uat'));
 $attachmentIcon = static function (array $file): string {
-    $ext = strtolower(pathinfo((string) ($file['original_name'] ?? ''), PATHINFO_EXTENSION));
+    $ext = strtolower(pathinfo((string) ($file['nama_asli'] ?? ''), PATHINFO_EXTENSION));
     return match (true) {
         $ext === 'pdf' => 'bi-file-earmark-pdf text-danger',
         in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true) => 'bi-file-earmark-image text-info',
@@ -34,7 +34,7 @@ $attachmentIcon = static function (array $file): string {
     };
 };
 $attachmentSize = static function (array $file): string {
-    $bytes = (int) ($file['file_size'] ?? 0);
+    $bytes = (int) ($file['ukuran_file'] ?? 0);
     return $bytes >= 1048576 ? number_format($bytes / 1048576, 1, ',', '.') . ' MB' : max(1, (int) round($bytes / 1024)) . ' KB';
 };
 ?>
@@ -48,20 +48,20 @@ $attachmentSize = static function (array $file): string {
         <div class="crf-info-rows">
             <div class="crf-info-row">
                 <span class="crf-info-label">Tipe Pengajuan</span>
-                <div class="crf-info-value"><?= h($crf['request_type'] ?? '-') ?></div>
+                <div class="crf-info-value"><?= h($crf['jenis_pengajuan'] ?? '-') ?></div>
             </div>
             <div class="crf-info-row crf-request-row-long">
                 <span class="crf-info-label">Rincian Permohonan Perubahan</span>
-                <div class="crf-info-value"><?= nl2br(h($crf['change_description'] ?? '-')) ?></div>
+                <div class="crf-info-value"><?= nl2br(h($crf['deskripsi_perubahan'] ?? '-')) ?></div>
             </div>
             <div class="crf-info-row crf-request-row-long">
                 <span class="crf-info-label">Benefit dari Perubahan yang Diharapkan</span>
-                <div class="crf-info-value"><?= nl2br(h($crf['benefit'] ?? '-')) ?></div>
+                <div class="crf-info-value"><?= nl2br(h($crf['manfaat'] ?? '-')) ?></div>
             </div>
             <div class="crf-info-row crf-request-row-long">
                 <span class="crf-info-label">Dampak Terpilih</span>
                 <div class="crf-info-value">
-                    <?= h(crfImpactLabel($crf['impact_category'] ?? null) ?: '-') ?>
+                    <?= h(crfImpactLabel($crf['kategori_dampak'] ?? null) ?: '-') ?>
                 </div>
             </div>
             <div class="crf-info-row crf-urgency-detail-row">
@@ -78,11 +78,11 @@ $attachmentSize = static function (array $file): string {
             </div>
             <div class="crf-info-row crf-request-row-long">
                 <span class="crf-info-label">Penjelasan Dampak yang Dipilih</span>
-                <div class="crf-info-value"><?= nl2br(h($crf['impact'] ?? '-')) ?></div>
+                <div class="crf-info-value"><?= nl2br(h($crf['dampak'] ?? '-')) ?></div>
             </div>
             <div class="crf-info-row crf-request-row-long">
                 <span class="crf-info-label">Alasan Permohonan Perubahan</span>
-                <div class="crf-info-value"><?= nl2br(h($crf['reason'] ?? '-')) ?></div>
+                <div class="crf-info-value"><?= nl2br(h($crf['alasan'] ?? '-')) ?></div>
             </div>
             <div class="crf-info-row crf-request-row-long">
                 <span class="crf-info-label">Bukti dan Informasi Pendukung</span>
@@ -95,18 +95,18 @@ $attachmentSize = static function (array $file): string {
                                 <div class="crf-attachment-row">
                                     <div class="crf-attachment-name">
                                         <i class="bi <?= h($attachmentIcon($file)) ?>"></i>
-                                        <span title="<?= h($file['original_name'] ?? '-') ?>"><?= h($file['original_name'] ?? '-') ?></span>
+                                        <span title="<?= h($file['nama_asli'] ?? '-') ?>"><?= h($file['nama_asli'] ?? '-') ?></span>
                                         <small class="text-muted">
                                             <?= h($attachmentSize($file)) ?>
                                         </small>
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
-                                        <?php if (!empty($file['file_path'])): ?>
+                                        <?php if (!empty($file['path_file'])): ?>
                                             <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>&amp;inline=1" target="_blank" rel="noopener" class="btn btn-sm btn-crf-outline py-1 px-2">
                                                 <i class="bi bi-eye"></i> Lihat
                                             </a>
                                         <?php endif; ?>
-                                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-outline py-1 px-2" title="Unduh <?= h($file['original_name'] ?? '') ?>">
+                                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-outline py-1 px-2" title="Unduh <?= h($file['nama_asli'] ?? '') ?>">
                                             <i class="bi bi-download"></i> Unduh
                                         </a>
                                     </div>
@@ -125,19 +125,19 @@ $attachmentSize = static function (array $file): string {
                                 <div class="crf-attachment-row">
                                     <div class="crf-attachment-name">
                                         <i class="bi <?= h($attachmentIcon($file)) ?>"></i>
-                                        <span title="<?= h($file['original_name'] ?? '-') ?>"><?= h($file['original_name'] ?? '-') ?></span>
+                                        <span title="<?= h($file['nama_asli'] ?? '-') ?>"><?= h($file['nama_asli'] ?? '-') ?></span>
                                         <small class="text-muted">
                                             <?= h($attachmentSize($file)) ?>
-                                            <?php if (!empty($file['uploaded_at'])): ?>· <?= h(date('d-m-Y H:i', strtotime($file['uploaded_at']))) ?><?php endif; ?>
+                                            <?php if (!empty($file['tgl_unggah'])): ?>· <?= h(date('d-m-Y H:i', strtotime($file['tgl_unggah']))) ?><?php endif; ?>
                                         </small>
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
-                                        <?php if (!empty($file['file_path'])): ?>
+                                        <?php if (!empty($file['path_file'])): ?>
                                             <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>&amp;inline=1" target="_blank" rel="noopener" class="btn btn-sm btn-crf-outline py-1 px-2">
                                                 <i class="bi bi-eye"></i> Lihat
                                             </a>
                                         <?php endif; ?>
-                                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-outline py-1 px-2" title="Unduh <?= h($file['original_name'] ?? '') ?>">
+                                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-outline py-1 px-2" title="Unduh <?= h($file['nama_asli'] ?? '') ?>">
                                             <i class="bi bi-download"></i> Unduh
                                         </a>
                                     </div>
@@ -150,9 +150,9 @@ $attachmentSize = static function (array $file): string {
             <div class="crf-info-row">
                 <span class="crf-info-label">Biaya / Anggaran</span>
                 <div class="crf-info-value">
-                    <?= h(budgetTypeLabel($crf['budget_type'] ?? null)) ?>
-                    <?php if (isset($crf['budget_amount']) && $crf['budget_amount'] !== ''): ?>
-                        &mdash; <?= h(formatRupiah($crf['budget_amount'])) ?>
+                    <?= h(budgetTypeLabel($crf['jenis_anggaran'] ?? null)) ?>
+                    <?php if (isset($crf['nilai_anggaran']) && $crf['nilai_anggaran'] !== ''): ?>
+                        &mdash; <?= h(formatRupiah($crf['nilai_anggaran'])) ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -160,14 +160,14 @@ $attachmentSize = static function (array $file): string {
                 <span class="crf-info-label">Kategori Perubahan</span>
                 <div class="crf-info-value">
                     <?= h(crfCategoryName($crf)) ?>
-                    <?php if (!empty($crf['change_category_detail'])): ?>
-                        &mdash; <?= h($crf['change_category_detail']) ?>
+                    <?php if (!empty($crf['detail_kategori_perubahan'])): ?>
+                        &mdash; <?= h($crf['detail_kategori_perubahan']) ?>
                     <?php endif; ?>
                 </div>
             </div>
             <div class="crf-info-row crf-request-row-long">
                 <span class="crf-info-label">Saran Alternatif</span>
-                <div class="crf-info-value"><?= nl2br(h($crf['alternative_suggestion'] ?? '-')) ?></div>
+                <div class="crf-info-value"><?= nl2br(h($crf['saran_alternatif'] ?? '-')) ?></div>
             </div>
         </div>
     </div>

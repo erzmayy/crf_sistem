@@ -13,9 +13,9 @@
  *   5. Setelah hasil dicatat, CRF langsung diteruskan ke Kepala Departemen
  *      Operasional untuk persetujuan (tanpa kembali ke verifikasi CMO).
  *   6. Hanya penentu (forumResultRoles(), saat ini CMO dan Admin) yang mencatat hasil dan
- *      menerapkannya ke data CRF, lengkap nilai sebelum/sesudah, alasan, waktu, actor.
+ *      menerapkannya ke data CRF, lengkap nilai sebelum/sesudah, alasan, waktu, pelaksana.
  *
- * Satu CRF hanya punya satu pembahasan terbuka (UNIQUE open_crf_id).
+ * Satu CRF hanya punya satu pembahasan terbuka (UNIQUE crf_terbuka_id).
  * ---------------------------------------------------------------
  */
 require_once __DIR__ . '/forum.php';
@@ -121,7 +121,7 @@ function forumOpenDiscussion(PDO $pdo, int $crfId): ?array
 {
     $stmt = $pdo->prepare(
         "SELECT * FROM crf_forum_pembahasan
-         WHERE change_request_id = :id AND status = 'menunggu'
+         WHERE pengajuan_id = :id AND status = 'menunggu'
          ORDER BY id DESC LIMIT 1"
     );
     $stmt->execute(['id' => $crfId]);
@@ -134,7 +134,7 @@ function forumDiscussionHistory(PDO $pdo, int $crfId, int $limit = 15): array
 {
     $stmt = $pdo->prepare(
         "SELECT * FROM crf_forum_pembahasan
-         WHERE change_request_id = :id AND status <> 'menunggu'
+         WHERE pengajuan_id = :id AND status <> 'menunggu'
          ORDER BY id DESC
          LIMIT " . max(1, min(50, $limit))
     );
@@ -149,7 +149,7 @@ function forumOpenDiscussionTotal(PDO $pdo): int
         return (int) $pdo->query(
             "SELECT COUNT(*)
              FROM crf_forum_pembahasan d
-             INNER JOIN crf_pengajuan cr ON cr.id = d.change_request_id
+             INNER JOIN crf_pengajuan cr ON cr.id = d.pengajuan_id
              WHERE d.status = 'menunggu' AND " . forumActiveCrfCondition('cr')
         )->fetchColumn();
     } catch (Throwable $e) {
@@ -162,30 +162,30 @@ function forumOpenDiscussionTotal(PDO $pdo): int
 function forumDiscussionIsOverdue(array $discussion): bool
 {
     return $discussion['status'] === 'menunggu'
-        && !empty($discussion['due_at'])
-        && strtotime($discussion['due_at']) < time();
+        && !empty($discussion['tgl_tenggat'])
+        && strtotime($discussion['tgl_tenggat']) < time();
 }
 
 /** CRF punya SLA yang valid (nilai > 0 dan satuan benar)? */
 function crfHasValidSla(array $crf): bool
 {
-    return isset($crf['sla_value'], $crf['sla_unit'])
-        && is_numeric($crf['sla_value'])
-        && (float) $crf['sla_value'] > 0
-        && in_array($crf['sla_unit'], FORUM_SLA_UNITS, true);
+    return isset($crf['sla_nilai'], $crf['sla_satuan'])
+        && is_numeric($crf['sla_nilai'])
+        && (float) $crf['sla_nilai'] > 0
+        && in_array($crf['sla_satuan'], FORUM_SLA_UNITS, true);
 }
 
 /**
  * Nilai yang berlaku saat ini untuk sebuah CRF.
  *
- * @return array{urgency:?string,sla_value:mixed,sla_unit:?string}
+ * @return array{urgency:?string,sla_nilai:mixed,sla_satuan:?string}
  */
 function forumCurrentAgreement(array $crf): array
 {
     return [
-        'urgency' => ($crf['final_urgency_level'] ?? null) ?: crfEffectiveUrgency($crf),
-        'sla_value' => $crf['sla_value'] ?? null,
-        'sla_unit' => $crf['sla_unit'] ?? null,
+        'urgency' => ($crf['level_urgensi_final'] ?? null) ?: crfEffectiveUrgency($crf),
+        'sla_nilai' => $crf['sla_nilai'] ?? null,
+        'sla_satuan' => $crf['sla_satuan'] ?? null,
     ];
 }
 
@@ -234,16 +234,16 @@ function forumAddSystemComment(PDO $pdo, int $crfId, array $user, string $text):
 {
     $stmt = $pdo->prepare(
         'INSERT INTO crf_forum_komentar
-            (change_request_id, user_id, user_name, user_role, comment, is_system)
+            (pengajuan_id, pengguna_id, pengguna_nama, pengguna_peran, komentar, dari_sistem)
          VALUES
-            (:crf_id, :user_id, :user_name, :user_role, :comment, 1)'
+            (:crf_id, :pengguna_id, :pengguna_nama, :pengguna_peran, :komentar, 1)'
     );
     $stmt->execute([
         'crf_id' => $crfId,
-        'user_id' => (int) $user['id'],
-        'user_name' => crfActorName($user),
-        'user_role' => getCrfRole(),
-        'comment' => $text,
+        'pengguna_id' => (int) $user['id'],
+        'pengguna_nama' => crfActorName($user),
+        'pengguna_peran' => getCrfRole(),
+        'komentar' => $text,
     ]);
 
     return (int) $pdo->lastInsertId();
@@ -259,9 +259,9 @@ function forumDiscussionDueAt(): string
 function forumLockCrf(PDO $pdo, int $crfId): ?array
 {
     $stmt = $pdo->prepare(
-        'SELECT id, user_id, request_number, crf_category_id, assigned_handler_id,
-                status, workflow_stage, level, impact_category, final_urgency_level,
-                sla_value, sla_unit, kadep_operasional_approved_at, forum_discussion_open
+        'SELECT id, pengguna_id, nomor_register, kategori_id, pic_id,
+                status, tahap_alur, level, kategori_dampak, level_urgensi_final,
+                sla_nilai, sla_satuan, tgl_disetujui_kadep, pembahasan_forum_terbuka
          FROM crf_pengajuan cr
          WHERE cr.id = :id AND ' . forumActiveCrfCondition('cr') . '
          FOR UPDATE'
@@ -273,7 +273,7 @@ function forumLockCrf(PDO $pdo, int $crfId): ?array
 
 function forumSetOpenFlag(PDO $pdo, int $crfId, bool $open): void
 {
-    $pdo->prepare('UPDATE crf_pengajuan SET forum_discussion_open = :flag WHERE id = :id')
+    $pdo->prepare('UPDATE crf_pengajuan SET pembahasan_forum_terbuka = :flag WHERE id = :id')
         ->execute(['flag' => $open ? 1 : 0, 'id' => $crfId]);
 }
 
@@ -281,8 +281,8 @@ function forumSetOpenFlag(PDO $pdo, int $crfId, bool $open): void
 function forumDiscussionAudience(PDO $pdo, array $crf): array
 {
     $ids = forumResultUserIds($pdo);
-    if (!empty($crf['crf_category_id'])) {
-        $ids = array_merge($ids, crfCategoryHandlerIds($pdo, (int) $crf['crf_category_id']));
+    if (!empty($crf['kategori_id'])) {
+        $ids = array_merge($ids, crfCategoryHandlerIds($pdo, (int) $crf['kategori_id']));
     }
 
     return $ids;
@@ -310,7 +310,7 @@ function forumRequestDiscussion(PDO $pdo, int $crfId, array $user, string $reaso
         if (!$crf) {
             throw new DomainException('CRF tidak ditemukan atau sudah tidak dalam proses.');
         }
-        if ($crf['workflow_stage'] !== 'CMO_FILTER') {
+        if ($crf['tahap_alur'] !== 'CMO_FILTER') {
             throw new DomainException('Pembahasan Forum hanya dapat diajukan saat CRF masih di verifikasi CMO.');
         }
         if (forumOpenDiscussion($pdo, $crfId)) {
@@ -325,23 +325,23 @@ function forumRequestDiscussion(PDO $pdo, int $crfId, array $user, string $reaso
         try {
             $pdo->prepare(
                 "INSERT INTO crf_forum_pembahasan
-                    (change_request_id, status, trigger_source,
-                     opened_by, opened_by_name, opened_by_role, reason,
-                     before_urgency, before_sla_value, before_sla_unit, due_at, open_crf_id)
+                    (pengajuan_id, status, sumber_pemicu,
+                     dibuka_oleh, dibuka_oleh_nama, dibuka_oleh_peran, alasan,
+                     urgensi_sebelum, sla_nilai_sebelum, sla_satuan_sebelum, tgl_tenggat, crf_terbuka_id)
                  VALUES
                     (:crf_id, 'menunggu', 'cmo',
-                     :by, :by_name, :by_role, :reason,
-                     :b_urgency, :b_value, :b_unit, :due_at, :open_id)"
+                     :by, :by_name, :by_role, :alasan,
+                     :b_urgency, :b_value, :b_unit, :tgl_tenggat, :open_id)"
             )->execute([
                 'crf_id' => $crfId,
                 'by' => (int) $user['id'],
                 'by_name' => $actor,
                 'by_role' => $actorRole,
-                'reason' => $reason,
+                'alasan' => $reason,
                 'b_urgency' => $before['urgency'],
-                'b_value' => $before['sla_value'],
-                'b_unit' => $before['sla_unit'],
-                'due_at' => $dueAt,
+                'b_value' => $before['sla_nilai'],
+                'b_unit' => $before['sla_satuan'],
+                'tgl_tenggat' => $dueAt,
                 'open_id' => $crfId,
             ]);
         } catch (PDOException $e) {
@@ -353,8 +353,8 @@ function forumRequestDiscussion(PDO $pdo, int $crfId, array $user, string $reaso
         $discussionId = (int) $pdo->lastInsertId();
         forumSetOpenFlag($pdo, $crfId, true);
 
-        $crfNumber = $crf['request_number'] ?: 'CRF #' . $crfId;
-        $current = forumValuesText($before['urgency'], $before['sla_value'], $before['sla_unit']);
+        $crfNumber = $crf['nomor_register'] ?: 'CRF #' . $crfId;
+        $current = forumValuesText($before['urgency'], $before['sla_nilai'], $before['sla_satuan']);
         $description = sprintf(
             '%s (%s) mengajukan pembahasan Forum untuk Level Urgensi dan SLA (nilai sistem saat ini: %s). CRF menunggu hasil pembahasan, lalu langsung diteruskan ke Kepala Departemen Operasional. Alasan: %s',
             $actor,
@@ -401,20 +401,20 @@ function forumRaiseSystemDiscussion(PDO $pdo, array $crf, array $actingUser, str
     try {
         $pdo->prepare(
             "INSERT INTO crf_forum_pembahasan
-                (change_request_id, status, trigger_source,
-                 opened_by, opened_by_name, opened_by_role, reason,
-                 before_urgency, before_sla_value, before_sla_unit, due_at, open_crf_id)
+                (pengajuan_id, status, sumber_pemicu,
+                 dibuka_oleh, dibuka_oleh_nama, dibuka_oleh_peran, alasan,
+                 urgensi_sebelum, sla_nilai_sebelum, sla_satuan_sebelum, tgl_tenggat, crf_terbuka_id)
              VALUES
                 (:crf_id, 'menunggu', 'sistem',
-                 NULL, 'Sistem', 'sistem', :reason,
-                 :b_urgency, :b_value, :b_unit, :due_at, :open_id)"
+                 NULL, 'Sistem', 'sistem', :alasan,
+                 :b_urgency, :b_value, :b_unit, :tgl_tenggat, :open_id)"
         )->execute([
             'crf_id' => $crfId,
-            'reason' => $reason,
+            'alasan' => $reason,
             'b_urgency' => $before['urgency'],
-            'b_value' => $before['sla_value'],
-            'b_unit' => $before['sla_unit'],
-            'due_at' => $dueAt,
+            'b_value' => $before['sla_nilai'],
+            'b_unit' => $before['sla_satuan'],
+            'tgl_tenggat' => $dueAt,
             'open_id' => $crfId,
         ]);
     } catch (PDOException $e) {
@@ -425,7 +425,7 @@ function forumRaiseSystemDiscussion(PDO $pdo, array $crf, array $actingUser, str
     }
     forumSetOpenFlag($pdo, $crfId, true);
 
-    $crfNumber = $crf['request_number'] ?: 'CRF #' . $crfId;
+    $crfNumber = $crf['nomor_register'] ?: 'CRF #' . $crfId;
     $text = 'Sistem membuka pembahasan Forum karena SLA default belum tersedia. ' . $reason;
     logCrfActivity($pdo, $crfId, 'Pembahasan Forum Diajukan', $text, 'Sistem', null, 'Menunggu Pembahasan Forum');
     forumAddSystemComment($pdo, $crfId, $actingUser, $text);
@@ -446,8 +446,8 @@ function forumRaiseSystemDiscussion(PDO $pdo, array $crf, array $actingUser, str
 
 /**
  * Catat hasil pembahasan dan terapkan ke data CRF. Menjalankan transaksi sendiri.
- *   outcome 'tetap'  : nilai sistem dipakai (data CRF tidak berubah).
- *   outcome 'diubah' : Level Urgensi dan SLA diganti nilai kesepakatan.
+ *   hasil 'tetap'  : nilai sistem dipakai (data CRF tidak berubah).
+ *   hasil 'diubah' : Level Urgensi dan SLA diganti nilai kesepakatan.
  * Mengembalikan ['crf_id' => int, 'message' => string].
  */
 function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $outcome, ?string $urgency, $value, $unit, string $note): array
@@ -469,14 +469,14 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
             throw new DomainException('Pembahasan ini sudah selesai atau dibatalkan.');
         }
 
-        $crfId = (int) $discussion['change_request_id'];
+        $crfId = (int) $discussion['pengajuan_id'];
         $crf = forumLockCrf($pdo, $crfId);
-        if (!$crf || !empty($crf['kadep_operasional_approved_at'])) {
+        if (!$crf || !empty($crf['tgl_disetujui_kadep'])) {
             throw new DomainException('Hasil pembahasan tidak dapat diterapkan karena CRF sudah disetujui atau tidak lagi dalam proses.');
         }
 
         $before = forumCurrentAgreement($crf);
-        $beforeText = forumValuesText($before['urgency'], $before['sla_value'], $before['sla_unit']);
+        $beforeText = forumValuesText($before['urgency'], $before['sla_nilai'], $before['sla_satuan']);
         $actor = crfActorName($user);
         $roleLabel = forumRoleName(getCrfRole());
 
@@ -489,44 +489,44 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
             $newUrgency = forumParseUrgency($urgency);
             [$newValue, $newUnit] = forumParseSla($value, $unit);
             $same = $newUrgency === $before['urgency']
-                && $before['sla_value'] !== null
-                && abs((float) $before['sla_value'] - $newValue) < 0.001
-                && $before['sla_unit'] === $newUnit;
+                && $before['sla_nilai'] !== null
+                && abs((float) $before['sla_nilai'] - $newValue) < 0.001
+                && $before['sla_satuan'] === $newUnit;
             if ($same) {
                 throw new DomainException('Nilai sama dengan nilai sistem. Pilih "Tetap" bila tidak ada perubahan.');
             }
 
             $pdo->prepare(
                 'UPDATE crf_pengajuan
-                 SET final_urgency_level = :final_urgency, level = :level_urgency,
-                     sla_value = :value, sla_unit = :unit
+                 SET level_urgensi_final = :urgensi_final, level = :level_urgency,
+                     sla_nilai = :value, sla_satuan = :unit
                  WHERE id = :id'
             )->execute([
-                'final_urgency' => $newUrgency,
+                'urgensi_final' => $newUrgency,
                 'level_urgency' => $newUrgency,
                 'value' => $newValue,
                 'unit' => $newUnit,
                 'id' => $crfId,
             ]);
-            $final = ['urgency' => $newUrgency, 'sla_value' => $newValue, 'sla_unit' => $newUnit];
+            $final = ['urgency' => $newUrgency, 'sla_nilai' => $newValue, 'sla_satuan' => $newUnit];
         }
-        $afterText = forumValuesText($final['urgency'], $final['sla_value'], $final['sla_unit']);
+        $afterText = forumValuesText($final['urgency'], $final['sla_nilai'], $final['sla_satuan']);
 
         $pdo->prepare(
             "UPDATE crf_forum_pembahasan
-             SET status = 'selesai', outcome = :outcome, open_crf_id = NULL,
-                 before_urgency = :b_urgency, before_sla_value = :b_value, before_sla_unit = :b_unit,
-                 final_urgency = :f_urgency, final_sla_value = :f_value, final_sla_unit = :f_unit,
-                 decided_by = :by, decided_by_name = :by_name, decision_note = :note, decided_at = NOW()
+             SET status = 'selesai', hasil = :hasil, crf_terbuka_id = NULL,
+                 urgensi_sebelum = :b_urgency, sla_nilai_sebelum = :b_value, sla_satuan_sebelum = :b_unit,
+                 urgensi_final = :f_urgency, sla_nilai_final = :f_value, sla_satuan_final = :f_unit,
+                 diputuskan_oleh = :by, diputuskan_oleh_nama = :by_name, catatan_keputusan = :note, tgl_diputuskan = NOW()
              WHERE id = :id"
         )->execute([
-            'outcome' => $outcome,
+            'hasil' => $outcome,
             'b_urgency' => $before['urgency'],
-            'b_value' => $before['sla_value'],
-            'b_unit' => $before['sla_unit'],
+            'b_value' => $before['sla_nilai'],
+            'b_unit' => $before['sla_satuan'],
             'f_urgency' => $final['urgency'],
-            'f_value' => $final['sla_value'],
-            'f_unit' => $final['sla_unit'],
+            'f_value' => $final['sla_nilai'],
+            'f_unit' => $final['sla_satuan'],
             'by' => (int) $user['id'],
             'by_name' => $actor,
             'note' => $note,
@@ -536,12 +536,12 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
 
         // Hasil sudah dicatat: langsung ke Kepala Departemen (SLA belum berjalan sampai disetujui).
         $forwarded = false;
-        if ($crf['workflow_stage'] === 'CMO_FILTER') {
+        if ($crf['tahap_alur'] === 'CMO_FILTER') {
             $advance = $pdo->prepare("
                 UPDATE crf_pengajuan
-                SET status = 'Dalam Proses', workflow_stage = 'kadep_operasional',
-                    automation_started_at = NULL, sla_started_at = NULL, sla_due_at = NULL
-                WHERE id = :id AND workflow_stage = 'CMO_FILTER' AND forum_discussion_open = 0
+                SET status = 'Dalam Proses', tahap_alur = 'kadep_operasional',
+                    otomasi_mulai = NULL, sla_mulai = NULL, sla_tenggat = NULL
+                WHERE id = :id AND tahap_alur = 'CMO_FILTER' AND pembahasan_forum_terbuka = 0
             ");
             $advance->execute(['id' => $crfId]);
             $forwarded = $advance->rowCount() === 1;
@@ -562,7 +562,7 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
         logCrfActivity($pdo, $crfId, 'Hasil Pembahasan Forum', $description, $actor, 'Menunggu Pembahasan Forum', 'Pembahasan Forum selesai: ' . $outcomeLabel);
         forumAddSystemComment($pdo, $crfId, $user, $description);
 
-        $crfNumber = $crf['request_number'] ?: 'CRF #' . $crfId;
+        $crfNumber = $crf['nomor_register'] ?: 'CRF #' . $crfId;
         if ($forwarded) {
             logCrfActivity(
                 $pdo,
@@ -584,11 +584,11 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
             );
         }
         // Hanya yang terlibat: pengaju (atau seluruh CMO bila dibuka sistem) dan pemberi komentar.
-        $commenters = $pdo->prepare('SELECT DISTINCT user_id FROM crf_forum_komentar WHERE change_request_id = :id AND is_system = 0');
+        $commenters = $pdo->prepare('SELECT DISTINCT pengguna_id FROM crf_forum_komentar WHERE pengajuan_id = :id AND dari_sistem = 0');
         $commenters->execute(['id' => $crfId]);
         $recipients = array_map('intval', $commenters->fetchAll(PDO::FETCH_COLUMN));
-        if (!empty($discussion['opened_by'])) {
-            $recipients[] = (int) $discussion['opened_by'];
+        if (!empty($discussion['dibuka_oleh'])) {
+            $recipients[] = (int) $discussion['dibuka_oleh'];
         } else {
             $recipients = array_merge($recipients, crfUserIdsForRole($pdo, 'cmo'));
         }
@@ -641,18 +641,18 @@ function forumCancelDiscussion(PDO $pdo, int $discussionId, array $user): int
             throw new DomainException('Hanya CMO atau Admin yang dapat membatalkan pembahasan.');
         }
 
-        $crfId = (int) $discussion['change_request_id'];
+        $crfId = (int) $discussion['pengajuan_id'];
         $crf = forumLockCrf($pdo, $crfId);
-        if ($discussion['trigger_source'] === 'sistem' && $crf && !crfHasValidSla($crf)) {
+        if ($discussion['sumber_pemicu'] === 'sistem' && $crf && !crfHasValidSla($crf)) {
             throw new DomainException('Pembahasan ini tidak dapat dibatalkan karena SLA CRF belum tersedia. CMO atau Admin perlu mencatat hasilnya (Diubah) dengan nilai SLA.');
         }
 
         $actor = crfActorName($user);
         $pdo->prepare(
             "UPDATE crf_forum_pembahasan
-             SET status = 'dibatalkan', open_crf_id = NULL,
-                 decided_by = :by, decided_by_name = :by_name,
-                 decision_note = 'Pembahasan dibatalkan.', decided_at = NOW()
+             SET status = 'dibatalkan', crf_terbuka_id = NULL,
+                 diputuskan_oleh = :by, diputuskan_oleh_nama = :by_name,
+                 catatan_keputusan = 'Pembahasan dibatalkan.', tgl_diputuskan = NOW()
              WHERE id = :id"
         )->execute(['by' => (int) $user['id'], 'by_name' => $actor, 'id' => $discussionId]);
         forumSetOpenFlag($pdo, $crfId, false);
@@ -687,8 +687,8 @@ function forumCloseOpenDiscussions(PDO $pdo, int $crfId, string $note): int
 
         $pdo->prepare(
             "UPDATE crf_forum_pembahasan
-             SET status = 'dibatalkan', open_crf_id = NULL, decided_by_name = 'Sistem',
-                 decision_note = :note, decided_at = NOW()
+             SET status = 'dibatalkan', crf_terbuka_id = NULL, diputuskan_oleh_nama = 'Sistem',
+                 catatan_keputusan = :note, tgl_diputuskan = NOW()
              WHERE id = :id AND status = 'menunggu'"
         )->execute(['note' => $note, 'id' => (int) $discussion['id']]);
         forumSetOpenFlag($pdo, $crfId, false);
@@ -716,28 +716,28 @@ function forumSendDueReminders(PDO $pdo): void
 {
     try {
         $rows = $pdo->query(
-            "SELECT d.id, d.change_request_id, d.opened_by_name, d.due_at, cr.request_number
+            "SELECT d.id, d.pengajuan_id, d.dibuka_oleh_nama, d.tgl_tenggat, cr.nomor_register
              FROM crf_forum_pembahasan d
-             INNER JOIN crf_pengajuan cr ON cr.id = d.change_request_id
-             WHERE d.status = 'menunggu' AND d.reminded_at IS NULL
-               AND d.due_at IS NOT NULL AND d.due_at < NOW()
+             INNER JOIN crf_pengajuan cr ON cr.id = d.pengajuan_id
+             WHERE d.status = 'menunggu' AND d.tgl_diingatkan IS NULL
+               AND d.tgl_tenggat IS NOT NULL AND d.tgl_tenggat < NOW()
              LIMIT 20"
         )->fetchAll();
 
         $sent = false;
         foreach ($rows as $row) {
-            $mark = $pdo->prepare('UPDATE crf_forum_pembahasan SET reminded_at = NOW() WHERE id = :id AND reminded_at IS NULL');
+            $mark = $pdo->prepare('UPDATE crf_forum_pembahasan SET tgl_diingatkan = NOW() WHERE id = :id AND tgl_diingatkan IS NULL');
             $mark->execute(['id' => (int) $row['id']]);
             if ($mark->rowCount() !== 1) {
                 continue;
             }
-            $crfId = (int) $row['change_request_id'];
+            $crfId = (int) $row['pengajuan_id'];
             forumNotify(
                 $pdo,
                 forumResultUserIds($pdo),
-                'Pembahasan Forum melewati target: ' . ($row['request_number'] ?: 'CRF #' . $crfId),
-                'Pembahasan yang diajukan ' . $row['opened_by_name'] . ' belum dicatat hasilnya sejak target '
-                    . date('d-m-Y H:i', strtotime($row['due_at']))
+                'Pembahasan Forum melewati target: ' . ($row['nomor_register'] ?: 'CRF #' . $crfId),
+                'Pembahasan yang diajukan ' . $row['dibuka_oleh_nama'] . ' belum dicatat hasilnya sejak target '
+                    . date('d-m-Y H:i', strtotime($row['tgl_tenggat']))
                     . '. CRF belum dapat diteruskan ke Kepala Departemen Operasional.',
                 $crfId,
                 0
@@ -761,7 +761,7 @@ function forumSendDueReminders(PDO $pdo): void
  * Isi Level/SLA default CRF dari matriks Kategori x Urgensi (saat pemohon submit,
  * atau saat CMO meneruskan bila matriks baru diisi belakangan). Bila tetap tidak
  * ada SLA standar, buka pembahasan Forum otomatis agar CMO atau Admin menetapkannya.
- * CRF yang sudah punya hasil Forum "Diubah" (final_urgency_level) tidak ditimpa.
+ * CRF yang sudah punya hasil Forum "Diubah" (level_urgensi_final) tidak ditimpa.
  * Dipanggil DI DALAM transaksi pemanggil.
  */
 function forumApplyDefaultSla(PDO $pdo, int $crfId, array $actingUser): void
@@ -773,14 +773,14 @@ function forumApplyDefaultSla(PDO $pdo, int $crfId, array $actingUser): void
         return;
     }
 
-    if (empty($crf['final_urgency_level'])) {
+    if (empty($crf['level_urgensi_final'])) {
         $urgency = crfEffectiveUrgency($crf);
-        $standard = crfStandardSla($pdo, (int) ($crf['crf_category_id'] ?? 0), $urgency);
-        if ($standard !== null && !crfSlaEquals($standard, $crf['sla_value'], $crf['sla_unit'])) {
-            $pdo->prepare('UPDATE crf_pengajuan SET sla_value = :value, sla_unit = :unit WHERE id = :id')
+        $standard = crfStandardSla($pdo, (int) ($crf['kategori_id'] ?? 0), $urgency);
+        if ($standard !== null && !crfSlaEquals($standard, $crf['sla_nilai'], $crf['sla_satuan'])) {
+            $pdo->prepare('UPDATE crf_pengajuan SET sla_nilai = :value, sla_satuan = :unit WHERE id = :id')
                 ->execute(['value' => $standard['value'], 'unit' => $standard['unit'], 'id' => $crfId]);
-            $crf['sla_value'] = $standard['value'];
-            $crf['sla_unit'] = $standard['unit'];
+            $crf['sla_nilai'] = $standard['value'];
+            $crf['sla_satuan'] = $standard['unit'];
             logCrfActivity(
                 $pdo,
                 $crfId,

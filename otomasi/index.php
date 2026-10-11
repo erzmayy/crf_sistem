@@ -25,16 +25,16 @@ if ($queue === 'history') {
     $where[] = "EXISTS (
         SELECT 1
         FROM crf_log_aktivitas activity_log
-        WHERE activity_log.change_request_id = cr.id
-          AND activity_log.activity IN (
+        WHERE activity_log.pengajuan_id = cr.id
+          AND activity_log.aktivitas IN (
               'Eksekusi Selesai',
               'Otomasi Selesai'
           )
     )";
 } else {
     // Hanya CRF yang sudah disetujui Kepala Departemen Operasional.
-    $where[] = "cr.workflow_stage = 'OTOMASI'";
-    $where[] = 'cr.kadep_operasional_approved_at IS NOT NULL';
+    $where[] = "cr.tahap_alur = 'OTOMASI'";
+    $where[] = 'cr.tgl_disetujui_kadep IS NOT NULL';
 }
 
 $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
@@ -85,17 +85,17 @@ $offset = ($page - 1) * $perPage;
  * ========================================================= */
 
 $sql = "
-    SELECT cr.*, cc.name AS crf_category_name
+    SELECT cr.*, cc.nama AS crf_category_name
     FROM crf_pengajuan cr
-    LEFT JOIN crf_kategori cc ON cc.id = cr.crf_category_id
+    LEFT JOIN crf_kategori cc ON cc.id = cr.kategori_id
     WHERE " . implode(' AND ', $where) . "
     ORDER BY " . ($queue === 'history'
-        ? 'cr.updated_at DESC'
+        ? 'cr.tgl_diubah DESC'
         // Tenggat SLA terdekat dulu, lalu urgensi (Tinggi lebih dulu) dan waktu persetujuan.
-        : "cr.sla_due_at ASC,
-        FIELD(COALESCE(cr.final_urgency_level, cr.level), 'Tinggi', 'Normal', 'Rendah') = 0,
-        FIELD(COALESCE(cr.final_urgency_level, cr.level), 'Tinggi', 'Normal', 'Rendah'),
-        cr.kadep_operasional_approved_at ASC,
+        : "cr.sla_tenggat ASC,
+        FIELD(COALESCE(cr.level_urgensi_final, cr.level), 'Tinggi', 'Normal', 'Rendah') = 0,
+        FIELD(COALESCE(cr.level_urgensi_final, cr.level), 'Tinggi', 'Normal', 'Rendah'),
+        cr.tgl_disetujui_kadep ASC,
         cr.id ASC") . "
     LIMIT {$perPage} OFFSET {$offset}
 ";
@@ -111,10 +111,10 @@ $requests = $stmt->fetchAll();
 $summaryStmt = $pdo->query("
     SELECT
         COUNT(*) AS in_execution,
-        SUM(CASE WHEN sla_due_at IS NOT NULL AND sla_due_at < NOW() THEN 1 ELSE 0 END) AS overdue
+        SUM(CASE WHEN sla_tenggat IS NOT NULL AND sla_tenggat < NOW() THEN 1 ELSE 0 END) AS overdue
     FROM crf_pengajuan cr
-    WHERE cr.workflow_stage = 'OTOMASI'
-      AND cr.kadep_operasional_approved_at IS NOT NULL
+    WHERE cr.tahap_alur = 'OTOMASI'
+      AND cr.tgl_disetujui_kadep IS NOT NULL
       AND cr.status <> 'Draft'
       AND {$handlerScopeSql}
 ");
@@ -257,8 +257,8 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
 
                                 <td data-label="SLA">
-                                    <?= $row['sla_value'] !== null && $row['sla_unit']
-                                        ? h(rtrim(rtrim(number_format((float) $row['sla_value'], 2, '.', ''), '0'), '.')) . ' ' . h($row['sla_unit'])
+                                    <?= $row['sla_nilai'] !== null && $row['sla_satuan']
+                                        ? h(rtrim(rtrim(number_format((float) $row['sla_nilai'], 2, '.', ''), '0'), '.')) . ' ' . h($row['sla_satuan'])
                                         : '-' ?>
                                 </td>
 
@@ -267,8 +267,8 @@ require_once __DIR__ . '/../includes/header.php';
                                     <td data-label="Status SLA">
                                         <div
                                             class="automation-sla-status"
-                                            <?= $rowSlaStatus['live'] && !empty($row['sla_due_at'])
-                                                ? 'data-sla-countdown="true" data-sla-started-at="' . (int) strtotime((string) ($row['sla_started_at'] ?? '')) . '" data-sla-due-at="' . (int) strtotime($row['sla_due_at']) . '"'
+                                            <?= $rowSlaStatus['live'] && !empty($row['sla_tenggat'])
+                                                ? 'data-sla-countdown="true" data-sla-started-at="' . (int) strtotime((string) ($row['sla_mulai'] ?? '')) . '" data-sla-due-at="' . (int) strtotime($row['sla_tenggat']) . '"'
                                                 : '' ?>
                                         >
                                             <span class="badge text-bg-<?= h($rowSlaStatus['class']) ?>" data-sla-status-label>

@@ -23,28 +23,28 @@ if ($filter === 'history') {
     $where[] = "EXISTS (
         SELECT 1
         FROM crf_log_aktivitas activity_log
-        WHERE activity_log.change_request_id = cr.id
+        WHERE activity_log.pengajuan_id = cr.id
           AND (
-              activity_log.activity = 'Lolos Filter CMO'
+              activity_log.aktivitas = 'Lolos Filter CMO'
               OR (
-                  activity_log.activity = 'Perlu Revisi'
-                  AND activity_log.description = 'CRF dikembalikan ke Pemohon untuk revisi.'
+                  activity_log.aktivitas = 'Perlu Revisi'
+                  AND activity_log.deskripsi = 'CRF dikembalikan ke Pemohon untuk revisi.'
               )
-              OR activity_log.activity IN ('Cancel', 'Solve')
+              OR activity_log.aktivitas IN ('Cancel', 'Solve')
           )
     )";
 } else {
-    $where[] = "cr.workflow_stage IN ('CMO_FILTER','UAT','PEMOHON_PIR','CMO_FINAL')";
+    $where[] = "cr.tahap_alur IN ('CMO_FILTER','UAT','PEMOHON_PIR','CMO_FINAL')";
 }
 
 if ($filter === 'filter') {
-    $where[] = "cr.workflow_stage = 'CMO_FILTER'";
+    $where[] = "cr.tahap_alur = 'CMO_FILTER'";
 } elseif ($filter === 'uat') {
-    $where[] = "cr.workflow_stage = 'UAT'";
+    $where[] = "cr.tahap_alur = 'UAT'";
 } elseif ($filter === 'pir') {
-    $where[] = "cr.workflow_stage = 'PEMOHON_PIR'";
+    $where[] = "cr.tahap_alur = 'PEMOHON_PIR'";
 } elseif ($filter === 'final') {
-    $where[] = "cr.workflow_stage = 'CMO_FINAL'";
+    $where[] = "cr.tahap_alur = 'CMO_FINAL'";
 }
 
 
@@ -107,12 +107,12 @@ $sql = "
     FROM crf_pengajuan cr
     WHERE " . implode(' AND ', $where) . "
     ORDER BY " . ($filter === 'history'
-        ? 'cr.updated_at DESC'
+        ? 'cr.tgl_diubah DESC'
         // Antrean kerja: yang menunggu Pemohon di bawah, lalu urgensi (Tinggi dulu), lalu yang paling lama menunggu.
-        : "cr.workflow_stage = 'PEMOHON_PIR',
-        FIELD(COALESCE(cr.final_urgency_level, cr.level), 'Tinggi', 'Normal', 'Rendah') = 0,
-        FIELD(COALESCE(cr.final_urgency_level, cr.level), 'Tinggi', 'Normal', 'Rendah'),
-        cr.updated_at ASC,
+        : "cr.tahap_alur = 'PEMOHON_PIR',
+        FIELD(COALESCE(cr.level_urgensi_final, cr.level), 'Tinggi', 'Normal', 'Rendah') = 0,
+        FIELD(COALESCE(cr.level_urgensi_final, cr.level), 'Tinggi', 'Normal', 'Rendah'),
+        cr.tgl_diubah ASC,
         cr.id ASC") . "
     LIMIT {$perPage} OFFSET {$offset}";
 
@@ -125,10 +125,10 @@ $requests = $stmt->fetchAll();
  * SUMMARY
  * ========================================================= */
 
-$countStmt = $pdo->query("SELECT workflow_stage, COUNT(*) total FROM crf_pengajuan WHERE workflow_stage IN ('CMO_FILTER','UAT','PEMOHON_PIR','CMO_FINAL') AND status <> 'Draft' GROUP BY workflow_stage");
+$countStmt = $pdo->query("SELECT tahap_alur, COUNT(*) total FROM crf_pengajuan WHERE tahap_alur IN ('CMO_FILTER','UAT','PEMOHON_PIR','CMO_FINAL') AND status <> 'Draft' GROUP BY tahap_alur");
 $counts = ['CMO_FILTER' => 0, 'UAT' => 0, 'PEMOHON_PIR' => 0, 'CMO_FINAL' => 0];
 foreach ($countStmt->fetchAll() as $row) {
-    $counts[$row['workflow_stage']] = (int) $row['total'];
+    $counts[$row['tahap_alur']] = (int) $row['total'];
 }
 
 $flash = $_SESSION['flash'] ?? null;

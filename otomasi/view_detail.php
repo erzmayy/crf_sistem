@@ -29,12 +29,12 @@ $stmt = $pdo->prepare("
     FROM crf_pengajuan cr
     WHERE cr.id = :id
       AND (
-          cr.workflow_stage = 'OTOMASI'
+          cr.tahap_alur = 'OTOMASI'
           OR EXISTS (
               SELECT 1
               FROM crf_log_aktivitas activity_log
-              WHERE activity_log.change_request_id = cr.id
-                AND activity_log.activity IN (
+              WHERE activity_log.pengajuan_id = cr.id
+                AND activity_log.aktivitas IN (
                     'Proses Otomasi Diperbarui',
                     'Otomasi - SLA Ditentukan',
                     'Eksekusi Selesai',
@@ -87,8 +87,8 @@ if (!$crf) {
 $attStmt = $pdo->prepare("
     SELECT *
     FROM crf_lampiran
-    WHERE change_request_id = :id
-    ORDER BY uploaded_at ASC
+    WHERE pengajuan_id = :id
+    ORDER BY tgl_unggah ASC
 ");
 
 $attStmt->execute(['id' => $id]);
@@ -101,15 +101,15 @@ $attachments = $attStmt->fetchAll();
  * ========================================================= */
 $logStmt = $pdo->prepare("
     SELECT
-        activity,
-        description,
-        actor,
-        old_status,
-        new_status,
-        created_at
+        aktivitas,
+        deskripsi,
+        pelaksana,
+        status_lama,
+        status_baru,
+        tgl_dibuat
     FROM crf_log_aktivitas
-    WHERE change_request_id = :id
-    ORDER BY created_at ASC, id ASC
+    WHERE pengajuan_id = :id
+    ORDER BY tgl_dibuat ASC, id ASC
 ");
 
 $logStmt->execute(['id' => $id]);
@@ -137,10 +137,10 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <p class="mb-0">
                     Nomor Register:
-                    <strong><?= h($crf['request_number'] ?? '-') ?></strong>
+                    <strong><?= h($crf['nomor_register'] ?? '-') ?></strong>
                     &middot;
                     Pengaju:
-                    <?= h($crf['full_name'] ?? '-') ?>
+                    <?= h($crf['nama_pemohon'] ?? '-') ?>
                 </p>
             </div>
 
@@ -152,7 +152,7 @@ require_once __DIR__ . '/../includes/header.php';
                     Kembali
                 </a>
 
-                <?php if ($crf['workflow_stage'] === 'OTOMASI' && !empty($crf['kadep_operasional_approved_at'])): ?>
+                <?php if ($crf['tahap_alur'] === 'OTOMASI' && !empty($crf['tgl_disetujui_kadep'])): ?>
                     <a
                         href="detail.php?id=<?= (int) $crf['id'] ?>"
                         class="btn btn-crf-primary"
@@ -176,19 +176,19 @@ require_once __DIR__ . '/../includes/header.php';
                 Status: <?= h(statusLabel($crf['status'] ?? '')) ?>
             </span>
 
-            <span class="crf-badge <?= workflowStageBadgeClass($crf['workflow_stage']) ?>">
-                Tahap: <?= h(workflowStageLabel($crf['workflow_stage'])) ?>
+            <span class="crf-badge <?= workflowStageBadgeClass($crf['tahap_alur']) ?>">
+                Tahap: <?= h(workflowStageLabel($crf['tahap_alur'])) ?>
             </span>
 
             <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>">
                 Level: <?= h($crf['level'] ?? 'Belum ditentukan') ?>
             </span>
 
-            <?php if (!empty($crf['sla_value']) && !empty($crf['sla_unit'])): ?>
+            <?php if (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan'])): ?>
                 <span class="crf-badge badge-stage-pir">
                     SLA:
-                    <?= h(rtrim(rtrim(number_format((float) $crf['sla_value'], 2, '.', ''), '0'), '.')) ?>
-                    <?= h($crf['sla_unit']) ?>
+                    <?= h(rtrim(rtrim(number_format((float) $crf['sla_nilai'], 2, '.', ''), '0'), '.')) ?>
+                    <?= h($crf['sla_satuan']) ?>
                 </span>
             <?php endif; ?>
 

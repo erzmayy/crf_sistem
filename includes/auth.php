@@ -37,14 +37,14 @@ function getCrfRole(): string
 
     try {
         $stmt = getConnection()->prepare(
-            'SELECT role
+            'SELECT peran
              FROM crf_peran_pengguna
-             WHERE user_id = :user_id
-               AND is_active = 1
+             WHERE pengguna_id = :pengguna_id
+               AND aktif = 1
              ORDER BY id ASC
              LIMIT 1'
         );
-        $stmt->execute(['user_id' => $_SESSION['user_id']]);
+        $stmt->execute(['pengguna_id' => $_SESSION['user_id']]);
         $role = $stmt->fetchColumn();
 
         if (is_string($role) && $role !== '') {
@@ -137,10 +137,10 @@ function crfHandlerScopeSql(PDO $pdo, string $alias = 'cr'): string
 
     $parts = [];
     if ($scope['category_ids']) {
-        $parts[] = $alias . '.crf_category_id IN (' . implode(',', array_map('intval', $scope['category_ids'])) . ')';
+        $parts[] = $alias . '.kategori_id IN (' . implode(',', array_map('intval', $scope['category_ids'])) . ')';
     }
     if ($scope['uncategorized']) {
-        $parts[] = $alias . '.crf_category_id IS NULL';
+        $parts[] = $alias . '.kategori_id IS NULL';
     }
 
     return $parts ? '(' . implode(' OR ', $parts) . ')' : '1 = 0';
@@ -161,7 +161,7 @@ function canHandleCrf(PDO $pdo, array $crf): bool
         return false;
     }
 
-    $categoryId = (int) ($crf['crf_category_id'] ?? 0);
+    $categoryId = (int) ($crf['kategori_id'] ?? 0);
 
     if ($categoryId === 0) {
         return $scope['uncategorized'];
@@ -180,8 +180,8 @@ function isAssignedCrfHandler(array $crf): bool
         return true;
     }
 
-    return !empty($crf['assigned_handler_id'])
-        && (int) $crf['assigned_handler_id'] === (int) ($_SESSION['user_id'] ?? 0);
+    return !empty($crf['pic_id'])
+        && (int) $crf['pic_id'] === (int) ($_SESSION['user_id'] ?? 0);
 }
 
 /**
@@ -212,8 +212,8 @@ function isAdmin(): bool
 function isOwnHandledCrf(array $crf): bool
 {
     return !isDemoUser()
-        && !empty($crf['assigned_handler_id'])
-        && (int) $crf['assigned_handler_id'] === (int) ($_SESSION['user_id'] ?? 0);
+        && !empty($crf['pic_id'])
+        && (int) $crf['pic_id'] === (int) ($_SESSION['user_id'] ?? 0);
 }
 
 /**
@@ -314,7 +314,7 @@ function canAccessCrf(PDO $pdo, int $crfId): bool
     }
 
     $stmt = $pdo->prepare(
-        'SELECT user_id, status, crf_category_id
+        'SELECT pengguna_id, status, kategori_id
          FROM crf_pengajuan
          WHERE id = :id
          LIMIT 1'
@@ -327,7 +327,7 @@ function canAccessCrf(PDO $pdo, int $crfId): bool
         return false;
     }
 
-    if ((int) $row['user_id'] === (int) $_SESSION['user_id']) {
+    if ((int) $row['pengguna_id'] === (int) $_SESSION['user_id']) {
         return true;
     }
 

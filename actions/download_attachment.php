@@ -24,7 +24,7 @@ if ($id <= 0) {
 }
 
 $stmt = $pdo->prepare(
-    'SELECT change_request_id, original_name, stored_name, file_path, file_type, file_size
+    'SELECT pengajuan_id, nama_asli, nama_tersimpan, path_file, tipe_file, ukuran_file
      FROM crf_lampiran
      WHERE id = :id
      LIMIT 1'
@@ -39,17 +39,17 @@ if (!$file) {
 }
 
 if (
-    !canAccessCrf($pdo, (int) $file['change_request_id'])
-    && !canViewForumCrf($pdo, (int) $file['change_request_id'])
+    !canAccessCrf($pdo, (int) $file['pengajuan_id'])
+    && !canViewForumCrf($pdo, (int) $file['pengajuan_id'])
 ) {
     http_response_code(403);
     exit('Anda tidak memiliki akses ke file ini.');
 }
 
-$storedName = (string) ($file['stored_name'] ?? '');
+$storedName = (string) ($file['nama_tersimpan'] ?? '');
 if ($storedName === '') {
-    // Baris lama tanpa stored_name: ambil nama file dari URL yang tersimpan.
-    $storedName = basename((string) parse_url((string) $file['file_path'], PHP_URL_PATH));
+    // Baris lama tanpa nama_tersimpan: ambil nama file dari URL yang tersimpan.
+    $storedName = basename((string) parse_url((string) $file['path_file'], PHP_URL_PATH));
 }
 
 if ($storedName === '') {
@@ -74,12 +74,12 @@ try {
 $downloadName = str_replace(
     ['"', '\\', "\r", "\n"],
     '',
-    basename($file['original_name'])
+    basename($file['nama_asli'])
 );
 
 // Hanya tipe yang lolos validasi upload yang boleh tampil inline.
-$mimeType = in_array($file['file_type'], CRF_ALLOWED_MIME_TYPES, true)
-    ? $file['file_type']
+$mimeType = in_array($file['tipe_file'], CRF_ALLOWED_MIME_TYPES, true)
+    ? $file['tipe_file']
     : 'application/octet-stream';
 $inline = isset($_GET['inline']) && $mimeType !== 'application/octet-stream';
 

@@ -47,7 +47,7 @@ Dokumen ini untuk dibahas dengan tim SIAP. Setiap pertanyaan punya **asumsi kami
 ## C. Login, sesi, dan identitas
 
 6. **Apakah CRF memakai sesi login SIAP?** Bila ya, apa nama kunci sesinya (ID user, userid,
-   nama, departemen, divisi/jabatan)? *Asumsi kami: `user_id` sama dengan ID di `tbl_user`.*
+   nama, departemen, divisi/jabatan)? *Asumsi kami: `pengguna_id` sama dengan ID di `tbl_user`.*
    Jawaban: ______
 7. **Berkas apa yang cukup dipanggil di awal halaman** untuk memastikan user sudah login
    (mis. `require 'siap/auth.php'`), dan ke mana user diarahkan bila belum login/sesi habis?
@@ -116,8 +116,8 @@ Dokumen ini untuk dibahas dengan tim SIAP. Setiap pertanyaan punya **asumsi kami
     `userid`, `password`, `password_new`, `nama`, `dept`, `divisi`, `email`, `no_wa`, `kpu_kode`.*
     Jawaban: ______
 22. **Bagaimana skema database dipasang?** Instalasi baru memakai `database/schema.sql`
-    (satu berkas, hasil akhir migrasi 001–023). Perubahan berikutnya diberi nomor
-    `024_...` di `database/migrations/`. Apakah SIAP punya mekanisme migrasi sendiri?
+    (satu berkas, hasil akhir migrasi 001–024). Perubahan berikutnya diberi nomor
+    `025_...` di `database/migrations/`. Apakah SIAP punya mekanisme migrasi sendiri?
     Jawaban: ______
 23. **Data CRF yang sudah ada** (pengajuan, lampiran, riwayat): **tidak dibawa**. Modul
     dipasang sebagai modul baru dengan database kosong dan nomor register mulai dari awal.

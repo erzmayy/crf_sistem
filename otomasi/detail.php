@@ -12,8 +12,8 @@ $stmt = $pdo->prepare("
     SELECT cr.*
     FROM crf_pengajuan cr
     WHERE cr.id = :id
-      AND cr.workflow_stage = 'OTOMASI'
-      AND cr.kadep_operasional_approved_at IS NOT NULL
+      AND cr.tahap_alur = 'OTOMASI'
+      AND cr.tgl_disetujui_kadep IS NOT NULL
     LIMIT 1
 ");
 
@@ -57,22 +57,22 @@ if (!$crf) {
 $attStmt = $pdo->prepare(
     'SELECT *
      FROM crf_lampiran
-     WHERE change_request_id = :id
-     ORDER BY uploaded_at ASC'
+     WHERE pengajuan_id = :id
+     ORDER BY tgl_unggah ASC'
 );
 $attStmt->execute(['id' => $id]);
 $attachments = $attStmt->fetchAll();
 
 $timelineStmt = $pdo->prepare("
-    SELECT activity, description, actor, old_status, new_status, created_at
+    SELECT aktivitas, deskripsi, pelaksana, status_lama, status_baru, tgl_dibuat
     FROM crf_log_aktivitas
-    WHERE change_request_id = :id
-    ORDER BY created_at ASC, id ASC
+    WHERE pengajuan_id = :id
+    ORDER BY tgl_dibuat ASC, id ASC
 ");
 $timelineStmt->execute(['id' => $id]);
 $timeline = $timelineStmt->fetchAll();
 
-$isAssignedToOther = !empty($crf['assigned_handler_id']) && !isAssignedCrfHandler($crf);
+$isAssignedToOther = !empty($crf['pic_id']) && !isAssignedCrfHandler($crf);
 
 // Tahap OTOMASI punya tiga fase (eksekusi, perbaikan hasil UAT, isi implementasi).
 $otomasiPhase = crfOtomasiPhase($crf);
@@ -86,9 +86,9 @@ $otomasiPhaseMeta = [
 $uatFailNote = null;
 if ($otomasiPhase === 'perbaikan') {
     $uatFailStmt = $pdo->prepare("
-        SELECT description, actor, created_at
+        SELECT deskripsi, pelaksana, tgl_dibuat
         FROM crf_log_aktivitas
-        WHERE change_request_id = :id AND activity = 'UAT Perlu Perbaikan'
+        WHERE pengajuan_id = :id AND aktivitas = 'UAT Perlu Perbaikan'
         ORDER BY id DESC
         LIMIT 1
     ");
@@ -116,10 +116,10 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <p>
                     Nomor Register:
-                    <strong><?= h($crf['request_number']) ?></strong>
+                    <strong><?= h($crf['nomor_register']) ?></strong>
                     ·
                     Pengaju:
-                    <?= h($crf['full_name']) ?>
+                    <?= h($crf['nama_pemohon']) ?>
                 </p>
 
             </div>
@@ -150,9 +150,9 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="d-flex gap-2 flex-wrap mb-4">
             <?php $resolvedUrgencyLevel = crfEffectiveUrgency($crf); ?>
 
-            <span class="crf-badge <?= workflowStageBadgeClass($crf['workflow_stage']) ?>">
+            <span class="crf-badge <?= workflowStageBadgeClass($crf['tahap_alur']) ?>">
                 Tahap:
-                <?= h(workflowStageLabel($crf['workflow_stage'])) ?>
+                <?= h(workflowStageLabel($crf['tahap_alur'])) ?>
             </span>
 
             <?php if ($resolvedUrgencyLevel !== null): ?>
@@ -161,7 +161,7 @@ require_once __DIR__ . '/../includes/header.php';
                 </span>
             <?php endif; ?>
 
-            <?php if (!empty($crf['sla_value']) && !empty($crf['sla_unit'])): ?>
+            <?php if (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan'])): ?>
 
                 <span class="crf-badge badge-stage-pir">
 
@@ -170,7 +170,7 @@ require_once __DIR__ . '/../includes/header.php';
                         rtrim(
                             rtrim(
                                 number_format(
-                                    (float) $crf['sla_value'],
+                                    (float) $crf['sla_nilai'],
                                     2,
                                     '.',
                                     ''
@@ -181,7 +181,7 @@ require_once __DIR__ . '/../includes/header.php';
                         )
                     ) ?>
 
-                    <?= h($crf['sla_unit']) ?>
+                    <?= h($crf['sla_satuan']) ?>
 
                 </span>
 
@@ -216,7 +216,7 @@ require_once __DIR__ . '/../includes/header.php';
         <?php if ($isAssignedToOther): ?>
         <div class="alert alert-warning crf-alert">
             <i class="bi bi-person-lock"></i>
-            CRF ini sedang ditangani oleh <strong><?= h($crf['assigned_handler_name'] ?? '-') ?></strong>.
+            CRF ini sedang ditangani oleh <strong><?= h($crf['pic_nama'] ?? '-') ?></strong>.
             Hanya PIC CRF tersebut yang dapat memprosesnya.
         </div>
         <?php else: ?>
@@ -291,9 +291,9 @@ require_once __DIR__ . '/../includes/header.php';
                                 <strong>Hasil UAT: perlu perbaikan.</strong>
                                 <?php if ($uatFailNote): ?>
                                     <div class="mt-1">
-                                        <?= nl2br(h($uatFailNote['description'])) ?>
+                                        <?= nl2br(h($uatFailNote['deskripsi'])) ?>
                                         <small class="d-block text-muted">
-                                            <?= h($uatFailNote['actor']) ?> · <?= h(date('d-m-Y H:i', strtotime($uatFailNote['created_at']))) ?>
+                                            <?= h($uatFailNote['pelaksana']) ?> · <?= h(date('d-m-Y H:i', strtotime($uatFailNote['tgl_dibuat']))) ?>
                                         </small>
                                     </div>
                                 <?php endif; ?>
@@ -323,39 +323,39 @@ require_once __DIR__ . '/../includes/header.php';
                         <?php else: ?>
 
                             <div class="alert alert-success">
-                                <strong>UAT lulus</strong><?= !empty($crf['uat_passed_at']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['uat_passed_at']))) : '' ?>.
+                                <strong>UAT lulus</strong><?= !empty($crf['tgl_uat_lulus']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['tgl_uat_lulus']))) : '' ?>.
                             </div>
 
                             <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
 
                             <div class="mb-4">
-                                <label for="implementation_date" class="form-label fw-semibold">
+                                <label for="tgl_implementasi" class="form-label fw-semibold">
                                     Tanggal Implementasi
                                     <span class="text-danger">*</span>
                                 </label>
                                 <input
                                     type="date"
-                                    id="implementation_date"
-                                    name="implementation_date"
+                                    id="tgl_implementasi"
+                                    name="tgl_implementasi"
                                     class="form-control"
-                                    value="<?= h($crf['implementation_date'] ?? '') ?>"
+                                    value="<?= h($crf['tgl_implementasi'] ?? '') ?>"
                                     required
                                 >
                             </div>
 
                             <div class="mb-4">
-                                <label for="implementation" class="form-label fw-semibold">
+                                <label for="implementasi" class="form-label fw-semibold">
                                     Implementasi / Hasil Perubahan
                                     <span class="text-danger">*</span>
                                 </label>
                                 <textarea
-                                    id="implementation"
-                                    name="implementation"
+                                    id="implementasi"
+                                    name="implementasi"
                                     class="form-control"
                                     rows="6"
                                     required
                                     placeholder="Tuliskan hasil atau perubahan yang sudah diterapkan..."
-                                ><?= h($crf['implementation'] ?? '') ?></textarea>
+                                ><?= h($crf['implementasi'] ?? '') ?></textarea>
                             </div>
 
                         <?php endif; ?>

@@ -42,7 +42,7 @@ function normalizeAdminCrfReportDateRange(?string $from, ?string $to): array
 
 function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
 {
-    $submittedDate = 'COALESCE(submission_date, DATE(created_at))';
+    $submittedDate = 'COALESCE(tgl_pengajuan, DATE(tgl_dibuat))';
     $baseWhere = "status <> 'Draft'
         AND {$submittedDate} >= :date_from
         AND {$submittedDate} <= :date_to";
@@ -112,7 +112,7 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
     ];
     $urgencyCounts = array_fill_keys(array_keys($urgencyMeta), 0);
     $urgencyStmt = $pdo->prepare(
-        "SELECT final_urgency_level, level, impact_category
+        "SELECT level_urgensi_final, level, kategori_dampak
          FROM crf_pengajuan
          WHERE {$baseWhere}"
     );
@@ -153,8 +153,8 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
     }
 
     $requestStmt = $pdo->prepare(
-        "SELECT id, request_number, full_name, from_department, change_category,
-                status, change_description, {$submittedDate} AS report_date,
+        "SELECT id, nomor_register, nama_pemohon, dept_asal, kategori_perubahan,
+                status, deskripsi_perubahan, {$submittedDate} AS report_date,
                 DATE_FORMAT({$submittedDate}, '%Y-%m') AS report_month
          FROM crf_pengajuan
          WHERE {$baseWhere}

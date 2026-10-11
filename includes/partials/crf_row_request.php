@@ -13,16 +13,16 @@
  */
 $rowShowDepartment = $rowShowDepartment ?? true;
 $rowShowHandler = $rowShowHandler ?? false;
-$rowDate = !empty($row['submission_date']) ? date('d-m-Y', strtotime($row['submission_date'])) : null;
+$rowDate = !empty($row['tgl_pengajuan']) ? date('d-m-Y', strtotime($row['tgl_pengajuan'])) : null;
 $rowMeta = array_filter([
-    $rowShowDepartment ? ($row['from_department'] ?? null) : null,
+    $rowShowDepartment ? ($row['dept_asal'] ?? null) : null,
     $rowDate,
 ]);
 ?>
 <td data-label="Pengajuan">
     <div class="crf-row-request">
-        <strong class="crf-row-name"><?= h($row['full_name'] ?? '-') ?></strong>
-        <span class="crf-row-register"><?= h($row['request_number'] ?? '-') ?></span>
+        <strong class="crf-row-name"><?= h($row['nama_pemohon'] ?? '-') ?></strong>
+        <span class="crf-row-register"><?= h($row['nomor_register'] ?? '-') ?></span>
         <?php if ($rowMeta): ?>
             <span class="crf-row-meta">
                 <?php if ($rowDate !== null): ?><i class="bi bi-calendar3"></i><?php endif; ?>
@@ -34,11 +34,11 @@ $rowMeta = array_filter([
 <td data-label="Isi Pengajuan">
     <div class="crf-row-content">
         <span class="crf-request-category-chip"><?= h(crfCategoryName($row, $rowCategoryEmpty ?? 'Lainnya')) ?></span>
-        <div class="crf-row-description" title="<?= h($row['change_description'] ?? '') ?>"><?= h($row['change_description'] ?? '-') ?></div>
+        <div class="crf-row-description" title="<?= h($row['deskripsi_perubahan'] ?? '') ?>"><?= h($row['deskripsi_perubahan'] ?? '-') ?></div>
         <?php if ($rowShowHandler): ?>
-            <div class="crf-row-handler <?= empty($row['assigned_handler_id']) ? 'is-empty' : '' ?>">
-                <i class="bi <?= empty($row['assigned_handler_id']) ? 'bi-person-dash' : 'bi-person-check' ?>"></i>
-                <?= empty($row['assigned_handler_id']) ? 'Belum ada PIC CRF' : 'PIC CRF: ' . h($row['assigned_handler_name']) ?>
+            <div class="crf-row-handler <?= empty($row['pic_id']) ? 'is-empty' : '' ?>">
+                <i class="bi <?= empty($row['pic_id']) ? 'bi-person-dash' : 'bi-person-check' ?>"></i>
+                <?= empty($row['pic_id']) ? 'Belum ada PIC CRF' : 'PIC CRF: ' . h($row['pic_nama']) ?>
             </div>
         <?php endif; ?>
     </div>

@@ -31,18 +31,18 @@ $stmt = $pdo->prepare("
     FROM crf_pengajuan cr
     WHERE cr.id = :id
       AND (
-          cr.workflow_stage IN ('CMO_FILTER', 'UAT', 'PEMOHON_PIR', 'CMO_FINAL')
+          cr.tahap_alur IN ('CMO_FILTER', 'UAT', 'PEMOHON_PIR', 'CMO_FINAL')
           OR EXISTS (
               SELECT 1
               FROM crf_log_aktivitas activity_log
-              WHERE activity_log.change_request_id = cr.id
+              WHERE activity_log.pengajuan_id = cr.id
                 AND (
-                    activity_log.activity = 'Lolos Filter CMO'
+                    activity_log.aktivitas = 'Lolos Filter CMO'
                     OR (
-                        activity_log.activity = 'Perlu Revisi'
-                        AND activity_log.description = 'CRF dikembalikan ke Pemohon untuk revisi.'
+                        activity_log.aktivitas = 'Perlu Revisi'
+                        AND activity_log.deskripsi = 'CRF dikembalikan ke Pemohon untuk revisi.'
                     )
-                    OR activity_log.activity IN ('Cancel', 'Solve')
+                    OR activity_log.aktivitas IN ('Cancel', 'Solve')
                 )
           )
       )
@@ -88,8 +88,8 @@ if (!$crf) {
 $attStmt = $pdo->prepare("
     SELECT *
     FROM crf_lampiran
-    WHERE change_request_id = :id
-    ORDER BY uploaded_at ASC
+    WHERE pengajuan_id = :id
+    ORDER BY tgl_unggah ASC
 ");
 
 $attStmt->execute(['id' => $id]);
@@ -102,15 +102,15 @@ $attachments = $attStmt->fetchAll();
  * ========================================================= */
 $logStmt = $pdo->prepare("
     SELECT
-        activity,
-        description,
-        actor,
-        old_status,
-        new_status,
-        created_at
+        aktivitas,
+        deskripsi,
+        pelaksana,
+        status_lama,
+        status_baru,
+        tgl_dibuat
     FROM crf_log_aktivitas
-    WHERE change_request_id = :id
-    ORDER BY created_at ASC, id ASC
+    WHERE pengajuan_id = :id
+    ORDER BY tgl_dibuat ASC, id ASC
 ");
 
 $logStmt->execute(['id' => $id]);
@@ -145,7 +145,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <p class="mb-0">
                     Nomor Register:
-                    <strong><?= h($crf['request_number'] ?? '-') ?></strong>
+                    <strong><?= h($crf['nomor_register'] ?? '-') ?></strong>
                 </p>
             </div>
 
@@ -182,19 +182,19 @@ require_once __DIR__ . '/../includes/header.php';
                 Status: <?= h(statusLabel($crf['status'])) ?>
             </span>
 
-            <span class="crf-badge <?= workflowStageBadgeClass($crf['workflow_stage']) ?>">
-                Tahap: <?= h(workflowStageLabel($crf['workflow_stage'])) ?>
+            <span class="crf-badge <?= workflowStageBadgeClass($crf['tahap_alur']) ?>">
+                Tahap: <?= h(workflowStageLabel($crf['tahap_alur'])) ?>
             </span>
 
             <span class="crf-badge <?= levelBadgeClass($crf['level']) ?>">
                 Level: <?= h($crf['level'] ?? 'Belum ditentukan') ?>
             </span>
 
-            <?php if (!empty($crf['sla_value']) && !empty($crf['sla_unit'])): ?>
+            <?php if (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan'])): ?>
                 <span class="crf-badge badge-stage-pir">
                     SLA:
-                    <?= h(rtrim(rtrim(number_format((float) $crf['sla_value'], 2, '.', ''), '0'), '.')) ?>
-                    <?= h($crf['sla_unit']) ?>
+                    <?= h(rtrim(rtrim(number_format((float) $crf['sla_nilai'], 2, '.', ''), '0'), '.')) ?>
+                    <?= h($crf['sla_satuan']) ?>
                 </span>
             <?php endif; ?>
 
@@ -230,16 +230,16 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="crf-info-row">
                         <span class="crf-info-label">Tanggal Implementasi</span>
                         <div class="crf-info-value">
-                            <?= !empty($crf['implementation_date'])
-                                ? h(date('d-m-Y', strtotime($crf['implementation_date'])))
+                            <?= !empty($crf['tgl_implementasi'])
+                                ? h(date('d-m-Y', strtotime($crf['tgl_implementasi'])))
                                 : '<span class="text-muted">Belum diisi oleh Otomasi.</span>' ?>
                         </div>
                     </div>
                     <div class="crf-info-row crf-request-row-long">
                         <span class="crf-info-label">Implementasi / Hasil Perubahan</span>
                         <div class="crf-info-value">
-                            <?php if (!empty($crf['implementation'])): ?>
-                                <?= nl2br(h($crf['implementation'])) ?>
+                            <?php if (!empty($crf['implementasi'])): ?>
+                                <?= nl2br(h($crf['implementasi'])) ?>
                             <?php else: ?>
                                 <span class="text-muted">Belum diisi oleh Otomasi.</span>
                             <?php endif; ?>
@@ -248,16 +248,16 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="crf-info-row">
                         <span class="crf-info-label">Tanggal PIR</span>
                         <div class="crf-info-value">
-                            <?= !empty($crf['pir_date'])
-                                ? h(date('d-m-Y', strtotime($crf['pir_date'])))
+                            <?= !empty($crf['tgl_pir'])
+                                ? h(date('d-m-Y', strtotime($crf['tgl_pir'])))
                                 : '<span class="text-muted">Belum diisi oleh Pemohon.</span>' ?>
                         </div>
                     </div>
                     <div class="crf-info-row crf-request-row-long">
                         <span class="crf-info-label">Post Implementation Review</span>
                         <div class="crf-info-value">
-                            <?php if (!empty($crf['post_implementation_review'])): ?>
-                                <?= nl2br(h($crf['post_implementation_review'])) ?>
+                            <?php if (!empty($crf['tinjauan_pasca_implementasi'])): ?>
+                                <?= nl2br(h($crf['tinjauan_pasca_implementasi'])) ?>
                             <?php else: ?>
                                 <span class="text-muted">Belum diisi oleh Pemohon.</span>
                             <?php endif; ?>
@@ -265,11 +265,11 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                 </div>
 
-                <?php if (!empty($crf['kadep_operasional_approved_at'])): ?>
+                <?php if (!empty($crf['tgl_disetujui_kadep'])): ?>
                     <div class="crf-readonly-note">
                         <i class="bi bi-check2-circle"></i>
                         Disetujui Kepala Departemen Operasional pada
-                        <?= h(date('d-m-Y H:i', strtotime($crf['kadep_operasional_approved_at']))) ?>
+                        <?= h(date('d-m-Y H:i', strtotime($crf['tgl_disetujui_kadep']))) ?>
                     </div>
                 <?php endif; ?>
 
@@ -287,7 +287,7 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- =====================================================
              5. REVIEW CMO / FINALISASI (khusus CMO)
              ===================================================== -->
-        <?php if ($crf['workflow_stage'] === 'CMO_FILTER'): ?>
+        <?php if ($crf['tahap_alur'] === 'CMO_FILTER'): ?>
 
             <div class="crf-section crf-detail-card mb-4">
 
@@ -302,17 +302,17 @@ require_once __DIR__ . '/../includes/header.php';
                     $cmoDiscussion = forumOpenDiscussion($pdo, (int) $crf['id']);
                     $cmoSlaMissing = !crfHasValidSla($crf);
                     // Pembahasan dari sistem (SLA kosong) wajib diselesaikan CMO atau Admin, tidak boleh dibatalkan.
-                    $cmoCanCancelDiscussion = $cmoDiscussion && !($cmoDiscussion['trigger_source'] === 'sistem' && $cmoSlaMissing);
+                    $cmoCanCancelDiscussion = $cmoDiscussion && !($cmoDiscussion['sumber_pemicu'] === 'sistem' && $cmoSlaMissing);
                     ?>
                     <?php if ($cmoDiscussion): ?>
                         <div class="alert alert-warning">
                             <i class="bi bi-flag-fill"></i>
                             <strong>Menunggu Pembahasan Forum.</strong>
-                            <?= $cmoDiscussion['trigger_source'] === 'sistem'
+                            <?= $cmoDiscussion['sumber_pemicu'] === 'sistem'
                                 ? 'SLA default belum tersedia, sehingga CMO atau Admin perlu menetapkannya lewat pembahasan Forum.'
                                 : 'Anda mengajukan pembahasan Level Urgensi dan SLA.' ?>
                             Setelah hasil pembahasan dicatat (CMO atau Admin), CRF langsung diteruskan ke Kepala Departemen Operasional
-                            <?= !empty($cmoDiscussion['due_at']) ? '(target ' . h(date('d-m-Y H:i', strtotime($cmoDiscussion['due_at']))) . ')' : '' ?>.
+                            <?= !empty($cmoDiscussion['tgl_tenggat']) ? '(target ' . h(date('d-m-Y H:i', strtotime($cmoDiscussion['tgl_tenggat']))) . ')' : '' ?>.
                             <a href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>#forum-pembahasan">Buka pembahasan di Forum</a>
                         </div>
                     <?php elseif ($cmoSlaMissing): ?>
@@ -402,7 +402,7 @@ require_once __DIR__ . '/../includes/header.php';
 
             </div>
 
-        <?php elseif ($crf['workflow_stage'] === 'CMO_FINAL'): ?>
+        <?php elseif ($crf['tahap_alur'] === 'CMO_FINAL'): ?>
 
             <div class="crf-section crf-detail-card mb-4">
 
@@ -442,21 +442,21 @@ require_once __DIR__ . '/../includes/header.php';
 
             </div>
 
-        <?php elseif ($crf['workflow_stage'] === 'UAT'): ?>
+        <?php elseif ($crf['tahap_alur'] === 'UAT'): ?>
 
             <?php
-            $uatDocCount = count(array_filter($attachments, static fn(array $file): bool => ($file['category'] ?? '') === 'uat'));
+            $uatDocCount = count(array_filter($attachments, static fn(array $file): bool => ($file['kategori'] ?? '') === 'uat'));
             // Catatan serah terima terakhir dari PIC CRF (eksekusi selesai / dikirim ulang).
             $uatHandoffStmt = $pdo->prepare("
-                SELECT activity, description, actor, created_at
+                SELECT aktivitas, deskripsi, pelaksana, tgl_dibuat
                 FROM crf_log_aktivitas
-                WHERE change_request_id = :id AND activity IN ('Eksekusi Selesai', 'UAT Dikirim Ulang')
+                WHERE pengajuan_id = :id AND aktivitas IN ('Eksekusi Selesai', 'UAT Dikirim Ulang')
                 ORDER BY id DESC
                 LIMIT 1
             ");
             $uatHandoffStmt->execute(['id' => (int) $crf['id']]);
             $uatHandoff = $uatHandoffStmt->fetch() ?: null;
-            $uatRoundStmt = $pdo->prepare("SELECT COUNT(*) FROM crf_log_aktivitas WHERE change_request_id = :id AND activity = 'UAT Perlu Perbaikan'");
+            $uatRoundStmt = $pdo->prepare("SELECT COUNT(*) FROM crf_log_aktivitas WHERE pengajuan_id = :id AND aktivitas = 'UAT Perlu Perbaikan'");
             $uatRoundStmt->execute(['id' => (int) $crf['id']]);
             $uatRound = (int) $uatRoundStmt->fetchColumn() + 1;
             ?>
@@ -471,17 +471,17 @@ require_once __DIR__ . '/../includes/header.php';
 
                     <p class="text-muted">
                         Otomasi
-                        <?php if (!empty($crf['assigned_handler_name'])): ?>(<strong><?= h($crf['assigned_handler_name']) ?></strong>)<?php endif; ?>
-                        sudah menyelesaikan eksekusi<?= !empty($crf['automation_completed_at']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['automation_completed_at']))) : '' ?>
+                        <?php if (!empty($crf['pic_nama'])): ?>(<strong><?= h($crf['pic_nama']) ?></strong>)<?php endif; ?>
+                        sudah menyelesaikan eksekusi<?= !empty($crf['otomasi_selesai']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['otomasi_selesai']))) : '' ?>
                         dan SLA berhenti. Lakukan pengujian bersama PIC CRF (koordinasi lewat <strong>Diskusi Forum</strong>);
                         waktu UAT tidak dihitung dalam SLA.
                     </p>
 
-                    <?php if ($uatHandoff && trim((string) $uatHandoff['description']) !== ''): ?>
+                    <?php if ($uatHandoff && trim((string) $uatHandoff['deskripsi']) !== ''): ?>
                         <div class="crf-readonly-note mb-3">
                             <i class="bi bi-chat-left-text"></i>
-                            <strong><?= h($uatHandoff['activity'] === 'UAT Dikirim Ulang' ? 'Perbaikan dari PIC:' : 'Serah terima dari PIC:') ?></strong>
-                            <?= nl2br(h($uatHandoff['description'])) ?>
+                            <strong><?= h($uatHandoff['aktivitas'] === 'UAT Dikirim Ulang' ? 'Perbaikan dari PIC:' : 'Serah terima dari PIC:') ?></strong>
+                            <?= nl2br(h($uatHandoff['deskripsi'])) ?>
                         </div>
                     <?php endif; ?>
 
@@ -531,7 +531,7 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
 
             </div>
-        <?php elseif ($crf['workflow_stage'] === 'PEMOHON_PIR'): ?>
+        <?php elseif ($crf['tahap_alur'] === 'PEMOHON_PIR'): ?>
 
             <?php $pirReminder = crfPirReminderInfo($pdo, $crf); ?>
             <div class="crf-section crf-detail-card mb-4">
@@ -545,8 +545,8 @@ require_once __DIR__ . '/../includes/header.php';
 
                     <div class="alert alert-warning">
                         Implementasi selesai
-                        <?php if (!empty($crf['automation_completed_at'])): ?>
-                            pada <strong><?= h(date('d-m-Y H:i', strtotime($crf['automation_completed_at']))) ?></strong>
+                        <?php if (!empty($crf['otomasi_selesai'])): ?>
+                            pada <strong><?= h(date('d-m-Y H:i', strtotime($crf['otomasi_selesai']))) ?></strong>
                             (<?= $pirReminder['waiting_days'] > 0 ? (int) $pirReminder['waiting_days'] . ' hari kerja lalu' : 'kurang dari 1 hari kerja' ?>),
                         <?php endif; ?>
                         tetapi Pemohon belum mengisi Post Implementation Review.

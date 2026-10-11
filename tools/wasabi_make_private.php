@@ -22,15 +22,15 @@ $pdo = getConnection();
 $client = crfWasabiClient();
 $bucket = crfWasabiConfig()['bucket'];
 
-$rows = $pdo->query('SELECT id, stored_name, file_path FROM crf_lampiran ORDER BY id')->fetchAll();
+$rows = $pdo->query('SELECT id, nama_tersimpan, path_file FROM crf_lampiran ORDER BY id')->fetchAll();
 
 $done = 0;
 $failed = 0;
 
 foreach ($rows as $row) {
-    $storedName = (string) ($row['stored_name'] ?? '');
+    $storedName = (string) ($row['nama_tersimpan'] ?? '');
     if ($storedName === '') {
-        $storedName = basename((string) parse_url((string) $row['file_path'], PHP_URL_PATH));
+        $storedName = basename((string) parse_url((string) $row['path_file'], PHP_URL_PATH));
     }
     if ($storedName === '') {
         echo "#{$row['id']}: nama file kosong, dilewati\n";

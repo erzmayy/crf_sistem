@@ -28,22 +28,22 @@ $crfStmt = $pdo->prepare('SELECT * FROM crf_pengajuan WHERE id = :id LIMIT 1');
 $crfStmt->execute(['id' => $crfId]);
 $crf = $crfStmt->fetch();
 
-$attStmt = $pdo->prepare('SELECT * FROM crf_lampiran WHERE change_request_id = :id ORDER BY uploaded_at ASC');
+$attStmt = $pdo->prepare('SELECT * FROM crf_lampiran WHERE pengajuan_id = :id ORDER BY tgl_unggah ASC');
 $attStmt->execute(['id' => $crfId]);
 $attachments = $attStmt->fetchAll();
 
 $timelineStmt = $pdo->prepare('
-    SELECT activity, description, actor, old_status, new_status, created_at
+    SELECT aktivitas, deskripsi, pelaksana, status_lama, status_baru, tgl_dibuat
     FROM crf_log_aktivitas
-    WHERE change_request_id = :id
-    ORDER BY created_at ASC, id ASC
+    WHERE pengajuan_id = :id
+    ORDER BY tgl_dibuat ASC, id ASC
 ');
 $timelineStmt->execute(['id' => $crfId]);
 $timeline = $timelineStmt->fetchAll();
 
 $displayStatus = crfDisplayStatus($crf);
 $processLink = forumProcessLink($pdo, $crf);
-$crfTitle = $crf['request_number'] ?: 'CRF #' . $crfId;
+$crfTitle = $crf['nomor_register'] ?: 'CRF #' . $crfId;
 
 if (!$isPartial) {
     $pageTitle = 'Detail CRF ' . $crfTitle;
@@ -59,7 +59,7 @@ if (!$isPartial) {
     <div class="crf-forum-detail-head">
         <div>
             <strong><?= h($crfTitle) ?></strong>
-            <span><?= h($crf['full_name']) ?> · <?= h(workflowStageLabel((string) $crf['workflow_stage'])) ?></span>
+            <span><?= h($crf['nama_pemohon']) ?> · <?= h(workflowStageLabel((string) $crf['tahap_alur'])) ?></span>
         </div>
         <span class="crf-badge <?= h($displayStatus['class']) ?>"><?= h($displayStatus['label']) ?></span>
     </div>

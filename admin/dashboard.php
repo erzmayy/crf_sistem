@@ -50,7 +50,7 @@ $dateTo = $listFilters['date_to'];
 /*
  * Rentang tanggal laporan = satu filter periode untuk kartu ringkasan,
  * grafik, daftar pengajuan, dan ekspor. Tanggal pengajuan memakai
- * submission_date (cadangan: tanggal dibuat), sama dengan laporan.
+ * tgl_pengajuan (cadangan: tanggal dibuat), sama dengan laporan.
  * Tanpa parameter tanggal, kartu dan daftar menampilkan semua data.
  */
 $reportRangeError = '';
@@ -69,7 +69,7 @@ try {
 $reportCarry = $reportFilterActive
     ? ['report_date_from' => $reportDateRange['from'], 'report_date_to' => $reportDateRange['to']]
     : [];
-$submittedDateSql = 'COALESCE(cr.submission_date, DATE(cr.created_at))';
+$submittedDateSql = 'COALESCE(cr.tgl_pengajuan, DATE(cr.tgl_dibuat))';
 $summaryDateSql = '';
 $summaryDateParams = [];
 if ($reportFilterActive) {
@@ -124,11 +124,11 @@ $offset = ($page - 1) * $perPage;
  * ========================================================= */
 
 $sql = "
-    SELECT cr.*, cc.name AS crf_category_name
+    SELECT cr.*, cc.nama AS crf_category_name
     FROM crf_pengajuan cr
-    LEFT JOIN crf_kategori cc ON cc.id = cr.crf_category_id
+    LEFT JOIN crf_kategori cc ON cc.id = cr.kategori_id
     WHERE " . implode(' AND ', $where) . "
-    ORDER BY cr.created_at DESC
+    ORDER BY cr.tgl_dibuat DESC
     LIMIT {$perPage} OFFSET {$offset}
 ";
 

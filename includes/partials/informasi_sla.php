@@ -6,22 +6,22 @@
  *   array $crf
  */
 
-$slaValueDisplay = (!empty($crf['sla_value']) && !empty($crf['sla_unit']))
-    ? rtrim(rtrim(number_format((float) $crf['sla_value'], 2, '.', ''), '0'), '.') . ' ' . $crf['sla_unit']
+$slaValueDisplay = (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan']))
+    ? rtrim(rtrim(number_format((float) $crf['sla_nilai'], 2, '.', ''), '0'), '.') . ' ' . $crf['sla_satuan']
     : null;
 $slaStatus = getCrfSlaStatus($crf);
 // Standar matriks Kategori x Urgensi, untuk menandai SLA yang disesuaikan.
-$slaStandard = empty($crf['final_urgency_level'])
-    ? crfStandardSla(getConnection(), (int) ($crf['crf_category_id'] ?? 0), crfEffectiveUrgency($crf))
+$slaStandard = empty($crf['level_urgensi_final'])
+    ? crfStandardSla(getConnection(), (int) ($crf['kategori_id'] ?? 0), crfEffectiveUrgency($crf))
     : null;
 $slaAdjusted = $slaValueDisplay !== null && $slaStandard !== null
-    && !crfSlaEquals($slaStandard, $crf['sla_value'], $crf['sla_unit']);
+    && !crfSlaEquals($slaStandard, $crf['sla_nilai'], $crf['sla_satuan']);
 $slaIsLive = !empty($slaStatus['live']);
-$slaStartedEpoch = !empty($crf['sla_started_at'])
-    ? strtotime($crf['sla_started_at'])
+$slaStartedEpoch = !empty($crf['sla_mulai'])
+    ? strtotime($crf['sla_mulai'])
     : false;
-$slaDueEpoch = !empty($crf['sla_due_at'])
-    ? strtotime($crf['sla_due_at'])
+$slaDueEpoch = !empty($crf['sla_tenggat'])
+    ? strtotime($crf['sla_tenggat'])
     : false;
 ?>
 <div class="crf-section crf-detail-card mb-4">
@@ -69,8 +69,8 @@ $slaDueEpoch = !empty($crf['sla_due_at'])
             <div class="col-md-3 crf-sla-item">
                 <div class="crf-detail-label">MULAI SLA</div>
                 <div class="crf-detail-value">
-                    <?php if (!empty($crf['sla_started_at'])): ?>
-                        <span class="crf-info-date"><?= h(date('d-m-Y H:i', strtotime($crf['sla_started_at']))) ?></span>
+                    <?php if (!empty($crf['sla_mulai'])): ?>
+                        <span class="crf-info-date"><?= h(date('d-m-Y H:i', strtotime($crf['sla_mulai']))) ?></span>
                     <?php else: ?>
                         <span class="crf-sla-empty">-</span>
                     <?php endif; ?>
@@ -80,8 +80,8 @@ $slaDueEpoch = !empty($crf['sla_due_at'])
             <div class="col-md-3 crf-sla-item">
                 <div class="crf-detail-label">BATAS SLA</div>
                 <div class="crf-detail-value">
-                    <?php if (!empty($crf['sla_due_at'])): ?>
-                        <span class="crf-info-date"><?= h(date('d-m-Y H:i', strtotime($crf['sla_due_at']))) ?></span>
+                    <?php if (!empty($crf['sla_tenggat'])): ?>
+                        <span class="crf-info-date"><?= h(date('d-m-Y H:i', strtotime($crf['sla_tenggat']))) ?></span>
                     <?php else: ?>
                         <span class="crf-sla-empty">-</span>
                     <?php endif; ?>
@@ -91,8 +91,8 @@ $slaDueEpoch = !empty($crf['sla_due_at'])
             <div class="col-md-3 crf-sla-item">
                 <div class="crf-detail-label">WAKTU SELESAI</div>
                 <div class="crf-detail-value">
-                    <?php if (!empty($crf['automation_completed_at'])): ?>
-                        <span class="crf-info-date"><?= h(date('d-m-Y H:i', strtotime($crf['automation_completed_at']))) ?></span>
+                    <?php if (!empty($crf['otomasi_selesai'])): ?>
+                        <span class="crf-info-date"><?= h(date('d-m-Y H:i', strtotime($crf['otomasi_selesai']))) ?></span>
                     <?php else: ?>
                         <span class="crf-sla-empty">Belum selesai</span>
                     <?php endif; ?>
@@ -124,10 +124,10 @@ $slaDueEpoch = !empty($crf['sla_due_at'])
 
         </div>
 
-        <?php if (!empty($crf['sla_result'])): ?>
-            <?php $slaOnTime = $crf['sla_result'] === 'Sesuai SLA'; ?>
+        <?php if (!empty($crf['sla_hasil'])): ?>
+            <?php $slaOnTime = $crf['sla_hasil'] === 'Sesuai SLA'; ?>
             <div class="crf-sla-result <?= $slaOnTime ? 'is-success' : 'is-danger' ?>">
-                <div><span class="crf-detail-label">Durasi SLA</span><strong><?= h(formatSlaDuration(((int) $crf['sla_actual_minutes']) * 60)) ?></strong></div>
+                <div><span class="crf-detail-label">Durasi SLA</span><strong><?= h(formatSlaDuration(((int) $crf['sla_menit_aktual']) * 60)) ?></strong></div>
                 <div><span class="crf-detail-label">Target SLA</span><strong><?= h($slaValueDisplay ?? '-') ?></strong></div>
                 <div><span class="crf-detail-label">Status</span><strong><?= $slaOnTime ? '✓ Sesuai SLA' : '⚠ Melebihi SLA' ?></strong></div>
             </div>

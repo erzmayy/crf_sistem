@@ -18,7 +18,7 @@
         <div class="crf-member-card">
             <span class="crf-member-index"><?= $index + 1 ?></span>
             <div class="crf-member-info">
-                <strong><?= h($member['user_name'] ?? '-') ?></strong>
+                <strong><?= h($member['pengguna_nama'] ?? '-') ?></strong>
                 <?php if (!empty($member['no_wa'])): ?>
                     <small><i class="bi bi-telephone"></i> <?= h($member['no_wa']) ?></small>
                 <?php endif; ?>
@@ -27,12 +27,12 @@
                 <?php endif; ?>
             </div>
             <form method="POST" action="../actions/category_master.php"
-                  data-confirm="Hapus <?= h($member['user_name'] ?? '') ?> dari <?= h($memberLabel) ?> kategori <?= h($memberCategory['name']) ?>?">
+                  data-confirm="Hapus <?= h($member['pengguna_nama'] ?? '') ?> dari <?= h($memberLabel) ?> kategori <?= h($memberCategory['nama']) ?>?">
                 <?= csrfField() ?>
                 <input type="hidden" name="op" value="remove_member">
                 <input type="hidden" name="return" value="<?= h($memberReturn) ?>">
                 <input type="hidden" name="id" value="<?= (int) $memberCategory['id'] ?>">
-                <input type="hidden" name="user_id" value="<?= (int) $member['user_id'] ?>">
+                <input type="hidden" name="pengguna_id" value="<?= (int) $member['pengguna_id'] ?>">
                 <button type="submit" class="crf-member-remove" aria-label="Hapus <?= h($memberLabel) ?>">
                     <i class="bi bi-x-lg"></i>
                 </button>
@@ -46,7 +46,7 @@
     <input type="hidden" name="op" value="add_member">
     <input type="hidden" name="return" value="<?= h($memberReturn) ?>">
     <input type="hidden" name="id" value="<?= (int) $memberCategory['id'] ?>">
-    <input type="hidden" name="user_id" value="" data-user-picker-id>
+    <input type="hidden" name="pengguna_id" value="" data-user-picker-id>
     <div class="crf-member-search">
         <i class="bi bi-search"></i>
         <input

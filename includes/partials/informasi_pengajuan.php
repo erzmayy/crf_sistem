@@ -23,25 +23,25 @@ $infoDisplayStatus = crfDisplayStatus($crf);
         <div class="crf-info-rows">
             <div class="crf-info-row">
                 <span class="crf-info-label">Nama Lengkap</span>
-                <span class="crf-info-value"><?= h($crf['full_name'] ?? '-') ?></span>
+                <span class="crf-info-value"><?= h($crf['nama_pemohon'] ?? '-') ?></span>
             </div>
             <div class="crf-info-row">
                 <span class="crf-info-label">No. Handphone / WA</span>
-                <span class="crf-info-value"><?= h($crf['phone'] ?? '-') ?></span>
+                <span class="crf-info-value"><?= h($crf['telepon'] ?? '-') ?></span>
             </div>
             <div class="crf-info-row">
                 <span class="crf-info-label">Email Pemohon</span>
                 <span class="crf-info-value"><?= h($crf['email'] ?? '-') ?></span>
             </div>
-            <?php if (!empty($crf['requester_position'])): ?>
+            <?php if (!empty($crf['jabatan_pemohon'])): ?>
                 <div class="crf-info-row">
                     <span class="crf-info-label">Jabatan</span>
-                    <span class="crf-info-value"><?= h($crf['requester_position']) ?></span>
+                    <span class="crf-info-value"><?= h($crf['jabatan_pemohon']) ?></span>
                 </div>
             <?php endif; ?>
             <div class="crf-info-row">
                 <span class="crf-info-label">Nomor Register</span>
-                <span class="crf-info-value crf-info-register"><?= h($crf['request_number'] ?? '-') ?></span>
+                <span class="crf-info-value crf-info-register"><?= h($crf['nomor_register'] ?? '-') ?></span>
             </div>
             <div class="crf-info-row">
                 <span class="crf-info-label">Kategori CRF</span>
@@ -49,13 +49,13 @@ $infoDisplayStatus = crfDisplayStatus($crf);
             </div>
             <div class="crf-info-row">
                 <span class="crf-info-label">PIC CRF</span>
-                <span class="crf-info-value"><?= h($crf['assigned_handler_name'] ?? '') ?: '<span class="text-muted">Belum ada</span>' ?></span>
+                <span class="crf-info-value"><?= h($crf['pic_nama'] ?? '') ?: '<span class="text-muted">Belum ada</span>' ?></span>
             </div>
             <div class="crf-info-row">
                 <span class="crf-info-label">Tanggal Pengajuan</span>
                 <span class="crf-info-value">
-                    <?php if (!empty($crf['submission_date'])): ?>
-                        <?= h(formatTanggalIndonesia(new DateTime($crf['submission_date']))) ?>
+                    <?php if (!empty($crf['tgl_pengajuan'])): ?>
+                        <?= h(formatTanggalIndonesia(new DateTime($crf['tgl_pengajuan']))) ?>
                     <?php else: ?>
                         <span class="text-muted">Belum diajukan</span>
                     <?php endif; ?>
@@ -64,18 +64,18 @@ $infoDisplayStatus = crfDisplayStatus($crf);
             <div class="crf-info-row">
                 <span class="crf-info-label">Kepada</span>
                 <span class="crf-info-value">
-                    <?= h($crf['to_department'] ?? '-') ?>
-                    <?php if (!empty($crf['to_division'])): ?>
-                        <span class="crf-info-sub"><?= h($crf['to_division']) ?></span>
+                    <?= h($crf['dept_tujuan'] ?? '-') ?>
+                    <?php if (!empty($crf['divisi_tujuan'])): ?>
+                        <span class="crf-info-sub"><?= h($crf['divisi_tujuan']) ?></span>
                     <?php endif; ?>
                 </span>
             </div>
             <div class="crf-info-row">
                 <span class="crf-info-label">Dari</span>
                 <span class="crf-info-value">
-                    <?= h($crf['from_department'] ?? '-') ?>
-                    <?php if (!empty($crf['from_division'])): ?>
-                        <span class="crf-info-sub"><?= h($crf['from_division']) ?></span>
+                    <?= h($crf['dept_asal'] ?? '-') ?>
+                    <?php if (!empty($crf['divisi_asal'])): ?>
+                        <span class="crf-info-sub"><?= h($crf['divisi_asal']) ?></span>
                     <?php endif; ?>
                 </span>
             </div>

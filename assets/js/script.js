@@ -150,10 +150,10 @@ document.addEventListener('DOMContentLoaded', function () {
   /* -----------------------------------------------------------------
    * 1. Tampilkan field "Detail Kategori" sesuai kategori yang dipilih
    * ----------------------------------------------------------------- */
-  var categorySelect = document.getElementById('change_category');
+  var categorySelect = document.getElementById('kategori_perubahan');
   var categoryDetailWrap = document.getElementById('category-detail-wrap');
   var categoryDetailLabel = document.getElementById('category-detail-label');
-  var categoryDetailInput = document.getElementById('change_category_detail');
+  var categoryDetailInput = document.getElementById('detail_kategori_perubahan');
 
   var categoryHints = {
     'Aplikasi': 'Nama Aplikasi / Modul (contoh: CL, PKS, PKWT, Absensi)',
@@ -195,8 +195,8 @@ document.addEventListener('DOMContentLoaded', function () {
   /* -----------------------------------------------------------------
    * 2. Nominal anggaran hanya wajib jika salah satu pilihan biaya dipilih
    * ----------------------------------------------------------------- */
-  var budgetRadios = crfRoot.querySelectorAll('input[name="budget_type"]');
-  var budgetAmountInput = document.getElementById('budget_amount');
+  var budgetRadios = crfRoot.querySelectorAll('input[name="jenis_anggaran"]');
+  var budgetAmountInput = document.getElementById('nilai_anggaran');
 
   function toggleBudgetAmount() {
     var hasCost = false;
@@ -372,17 +372,17 @@ if (fileInput && fileList) {
 
   function isCrfFormComplete() {
     var requiredFieldIds = [
-      'full_name',
-      'phone',
+      'nama_pemohon',
+      'telepon',
       'email',
-      'from_department',
-      'from_division',
-      'request_type',
-      'change_description',
-      'benefit',
-      'impact_category',
-      'impact',
-      'reason'
+      'dept_asal',
+      'divisi_asal',
+      'jenis_pengajuan',
+      'deskripsi_perubahan',
+      'manfaat',
+      'kategori_dampak',
+      'dampak',
+      'alasan'
     ];
     var isComplete = requiredFieldIds.every(function (id) {
       var field = document.getElementById(id);
@@ -395,22 +395,22 @@ if (fileInput && fileList) {
       isComplete = false;
     }
 
-    var category = document.getElementById('change_category');
+    var category = document.getElementById('kategori_perubahan');
     if (isComplete && category && category.value === '') {
       isComplete = false;
     }
 
-    var categoryDetail = document.getElementById('change_category_detail');
+    var categoryDetail = document.getElementById('detail_kategori_perubahan');
     if (isComplete && category && legacyCategoryValue(category) === 'Lainnya'
       && categoryDetail && categoryDetail.value.trim() === '') {
       isComplete = false;
     }
 
-    var selectedBudget = crfRoot.querySelector('input[name="budget_type"]:checked');
+    var selectedBudget = crfRoot.querySelector('input[name="jenis_anggaran"]:checked');
 
     // Nominal hanya wajib bila ada biaya (bukan "Tidak ada biaya").
     if (isComplete && selectedBudget && selectedBudget.value !== 'tidak_ada') {
-      var budgetAmount = document.getElementById('budget_amount');
+      var budgetAmount = document.getElementById('nilai_anggaran');
       if (!budgetAmount || budgetAmount.value.trim() === ''
         || Number(budgetAmount.value) < 0) {
         isComplete = false;
@@ -448,17 +448,17 @@ if (fileInput && fileList) {
     var errors = [];
 
     [
-      ['full_name', 'Nama lengkap wajib diisi.'],
-      ['phone', 'Nomor handphone/WA wajib diisi.'],
+      ['nama_pemohon', 'Nama lengkap wajib diisi.'],
+      ['telepon', 'Nomor handphone/WA wajib diisi.'],
       ['email', 'Email wajib diisi.'],
-      ['from_department', 'Departemen wajib diisi.'],
-      ['from_division', 'Divisi wajib diisi.'],
-      ['request_type', 'Tipe pengajuan wajib dipilih.'],
-      ['change_description', 'Rincian permohonan perubahan wajib diisi.'],
-      ['benefit', 'Benefit perubahan wajib diisi.'],
-      ['impact_category', 'Dampak jika tidak dilakukan perubahan wajib dipilih.'],
-      ['impact', 'Penjelasan dampak wajib diisi.'],
-      ['reason', 'Alasan permohonan perubahan wajib diisi.']
+      ['dept_asal', 'Departemen wajib diisi.'],
+      ['divisi_asal', 'Divisi wajib diisi.'],
+      ['jenis_pengajuan', 'Tipe pengajuan wajib dipilih.'],
+      ['deskripsi_perubahan', 'Rincian permohonan perubahan wajib diisi.'],
+      ['manfaat', 'Benefit perubahan wajib diisi.'],
+      ['kategori_dampak', 'Dampak jika tidak dilakukan perubahan wajib dipilih.'],
+      ['dampak', 'Penjelasan dampak wajib diisi.'],
+      ['alasan', 'Alasan permohonan perubahan wajib diisi.']
     ].forEach(function (item) {
       var field = document.getElementById(item[0]);
       if (field && field.value.trim() === '') {
@@ -472,20 +472,20 @@ if (fileInput && fileList) {
       addInlineError(email, 'Format email belum valid.', errors);
     }
 
-    var category = document.getElementById('change_category');
+    var category = document.getElementById('kategori_perubahan');
     if (category && category.value === '') {
       addInlineError(category, 'Kategori perubahan wajib dipilih.', errors);
     }
 
-    var categoryDetail = document.getElementById('change_category_detail');
+    var categoryDetail = document.getElementById('detail_kategori_perubahan');
     if (category && legacyCategoryValue(category) === 'Lainnya'
       && categoryDetail && categoryDetail.value.trim() === '') {
       addInlineError(categoryDetail, 'Detail kategori wajib diisi.', errors);
     }
 
-    var selectedBudget = crfRoot.querySelector('input[name="budget_type"]:checked');
+    var selectedBudget = crfRoot.querySelector('input[name="jenis_anggaran"]:checked');
     if (selectedBudget && selectedBudget.value !== 'tidak_ada') {
-      var budgetAmount = document.getElementById('budget_amount');
+      var budgetAmount = document.getElementById('nilai_anggaran');
       if (!budgetAmount || budgetAmount.value.trim() === '') {
         addInlineError(budgetAmount, 'Nominal biaya / anggaran wajib diisi.', errors);
       } else if (Number(budgetAmount.value) < 0) {

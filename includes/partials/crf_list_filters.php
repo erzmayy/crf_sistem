@@ -60,7 +60,7 @@ $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
                 <option value="">Semua Kategori</option>
                 <?php foreach ($listFilters['categories'] as $categoryOption): ?>
                     <option value="<?= (int) $categoryOption['id'] ?>" <?= (int) ($listFilters['category_id'] ?? 0) === (int) $categoryOption['id'] ? 'selected' : '' ?>>
-                        <?= h($categoryOption['name']) ?>
+                        <?= h($categoryOption['nama']) ?>
                     </option>
                 <?php endforeach; ?>
             </select>

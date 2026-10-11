@@ -151,10 +151,10 @@ if ($crfEmbedded) {
               <div class="crf-notification-empty"><i class="bi bi-bell-slash"></i> Belum ada notifikasi.</div>
             <?php endif; ?>
             <?php foreach ($notificationItems as $notificationItem): ?>
-              <a class="crf-notification-item <?= $notificationItem['read_at'] === null ? 'unread' : '' ?>" href="<?= h($appBasePath) ?>/notifications/open.php?id=<?= (int) $notificationItem['id'] ?>">
-                <strong><?= h($notificationItem['title']) ?></strong>
-                <span><?= h(mb_strimwidth((string) $notificationItem['message'], 0, 110, '…')) ?></span>
-                <small><?= h(date('d M Y H:i', strtotime($notificationItem['created_at']))) ?></small>
+              <a class="crf-notification-item <?= $notificationItem['tgl_dibaca'] === null ? 'unread' : '' ?>" href="<?= h($appBasePath) ?>/notifications/open.php?id=<?= (int) $notificationItem['id'] ?>">
+                <strong><?= h($notificationItem['judul']) ?></strong>
+                <span><?= h(mb_strimwidth((string) $notificationItem['pesan'], 0, 110, '…')) ?></span>
+                <small><?= h(date('d M Y H:i', strtotime($notificationItem['tgl_dibuat']))) ?></small>
               </a>
             <?php endforeach; ?>
           </div>

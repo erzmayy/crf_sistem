@@ -24,7 +24,7 @@ $id = (int) ($_GET['id'] ?? 0);
 /*
  * Ambil CRF berdasarkan:
  * 1. ID CRF
- * 2. user_id user yang sedang login
+ * 2. pengguna_id user yang sedang login
  *
  * Jadi user tidak bisa membuka detail CRF milik user lain hanya
  * dengan mengganti ?id= di URL.
@@ -33,13 +33,13 @@ $stmt = $pdo->prepare(
     'SELECT cr.*
      FROM crf_pengajuan cr
      WHERE cr.id = :id
-       AND cr.user_id = :user_id
+       AND cr.pengguna_id = :pengguna_id
      LIMIT 1'
 );
 
 $stmt->execute([
     'id' => $id,
-    'user_id' => $currentUser['id']
+    'pengguna_id' => $currentUser['id']
 ]);
 
 $crf = $stmt->fetch();
@@ -71,8 +71,8 @@ if (!$crf) {
 $attStmt = $pdo->prepare(
     'SELECT *
      FROM crf_lampiran
-     WHERE change_request_id = :id
-     ORDER BY uploaded_at ASC'
+     WHERE pengajuan_id = :id
+     ORDER BY tgl_unggah ASC'
 );
 
 $attStmt->execute([
@@ -86,15 +86,15 @@ $attachments = $attStmt->fetchAll();
  */
 $timelineStmt = $pdo->prepare("
     SELECT
-        activity,
-        description,
-        actor,
-        old_status,
-        new_status,
-        created_at
+        aktivitas,
+        deskripsi,
+        pelaksana,
+        status_lama,
+        status_baru,
+        tgl_dibuat
     FROM crf_log_aktivitas
-    WHERE change_request_id = :id
-    ORDER BY created_at ASC, id ASC
+    WHERE pengajuan_id = :id
+    ORDER BY tgl_dibuat ASC, id ASC
 ");
 
 $timelineStmt->execute([
@@ -109,8 +109,8 @@ $timeline = $timelineStmt->fetchAll();
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$requestNumberDisplay = !empty($crf['request_number'])
-    ? $crf['request_number']
+$requestNumberDisplay = !empty($crf['nomor_register'])
+    ? $crf['nomor_register']
     : 'Belum ada (draft)';
 
 $pageTitle = 'Detail CRF - ' . $requestNumberDisplay;
@@ -190,21 +190,21 @@ require_once __DIR__ . '/../includes/header.php';
                 Status: <?= h(statusLabel($crf['status'])) ?>
             </span>
 
-            <span class="crf-badge <?= workflowStageBadgeClass($crf['workflow_stage'] ?? 'PEMOHON') ?>">
-                Tahap: <?= h(workflowStageLabel($crf['workflow_stage'] ?? 'PEMOHON')) ?>
+            <span class="crf-badge <?= workflowStageBadgeClass($crf['tahap_alur'] ?? 'PEMOHON') ?>">
+                Tahap: <?= h(workflowStageLabel($crf['tahap_alur'] ?? 'PEMOHON')) ?>
             </span>
 
         </div>
 
         <!-- INFO SOLVE -->
-        <?php if ($crf['status'] === 'Solve' && $crf['solved_at']): ?>
+        <?php if ($crf['status'] === 'Solve' && $crf['tgl_selesai']): ?>
 
             <div class="crf-readonly-note mb-3">
 
                 <i class="bi bi-check-circle"></i>
 
                 Diselesaikan pada:
-                <?= h(date('d-m-Y H:i', strtotime($crf['solved_at']))) ?>
+                <?= h(date('d-m-Y H:i', strtotime($crf['tgl_selesai']))) ?>
 
             </div>
 
@@ -212,14 +212,14 @@ require_once __DIR__ . '/../includes/header.php';
 
 
         <!-- INFO CANCEL -->
-        <?php if ($crf['status'] === 'Cancel' && $crf['cancelled_at']): ?>
+        <?php if ($crf['status'] === 'Cancel' && $crf['tgl_dibatalkan']): ?>
 
             <div class="crf-readonly-note mb-3">
 
                 <i class="bi bi-x-circle"></i>
 
                 Dibatalkan pada:
-                <?= h(date('d-m-Y H:i', strtotime($crf['cancelled_at']))) ?>
+                <?= h(date('d-m-Y H:i', strtotime($crf['tgl_dibatalkan']))) ?>
 
             </div>
 
@@ -277,14 +277,14 @@ require_once __DIR__ . '/../includes/header.php';
 
             <div class="crf-section-body">
 
-                <?php $isPirStage = ($crf['workflow_stage'] ?? '') === 'PEMOHON_PIR'; ?>
+                <?php $isPirStage = ($crf['tahap_alur'] ?? '') === 'PEMOHON_PIR'; ?>
                 <?php if ($isPirStage): ?>
                     <div class="alert alert-warning">
                         <i class="bi bi-pencil-square"></i>
                         Otomasi sudah mencatat hasil implementasi. Silakan periksa hasilnya lalu isi
                         <strong>Tanggal PIR</strong> dan <strong>Post Implementation Review</strong> di bawah.
                     </div>
-                <?php elseif (empty($crf['implementation'])): ?>
+                <?php elseif (empty($crf['implementasi'])): ?>
                     <div class="alert alert-info">
                         Implementasi akan dicatat oleh Otomasi. Setelah itu Anda diminta mengisi Post Implementation Review.
                     </div>
@@ -294,16 +294,16 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="crf-info-row">
                         <span class="crf-info-label">Tanggal Implementasi</span>
                         <div class="crf-info-value">
-                            <?= !empty($crf['implementation_date'])
-                                ? h(date('d-m-Y', strtotime($crf['implementation_date'])))
+                            <?= !empty($crf['tgl_implementasi'])
+                                ? h(date('d-m-Y', strtotime($crf['tgl_implementasi'])))
                                 : '<span class="text-muted">Belum diisi.</span>' ?>
                         </div>
                     </div>
                     <div class="crf-info-row crf-request-row-long">
                         <span class="crf-info-label">Implementasi / Hasil Perubahan</span>
                         <div class="crf-info-value">
-                            <?php if (!empty($crf['implementation'])): ?>
-                                <?= nl2br(h($crf['implementation'])) ?>
+                            <?php if (!empty($crf['implementasi'])): ?>
+                                <?= nl2br(h($crf['implementasi'])) ?>
                             <?php else: ?>
                                 <span class="text-muted">Belum diisi.</span>
                             <?php endif; ?>
@@ -313,16 +313,16 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="crf-info-row">
                         <span class="crf-info-label">Tanggal PIR</span>
                         <div class="crf-info-value">
-                            <?= !empty($crf['pir_date'])
-                                ? h(date('d-m-Y', strtotime($crf['pir_date'])))
+                            <?= !empty($crf['tgl_pir'])
+                                ? h(date('d-m-Y', strtotime($crf['tgl_pir'])))
                                 : '<span class="text-muted">Belum diisi.</span>' ?>
                         </div>
                     </div>
                     <div class="crf-info-row crf-request-row-long">
                         <span class="crf-info-label">Post Implementation Review</span>
                         <div class="crf-info-value">
-                            <?php if (!empty($crf['post_implementation_review'])): ?>
-                                <?= nl2br(h($crf['post_implementation_review'])) ?>
+                            <?php if (!empty($crf['tinjauan_pasca_implementasi'])): ?>
+                                <?= nl2br(h($crf['tinjauan_pasca_implementasi'])) ?>
                             <?php else: ?>
                                 <span class="text-muted">Belum diisi.</span>
                             <?php endif; ?>
@@ -337,32 +337,32 @@ require_once __DIR__ . '/../includes/header.php';
                         <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
 
                         <div class="mb-4">
-                            <label for="pir_date" class="form-label fw-semibold">
+                            <label for="tgl_pir" class="form-label fw-semibold">
                                 Tanggal PIR <span class="text-danger">*</span>
                             </label>
                             <input
                                 type="date"
-                                id="pir_date"
-                                name="pir_date"
+                                id="tgl_pir"
+                                name="tgl_pir"
                                 class="form-control"
-                                value="<?= h($crf['pir_date'] ?? date('Y-m-d')) ?>"
-                                <?= !empty($crf['implementation_date']) ? 'min="' . h($crf['implementation_date']) . '"' : '' ?>
+                                value="<?= h($crf['tgl_pir'] ?? date('Y-m-d')) ?>"
+                                <?= !empty($crf['tgl_implementasi']) ? 'min="' . h($crf['tgl_implementasi']) . '"' : '' ?>
                                 required
                             >
                         </div>
 
                         <div class="mb-4">
-                            <label for="post_implementation_review" class="form-label fw-semibold">
+                            <label for="tinjauan_pasca_implementasi" class="form-label fw-semibold">
                                 Post Implementation Review <span class="text-danger">*</span>
                             </label>
                             <textarea
-                                id="post_implementation_review"
-                                name="post_implementation_review"
+                                id="tinjauan_pasca_implementasi"
+                                name="tinjauan_pasca_implementasi"
                                 class="form-control"
                                 rows="6"
                                 required
                                 placeholder="Apakah perubahan sudah sesuai kebutuhan? Tuliskan hasil evaluasi Anda setelah perubahan diterapkan..."
-                            ><?= h($crf['post_implementation_review'] ?? '') ?></textarea>
+                            ><?= h($crf['tinjauan_pasca_implementasi'] ?? '') ?></textarea>
                         </div>
 
                         <div class="d-flex justify-content-end">

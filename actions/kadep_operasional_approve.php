@@ -31,7 +31,7 @@ if ($id <= 0) {
 }
 
 $stmt = $pdo->prepare("
-    SELECT id, user_id, request_number, assigned_handler_id, crf_category_id, workflow_stage
+    SELECT id, pengguna_id, nomor_register, pic_id, kategori_id, tahap_alur
     FROM crf_pengajuan
     WHERE id = :id
     LIMIT 1
@@ -41,7 +41,7 @@ $stmt->execute(['id' => $id]);
 
 $crf = $stmt->fetch();
 
-if (!$crf || $crf['workflow_stage'] !== 'kadep_operasional') {
+if (!$crf || $crf['tahap_alur'] !== 'kadep_operasional') {
     $_SESSION['flash'] = [
         'type' => 'danger',
         'message' => 'CRF tidak tersedia untuk persetujuan.'
@@ -72,12 +72,12 @@ try {
 
     $actor = crfActorName($user);
     $crfLink = 'crf/open.php?id=' . $id;
-    $crfNumber = (string) $crf['request_number'];
+    $crfNumber = (string) $crf['nomor_register'];
 
     // Handler pemegang CRF; bila belum ada, seluruh handler kategori.
-    $handlerRecipients = !empty($crf['assigned_handler_id'])
-        ? [(int) $crf['assigned_handler_id']]
-        : (!empty($crf['crf_category_id']) ? crfCategoryHandlerIds($pdo, (int) $crf['crf_category_id']) : []);
+    $handlerRecipients = !empty($crf['pic_id'])
+        ? [(int) $crf['pic_id']]
+        : (!empty($crf['kategori_id']) ? crfCategoryHandlerIds($pdo, (int) $crf['kategori_id']) : []);
 
 
     /* =====================================================
@@ -90,12 +90,12 @@ try {
         $stmt = $pdo->prepare("
             SELECT
                 id,
-                sla_value,
-                sla_unit,
-                forum_discussion_open
+                sla_nilai,
+                sla_satuan,
+                pembahasan_forum_terbuka
             FROM crf_pengajuan
             WHERE id = :id
-              AND workflow_stage = 'kadep_operasional'
+              AND tahap_alur = 'kadep_operasional'
             FOR UPDATE
         ");
 
@@ -106,11 +106,11 @@ try {
             throw new RuntimeException('CRF sudah tidak tersedia untuk persetujuan.');
         }
 
-        if (!crfHasValidSla($approvalCrf) || !empty($approvalCrf['forum_discussion_open'])) {
+        if (!crfHasValidSla($approvalCrf) || !empty($approvalCrf['pembahasan_forum_terbuka'])) {
             $pdo->rollBack();
             $_SESSION['flash'] = [
                 'type' => 'danger',
-                'message' => !empty($approvalCrf['forum_discussion_open'])
+                'message' => !empty($approvalCrf['pembahasan_forum_terbuka'])
                     ? 'CRF ini masih menunggu pembahasan Forum sehingga belum dapat disetujui.'
                     : 'SLA CRF ini belum tersedia, sehingga belum dapat disetujui. Hubungi Admin.',
             ];
@@ -121,7 +121,7 @@ try {
         // SLA mulai dihitung sejak Kepala Departemen Operasional menyetujui,
         // lalu CRF diserahkan ke PIC CRF untuk dieksekusi.
         $slaStartedAt = $now;
-        $slaDueAt = slaDueAt($slaStartedAt, $approvalCrf['sla_value'], $approvalCrf['sla_unit']);
+        $slaDueAt = slaDueAt($slaStartedAt, $approvalCrf['sla_nilai'], $approvalCrf['sla_satuan']);
         if ($slaDueAt === null) {
             throw new RuntimeException('Tenggat SLA tidak dapat dihitung.');
         }
@@ -129,16 +129,16 @@ try {
         $stmt = $pdo->prepare("
             UPDATE crf_pengajuan
             SET
-                kadep_operasional_approved_by = :approved_by,
-                kadep_operasional_approved_at = :approved_at,
-                kadep_operasional_approval_note = :approval_note,
-                sla_started_at = :sla_started_at,
-                sla_due_at = :sla_due_at,
-                automation_started_at = :automation_started_at,
-                workflow_stage = 'OTOMASI',
+                disetujui_kadep_oleh = :approved_by,
+                tgl_disetujui_kadep = :approved_at,
+                catatan_persetujuan_kadep = :approval_note,
+                sla_mulai = :sla_mulai,
+                sla_tenggat = :sla_tenggat,
+                otomasi_mulai = :otomasi_mulai,
+                tahap_alur = 'OTOMASI',
                 status = 'Dalam Proses'
             WHERE id = :id
-              AND workflow_stage = 'kadep_operasional'
+              AND tahap_alur = 'kadep_operasional'
         ");
 
         $stmt->execute([
@@ -147,9 +147,9 @@ try {
             'approval_note' => $note !== ''
                 ? $note
                 : null,
-            'sla_started_at' => $slaStartedAt,
-            'sla_due_at' => $slaDueAt,
-            'automation_started_at' => $slaStartedAt,
+            'sla_mulai' => $slaStartedAt,
+            'sla_tenggat' => $slaDueAt,
+            'otomasi_mulai' => $slaStartedAt,
             'id' => $id,
         ]);
 
@@ -161,7 +161,7 @@ try {
             $pdo,
             $id,
             'Approval Kepala Departemen Operasional',
-            'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. SLA ' . slaLabel($approvalCrf['sla_value'], $approvalCrf['sla_unit'])
+            'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. SLA ' . slaLabel($approvalCrf['sla_nilai'], $approvalCrf['sla_satuan'])
                 . ' mulai dihitung, batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. CRF diserahkan ke PIC CRF untuk dieksekusi.'
                 . ($note !== '' ? ' Catatan: ' . $note : ''),
             $actor,
@@ -171,7 +171,7 @@ try {
 
         notifyUsers(
             $pdo,
-            array_merge($handlerRecipients ?: crfUserIdsForRole($pdo, 'otomasi'), [(int) $crf['user_id']]),
+            array_merge($handlerRecipients ?: crfUserIdsForRole($pdo, 'otomasi'), [(int) $crf['pengguna_id']]),
             'CRF disetujui: ' . $crfNumber,
             'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional. SLA mulai dihitung dan batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. PIC CRF dapat mengeksekusi CRF.',
             $crfLink,

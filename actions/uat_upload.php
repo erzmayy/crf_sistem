@@ -4,7 +4,7 @@
  * Unggah dokumen hasil UAT sebagai bukti pengujian.
  *   - CMO     : saat CRF berada di tahap UAT (CMO yang menguji).
  *   - Admin   : kapan pun setelah UAT dimulai (menyimpan bukti/dokumentasi).
- * Dokumen disimpan di tabel crf_lampiran dengan category = 'uat'.
+ * Dokumen disimpan di tabel crf_lampiran dengan kategori = 'uat'.
  */
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
@@ -32,17 +32,17 @@ if ($role === 'demo' && ($_POST['back'] ?? '') === 'admin') {
 }
 $back = $backPage . $id;
 
-$stmt = $pdo->prepare('SELECT id, status, workflow_stage, automation_completed_at, request_number FROM crf_pengajuan WHERE id = :id');
+$stmt = $pdo->prepare('SELECT id, status, tahap_alur, otomasi_selesai, nomor_register FROM crf_pengajuan WHERE id = :id');
 $stmt->execute(['id' => $id]);
 $crf = $stmt->fetch();
 
-if (!$crf || in_array($crf['status'], ['Draft', 'Cancel'], true) || empty($crf['automation_completed_at'])) {
+if (!$crf || in_array($crf['status'], ['Draft', 'Cancel'], true) || empty($crf['otomasi_selesai'])) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Dokumen UAT hanya dapat diunggah setelah Otomasi menyelesaikan eksekusi.'];
     header('Location: ' . $back);
     exit;
 }
 
-if ($role === 'cmo' && $crf['workflow_stage'] !== 'UAT') {
+if ($role === 'cmo' && $crf['tahap_alur'] !== 'UAT') {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'CMO mengunggah dokumen UAT saat CRF berada pada tahap UAT.'];
     header('Location: ' . $back);
     exit;
@@ -55,7 +55,7 @@ if (!$files || empty($files['name']) || empty($files['name'][0])) {
     exit;
 }
 
-$countStmt = $pdo->prepare("SELECT COUNT(*) FROM crf_lampiran WHERE change_request_id = :id AND category = 'uat'");
+$countStmt = $pdo->prepare("SELECT COUNT(*) FROM crf_lampiran WHERE pengajuan_id = :id AND kategori = 'uat'");
 $countStmt->execute(['id' => $id]);
 $before = (int) $countStmt->fetchColumn();
 

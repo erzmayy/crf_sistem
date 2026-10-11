@@ -83,13 +83,13 @@ if ($format === 'pdf') {
             . '<th>Departemen</th><th>Kategori</th><th>Status</th><th>Tanggal</th>'
             . '<th>Isi Pengajuan</th></tr></thead><tbody>';
         foreach ($month['requests'] as $request) {
-            $monthlyDetails .= '<tr><td>' . $escape($request['request_number'])
-                . '</td><td>' . $escape($request['full_name'])
-                . '</td><td>' . $escape($request['from_department'])
-                . '</td><td>' . $escape($request['change_category'])
+            $monthlyDetails .= '<tr><td>' . $escape($request['nomor_register'])
+                . '</td><td>' . $escape($request['nama_pemohon'])
+                . '</td><td>' . $escape($request['dept_asal'])
+                . '</td><td>' . $escape($request['kategori_perubahan'])
                 . '</td><td>' . $escape(statusLabel($request['status']))
                 . '</td><td>' . $escape(date('d-m-Y', strtotime($request['report_date'])))
-                . '</td><td>' . $escape($request['change_description']) . '</td></tr>';
+                . '</td><td>' . $escape($request['deskripsi_perubahan']) . '</td></tr>';
         }
         $monthlyDetails .= '</tbody></table>';
     }
@@ -169,17 +169,17 @@ foreach ($report['months'] as $month) {
     foreach ($month['requests'] as $request) {
         $requestRows[] = [
             $month['label'],
-            $request['request_number'],
-            $request['full_name'],
-            $request['from_department'],
-            $request['change_category'],
+            $request['nomor_register'],
+            $request['nama_pemohon'],
+            $request['dept_asal'],
+            $request['kategori_perubahan'],
             statusLabel($request['status']),
             date('d-m-Y', strtotime($request['report_date'])),
-            $request['change_description'],
+            $request['deskripsi_perubahan'],
         ];
         $textLength = function_exists('mb_strlen')
-            ? mb_strlen((string) ($request['change_description'] ?? ''), 'UTF-8')
-            : strlen((string) ($request['change_description'] ?? ''));
+            ? mb_strlen((string) ($request['deskripsi_perubahan'] ?? ''), 'UTF-8')
+            : strlen((string) ($request['deskripsi_perubahan'] ?? ''));
         $lineCount = max(1, (int) ceil($textLength / 66));
         $requestRowHeights[count($requestRows) + 4] = min(120, max(34, 18 + ($lineCount * 14)));
     }

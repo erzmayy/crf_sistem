@@ -31,7 +31,7 @@ $back = static function (int $id): string {
 try {
     switch ($op) {
         case 'result':
-            $outcome = is_string($_POST['outcome'] ?? null) ? $_POST['outcome'] : '';
+            $outcome = is_string($_POST['hasil'] ?? null) ? $_POST['hasil'] : '';
             $note = forumParseText($_POST['note'] ?? null, 1000, true, 'Alasan / ringkasan kesepakatan');
             $result = forumRecordResult(
                 $pdo,
@@ -39,8 +39,8 @@ try {
                 $user,
                 $outcome,
                 is_string($_POST['urgency'] ?? null) ? $_POST['urgency'] : null,
-                $_POST['sla_value'] ?? null,
-                $_POST['sla_unit'] ?? null,
+                $_POST['sla_nilai'] ?? null,
+                $_POST['sla_satuan'] ?? null,
                 $note
             );
             $crfId = $result['crf_id'];

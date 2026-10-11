@@ -29,16 +29,16 @@ $stmt = $pdo->prepare("
     WHERE cr.id = :id
       AND cr.status <> 'Draft'
       AND (
-          cr.workflow_stage = 'kadep_operasional'
+          cr.tahap_alur = 'kadep_operasional'
           OR EXISTS (
               SELECT 1
               FROM crf_log_aktivitas activity_log
-              WHERE activity_log.change_request_id = cr.id
+              WHERE activity_log.pengajuan_id = cr.id
                 AND (
-                    activity_log.activity = 'Approval Kepala Departemen Operasional'
+                    activity_log.aktivitas = 'Approval Kepala Departemen Operasional'
                     OR (
-                        activity_log.activity = 'Perlu Revisi'
-                        AND activity_log.description LIKE 'Kepala Departemen Operasional mengembalikan CRF ke Otomasi%'
+                        activity_log.aktivitas = 'Perlu Revisi'
+                        AND activity_log.deskripsi LIKE 'Kepala Departemen Operasional mengembalikan CRF ke Otomasi%'
                     )
                 )
           )
@@ -90,8 +90,8 @@ if (!$crf) {
 $attStmt = $pdo->prepare("
     SELECT *
     FROM crf_lampiran
-    WHERE change_request_id = :id
-    ORDER BY uploaded_at ASC
+    WHERE pengajuan_id = :id
+    ORDER BY tgl_unggah ASC
 ");
 
 $attStmt->execute(['id' => $id]);
@@ -104,15 +104,15 @@ $attachments = $attStmt->fetchAll();
  * ========================================================= */
 $logStmt = $pdo->prepare("
     SELECT
-        activity,
-        description,
-        actor,
-        old_status,
-        new_status,
-        created_at
+        aktivitas,
+        deskripsi,
+        pelaksana,
+        status_lama,
+        status_baru,
+        tgl_dibuat
     FROM crf_log_aktivitas
-    WHERE change_request_id = :id
-    ORDER BY created_at ASC, id ASC
+    WHERE pengajuan_id = :id
+    ORDER BY tgl_dibuat ASC, id ASC
 ");
 
 $logStmt->execute(['id' => $id]);
@@ -147,7 +147,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <p>
                     Nomor Register:
-                    <strong><?= h($crf['request_number'] ?? '-') ?></strong>
+                    <strong><?= h($crf['nomor_register'] ?? '-') ?></strong>
                 </p>
             </div>
 
@@ -184,8 +184,8 @@ require_once __DIR__ . '/../includes/header.php';
                 Status: <?= h(statusLabel($crf['status'] ?? '')) ?>
             </span>
 
-            <span class="crf-badge <?= workflowStageBadgeClass($crf['workflow_stage'] ?? 'kadep_operasional') ?>">
-                Tahap: <?= h(workflowStageLabel($crf['workflow_stage'] ?? 'kadep_operasional')) ?>
+            <span class="crf-badge <?= workflowStageBadgeClass($crf['tahap_alur'] ?? 'kadep_operasional') ?>">
+                Tahap: <?= h(workflowStageLabel($crf['tahap_alur'] ?? 'kadep_operasional')) ?>
             </span>
 
             <?php $approvalUrgency = crfEffectiveUrgency($crf); ?>
@@ -193,11 +193,11 @@ require_once __DIR__ . '/../includes/header.php';
                 Level Urgensi: <?= h($approvalUrgency ?? 'Belum ditentukan') ?>
             </span>
 
-            <?php if (!empty($crf['sla_value']) && !empty($crf['sla_unit'])): ?>
+            <?php if (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan'])): ?>
                 <span class="crf-badge badge-stage-pir">
                     SLA:
-                    <?= h(rtrim(rtrim(number_format((float) $crf['sla_value'], 2, '.', ''), '0'), '.')) ?>
-                    <?= h($crf['sla_unit']) ?>
+                    <?= h(rtrim(rtrim(number_format((float) $crf['sla_nilai'], 2, '.', ''), '0'), '.')) ?>
+                    <?= h($crf['sla_satuan']) ?>
                 </span>
             <?php endif; ?>
 
@@ -225,7 +225,7 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- =====================================================
              4. APPROVAL KEPALA DEPARTEMEN OPERASIONAL (khusus)
              ===================================================== -->
-        <?php if ($crf['workflow_stage'] === 'kadep_operasional'): ?>
+        <?php if ($crf['tahap_alur'] === 'kadep_operasional'): ?>
         <div class="crf-section mb-4">
 
             <div class="crf-section-header">
@@ -240,7 +240,7 @@ require_once __DIR__ . '/../includes/header.php';
                     SLA mulai dihitung sejak Anda menyetujui, lalu CRF diserahkan ke PIC CRF untuk dieksekusi.
                 </p>
 
-                <?php $approvalHasSla = slaDueAt(date('Y-m-d H:i:s'), $crf['sla_value'], $crf['sla_unit']) !== null; ?>
+                <?php $approvalHasSla = slaDueAt(date('Y-m-d H:i:s'), $crf['sla_nilai'], $crf['sla_satuan']) !== null; ?>
                 <?php if (!$approvalHasSla): ?>
                     <div class="alert alert-warning">
                         <i class="bi bi-exclamation-triangle"></i>
@@ -268,7 +268,7 @@ require_once __DIR__ . '/../includes/header.php';
                             rows="4"
                             required
                             placeholder="Tuliskan catatan persetujuan..."
-                        ><?= h($crf['kadep_operasional_approval_note'] ?? '') ?></textarea>
+                        ><?= h($crf['catatan_persetujuan_kadep'] ?? '') ?></textarea>
 
                     </div>
 

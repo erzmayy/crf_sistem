@@ -11,7 +11,7 @@ Pemohon → CMO (screening) ─┬→ Kepala Departemen Operasional (approve; SL
   → CMO (Finalisasi) → Selesai
 ```
 
-## Tahap workflow (`crf_pengajuan.workflow_stage`)
+## Tahap workflow (`crf_pengajuan.tahap_alur`)
 
 | Tahap | Label di aplikasi | Pemegang |
 |-------|-------------------|----------|
@@ -32,14 +32,14 @@ Tahap `OTOMASI` dipakai ulang untuk tiga fase milik PIC CRF yang dibedakan lewat
 
 | Fase | Penanda | Aksi PIC CRF |
 |------|---------|--------------|
-| Eksekusi | `automation_completed_at` kosong | **Selesai Eksekusi · Kirim ke UAT** (`execute`) |
-| Perbaikan hasil UAT | `automation_completed_at` ada, `uat_passed_at` kosong | **Kirim Ulang ke UAT** (`resubmit_uat`) |
-| Isi implementasi | `uat_passed_at` ada | **Selesaikan** (`complete`) |
+| Eksekusi | `otomasi_selesai` kosong | **Selesai Eksekusi · Kirim ke UAT** (`execute`) |
+| Perbaikan hasil UAT | `otomasi_selesai` ada, `tgl_uat_lulus` kosong | **Kirim Ulang ke UAT** (`resubmit_uat`) |
+| Isi implementasi | `tgl_uat_lulus` ada | **Selesaikan** (`complete`) |
 
 Aksi di `actions/automation_action.php` divalidasi menurut fase di server, jadi UAT tidak dapat dilewati.
 
 Selama pembahasan Forum terbuka, CRF di tahap `CMO_FILTER` bertanda
-`forum_discussion_open = 1` dan tampil sebagai **Menunggu Pembahasan Forum**.
+`pembahasan_forum_terbuka = 1` dan tampil sebagai **Menunggu Pembahasan Forum**.
 
 ## Langkah per peran
 
@@ -67,7 +67,7 @@ Selama pembahasan Forum terbuka, CRF di tahap `CMO_FILTER` bertanda
    - **Lulus UAT**: wajib sudah ada minimal satu dokumen UAT. CRF kembali ke PIC CRF.
    - **Perlu Perbaikan**: catatan wajib. CRF kembali ke PIC CRF; setelah **Kirim Ulang ke UAT**, CMO menguji lagi.
      Tidak ada batas putaran; tiap putaran tercatat di timeline.
-   - **UAT dan perbaikannya tidak dihitung dalam SLA**: waktu eksekusi selesai (`automation_completed_at`)
+   - **UAT dan perbaikannya tidak dihitung dalam SLA**: waktu eksekusi selesai (`otomasi_selesai`)
      hanya diisi sekali, jadi hasil SLA tidak berubah oleh putaran UAT.
 6. **PIC CRF** setelah UAT lulus mengisi **Tanggal Implementasi** dan **Implementasi / Hasil Perubahan**,
    lalu CRF diteruskan ke Pemohon.
@@ -95,12 +95,12 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
 
 - **Hasil pembahasan** selalu salah satu dari:
   - **Tetap** — Level dan SLA tetap memakai nilai sistem (data CRF tidak berubah).
-  - **Diubah** — nilai kesepakatan diterapkan: `final_urgency_level`, `level`, `sla_value`, `sla_unit`.
+  - **Diubah** — nilai kesepakatan diterapkan: `level_urgensi_final`, `level`, `sla_nilai`, `sla_satuan`.
 - **Riwayat** (timeline, komentar sistem, dan tabel `crf_forum_pembahasan`) mencatat nilai
   **sebelum**, nilai **sesudah**, alasan, waktu, dan pelaksana.
 - **Tidak ada penetapan langsung** dan tidak ada pengajuan nilai oleh pengguna lain;
   satu-satunya jalan mengubah Level/SLA adalah hasil pembahasan "Diubah".
-- **Satu pembahasan terbuka per CRF** (UNIQUE `crf_forum_pembahasan.open_crf_id`).
+- **Satu pembahasan terbuka per CRF** (UNIQUE `crf_forum_pembahasan.crf_terbuka_id`).
 - **Pembahasan otomatis**: bila kategori belum punya SLA standar sehingga SLA default
   kosong, sistem membuka pembahasan; CMO atau Admin wajib menetapkannya (hasil "Diubah") sebelum
   CRF dapat diteruskan. Pembahasan jenis ini tidak dapat dibatalkan selama SLA kosong.
@@ -167,8 +167,8 @@ buka kartu kategori → **PIC CRF** → cari user SIAP → **Tambah**.
 - Database lama: jalankan migrasi di `database/migrations/` berurutan.
   Daftar lengkap ada di [database/README.md](database/README.md).
 - Tahap `PEMOHON_PIR` dipulihkan oleh migrasi `011_pir_pemohon_migration.sql`.
-- Fase UAT: jalankan `021_uat_migration.sql`. **Wajib**: tahap `UAT` pada ENUM `workflow_stage`, kolom
-  `uat_passed_at` dan `implementation_submitted_at` pada `crf_pengajuan`, serta `crf_lampiran.category`.
+- Fase UAT: jalankan `021_uat_migration.sql`. **Wajib**: tahap `UAT` pada ENUM `tahap_alur`, kolom
+  `tgl_uat_lulus` dan `tgl_implementasi_diisi` pada `crf_pengajuan`, serta `crf_lampiran.category`.
   Aman dijalankan ulang. CRF yang sudah melewati tahap eksekusi sebelum migrasi tidak terpengaruh;
   CRF yang masih di tahap `OTOMASI` akan melewati UAT.
 - Alur antrean Otomasi (015) dan usulan Forum (016) sudah digantikan oleh migrasi 018.
@@ -180,7 +180,7 @@ buka kartu kategori → **PIC CRF** → cari user SIAP → **Tambah**.
   dipakai (penulisan PIC CRF kini langsung ke `crf_kategori_pic`).
 - Forum hasil pembahasan: jalankan `018_forum_hasil_pembahasan_migration.sql`. **Wajib**: tabel
   `forum_proposals` menjadi `crf_forum_pembahasan` dan `crf_pengajuan` mendapat kolom
-  `forum_discussion_open`. Aman dijalankan ulang. Bila saat itu ada CRF yang sudah
+  `pembahasan_forum_terbuka`. Aman dijalankan ulang. Bila saat itu ada CRF yang sudah
   disetujui tetapi belum dimulai, jalankan setelahnya `php database/maintenance/hitung_tenggat_sla.php`
   untuk menghitung tenggat SLA-nya.
 

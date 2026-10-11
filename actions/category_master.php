@@ -5,7 +5,7 @@
  * Kelola master Kategori CRF (Admin):
  *   op = save | toggle | delete | add_member | remove_member
  * Anggota kategori = PIC CRF (tabel crf_kategori_pic).
- * Hapus kategori = soft delete (deleted_at), data CRF lama aman.
+ * Hapus kategori = soft delete (tgl_dihapus), data CRF lama aman.
  * ---------------------------------------------------------------
  */
 
@@ -43,11 +43,11 @@ $table = 'crf_kategori';
 try {
     switch ($op) {
         case 'save':
-            $name = trim($_POST['name'] ?? '');
-            $description = trim($_POST['description'] ?? '');
-            $slaValueRaw = trim($_POST['sla_value'] ?? '');
-            $slaUnit = $_POST['sla_unit'] ?? '';
-            $isActive = !empty($_POST['is_active']) ? 1 : 0;
+            $name = trim($_POST['nama'] ?? '');
+            $description = trim($_POST['deskripsi'] ?? '');
+            $slaValueRaw = trim($_POST['sla_nilai'] ?? '');
+            $slaUnit = $_POST['sla_satuan'] ?? '';
+            $isActive = !empty($_POST['aktif']) ? 1 : 0;
             $errors = [];
 
             if ($name === '' || mb_strlen($name) > 100) {
@@ -72,10 +72,10 @@ try {
             }
 
             $extra = [];
-            // Matriks SLA: kolom sla_value/sla_unit di atas = SLA Normal.
+            // Matriks SLA: kolom sla_nilai/sla_satuan di atas = SLA Normal.
             foreach (['tinggi' => 'Tinggi', 'rendah' => 'Rendah'] as $levelKey => $levelLabel) {
-                $levelValueRaw = trim($_POST['sla_' . $levelKey . '_value'] ?? '');
-                $levelUnit = $_POST['sla_' . $levelKey . '_unit'] ?? '';
+                $levelValueRaw = trim($_POST['sla_' . $levelKey . '_nilai'] ?? '');
+                $levelUnit = $_POST['sla_' . $levelKey . '_satuan'] ?? '';
                 $levelValue = null;
                 if ($levelValueRaw !== '') {
                     if (!is_numeric($levelValueRaw) || (float) $levelValueRaw <= 0) {
@@ -86,21 +86,21 @@ try {
                         $levelValue = (float) $levelValueRaw;
                     }
                 }
-                $extra['sla_' . $levelKey . '_value'] = $levelValue;
-                $extra['sla_' . $levelKey . '_unit'] = $levelValue !== null ? $levelUnit : null;
+                $extra['sla_' . $levelKey . '_nilai'] = $levelValue;
+                $extra['sla_' . $levelKey . '_satuan'] = $levelValue !== null ? $levelUnit : null;
             }
 
-            $legacy = $_POST['legacy_change_category'] ?? 'Lainnya';
+            $legacy = $_POST['kategori_perubahan_lama'] ?? 'Lainnya';
             if (!in_array($legacy, ['Aplikasi', 'Infrastruktur', 'Proses', 'Security', 'Lainnya'], true)) {
                 $errors[] = 'Kelompok kategori laporan tidak valid.';
             }
-            $extra['legacy_change_category'] = $legacy;
+            $extra['kategori_perubahan_lama'] = $legacy;
             // Nama unik terhadap kategori lain yang masih ada.
-            $dupStmt = $pdo->prepare("SELECT id, deleted_at FROM {$table} WHERE name = :name AND id <> :id LIMIT 1");
-            $dupStmt->execute(['name' => $name, 'id' => $categoryId]);
+            $dupStmt = $pdo->prepare("SELECT id, tgl_dihapus FROM {$table} WHERE nama = :nama AND id <> :id LIMIT 1");
+            $dupStmt->execute(['nama' => $name, 'id' => $categoryId]);
             $duplicate = $dupStmt->fetch();
 
-            if ($duplicate && $duplicate['deleted_at'] === null) {
+            if ($duplicate && $duplicate['tgl_dihapus'] === null) {
                 $errors[] = 'Nama kategori sudah digunakan.';
             }
 
@@ -114,16 +114,16 @@ try {
             }
 
             $fields = array_merge([
-                'name'        => $name,
-                'description' => $description !== '' ? $description : null,
-                'sla_value'   => $slaValue,
-                'sla_unit'    => $slaUnit,
-                'is_active'   => $isActive,
+                'nama'        => $name,
+                'deskripsi' => $description !== '' ? $description : null,
+                'sla_nilai'   => $slaValue,
+                'sla_satuan'    => $slaUnit,
+                'aktif'   => $isActive,
             ], $extra);
 
             if ($categoryId > 0) {
                 $sets = implode(', ', array_map(static fn($col) => "{$col} = :{$col}", array_keys($fields)));
-                $stmt = $pdo->prepare("UPDATE {$table} SET {$sets}, deleted_at = NULL WHERE id = :id");
+                $stmt = $pdo->prepare("UPDATE {$table} SET {$sets}, tgl_dihapus = NULL WHERE id = :id");
                 $stmt->execute($fields + ['id' => $categoryId]);
                 $message = 'Kategori "' . $name . '" berhasil diperbarui.';
             } else {
@@ -138,7 +138,7 @@ try {
             break;
 
         case 'toggle':
-            $stmt = $pdo->prepare("UPDATE {$table} SET is_active = 1 - is_active WHERE id = :id AND deleted_at IS NULL");
+            $stmt = $pdo->prepare("UPDATE {$table} SET aktif = 1 - aktif WHERE id = :id AND tgl_dihapus IS NULL");
             $stmt->execute(['id' => $categoryId]);
             categoryMasterFinish(
                 $stmt->rowCount() ? 'success' : 'danger',
@@ -149,7 +149,7 @@ try {
 
         case 'delete':
             // Soft delete: data CRF yang memakai kategori ini tetap utuh.
-            $stmt = $pdo->prepare("UPDATE {$table} SET is_active = 0, deleted_at = NOW() WHERE id = :id AND deleted_at IS NULL");
+            $stmt = $pdo->prepare("UPDATE {$table} SET aktif = 0, tgl_dihapus = NOW() WHERE id = :id AND tgl_dihapus IS NULL");
             $stmt->execute(['id' => $categoryId]);
             categoryMasterFinish(
                 $stmt->rowCount() ? 'success' : 'danger',
@@ -160,7 +160,7 @@ try {
 
         case 'add_member':
         case 'remove_member':
-            $userId = (int) ($_POST['user_id'] ?? 0);
+            $userId = (int) ($_POST['pengguna_id'] ?? 0);
             $category = findCrfCategory($pdo, $categoryId);
             $memberUser = findCrfUserById($pdo, $userId);
 
@@ -172,15 +172,15 @@ try {
 
             if ($op === 'add_member') {
                 $pdo->prepare('
-                    INSERT INTO crf_kategori_pic (crf_category_id, user_id, user_name)
-                    VALUES (:category_id, :user_id, :user_name)
-                    ON DUPLICATE KEY UPDATE user_name = VALUES(user_name)
-                ')->execute(['category_id' => $categoryId, 'user_id' => $userId, 'user_name' => $memberName]);
-                $message = $memberName . ' ditambahkan sebagai PIC CRF kategori ' . $category['name'] . '.';
+                    INSERT INTO crf_kategori_pic (kategori_id, pengguna_id, pengguna_nama)
+                    VALUES (:category_id, :pengguna_id, :pengguna_nama)
+                    ON DUPLICATE KEY UPDATE pengguna_nama = VALUES(pengguna_nama)
+                ')->execute(['category_id' => $categoryId, 'pengguna_id' => $userId, 'pengguna_nama' => $memberName]);
+                $message = $memberName . ' ditambahkan sebagai PIC CRF kategori ' . $category['nama'] . '.';
             } else {
-                $pdo->prepare('DELETE FROM crf_kategori_pic WHERE crf_category_id = :category_id AND user_id = :user_id')
-                    ->execute(['category_id' => $categoryId, 'user_id' => $userId]);
-                $message = $memberName . ' dihapus dari PIC CRF kategori ' . $category['name'] . '.';
+                $pdo->prepare('DELETE FROM crf_kategori_pic WHERE kategori_id = :category_id AND pengguna_id = :pengguna_id')
+                    ->execute(['category_id' => $categoryId, 'pengguna_id' => $userId]);
+                $message = $memberName . ' dihapus dari PIC CRF kategori ' . $category['nama'] . '.';
             }
             categoryMasterFinish('success', $message, $redirect);
             break;
