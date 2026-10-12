@@ -136,11 +136,11 @@ unset($_SESSION['flash']);
 $pageTitle = 'CMO';
 require_once __DIR__ . '/../includes/header.php';
 ?>
-<div class="crf-page crf-helpdesk-page">
+<div class="crf-page crf-portal-page">
   <div class="container">
-    <div class="crf-helpdesk-banner">
+    <div class="crf-portal-banner">
       <div>
-        <span class="crf-helpdesk-eyebrow">PORTAL CRF · VERIFIKASI CMO</span>
+        <span class="crf-portal-eyebrow">PORTAL CRF · VERIFIKASI CMO</span>
         <h1>Verifikasi Permohonan Perubahan</h1>
         <p>Kelola CRF pada tahap filter, UAT, pemantauan PIR, dan finalisasi.</p>
       </div>
@@ -150,7 +150,7 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="alert alert-<?= h($flash['type']) ?> crf-alert"><?= h($flash['message']) ?></div>
     <?php endif; ?>
 
-    <div class="crf-stat-grid crf-helpdesk-summary mb-4">
+    <div class="crf-stat-grid crf-portal-summary mb-4">
       <a class="crf-stat-card text-decoration-none" href="?stage=filter">
         <span><i class="bi bi-funnel-fill"></i> Menunggu Verifikasi</span>
         <strong><?= $counts['CMO_FILTER'] ?></strong>
@@ -190,8 +190,8 @@ require_once __DIR__ . '/../includes/header.php';
       unset($listContextName, $listContextValue, $listResetUrl);
       ?>
 
-      <div class="table-responsive crf-table-responsive-cards crf-helpdesk-table-wrap">
-        <table class="table crf-table crf-helpdesk-table crf-helpdesk-table--cmo align-middle">
+      <div class="table-responsive crf-table-responsive-cards crf-portal-table-wrap">
+        <table class="table crf-table crf-portal-table crf-portal-table--cmo align-middle">
           <thead><tr>
             <th>No</th><th>Pengajuan</th><th>Isi Pengajuan</th><th>Urgensi</th><th>Status</th><th>Aksi</th>
           </tr></thead>

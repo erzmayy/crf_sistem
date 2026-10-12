@@ -121,12 +121,12 @@ require_once __DIR__ . '/../includes/header.php';
     }
 </style>
 
-<div class="crf-page crf-helpdesk-page">
+<div class="crf-page crf-portal-page">
     <div class="container">
 
-        <div class="crf-helpdesk-banner">
+        <div class="crf-portal-banner">
             <div>
-                <span class="crf-helpdesk-eyebrow">PORTAL CRF · PERSETUJUAN PERUBAHAN</span>
+                <span class="crf-portal-eyebrow">PORTAL CRF · PERSETUJUAN PERUBAHAN</span>
                 <h1>Persetujuan Kepala Departemen Operasional</h1>
                 <p>Daftar CRF yang lolos verifikasi CMO dan menunggu persetujuan. Setelah disetujui, SLA mulai dihitung dan CRF diserahkan ke PIC CRF.</p>
             </div>
@@ -141,7 +141,7 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- =====================================================
              SUMMARY CARD
              ===================================================== -->
-        <div class="crf-stat-grid crf-helpdesk-summary mb-4">
+        <div class="crf-stat-grid crf-portal-summary mb-4">
             <div class="crf-stat-card">
                 <span><i class="bi bi-clipboard-check-fill"></i> Menunggu Persetujuan</span>
                 <strong><?= $waitingApproval ?></strong>
@@ -177,8 +177,8 @@ require_once __DIR__ . '/../includes/header.php';
             unset($listContextName, $listContextValue, $listResetUrl);
             ?>
 
-            <div class="table-responsive crf-table-responsive-cards crf-helpdesk-table-wrap">
-                <table class="table crf-table crf-helpdesk-table crf-helpdesk-table--department align-middle">
+            <div class="table-responsive crf-table-responsive-cards crf-portal-table-wrap">
+                <table class="table crf-table crf-portal-table crf-portal-table--department align-middle">
                     <thead>
                         <tr>
                             <th>No</th>

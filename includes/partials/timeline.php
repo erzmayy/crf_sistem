@@ -23,7 +23,8 @@ $activityLabels = [
     'Pengingat PIR' => 'Pengingat PIR ke Pemohon',
     'Solve' => 'CRF Selesai',
     'Cancel' => 'CRF Dibatalkan',
-    'Dibuat dari Helpdesk' => 'Draft CRF Dibuat dari Helpdesk',
+    // Riwayat lama dari masa modul Helpdesk (sudah dihapus).
+    'Dibuat dari Helpdesk' => 'Draft CRF Dibuat',
     'CRF Diambil Handler' => 'CRF Diterima PIC CRF',
     'Handler Ditugaskan' => 'PIC CRF Ditugaskan',
 ];

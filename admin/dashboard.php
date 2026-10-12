@@ -156,7 +156,7 @@ $summaryStmt = $pdo->query(
 
 $summary = $summaryStmt->fetch() ?: [];
 
-// Ringkasan per status tampilan alur Helpdesk/CRF (termasuk Draft).
+// Ringkasan per status tampilan alur CRF (termasuk Draft).
 $displayConditions = crfDisplayStatusConditions('cr');
 $displaySumSql = implode(",\n", array_map(
     static fn($key, $condition) => "SUM(CASE WHEN {$condition['sql']} THEN 1 ELSE 0 END) AS `{$key}`",
@@ -223,11 +223,11 @@ require_once __DIR__ . '/../includes/header.php';
 
 
 
-<div class="crf-page crf-helpdesk-page">
+<div class="crf-page crf-portal-page">
 
     <div class="container">
 
-        <div class="crf-helpdesk-banner">
+        <div class="crf-portal-banner">
             <div>
                 <h1>Dashboard CRF</h1>
                 <p>Ringkasan seluruh pengajuan Change Request.</p>
@@ -239,7 +239,7 @@ require_once __DIR__ . '/../includes/header.php';
              SUMMARY
              ===================================================== -->
 
-        <div class="crf-stat-grid crf-helpdesk-summary dashboard-summary-grid">
+        <div class="crf-stat-grid crf-portal-summary dashboard-summary-grid">
 
             <a class="crf-stat-card text-decoration-none <?= $listFilters['display_status'] === '' ? 'is-active' : '' ?>" href="<?= h('?' . http_build_query($reportCarry)) ?>#crf-table">
                 <span><i class="bi bi-inboxes-fill"></i> Total CRF</span>
@@ -450,9 +450,9 @@ require_once __DIR__ . '/../includes/header.php';
 
 
             <!-- TABLE -->
-            <div class="table-responsive crf-table-responsive-cards crf-helpdesk-table-wrap">
+            <div class="table-responsive crf-table-responsive-cards crf-portal-table-wrap">
 
-                <table class="table crf-table crf-helpdesk-table crf-helpdesk-table--admin align-middle">
+                <table class="table crf-table crf-portal-table crf-portal-table--admin align-middle">
 
                     <thead>
 

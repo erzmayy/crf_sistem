@@ -45,11 +45,11 @@ $pageTitle = 'Notifikasi';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="crf-page crf-helpdesk-page">
+<div class="crf-page crf-portal-page">
     <div class="container">
-        <div class="crf-helpdesk-banner crf-banner-with-actions">
+        <div class="crf-portal-banner crf-banner-with-actions">
             <div>
-                <span class="crf-helpdesk-eyebrow">CRF</span>
+                <span class="crf-portal-eyebrow">CRF</span>
                 <h1>Notifikasi</h1>
                 <p>Pemberitahuan terkait CRF Anda.</p>
             </div>

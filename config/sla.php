@@ -1,7 +1,7 @@
 <?php
 /**
  * config/sla.php
- * Aturan waktu kerja untuk perhitungan SLA (CRF & Helpdesk).
+ * Aturan waktu kerja untuk perhitungan SLA (CRF).
  *
  * SLA hanya berjalan pada hari kerja: Sabtu, Minggu, dan tanggal libur
  * di bawah ini tidak dihitung. Contoh: SLA 1 Hari yang dimulai Jumat

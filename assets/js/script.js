@@ -1,5 +1,5 @@
 /* =====================================================================
-   Helpdesk & CRF - script.js
+   CRF - script.js
    Validasi client-side ringan + interaksi form.
    Validasi asli tetap dilakukan di server (lihat actions/*.php).
    ===================================================================== */

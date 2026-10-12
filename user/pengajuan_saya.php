@@ -209,7 +209,7 @@ $pageTitle = 'Pengajuan Saya';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="crf-page crf-helpdesk-page pt-4">
+<div class="crf-page crf-portal-page pt-4">
     <div class="container">
         <?php if ($flash): ?>
         <div
@@ -409,9 +409,9 @@ require_once __DIR__ . '/../includes/header.php';
 
                     </form>
 
-                    <div class="table-responsive crf-table-responsive-cards pengajuan-table-wrap crf-helpdesk-table-wrap">
+                    <div class="table-responsive crf-table-responsive-cards pengajuan-table-wrap crf-portal-table-wrap">
 
-                    <table class="table crf-table pengajuan-table crf-helpdesk-table crf-helpdesk-table--user align-middle">
+                    <table class="table crf-table pengajuan-table crf-portal-table crf-portal-table--user align-middle">
                             <thead>
 
                                 <tr>

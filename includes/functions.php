@@ -608,7 +608,7 @@ function crfStripSlaText(?string $text): string
 }
 
 /**
- * Status tampilan CRF (label sesuai alur Helpdesk/CRF) yang diturunkan
+ * Status tampilan CRF (label sesuai alur CRF) yang diturunkan
  * dari kombinasi status + tahap_alur. ENUM database tidak diubah.
  *
  * @return array{key:string,label:string,class:string}
