@@ -44,7 +44,7 @@ Forum dan Notifikasi. Helpdesk ditangani modul Helpdesk SIAP (bukan bagian aplik
 | `crf/` | Pintu masuk tautan CRF (mengarahkan ke halaman sesuai peran) dan Handling Kategori CRF |
 | `actions/` | Endpoint POST (submit, draft, approval, assign, ekspor, dll.) |
 | `includes/` | Logika inti: `auth.php` (peran/akses), `functions.php` (status, SLA, nomor register), `categories.php`, `notifications.php`, `forum.php` |
-| `config/` | Konfigurasi: `siap.php` (sumber user & peran), `crf.php`, `sla.php`, `database.php` |
+| `config/` | Konfigurasi: `siap.php` (sumber user & peran), `sla.php`, `urgensi.php` (bobot urgensi), `database.php` |
 | `database/` | `schema.sql` dan migrasi bernomor |
 
 ## Peran

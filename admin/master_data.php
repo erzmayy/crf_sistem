@@ -29,12 +29,12 @@ $pageTitle = 'Kategori CRF';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="crf-page crf-helpdesk-page">
+<div class="crf-page crf-portal-page">
     <div class="container">
 
-        <div class="crf-helpdesk-banner crf-banner-with-actions">
+        <div class="crf-portal-banner crf-banner-with-actions">
             <div>
-                <span class="crf-helpdesk-eyebrow">MASTER DATA · CRF</span>
+                <span class="crf-portal-eyebrow">MASTER DATA · CRF</span>
                 <h1>Kategori CRF</h1>
                 <p>Kelola kategori CRF, SLA per level urgensi, dan PIC CRF.</p>
             </div>

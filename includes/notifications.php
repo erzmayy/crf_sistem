@@ -241,6 +241,69 @@ function dispatchPendingNotificationEmails(PDO $pdo, int $limit = 30): void
     }
 }
 
+/**
+ * Isi email notifikasi: satu kolom, minimalis, dan formal. Memakai tabel dan
+ * gaya inline supaya tampil sama di Outlook, Gmail, dan klien email lain.
+ *
+ * @param bool $withLogo true bila gambar tersemat dengan cid "crf-logo"
+ */
+function crfEmailHtml(string $recipientName, string $title, string $message, string $link, bool $withLogo): string
+{
+    $greeting = h(trim($recipientName) !== '' ? trim($recipientName) : 'Bapak/Ibu');
+    $title = h($title);
+    $message = nl2br(h($message));
+    $font = "font-family:'Segoe UI',Helvetica,Arial,sans-serif;";
+
+    $logo = $withLogo
+        ? '<img src="cid:crf-logo" width="36" height="36" alt="PT Persona Prima Utama" style="display:block;border:0;">'
+        : '';
+
+    $button = '';
+    if ($link !== '') {
+        $button = '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 4px;"><tr>'
+            . '<td style="background:#1f568f;border-radius:6px;">'
+            . '<a href="' . h($link) . '" style="display:inline-block;padding:11px 26px;' . $font
+            . 'font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">Buka CRF</a>'
+            . '</td></tr></table>'
+            . '<p style="margin:14px 0 0;' . $font . 'font-size:12px;line-height:1.5;color:#6b7785;">'
+            . 'Jika tombol tidak berfungsi, salin tautan berikut ke peramban Anda:<br>'
+            . '<a href="' . h($link) . '" style="color:#1f568f;word-break:break-all;">' . h($link) . '</a></p>';
+    }
+
+    return '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8">'
+        . '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        . '<title>' . $title . '</title></head>'
+        . '<body style="margin:0;padding:0;background:#f4f6f9;">'
+        // Teks pratinjau di daftar kotak masuk.
+        . '<div style="display:none;max-height:0;overflow:hidden;opacity:0;">' . $title . '</div>'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;">'
+        . '<tr><td align="center" style="padding:32px 16px;">'
+        . '<table role="presentation" width="560" cellpadding="0" cellspacing="0" '
+        . 'style="width:100%;max-width:560px;background:#ffffff;border:1px solid #e3e8ee;border-radius:8px;">'
+        // Kepala surat
+        . '<tr><td style="padding:22px 32px;border-bottom:1px solid #e3e8ee;">'
+        . '<table role="presentation" cellpadding="0" cellspacing="0"><tr>'
+        . ($logo !== '' ? '<td style="padding-right:12px;">' . $logo . '</td>' : '')
+        . '<td style="' . $font . 'font-size:13px;line-height:1.4;color:#1f568f;font-weight:700;letter-spacing:.4px;">'
+        . 'PT PERSONA PRIMA UTAMA<br>'
+        . '<span style="font-weight:400;color:#6b7785;letter-spacing:0;">Change Request Form</span></td>'
+        . '</tr></table></td></tr>'
+        // Isi
+        . '<tr><td style="padding:32px;' . $font . 'color:#1f2933;">'
+        . '<p style="margin:0 0 20px;font-size:14px;line-height:1.6;">Yth. ' . $greeting . ',</p>'
+        . '<p style="margin:0 0 16px;font-size:17px;line-height:1.4;font-weight:700;color:#12263f;">' . $title . '</p>'
+        . '<p style="margin:0;font-size:14px;line-height:1.7;color:#3e4c59;">' . $message . '</p>'
+        . $button
+        . '</td></tr>'
+        // Kaki
+        . '<tr><td style="padding:18px 32px;border-top:1px solid #e3e8ee;' . $font
+        . 'font-size:12px;line-height:1.6;color:#8795a1;">'
+        . 'Email ini dikirim otomatis oleh Sistem CRF PT Persona Prima Utama. '
+        . 'Mohon tidak membalas email ini.'
+        . '</td></tr>'
+        . '</table></td></tr></table></body></html>';
+}
+
 function sendNotificationEmail(array $config, string $toEmail, string $toName, array $notification): bool
 {
     try {
@@ -270,14 +333,17 @@ function sendNotificationEmail(array $config, string $toEmail, string $toName, a
             $link = rtrim((string) ($config['app_url'] ?? ''), '/') . '/' . ltrim((string) $notification['url'], '/');
         }
 
-        $body = '<p>Yth. ' . h($toName ?: 'Bapak/Ibu') . ',</p>'
-            . '<p>' . nl2br(h((string) $notification['pesan'])) . '</p>';
-        if ($link !== '') {
-            $body .= '<p><a href="' . h($link) . '">Buka di aplikasi</a></p>';
-        }
-        $body .= '<p style="color:#888;font-size:12px">Email otomatis dari Sistem CRF PT Persona Prima Utama.</p>';
+        $logoPath = __DIR__ . '/../assets/img/logo-header.png';
+        $hasLogo = is_file($logoPath)
+            && $mail->addEmbeddedImage($logoPath, 'crf-logo', 'logo-ppu.png', 'base64', 'image/png');
 
-        $mail->Body = $body;
+        $mail->Body = crfEmailHtml(
+            $toName,
+            (string) $notification['judul'],
+            (string) $notification['pesan'],
+            $link,
+            $hasLogo
+        );
         $mail->AltBody = (string) $notification['pesan'] . ($link !== '' ? "\n\n" . $link : '');
         $mail->send();
 

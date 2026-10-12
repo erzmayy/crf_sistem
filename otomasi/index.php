@@ -152,12 +152,12 @@ require_once __DIR__ . '/../includes/header.php';
     }
 </style>
 
-<div class="crf-page crf-helpdesk-page">
+<div class="crf-page crf-portal-page">
     <div class="container">
 
-        <div class="crf-helpdesk-banner">
+        <div class="crf-portal-banner">
             <div>
-                <span class="crf-helpdesk-eyebrow">PORTAL CRF · TINDAK LANJUT OTOMASI</span>
+                <span class="crf-portal-eyebrow">PORTAL CRF · TINDAK LANJUT OTOMASI</span>
                 <h1>Tindak Lanjut Permohonan Perubahan</h1>
                 <p>CRF yang sudah disetujui Kepala Departemen Operasional pada kategori yang Anda tangani. SLA mulai dihitung sejak persetujuan; isi hasil implementasi untuk menyelesaikan CRF.</p>
             </div>
@@ -172,7 +172,7 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- =====================================================
              SUMMARY
              ===================================================== -->
-        <div class="crf-stat-grid crf-helpdesk-summary mb-4">
+        <div class="crf-stat-grid crf-portal-summary mb-4">
             <div class="crf-stat-card">
                 <span><i class="bi bi-gear-wide-connected"></i> Menunggu Eksekusi</span>
                 <strong><?= $inExecution ?></strong>
@@ -222,8 +222,8 @@ require_once __DIR__ . '/../includes/header.php';
             unset($listContextName, $listContextValue, $listResetUrl);
             ?>
 
-            <div class="table-responsive crf-table-responsive-cards crf-helpdesk-table-wrap">
-                <table class="table crf-table crf-helpdesk-table crf-helpdesk-table--automation align-middle">
+            <div class="table-responsive crf-table-responsive-cards crf-portal-table-wrap">
+                <table class="table crf-table crf-portal-table crf-portal-table--automation align-middle">
                     <thead>
                         <tr>
                             <th>No</th>

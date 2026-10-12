@@ -76,11 +76,11 @@ $pageTitle = 'Handling Kategori CRF';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="crf-page crf-helpdesk-page">
+<div class="crf-page crf-portal-page">
     <div class="container">
-        <div class="crf-helpdesk-banner crf-banner-with-actions">
+        <div class="crf-portal-banner crf-banner-with-actions">
             <div>
-                <span class="crf-helpdesk-eyebrow">PT PERSONA PRIMA UTAMA</span>
+                <span class="crf-portal-eyebrow">PT PERSONA PRIMA UTAMA</span>
                 <h1>Handling Kategori CRF</h1>
                 <p>Ringkasan penanganan CRF per kategori.</p>
             </div>
