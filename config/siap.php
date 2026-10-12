@@ -61,6 +61,13 @@ const CRF_LAYOUT_MODE = 'standalone';
 /* Awalan URL modul CRF di dalam SIAP, mis. '/modules/crf'. Kosong = otomatis. */
 const CRF_BASE_URL = '';
 
-/* Mode module: muat Bootstrap / Bootstrap Icons sendiri bila SIAP belum memuatnya. */
-const CRF_LOAD_BOOTSTRAP = false;
+/*
+ * Mode module: muat Bootstrap / Bootstrap Icons sendiri bila SIAP belum memuatnya.
+ *
+ * CRF_LOAD_BOOTSTRAP memuat Bootstrap 5.3.3 (CSS + JS bundle). Tombol, grid form,
+ * modal, dan dropdown CRF bergantung padanya; tanpa Bootstrap halaman tampil
+ * berantakan. Bawaannya true. Ubah ke false HANYA bila SIAP sudah memuat
+ * Bootstrap 5.x (CSS dan JS bundle) di semua halaman, agar tidak dimuat dua kali.
+ */
+const CRF_LOAD_BOOTSTRAP = true;
 const CRF_LOAD_ICONS = true;
