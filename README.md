@@ -27,9 +27,10 @@ Forum dan Notifikasi. Helpdesk ditangani modul Helpdesk SIAP (bukan bagian aplik
 4. Salin file contoh konfigurasi bila diperlukan:
    - `config/mail.example.php` → `config/mail.php` (email notifikasi)
    - `config/dev_login.example.php` → `config/dev_login.php` (login pengembangan)
-   - `config/wasabi.php` (storage lampiran S3; tidak ada di repo)
+   - `config/wasabi.example.php` → `config/wasabi.php` (storage lampiran S3)
 
-   File-file ini sudah masuk `.gitignore`.
+   File-file ini sudah masuk `.gitignore`. Isian dan cara pakainya ada di bagian
+   "Konfigurasi yang harus diisi di server" di bawah.
 5. Buka `login.php` melalui web server.
 
 ## Struktur folder
@@ -67,3 +68,53 @@ boleh menugaskan ulang atau membatalkan CRF yang sedang ia pegang sebagai Handle
 - Jangan jalankan migrasi `006_siap_demo_user_migration.sql` (khusus lokal/testing).
 - Perbarui `CRF_SLA_HOLIDAYS` di `config/sla.php` setiap tahun.
 - Folder `database/` serta file `.sql/.md/.py/.lock` dilindungi `.htaccess`.
+
+## Konfigurasi yang harus diisi di server
+
+Kedua file berisi kredensial, jadi **tidak ada di repositori git** (di-`.gitignore`).
+Pada paket serah terima, keduanya disertakan di folder `config/` dalam keadaan sudah
+terisi; pemasang cukup memeriksa nilainya dan mengganti kunci bila perlu. Bila salah satu
+belum ada di paket, buat dari berkas contoh. Jangan di-commit.
+
+### `config/mail.php` (email notifikasi)
+
+Salin dari `config/mail.example.php`.
+
+| Isian | Keterangan |
+|-------|------------|
+| `enabled` | `true` untuk mengaktifkan email. `false` atau file tidak ada: email dilewati, notifikasi lonceng tetap jalan |
+| `host`, `port`, `encryption` | Server SMTP perusahaan. `encryption`: `tls` (587), `ssl` (465), atau kosong |
+| `username`, `password` | Akun SMTP. Kosongkan bila SMTP internal tidak memakai login |
+| `from_email`, `from_name` | Alamat dan nama pengirim. Sering harus sama dengan akun SMTP |
+| `app_url` | URL produksi modul CRF tanpa garis miring akhir. Dipakai untuk tombol "Buka CRF" di email. Bila salah, tautan mengarah ke `localhost` |
+
+Email dikirim otomatis untuk semua notifikasi (CRF baru, persetujuan, revisi, UAT, PIR,
+Forum, dan peringatan SLA). Penerima harus punya email valid di `siap.tbl_user`; bila
+kosong, notifikasi hanya tampil di lonceng. Peringatan SLA hanya terkirim bila tugas
+terjadwal di bawah dijalankan.
+
+### `config/wasabi.php` (lampiran)
+
+Salin dari `config/wasabi.example.php`.
+
+| Isian | Keterangan |
+|-------|------------|
+| `endpoint`, `region` | Endpoint storage S3-compatible (contoh: Wasabi `ap-southeast-1`) |
+| `credentials.key`, `credentials.secret` | Access key bucket. Buat khusus untuk CRF |
+| `bucket` | Nama bucket. Harus **private** (tanpa bucket policy publik) |
+| `upload_path` | Awalan folder di dalam bucket, mis. `crf/uploads/` |
+
+Lampiran diunggah sebagai objek private dan hanya dibuka lewat
+`actions/download_attachment.php` setelah cek hak akses. Batas: PDF/JPG/PNG, 5 MB per file.
+Tanpa file ini, fitur unggah dan unduh lampiran error. Bila SIAP memakai storage lain, perlu penyesuaian kode.
+
+### Tugas terjadwal (peringatan SLA)
+
+Jalankan tiap 5 menit di server (cron atau Task Scheduler):
+
+```bash
+*/5 * * * * php /path/ke/crf/database/maintenance/kirim_peringatan_sla.php
+```
+
+Skrip hanya dapat dijalankan dari terminal dan aman diulang. Membutuhkan `config/mail.php`
+agar peringatan sampai ke email PIC CRF.
