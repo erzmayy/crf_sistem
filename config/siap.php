@@ -34,7 +34,7 @@ const CRF_ADMIN_USERIDS = ['administrator', 'N76559'];
  * dari satu akun, khusus untuk presentasi. Set CRF_DEMO_MODE = false di
  * server production agar akun demo kembali menjadi Pemohon biasa.
  */
-const CRF_DEMO_MODE = true;
+const CRF_DEMO_MODE = false;
 const CRF_DEMO_USERIDS = ['CRFDEMO'];
 const CRF_OTOMASI_USERIDS = ['N75392', 'N76559'];
 const CRF_KADEP_OPERASIONAL_USERIDS = ['3736'];
@@ -61,13 +61,6 @@ const CRF_LAYOUT_MODE = 'standalone';
 /* Awalan URL modul CRF di dalam SIAP, mis. '/modules/crf'. Kosong = otomatis. */
 const CRF_BASE_URL = '';
 
-/*
- * Mode module: muat Bootstrap / Bootstrap Icons sendiri bila SIAP belum memuatnya.
- *
- * CRF_LOAD_BOOTSTRAP memuat Bootstrap 5.3.3 (CSS + JS bundle). Tombol, grid form,
- * modal, dan dropdown CRF bergantung padanya; tanpa Bootstrap halaman tampil
- * berantakan. Bawaannya true. Ubah ke false HANYA bila SIAP sudah memuat
- * Bootstrap 5.x (CSS dan JS bundle) di semua halaman, agar tidak dimuat dua kali.
- */
-const CRF_LOAD_BOOTSTRAP = true;
+/* Mode module: muat Bootstrap / Bootstrap Icons sendiri bila SIAP belum memuatnya. */
+const CRF_LOAD_BOOTSTRAP = false;
 const CRF_LOAD_ICONS = true;
