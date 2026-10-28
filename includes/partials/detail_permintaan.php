@@ -79,6 +79,8 @@ if ($showUrgencyScore) {
         'skor' => (float) $crf['skor_urgensi'],
         'maks' => $scoreMax,
         'level' => crfUrgensiSistem($crf),
+        // Level yang berlaku sekarang (bisa sudah diubah CMO/Admin lewat Forum).
+        'levelFinal' => crfEffectiveUrgency($crf),
         'persen' => $scoreMax > 0 ? max(0, min(100, (float) $crf['skor_urgensi'] / $scoreMax * 100)) : 0,
         'ambangNormal' => (float) ($cfgUrgensi['ambang']['Normal'] ?? 10),
         'ambangTinggi' => (float) ($cfgUrgensi['ambang']['Tinggi'] ?? 35),
@@ -173,7 +175,7 @@ $renderFiles = static function (array $files, bool $showDate) use ($attachmentIc
                 <?php if ($scoreInfo !== null): ?>
                     <div class="crf-score" role="group" aria-label="Skor urgensi">
                         <div class="crf-score-head">
-                            <span class="crf-score-title">Skor urgensi</span>
+                            <span class="crf-score-title">Skor urgensi (sistem)</span>
                             <strong class="crf-score-value"><?= h($formatSkor($scoreInfo['skor'])) ?><small> / <?= h($formatSkor($scoreInfo['maks'])) ?></small></strong>
                             <?php if ($scoreInfo['level'] !== null): ?>
                                 <span class="crf-badge <?= h(levelBadgeClass($scoreInfo['level'])) ?>"><?= h($scoreInfo['level']) ?></span>
@@ -191,6 +193,14 @@ $renderFiles = static function (array $files, bool $showDate) use ($attachmentIc
                             <i class="crf-score-mark" style="left: <?= h(number_format($scoreInfo['ambangNormal'] / max(1, $scoreInfo['maks']) * 100, 1, '.', '')) ?>%" aria-hidden="true"></i>
                             <i class="crf-score-mark" style="left: <?= h(number_format($scoreInfo['ambangTinggi'] / max(1, $scoreInfo['maks']) * 100, 1, '.', '')) ?>%" aria-hidden="true"></i>
                         </div>
+                        <?php if ($scoreInfo['levelFinal'] !== null && $scoreInfo['level'] !== null && $scoreInfo['levelFinal'] !== $scoreInfo['level']): ?>
+                            <p class="crf-score-legend">
+                                <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+                                Level urgensi diubah dari <strong><?= h($scoreInfo['level']) ?></strong>
+                                ke <span class="crf-badge <?= h(levelBadgeClass($scoreInfo['levelFinal'])) ?>"><?= h($scoreInfo['levelFinal']) ?></span>
+                                lewat keputusan Forum. Skor di atas adalah hitungan sistem saat pengajuan.
+                            </p>
+                        <?php endif; ?>
                         <p class="crf-score-legend">
                             Rendah &lt; <?= h($formatSkor($scoreInfo['ambangNormal'])) ?>
                             &middot; Normal <?= h($formatSkor($scoreInfo['ambangNormal'])) ?> sampai &lt; <?= h($formatSkor($scoreInfo['ambangTinggi'])) ?>

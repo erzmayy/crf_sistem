@@ -117,7 +117,7 @@ function crfNavGroups(): array
                 ['label' => 'Persetujuan Kepala Departemen Operasional', 'url' => '/kadep_operasional/index.php', 'show' => $canRole('kadep_operasional'), 'active' => $currentFolder === 'kadep_operasional', 'badge' => $queue['kadep'], 'badge_label' => $queue['kadep'] . ' CRF menunggu persetujuan'],
                 ['label' => 'Handling CRF', 'url' => '/crf/handling.php', 'show' => $isAdminUser || in_array($crfRole, ['cmo', 'otomasi', 'kadep_operasional', 'demo'], true), 'active' => $isNav('crf', 'handling.php')],
                 ['label' => 'Form CRF', 'url' => '/user/form_crf.php', 'show' => true, 'active' => $isNav('user', 'form_crf.php')],
-                ['label' => 'Pengajuan CRF Saya', 'url' => '/user/pengajuan_saya.php', 'show' => in_array($crfRole, ['pemohon', 'demo'], true), 'active' => $isNav('user', 'pengajuan_saya.php') || $isNav('user', 'detail.php')],
+                ['label' => 'Pengajuan CRF Saya', 'url' => '/user/pengajuan_saya.php', 'show' => true, 'active' => $isNav('user', 'pengajuan_saya.php') || $isNav('user', 'detail.php')],
                 ['label' => 'Forum', 'url' => '/forum/index.php', 'show' => in_array($crfRole, forumRoles(), true), 'active' => $isForum, 'badge' => $forumUnreadTotal],
             ],
         ],
