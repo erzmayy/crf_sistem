@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alur Helpdesk dan CRF</title>
+<style>
+  :root {
+    --bg: #f6f7fb; --card: #ffffff; --ink: #1c2333; --muted: #5b6478; --line: #98a2b8;
+    --help: #e8f0ff; --help-b: #7aa2f7;
+    --crf: #e6f6ee; --crf-b: #4fb286;
+    --new: #fff4d6; --new-b: #e0a100;
+    --dec: #ffeaea; --dec-b: #e06c6c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151d; --card: #1b2030; --ink: #e8ecf5; --muted: #9aa4ba; --line: #6b7590;
+      --help: #1d2c4d; --help-b: #5b84d6;
+      --crf: #16352a; --crf-b: #3f9a72;
+      --new: #3b3112; --new-b: #d9a400;
+      --dec: #3a1d1d; --dec-b: #d36363;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 14px/1.4 system-ui, "Segoe UI", Arial, sans-serif; }
+  main { max-width: 1240px; margin: 0 auto; padding: 20px 16px 28px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 14px; }
+  .wrap { background: var(--card); border-radius: 12px; padding: 8px; overflow-x: auto; }
+  svg { width: 100%; min-width: 900px; height: auto; display: block; font-family: inherit; }
+  .box { stroke-width: 1.6; rx: 10; }
+  .help { fill: var(--help); stroke: var(--help-b); }
+  .crf  { fill: var(--crf);  stroke: var(--crf-b); }
+  .new  { fill: var(--new);  stroke: var(--new-b); stroke-width: 2.4; }
+  .dec  { fill: var(--dec);  stroke: var(--dec-b); stroke-width: 1.8; }
+  .t  { fill: var(--ink); font-size: 14px; font-weight: 600; }
+  .s  { fill: var(--muted); font-size: 12px; }
+  .lane { fill: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+  .arr { stroke: var(--line); stroke-width: 1.8; fill: none; }
+  .dash { stroke: var(--new-b); stroke-width: 1.8; fill: none; stroke-dasharray: 6 5; }
+  .lbl { fill: var(--ink); font-size: 12px; font-weight: 700; }
+  .phases { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+  .ph { background: var(--card); border-radius: 10px; padding: 10px 12px; border-left: 5px solid var(--new-b); }
+  .ph b { display: block; margin-bottom: 2px; }
+  .ph span { color: var(--muted); font-size: 13px; }
+  .ask { margin-top: 12px; background: var(--card); border-radius: 10px; padding: 10px 14px; }
+  .ask b { display: block; margin-bottom: 4px; }
+  .ask ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+  @media (max-width: 700px) { .phases { grid-template-columns: 1fr; } }
+  @page { size: A4 landscape; margin: 10mm; }
+  @media print { body { background: #fff; } main { padding: 0; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Alur Help Desk SIAP dan CRF (usulan)</h1>
+  <p class="sub">Help Desk tetap menjadi pintu masuk semua laporan. Permintaan perubahan sistem dialihkan ke Form CRF.</p>
+
+  <div class="wrap">
+  <svg viewBox="0 0 1200 560" role="img" aria-label="Diagram alur Help Desk SIAP ke CRF">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M0 0L10 5L0 10z" fill="var(--line)"/>
+      </marker>
+    </defs>
+
+    <text class="lane" x="440" y="30">HELP DESK SIAP</text>
+    <text class="lane" x="720" y="372">CRF</text>
+
+    <!-- 1. pelapor -->
+    <rect class="box help" x="30" y="215" width="190" height="86"/>
+    <text class="t" x="125" y="245" text-anchor="middle">Pelapor mengisi</text>
+    <text class="t" x="125" y="263" text-anchor="middle">Formulir Help Desk</text>
+    <text class="s" x="125" y="284" text-anchor="middle">kategori · jenis · pesan</text>
+
+    <!-- keputusan -->
+    <polygon class="dec" points="360,258 470,198 580,258 470,318"/>
+    <text class="t" x="470" y="248" text-anchor="middle">Aplikasi SIAP</text>
+    <text class="t" x="470" y="266" text-anchor="middle">+ Request?</text>
+    <text class="s" x="470" y="283" text-anchor="middle">perubahan sistem</text>
+
+    <path class="arr" d="M220 258H358" marker-end="url(#ah)"/>
+
+    <!-- jalur TIDAK -->
+    <path class="arr" d="M470 198V90H640" marker-end="url(#ah)"/>
+    <text class="lbl" x="482" y="150">Tidak</text>
+
+    <rect class="box help" x="640" y="55" width="170" height="70"/>
+    <text class="t" x="725" y="85" text-anchor="middle">Tiket Help Desk</text>
+    <text class="s" x="725" y="105" text-anchor="middle">gangguan, akun, fasilitas</text>
+    <path class="arr" d="M810 90H850" marker-end="url(#ah)"/>
+
+    <rect class="box help" x="850" y="55" width="170" height="70"/>
+    <text class="t" x="935" y="85" text-anchor="middle">PIC menindaklanjuti</text>
+    <text class="s" x="935" y="105" text-anchor="middle">status · level · SLA</text>
+    <path class="arr" d="M1020 90H1060" marker-end="url(#ah)"/>
+
+    <rect class="box help" x="1060" y="55" width="110" height="70"/>
+    <text class="t" x="1115" y="95" text-anchor="middle">Selesai</text>
+
+    <!-- jalur YA -->
+    <path class="arr" d="M470 318V440H500" marker-end="url(#ah)"/>
+    <text class="lbl" x="482" y="385">Ya</text>
+
+    <rect class="box new" x="500" y="395" width="190" height="96"/>
+    <text class="t" x="595" y="425" text-anchor="middle">Dialihkan ke Form CRF</text>
+    <text class="s" x="595" y="446" text-anchor="middle">data pelapor dan pesan</text>
+    <text class="s" x="595" y="462" text-anchor="middle">terisi otomatis</text>
+    <text class="lbl" x="595" y="482" text-anchor="middle" style="fill:var(--new-b)">BARU</text>
+    <path class="arr" d="M690 443H720" marker-end="url(#ah)"/>
+
+    <rect class="box crf" x="720" y="395" width="150" height="96"/>
+    <text class="t" x="795" y="425" text-anchor="middle">CMO dan Kepala</text>
+    <text class="t" x="795" y="443" text-anchor="middle">Dept. Operasional</text>
+    <text class="s" x="795" y="466" text-anchor="middle">menyetujui · SLA mulai</text>
+    <path class="arr" d="M870 443H900" marker-end="url(#ah)"/>
+
+    <rect class="box crf" x="900" y="395" width="130" height="96"/>
+    <text class="t" x="965" y="440" text-anchor="middle">PIC CRF</text>
+    <text class="s" x="965" y="462" text-anchor="middle">eksekusi</text>
+    <path class="arr" d="M1030 443H1050" marker-end="url(#ah)"/>
+
+    <rect class="box crf" x="1050" y="395" width="120" height="96"/>
+    <text class="t" x="1110" y="432" text-anchor="middle">UAT, PIR,</text>
+    <text class="t" x="1110" y="450" text-anchor="middle">selesai</text>
+
+    <!-- catatan: tanpa tiket -->
+    <rect class="box new" x="500" y="505" width="670" height="34" style="rx:8"/>
+    <text class="s" x="835" y="527" text-anchor="middle" style="fill:var(--ink)">Jalur Ya: tidak membuat tiket Help Desk. Seluruh proses berjalan di CRF.</text>
+  </svg>
+  </div>
+
+  <div class="phases">
+    <div class="ph"><b>Cara kerja</b>
+      <span>Request pada kategori Aplikasi SIAP langsung membuka Form CRF dengan data pelapor dan pesan terisi. Pelapor tidak mengisi dua kali.</span></div>
+    <div class="ph"><b>Yang diminta dari tim SIAP</b>
+      <span>Satu perubahan kecil di formulir Help Desk: mengalihkan ke Form CRF. Aturan kategori mana yang dialihkan disimpan di sisi CRF.</span></div>
+  </div>
+</main>
+</body>
+</html>
