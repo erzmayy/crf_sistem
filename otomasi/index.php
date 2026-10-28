@@ -45,6 +45,7 @@ $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
     'date_from' => $_GET['date_from'] ?? '',
     'date_to' => $_GET['date_to'] ?? '',
     'category_id' => $_GET['category_id'] ?? '',
+    'type' => $_GET['type'] ?? '',
 ]);
 $search = $listFilters['search'];
 

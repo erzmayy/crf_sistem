@@ -958,6 +958,14 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
         $categoryId = 0;
     }
 
+    $requestType = $filterString($filters['type'] ?? '');
+    if (in_array($requestType, crfRequestTypeOptions(), true)) {
+        $where[] = 'cr.jenis_pengajuan = :list_request_type';
+        $params['list_request_type'] = $requestType;
+    } else {
+        $requestType = '';
+    }
+
     $displayStatus = $filterString($filters['display_status'] ?? '');
     $displayConditions = crfDisplayStatusConditions('cr');
     if (isset($displayConditions[$displayStatus])) {
@@ -994,6 +1002,7 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
         'date_from' => $dateFrom,
         'date_to' => $dateTo,
         'category_id' => $categoryId,
+        'type' => $requestType,
         'display_status' => $displayStatus,
         'departments' => $departmentStmt->fetchAll(PDO::FETCH_COLUMN),
         'categories' => $categories,

@@ -38,6 +38,7 @@ $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
     'date_from' => $dateFrom,
     'date_to' => $dateTo,
     'category_id' => $_GET['category_id'] ?? '',
+    'type' => $_GET['type'] ?? '',
     'display_status' => $_GET['display_status'] ?? '',
 ]);
 $search = $listFilters['search'];
@@ -428,6 +429,24 @@ require_once __DIR__ . '/../includes/header.php';
                             <?php endforeach; ?>
                         </ul>
                     </div>
+                </section>
+
+                <section class="admin-report-card admin-report-card--wide" aria-labelledby="type-composition-title">
+                    <h3 id="type-composition-title">Tipe Pengajuan</h3>
+                    <ul class="admin-type-list">
+                        <?php foreach ($report['types'] as $typeItem): ?>
+                            <?php $typeLinkable = $typeItem['label'] !== 'Belum diisi'; ?>
+                            <li>
+                                <<?= $typeLinkable ? 'a' : 'div' ?> class="admin-type-item"<?= $typeLinkable ? ' href="' . h('?' . http_build_query($reportCarry + ['type' => $typeItem['label']])) . '#crf-table" title="Tampilkan CRF bertipe ini di daftar"' : '' ?>>
+                                    <span class="admin-type-head">
+                                        <span><?= h($typeItem['label']) ?></span>
+                                        <strong><?= (int) $typeItem['count'] ?> <small>(<?= number_format($typeItem['percentage'], 1, ',', '.') ?>%)</small></strong>
+                                    </span>
+                                    <span class="admin-type-bar" aria-hidden="true"><span style="width: <?= h(number_format($typeItem['percentage'], 1, '.', '')) ?>%; background: <?= h($typeItem['color']) ?>;"></span></span>
+                                </<?= $typeLinkable ? 'a' : 'div' ?>>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
                 </section>
             </div>
         </section>

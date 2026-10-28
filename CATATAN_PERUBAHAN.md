@@ -28,6 +28,7 @@ yang bertanda (jalankan).
 - `includes/crf_nav.php`
 - `includes/functions.php`
 - `includes/header.php`
+- `includes/partials/crf_list_filters.php`
 - `includes/partials/crf_row_status.php`
 - `includes/partials/detail_permintaan.php`
 - `includes/partials/handler_assignment.php`

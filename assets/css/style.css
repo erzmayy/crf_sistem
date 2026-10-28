@@ -631,6 +631,10 @@ body.crf-module {
   grid-template-columns: minmax(200px, 2fr) repeat(3, minmax(110px, 1fr)) auto;
 }
 
+.crf-list-filters-with-type {
+  grid-template-columns: minmax(180px, 2fr) repeat(4, minmax(100px, 1fr)) auto;
+}
+
 @media (max-width: 640px) {
   .crf-list-pagination {
     align-items: flex-start;
@@ -665,18 +669,39 @@ body.crf-module {
   }
 }
 
+@container crf-filter-card (max-width: 900px) {
+  .crf-list-filters-with-type {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .crf-list-filters-with-type .crf-list-search {
+    grid-column: 1 / 4;
+    grid-row: 1;
+  }
+
+  .crf-list-filters-with-type .crf-list-filter-actions {
+    grid-column: 4;
+    grid-row: 1;
+    align-self: end;
+    justify-self: end;
+  }
+}
+
 @container crf-filter-card (max-width: 640px) {
   .crf-list-filters,
-  .crf-list-filters-with-category {
+  .crf-list-filters-with-category,
+  .crf-list-filters-with-type {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .crf-list-filters .crf-list-search {
     grid-column: 1 / -1;
+    grid-row: auto;
   }
 
   .crf-list-filters .crf-list-filter-actions {
     grid-column: 1 / -1;
+    grid-row: auto;
     justify-self: end;
   }
 }
@@ -6998,3 +7023,16 @@ body.crf-module {
   .admin-sla .admin-report-heading { align-items: flex-start; flex-direction: column; gap: 0.5rem; }
   .admin-sla-actions { justify-content: flex-start; }
 }
+
+/* Komposisi Tipe Pengajuan (dashboard Admin) */
+.admin-report-card--wide { grid-column: 1 / -1; padding: 0.65rem 0.75rem; }
+.admin-report-card--wide h3 { margin-bottom: 0.5rem; font-size: 0.8rem; }
+.admin-type-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem 1rem; margin: 0; padding: 0; list-style: none; }
+.admin-type-item { display: grid; gap: 0.3rem; padding: 0.4rem 0.55rem; border-radius: 7px; color: #334155; text-decoration: none; }
+a.admin-type-item:hover { background: #f1f5f9; color: #1e293b; }
+.admin-type-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; font-size: 0.78rem; }
+.admin-type-head strong { font-size: 0.85rem; color: #172b4d; }
+.admin-type-head small { color: #64748b; font-size: 0.72rem; font-weight: 600; }
+.admin-type-bar { display: block; height: 6px; border-radius: 99px; background: #e8edf3; overflow: hidden; }
+.admin-type-bar > span { display: block; height: 100%; border-radius: 99px; }
+@media (max-width: 640px) { .admin-type-list { grid-template-columns: 1fr; } }

@@ -135,6 +135,39 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
         ];
     }
 
+    // Komposisi Tipe Pengajuan. CRF lama tanpa tipe dihitung "Belum diisi" (hanya tampil bila ada).
+    $typeMeta = [
+        'Problem' => '#0ea5e9',
+        'Permohonan Perubahan' => '#6366f1',
+        'Permohonan Tambahan' => '#14b8a6',
+    ];
+    $typeCounts = array_fill_keys(array_keys($typeMeta), 0);
+    $typeCounts['Belum diisi'] = 0;
+    $typeStmt = $pdo->prepare(
+        "SELECT jenis_pengajuan, COUNT(*) AS total
+         FROM crf_pengajuan
+         WHERE {$baseWhere}
+         GROUP BY jenis_pengajuan"
+    );
+    $typeStmt->execute($params);
+    foreach ($typeStmt->fetchAll() as $row) {
+        $typeKey = isset($typeMeta[$row['jenis_pengajuan']]) ? $row['jenis_pengajuan'] : 'Belum diisi';
+        $typeCounts[$typeKey] += (int) $row['total'];
+    }
+    $typeTotal = array_sum($typeCounts);
+    $types = [];
+    foreach ($typeCounts as $typeKey => $count) {
+        if ($typeKey === 'Belum diisi' && $count === 0) {
+            continue;
+        }
+        $types[] = [
+            'label' => $typeKey,
+            'count' => $count,
+            'percentage' => $typeTotal > 0 ? ($count / $typeTotal) * 100 : 0,
+            'color' => $typeMeta[$typeKey] ?? '#94a3b8',
+        ];
+    }
+
     $monthNames = [
         1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
         'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
@@ -153,7 +186,7 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
     }
 
     $requestStmt = $pdo->prepare(
-        "SELECT id, nomor_register, nama_pemohon, dept_asal, kategori_perubahan,
+        "SELECT id, nomor_register, nama_pemohon, dept_asal, kategori_perubahan, jenis_pengajuan,
                 status, deskripsi_perubahan, {$submittedDate} AS report_date,
                 DATE_FORMAT({$submittedDate}, '%Y-%m') AS report_month
          FROM crf_pengajuan
@@ -180,6 +213,7 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
         'months' => $months,
         'statuses' => $statuses,
         'urgencies' => $urgencies,
+        'types' => $types,
     ];
 }
 
