@@ -9,6 +9,8 @@
 $rowStage = (string) ($row['tahap_alur'] ?? 'PEMOHON');
 // Tampilan Pemohon: urgensi dan Forum bersifat internal, jadi tidak ditampilkan.
 $rowPemohonView = !empty($rowPemohonView);
+// Opsional: lama menunggu di tahap CMO/Kadep (crfWaitingInfo). Hanya diisi daftar CMO dan Kadep.
+$rowWaiting = $rowWaiting ?? null;
 ?>
 <?php if (!$rowPemohonView): ?>
 <td data-label="Urgensi">
@@ -27,7 +29,13 @@ $rowPemohonView = !empty($rowPemohonView);
                 <i class="bi bi-signpost-split"></i> <?= h(!$rowPemohonView && !empty($row['pembahasan_forum_terbuka']) && $rowStage === 'CMO_FILTER' ? 'Pembahasan Forum' : workflowStageLabel($rowStage)) ?>
             </span>
         <?php endif; ?>
+        <?php if (!$rowPemohonView && !empty($rowWaiting)): ?>
+            <span class="crf-row-waiting" title="Menunggu sejak <?= h($rowWaiting['since']) ?> (dihitung dalam jam kerja; 1 hr = 1 hari kerja)">
+                <i class="bi bi-clock-history" aria-hidden="true"></i>
+                <?= $rowWaiting['short'] === 'baru saja' ? 'Baru masuk' : 'Menunggu ' . h($rowWaiting['short']) ?>
+            </span>
+        <?php endif; ?>
     </div>
 </td>
 <?php
-unset($rowStage, $rowPemohonView);
+unset($rowStage, $rowPemohonView, $rowWaiting);

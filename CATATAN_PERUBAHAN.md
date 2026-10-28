@@ -19,6 +19,7 @@ yang bertanda (jalankan).
 - `admin/master_data.php`
 - `assets/css/style.css`
 - `assets/js/script.js`
+- `cmo/index.php`
 - `config/sla.php`
 - `database/migrations/026_sla_respon_migration.sql` (baru, jalankan)
 - `database/schema.sql`
@@ -27,9 +28,11 @@ yang bertanda (jalankan).
 - `includes/crf_nav.php`
 - `includes/functions.php`
 - `includes/header.php`
+- `includes/partials/crf_row_status.php`
 - `includes/partials/detail_permintaan.php`
 - `includes/partials/handler_assignment.php`
 - `includes/partials/informasi_sla.php`
 - `includes/sla_alerts.php`
+- `kadep_operasional/index.php`
 - `otomasi/detail.php`
 - `otomasi/index.php`

@@ -479,6 +479,82 @@ function formatSlaDurationShort(int $seconds): string
     return implode(' ', array_slice($parts, 0, 2));
 }
 
+/**
+ * Lama CRF menunggu di tahap yang dipegang CMO atau Kadep Operasional (verifikasi CMO, persetujuan Kadep,
+ * UAT, finalisasi). Hanya informasi, tanpa target: supaya CRF yang tertahan terlihat di daftar.
+ * Waktu masuk tahap diambil dari log aktivitas terbaru yang menetapkan status tahap itu
+ * (cadangan: tgl_diubah). Durasi dalam jam kerja, sama dengan SLA.
+ *
+ * @param  array<int,array> $rows baris CRF (butuh id, status, tahap_alur, pembahasan_forum_terbuka, tgl_diubah)
+ * @return array<int,array{since:string,short:string,seconds:int}> diindeks id CRF
+ */
+function crfWaitingInfo(PDO $pdo, array $rows, ?DateTimeImmutable $now = null): array
+{
+    $now = $now ?? new DateTimeImmutable('now');
+    $stageStatuses = [
+        'CMO_FILTER' => 'Menunggu Verifikasi',
+        'kadep_operasional' => 'Menunggu Persetujuan',
+        'UAT' => 'Menunggu UAT',
+        'CMO_FINAL' => 'Menunggu Finalisasi',
+    ];
+
+    $candidates = [];
+    foreach ($rows as $row) {
+        if (
+            isset($stageStatuses[$row['tahap_alur'] ?? ''])
+            && in_array($row['status'] ?? '', ['Belum Ditindak Lanjuti', 'Dalam Proses'], true)
+            && empty($row['pembahasan_forum_terbuka'])
+        ) {
+            $candidates[(int) $row['id']] = $row;
+        }
+    }
+    if (!$candidates) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($candidates), '?'));
+    $stmt = $pdo->prepare("
+        SELECT pengajuan_id, status_baru, MAX(tgl_dibuat) AS tgl
+        FROM crf_log_aktivitas
+        WHERE pengajuan_id IN ({$placeholders})
+          AND (status_baru IN ('Menunggu Verifikasi', 'Menunggu Persetujuan', 'Menunggu UAT', 'Menunggu Finalisasi')
+               OR status_baru LIKE 'Pembahasan Forum selesai%')
+        GROUP BY pengajuan_id, status_baru
+    ");
+    $stmt->execute(array_keys($candidates));
+    $logged = [];
+    foreach ($stmt->fetchAll() as $log) {
+        $logged[(int) $log['pengajuan_id']][] = $log;
+    }
+
+    $result = [];
+    foreach ($candidates as $id => $row) {
+        $stageStatus = $stageStatuses[$row['tahap_alur']];
+        $since = null;
+        foreach ($logged[$id] ?? [] as $log) {
+            // Setelah Forum memutuskan, CRF kembali ke CMO: hitung dari keputusan itu.
+            $matches = $log['status_baru'] === $stageStatus
+                || ($row['tahap_alur'] === 'CMO_FILTER' && strpos((string) $log['status_baru'], 'Pembahasan Forum selesai') === 0);
+            if ($matches && ($since === null || $log['tgl'] > $since)) {
+                $since = $log['tgl'];
+            }
+        }
+        $since = $since ?? ($row['tgl_diubah'] ?? null);
+        if (empty($since)) {
+            continue;
+        }
+
+        $seconds = slaWorkingSecondsBetween(new DateTimeImmutable($since), $now);
+        $result[$id] = [
+            'since' => date('d-m-Y H:i', strtotime($since)),
+            'short' => $seconds < 60 ? 'baru saja' : formatSlaDurationShort($seconds),
+            'seconds' => $seconds,
+        ];
+    }
+
+    return $result;
+}
+
 function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
 {
     $now = $now ?? new DateTimeImmutable('now');
