@@ -11,10 +11,15 @@ document.addEventListener('DOMContentLoaded', function () {
   var crfDataEl = crfRoot.getAttribute ? crfRoot : document.body;
 
 
+  // Jam kerja SLA (detik sejak 00:00), sama dengan config/sla.php: 08:00-17:00.
+  var slaWorkStart = Number(crfDataEl.getAttribute('data-sla-work-start')) || 8 * 3600;
+  var slaWorkEnd = Number(crfDataEl.getAttribute('data-sla-work-end')) || 17 * 3600;
+  var slaWorkDayMinutes = Math.floor((slaWorkEnd - slaWorkStart) / 60);
+
   function formatSlaDuration(totalSeconds) {
     var totalMinutes = Math.max(0, Math.floor(totalSeconds / 60));
-    var days = Math.floor(totalMinutes / 1440);
-    var hours = Math.floor((totalMinutes % 1440) / 60);
+    var days = Math.floor(totalMinutes / slaWorkDayMinutes);
+    var hours = Math.floor((totalMinutes % slaWorkDayMinutes) / 60);
     var minutes = totalMinutes % 60;
     var parts = [];
 
@@ -53,9 +58,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     while (cursor < end) {
       var dayEnd = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 1);
-      var segmentEnd = dayEnd < end ? dayEnd : end;
-      if (slaIsWorkingDay(cursor)) { total += (segmentEnd - cursor) / 1000; }
-      cursor = segmentEnd;
+      if (slaIsWorkingDay(cursor)) {
+        var workStart = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate(), 0, 0, slaWorkStart);
+        var workEnd = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate(), 0, 0, slaWorkEnd);
+        var from = cursor > workStart ? cursor : workStart;
+        var to = end < workEnd ? end : workEnd;
+        if (to > from) { total += (to - from) / 1000; }
+      }
+      cursor = dayEnd;
     }
 
     return Math.round(total);

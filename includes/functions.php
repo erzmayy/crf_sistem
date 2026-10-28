@@ -327,7 +327,7 @@ function slaDueAt(?string $startedAt, $value, ?string $unit): ?string
                 $seconds = (int) round($numeric * 3600);
                 break;
             case 'Hari':
-                $seconds = (int) round($numeric * 86400);
+                $seconds = (int) round($numeric * CRF_SLA_WORK_SECONDS_PER_DAY);
                 break;
             default:
                 return null;
@@ -349,33 +349,53 @@ function slaIsWorkingDay(DateTimeInterface $date): bool
 }
 
 /**
- * Tambah durasi SLA yang hanya berjalan di hari kerja.
- * Contoh: Jumat 16:00 + 1 Hari = Senin 16:00.
+ * Awal / akhir jam kerja SLA pada tanggal $date (config/sla.php).
+ *
+ * @return array{0:DateTimeImmutable,1:DateTimeImmutable}
+ */
+function slaWorkWindow(DateTimeInterface $date): array
+{
+    $midnight = DateTimeImmutable::createFromInterface($date)->setTime(0, 0, 0);
+
+    return [
+        $midnight->modify('+' . CRF_SLA_WORK_START . ' seconds'),
+        $midnight->modify('+' . CRF_SLA_WORK_END . ' seconds'),
+    ];
+}
+
+/**
+ * Tambah durasi SLA yang hanya berjalan di hari dan jam kerja.
+ * Contoh (08:00-17:00): Jumat 16:00 + 1 Hari = Senin 16:00.
  */
 function slaAddWorkingSeconds(DateTimeInterface $start, int $seconds): DateTimeImmutable
 {
     $cursor = DateTimeImmutable::createFromInterface($start);
 
     while (true) {
-        if (!slaIsWorkingDay($cursor)) {
+        [$workStart, $workEnd] = slaWorkWindow($cursor);
+
+        if (!slaIsWorkingDay($cursor) || $cursor >= $workEnd) {
             $cursor = $cursor->modify('tomorrow');
             continue;
         }
 
-        $dayEnd = $cursor->modify('tomorrow');
-        $available = $dayEnd->getTimestamp() - $cursor->getTimestamp();
+        if ($cursor < $workStart) {
+            $cursor = $workStart;
+        }
+
+        $available = $workEnd->getTimestamp() - $cursor->getTimestamp();
 
         if ($seconds <= $available) {
             return $cursor->modify('+' . $seconds . ' seconds');
         }
 
         $seconds -= $available;
-        $cursor = $dayEnd;
+        $cursor = $cursor->modify('tomorrow');
     }
 }
 
 /**
- * Durasi (detik) di antara dua waktu yang jatuh pada hari kerja saja.
+ * Durasi (detik) di antara dua waktu yang jatuh pada hari dan jam kerja saja.
  */
 function slaWorkingSecondsBetween(DateTimeInterface $start, DateTimeInterface $end): int
 {
@@ -385,23 +405,32 @@ function slaWorkingSecondsBetween(DateTimeInterface $start, DateTimeInterface $e
 
     while ($cursor < $end) {
         $dayEnd = $cursor->modify('tomorrow');
-        $segmentEnd = $dayEnd < $end ? $dayEnd : $end;
 
         if (slaIsWorkingDay($cursor)) {
-            $total += $segmentEnd->getTimestamp() - $cursor->getTimestamp();
+            [$workStart, $workEnd] = slaWorkWindow($cursor);
+            $from = $cursor > $workStart ? $cursor : $workStart;
+            $to = $end < $workEnd ? $end : $workEnd;
+
+            if ($to > $from) {
+                $total += $to->getTimestamp() - $from->getTimestamp();
+            }
         }
 
-        $cursor = $segmentEnd;
+        $cursor = $dayEnd;
     }
 
     return $total;
 }
 
+/**
+ * Format durasi jam kerja: 1 Hari = 1 hari kerja (CRF_SLA_WORK_SECONDS_PER_DAY).
+ */
 function formatSlaDuration(int $seconds): string
 {
     $minutes = max(0, intdiv($seconds, 60));
-    $days = intdiv($minutes, 1440);
-    $hours = intdiv($minutes % 1440, 60);
+    $dayMinutes = intdiv(CRF_SLA_WORK_SECONDS_PER_DAY, 60);
+    $days = intdiv($minutes, $dayMinutes);
+    $hours = intdiv($minutes % $dayMinutes, 60);
     $remainingMinutes = $minutes % 60;
     $parts = [];
 
@@ -457,7 +486,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
     if ($completedAt !== null && $startedAt !== null && $dueAt !== null) {
         $elapsed = slaWorkingSecondsBetween($startedAt, $completedAt);
         if ($completedAt <= $dueAt) {
-            $remaining = $dueAt->getTimestamp() - $completedAt->getTimestamp();
+            $remaining = slaWorkingSecondsBetween($completedAt, $dueAt);
             return [
                 'label' => 'Selesai sebelum SLA',
                 'detail' => 'Lebih cepat ' . formatSlaDuration($remaining) . '.',
@@ -470,7 +499,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
             ];
         }
 
-        $overdue = $completedAt->getTimestamp() - $dueAt->getTimestamp();
+        $overdue = slaWorkingSecondsBetween($dueAt, $completedAt);
         return [
             'label' => 'Terlambat',
             'detail' => 'Melewati batas SLA ' . formatSlaDuration($overdue) . '.',
@@ -741,7 +770,7 @@ function crfPirReminderInfo(PDO $pdo, array $crf): array
     // Penantian PIR dimulai saat Otomasi mengisi implementasi; data lama memakai waktu eksekusi selesai.
     $pirStartedAt = $crf['tgl_implementasi_diisi'] ?? $crf['otomasi_selesai'] ?? null;
     $waitingDays = !empty($pirStartedAt)
-        ? (int) floor(slaWorkingSecondsBetween(new DateTimeImmutable($pirStartedAt), new DateTimeImmutable()) / 86400)
+        ? (int) floor(slaWorkingSecondsBetween(new DateTimeImmutable($pirStartedAt), new DateTimeImmutable()) / CRF_SLA_WORK_SECONDS_PER_DAY)
         : null;
 
     return [

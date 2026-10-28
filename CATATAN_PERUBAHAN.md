@@ -27,9 +27,23 @@ lalu jalankan migrasi SQL bila entri menyebutkannya.
 - **File:** `includes/crf_nav.php` (baris menu "Pengajuan CRF Saya")
 - **Migrasi SQL:** tidak ada.
 
+### 3. SLA dihitung berdasarkan jam kerja 08:00-17:00
+- **Masalah:** SLA sebelumnya hanya melewati Sabtu/Minggu/libur, tetapi 1 hari dihitung 24 jam. CRF yang
+  disetujui Jumat sore baru jatuh tempo Senin sore, dan malam hari ikut dihitung.
+- **Perubahan:** SLA hanya berjalan Senin-Jumat (bukan libur) pukul 08:00-17:00. "1 Hari" SLA = 1 hari kerja
+  (9 jam), jadi Jumat 16:00 + 1 Hari = Senin 16:00. Tampilan durasi ("X Hari Y Jam") ikut memakai 1 hari = 9 jam.
+  Tampilan "Lebih cepat / Terlambat" pada CRF selesai kini juga dihitung dalam jam kerja. Hitung mundur di browser
+  (`script.js`) disamakan dengan server. Jam kerja diatur di `config/sla.php`.
+- **Catatan:** `sla_tenggat` CRF yang sudah berjalan tidak berubah otomatis. Untuk menghitung ulang, jalankan
+  `database/maintenance/hitung_tenggat_sla.php`. Durasi diskusi Forum (satuan "Hari") dan hitungan hari tunggu
+  PIR ikut memakai 1 hari = 9 jam kerja.
+- **File:** `config/sla.php`, `includes/functions.php`, `includes/header.php`, `assets/js/script.js`
+- **Migrasi SQL:** tidak ada.
+
 ---
 
 ## Rencana / belum dikerjakan
+- Jeda SLA (status on hold saat menunggu pemohon/vendor) dan eskalasi ke Kadep/CMO saat SLA terlewat: ditunda atas permintaan.
 - Nomor registrasi (rubrik): menunggu format dari pemilik proses. Perubahan ada di `generateRequestNumber()`, `includes/functions.php`.
 - Aturan pemohon tidak boleh memproses CRF miliknya sendiri: menunggu keputusan bisnis.
 - Kolom urgensi/SLA di laporan admin dan XLSX.
