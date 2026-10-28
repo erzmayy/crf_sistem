@@ -6515,6 +6515,88 @@ body.crf-module {
   cursor: pointer;
 }
 
+/* Informasi SLA: panel Response Time dan Resolution Time, ringkas (hanya untuk informasi) */
+.crf-module .crf-sla-card .crf-section-body { padding: 0.7rem 0.9rem 0.8rem; }
+.crf-module .crf-sla-panels { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
+.crf-module .crf-sla-panels.has-respon { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+.crf-module .crf-sla-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e3e8ef;
+  border-radius: 10px;
+  background: #fbfcfd;
+}
+.crf-module .crf-sla-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.crf-module .crf-sla-panel-title { margin: 0; color: #172b4d; font-size: 0.85rem; font-weight: 700; line-height: 1.2; }
+.crf-module .crf-sla-panel-head .badge { flex: 0 0 auto; padding: 0.28rem 0.55rem; font-size: 0.7rem; white-space: nowrap; }
+.crf-module .crf-sla-metrics { display: flex; flex-wrap: wrap; gap: 0.1rem 0.85rem; margin: 0; }
+.crf-module .crf-sla-metrics > div { display: flex; align-items: baseline; gap: 0.3rem; }
+.crf-module .crf-sla-metrics dt { margin: 0; color: #6b7686; font-size: 0.74rem; font-weight: 400; }
+.crf-module .crf-sla-metrics dd { margin: 0; color: #1f2a3d; font-size: 0.78rem; font-weight: 600; }
+.crf-module .crf-sla-metrics dd small { color: #6b7686; font-size: 0.68rem; font-weight: 400; }
+.crf-module .crf-sla-bar { height: 0.3rem; overflow: hidden; border-radius: 999px; background: #e3e8ef; }
+.crf-module .crf-sla-bar > span { display: block; height: 100%; border-radius: inherit; background: #94a3b8; transition: width 0.4s ease; }
+.crf-module .crf-sla-bar.is-success > span { background: #1e8e4a; }
+.crf-module .crf-sla-bar.is-primary > span { background: #2563eb; }
+.crf-module .crf-sla-bar.is-warning > span { background: #e0a100; }
+.crf-module .crf-sla-bar.is-danger > span { background: #c9302c; }
+.crf-module .crf-sla-panel .crf-sla-status-detail { margin: 0; font-size: 0.74rem; line-height: 1.35; }
+.crf-module .crf-sla-panel .crf-sla-alert { margin: 0; padding: 0.4rem 0.6rem; font-size: 0.78rem; }
+.crf-module .crf-sla-card .crf-sla-note,
+.crf-module .crf-sla-card .crf-sla-details,
+.crf-module .crf-sla-card .crf-sla-result { margin-top: 0.55rem; }
+.crf-module .crf-sla-card .crf-sla-details > summary { min-height: 0; font-size: 0.8rem; }
+.crf-module .crf-sla-legend { margin: 0.35rem 0 0; color: #6b7686; font-size: 0.76rem; line-height: 1.4; }
+
+/* Status SLA di daftar Otomasi: satu fokus per baris */
+.crf-module .automation-sla-cell { display: grid; gap: 0.45rem; min-width: 140px; }
+.crf-module .automation-sla-main { display: grid; justify-items: start; gap: 0.3rem; }
+.crf-module .automation-sla-main .badge { padding: 0.38rem 0.65rem; white-space: nowrap; }
+.crf-module .automation-sla-kicker { color: #3b4657; font-size: 0.72rem; font-weight: 600; }
+.crf-module .automation-sla-main .automation-sla-status-detail { max-width: none; white-space: nowrap; }
+.crf-module .automation-sla-sub {
+  padding-top: 0.4rem;
+  border-top: 1px dashed #dfe3e8;
+  color: #6b7686;
+  font-size: 0.75rem;
+}
+
+/* Bilah aksi halaman kerja PIC: menempel di bawah layar, isi mengikuti status CRF */
+.crf-detail-page .crf-detail-main .crf-action-bar {
+  position: sticky;
+  bottom: 0.75rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--dt-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 30px rgba(15, 39, 66, 0.12);
+  backdrop-filter: blur(8px);
+}
+.crf-module .crf-action-bar-text { flex: 1 1 16rem; min-width: 0; color: #4b5666; font-size: 0.88rem; line-height: 1.45; }
+.crf-module .crf-action-bar-text strong { display: block; color: #1f2a3d; font-size: 0.95rem; }
+.crf-module .crf-action-bar .btn { min-height: 2.5rem; white-space: nowrap; }
+
+/* Form tindakan PIC dibuat ringkas */
+.crf-module .crf-action-card .crf-section-body { padding-top: 0.9rem; padding-bottom: 0.4rem; }
+.crf-module .crf-action-card .form-label { margin-bottom: 0.3rem; font-size: 0.88rem; }
+.crf-module .crf-action-card .form-control { font-size: 0.9rem; padding: 0.5rem 0.7rem; }
+.crf-module .crf-action-card textarea.form-control { min-height: 0; resize: vertical; }
+.crf-module .crf-action-card .alert { padding: 0.6rem 0.85rem; font-size: 0.88rem; }
+@media (max-width: 575.98px) {
+  .crf-module .crf-action-bar .btn { width: 100%; }
+  .crf-module .crf-sla-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* Riwayat: tanpa gulir bersarang, entri lama bisa dibuka */
 .crf-module .crf-detail-page .crf-detail-sidebar { position: static; }
 .crf-module .crf-detail-page .crf-detail-sidebar > .crf-detail-timeline { max-height: none; overflow: visible; }
@@ -6776,3 +6858,128 @@ body.crf-module {
 .crf-module .crf-score-flag > i { margin-top: 0.15rem; color: #b26a00; }
 .crf-module .crf-score-flag > div { display: flex; flex-direction: column; gap: 0.15rem; }
 .crf-module .crf-impact-block .crf-prose-text { margin-top: 0.6rem; }
+
+/* =====================================================================
+   Laporan Admin: Kepatuhan SLA (Response Time & Resolution Time)
+   ===================================================================== */
+.admin-sla { display: grid; gap: 0.8rem; }
+.admin-sla .admin-report-heading { margin-bottom: 0; }
+.admin-sla-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.74rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.admin-sla-count strong { color: #1e293b; font-weight: 700; }
+.admin-sla-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; }
+.admin-sla-kpi {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #fff;
+}
+.admin-sla-kpi header { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.15rem 0.6rem; }
+.admin-sla-kpi h3 { margin: 0; color: #334155; font-size: 0.85rem; font-weight: 700; }
+.admin-sla-kpi header small { color: #64748b; font-size: 0.72rem; }
+.admin-sla-kpi-main { display: flex; align-items: baseline; gap: 0.45rem; }
+.admin-sla-kpi-main strong { font-size: 1.9rem; font-weight: 700; line-height: 1; color: #64748b; }
+.admin-sla-kpi-main strong.is-success { color: #1e8e4a; }
+.admin-sla-kpi-main strong.is-warning { color: #b7791f; }
+.admin-sla-kpi-main strong.is-danger { color: #c9302c; }
+.admin-sla-kpi-main span { color: #64748b; font-size: 0.8rem; }
+.admin-sla-bar { height: 0.4rem; overflow: hidden; border-radius: 999px; background: #e2e8f0; }
+.admin-sla-bar > span { display: block; height: 100%; border-radius: inherit; background: #94a3b8; }
+.admin-sla-bar.is-success > span { background: #1e8e4a; }
+.admin-sla-bar.is-warning > span { background: #e0a100; }
+.admin-sla-bar.is-danger > span { background: #c9302c; }
+.admin-sla-kpi-meta { display: flex; flex-wrap: wrap; gap: 0.2rem 1.25rem; margin: 0; }
+.admin-sla-kpi-meta dt { margin: 0; color: #64748b; font-size: 0.7rem; font-weight: 400; }
+.admin-sla-kpi-meta dd { margin: 0; color: #1e293b; font-size: 0.85rem; font-weight: 600; }
+.admin-sla-kpi-meta .is-alert dd { color: #c9302c; }
+.admin-sla-tables { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; align-items: start; }
+.admin-sla-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.admin-sla-table th {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+.admin-sla-table th.text-end { text-align: right; }
+.admin-sla-table td { padding: 0.5rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+.admin-sla-table tbody tr:last-child td { border-bottom: 0; }
+.admin-sla-table td small { display: block; margin-top: 0.15rem; color: #64748b; font-size: 0.68rem; }
+.admin-sla-table td a { color: #1d4ed8; font-weight: 600; text-decoration: none; }
+.admin-sla-pill, .admin-sla-state {
+  display: inline-block;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.admin-sla-pill.is-success, .admin-sla-state.is-ok { background: #e3f4ea; color: #1e7a3d; }
+.admin-sla-pill.is-warning { background: #fdf0d2; color: #8a5a00; }
+.admin-sla-pill.is-danger, .admin-sla-state.is-danger { background: #fde8e6; color: #b3261e; }
+.admin-sla-state.is-muted { background: #eef2f7; color: #64748b; font-weight: 600; }
+.admin-sla-empty { color: #94a3b8; }
+.admin-sla-violations h3 { display: flex; align-items: center; gap: 0.5rem; }
+.admin-sla-clear { margin: 0; color: #1e7a3d; font-size: 0.85rem; }
+.admin-sla-more, .admin-sla-note { margin: 0.6rem 0 0; color: #64748b; font-size: 0.74rem; line-height: 1.45; }
+.admin-sla-note { margin: 0; }
+@media (max-width: 991.98px) {
+  .admin-sla-kpis, .admin-sla-tables { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Kepatuhan SLA: lebih rapat, bisa disembunyikan */
+.admin-report.admin-sla { gap: 0.6rem; padding: 0.7rem 0.85rem; }
+.admin-sla .admin-report-heading { align-items: center; }
+.admin-sla .admin-report-heading h2 { font-size: 0.95rem; }
+.admin-sla .admin-report-heading p { font-size: 0.74rem; }
+.admin-sla-body { display: grid; gap: 0.6rem; }
+.admin-sla-body[hidden] { display: none; }
+.admin-sla-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 0.4rem 0.5rem; flex: 0 0 auto; }
+.admin-sla-mini { display: none; align-items: center; gap: 0.35rem; }
+.admin-sla.is-collapsed .admin-sla-mini { display: inline-flex; }
+.admin-sla.is-collapsed .admin-sla-count { display: none; }
+.admin-sla-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1.9rem;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.admin-sla-toggle:hover { background: #f1f5f9; }
+.admin-sla-toggle:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.admin-sla-kpis, .admin-sla-tables { gap: 0.6rem; }
+.admin-sla-kpi { gap: 0.4rem; padding: 0.6rem 0.8rem; }
+.admin-sla-kpi-main strong { font-size: 1.55rem; }
+.admin-sla .admin-report-card { padding: 0.65rem 0.75rem; }
+.admin-sla .admin-report-card h3 { margin-bottom: 0.4rem; font-size: 0.8rem; }
+.admin-sla-table td { padding: 0.35rem 0.45rem; }
+.admin-sla-table th { padding: 0.3rem 0.45rem; }
+.admin-sla-more, .admin-sla-note { font-size: 0.72rem; }
+@media (max-width: 575.98px) {
+  .admin-sla .admin-report-heading { align-items: flex-start; flex-direction: column; gap: 0.5rem; }
+  .admin-sla-actions { justify-content: flex-start; }
+}

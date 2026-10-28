@@ -176,6 +176,34 @@ $displayIcons = [
     'selesai' => 'bi-check-circle-fill', 'dibatalkan' => 'bi-slash-circle-fill',
 ];
 $report = getAdminCrfReport($pdo, $reportDateRange['from'], $reportDateRange['to']);
+$slaCompliance = getAdminCrfSlaCompliance($pdo, $reportDateRange['from'], $reportDateRange['to']);
+
+// Sel persentase kepatuhan: pil berwarna + keterangan kecil (n/diukur, rata-rata).
+$slaPercentLabel = static fn(?float $percent): string => $percent === null ? '-' : number_format($percent, 0, ',', '.') . '%';
+$slaPill = static function (array $group) use ($slaPercentLabel): string {
+    if ($group['percent'] === null) {
+        return '<span class="admin-sla-empty">-</span>';
+    }
+    $average = $group['average'] !== null ? ' · rata-rata ' . formatSlaDurationShort($group['average']) : '';
+
+    return '<span class="admin-sla-pill is-' . h($group['tone']) . '">' . h($slaPercentLabel($group['percent'])) . '</span>'
+        . '<small>' . (int) $group['met'] . '/' . (int) $group['measured'] . h($average) . '</small>';
+};
+// Status satu CRF pada daftar pelanggaran.
+$slaStateBadge = static function (array $result): string {
+    switch ($result['state']) {
+        case 'late':
+            return '<span class="admin-sla-state is-danger">Lewat ' . h(formatSlaDurationShort($result['over'])) . '</span>';
+        case 'open_late':
+            return '<span class="admin-sla-state is-danger">Terlewati ' . h(formatSlaDurationShort($result['over'])) . '</span><small>masih berjalan</small>';
+        case 'met':
+            return '<span class="admin-sla-state is-ok">Sesuai</span>';
+        case 'open':
+            return '<span class="admin-sla-state is-muted">Berjalan</span>';
+        default:
+            return '<span class="admin-sla-empty">-</span>';
+    }
+};
 $reportExportQuery = http_build_query([
     'report_date_from' => $reportDateRange['from'],
     'report_date_to' => $reportDateRange['to'],
@@ -403,6 +431,162 @@ require_once __DIR__ . '/../includes/header.php';
                 </section>
             </div>
         </section>
+
+        <!-- =====================================================
+             KEPATUHAN SLA (Response Time & Resolution Time)
+             ===================================================== -->
+        <section class="admin-report admin-sla" id="adminSla" aria-labelledby="admin-sla-title">
+            <div class="admin-report-heading">
+                <div>
+                    <h2 id="admin-sla-title">Kepatuhan SLA</h2>
+                    <p>Response Time dan Resolution Time CRF yang disetujui Kadep Operasional pada periode ini, dalam jam kerja.</p>
+                </div>
+                <div class="admin-sla-actions">
+                    <?php if ($slaCompliance['total'] > 0): ?>
+                        <?php /* Ringkasan singkat; hanya tampil saat bagian ini disembunyikan. */ ?>
+                        <span class="admin-sla-mini" aria-label="Ringkasan kepatuhan SLA">
+                            <span class="admin-sla-pill is-<?= h($slaCompliance['response']['tone']) ?>">Response <?= h($slaPercentLabel($slaCompliance['response']['percent'])) ?></span>
+                            <span class="admin-sla-pill is-<?= h($slaCompliance['resolution']['tone']) ?>">Resolution <?= h($slaPercentLabel($slaCompliance['resolution']['percent'])) ?></span>
+                        </span>
+                        <span class="admin-sla-count"><strong><?= (int) $slaCompliance['total'] ?></strong> CRF disetujui</span>
+                    <?php endif; ?>
+                    <button type="button" class="admin-sla-toggle" id="adminSlaToggle" aria-expanded="true" aria-controls="adminSlaBody">
+                        <i class="bi bi-chevron-up" aria-hidden="true"></i> <span>Sembunyikan</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="admin-sla-body" id="adminSlaBody">
+            <?php if ($slaCompliance['total'] === 0): ?>
+                <div class="crf-empty-state">
+                    <i class="bi bi-hourglass-split"></i>
+                    <p>Belum ada CRF yang disetujui Kadep Operasional pada periode ini, jadi belum ada data SLA.</p>
+                </div>
+            <?php else: ?>
+                <div class="admin-sla-kpis">
+                    <?php foreach ([
+                        ['key' => 'response', 'title' => 'Response Time', 'hint' => 'Sampai PIC menekan Mulai kerjakan'],
+                        ['key' => 'resolution', 'title' => 'Resolution Time', 'hint' => 'Sampai eksekusi selesai'],
+                    ] as $kpi): ?>
+                        <?php $kpiData = $slaCompliance[$kpi['key']]; ?>
+                        <article class="admin-sla-kpi">
+                            <header>
+                                <h3><?= h($kpi['title']) ?></h3>
+                                <small><?= h($kpi['hint']) ?></small>
+                            </header>
+                            <div class="admin-sla-kpi-main">
+                                <strong class="is-<?= h($kpiData['tone']) ?>"><?= h($slaPercentLabel($kpiData['percent'])) ?></strong>
+                                <span><?= $kpiData['percent'] === null ? 'belum ada hasil' : 'tepat waktu' ?></span>
+                            </div>
+                            <div class="admin-sla-bar is-<?= h($kpiData['tone']) ?>" role="progressbar" aria-label="<?= h($kpi['title']) ?> tepat waktu" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= (int) round((float) $kpiData['percent']) ?>">
+                                <span style="width: <?= (int) round((float) $kpiData['percent']) ?>%"></span>
+                            </div>
+                            <dl class="admin-sla-kpi-meta">
+                                <div><dt>Sudah diukur</dt><dd><?= (int) $kpiData['measured'] ?> CRF</dd></div>
+                                <div><dt>Rata-rata</dt><dd><?= $kpiData['average'] !== null ? h(formatSlaDurationShort($kpiData['average'])) : '-' ?></dd></div>
+                                <div class="<?= $kpiData['open_late'] > 0 ? 'is-alert' : '' ?>"><dt>Berjalan, terlewati</dt><dd><?= (int) $kpiData['open_late'] ?></dd></div>
+                            </dl>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="admin-sla-tables">
+                    <?php foreach ([
+                        ['title' => 'Per Kategori', 'rows' => $slaCompliance['by_category']],
+                        ['title' => 'Per Level Urgensi', 'rows' => $slaCompliance['by_urgency']],
+                    ] as $slaTable): ?>
+                        <section class="admin-report-card">
+                            <h3><?= h($slaTable['title']) ?></h3>
+                            <div class="table-responsive">
+                                <table class="admin-sla-table">
+                                    <thead>
+                                        <tr><th>Nama</th><th class="text-end">CRF</th><th>Response</th><th>Resolution</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($slaTable['rows'] as $slaGroup): ?>
+                                            <tr>
+                                                <td><?= h($slaGroup['name']) ?></td>
+                                                <td class="text-end"><?= (int) $slaGroup['total'] ?></td>
+                                                <td><?= $slaPill($slaGroup['response']) ?></td>
+                                                <td><?= $slaPill($slaGroup['resolution']) ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    <?php endforeach; ?>
+                </div>
+
+                <section class="admin-report-card admin-sla-violations">
+                    <h3>
+                        CRF yang Melewati SLA
+                        <span class="admin-sla-count"><?= count($slaCompliance['violations']) ?></span>
+                    </h3>
+                    <?php if (!$slaCompliance['violations']): ?>
+                        <p class="admin-sla-clear"><i class="bi bi-check-circle-fill"></i> Tidak ada CRF yang melewati SLA pada periode ini.</p>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="admin-sla-table">
+                                <thead>
+                                    <tr><th>No. Register</th><th>Kategori</th><th>Urgensi</th><th>PIC</th><th>Response</th><th>Resolution</th></tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach (array_slice($slaCompliance['violations'], 0, 10) as $violation): ?>
+                                        <tr>
+                                            <td><a href="detail.php?id=<?= (int) $violation['id'] ?>"><?= h($violation['nomor_register']) ?></a></td>
+                                            <td><?= h($violation['kategori']) ?></td>
+                                            <td><?= h($violation['urgensi']) ?></td>
+                                            <td><?= $violation['pic'] !== '' ? h($violation['pic']) : '<span class="admin-sla-empty">Belum ada</span>' ?></td>
+                                            <td><?= $slaStateBadge($violation['response']) ?></td>
+                                            <td><?= $slaStateBadge($violation['resolution']) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php if (count($slaCompliance['violations']) > 10): ?>
+                            <p class="admin-sla-more">Menampilkan 10 dari <?= count($slaCompliance['violations']) ?> CRF. Daftar lengkap ada di ekspor Excel (kolom Response Time dan Resolution Time).</p>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </section>
+
+                <p class="admin-sla-note">
+                    Persentase = CRF tepat waktu dari CRF yang sudah punya hasil (sudah direspons atau eksekusi selesai).
+                    Warna: hijau 90% ke atas, kuning 75-89%, merah di bawah 75%. CRF tanpa target Response Time
+                    (disetujui sebelum fitur ini) tidak dihitung pada Response Time.
+                </p>
+            <?php endif; ?>
+            </div>
+        </section>
+        <script>
+        (function () {
+            var section = document.getElementById('adminSla');
+            var body = document.getElementById('adminSlaBody');
+            var button = document.getElementById('adminSlaToggle');
+            if (!section || !body || !button) { return; }
+
+            var storageKey = 'crfAdminSlaHidden';
+            function apply(hidden) {
+                body.hidden = hidden;
+                section.classList.toggle('is-collapsed', hidden);
+                button.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+                button.querySelector('span').textContent = hidden ? 'Tampilkan' : 'Sembunyikan';
+                button.querySelector('i').className = 'bi ' + (hidden ? 'bi-chevron-down' : 'bi-chevron-up');
+            }
+
+            // Pilihan tampil/sembunyi diingat di browser ini (opsional; halaman tetap jalan tanpa penyimpanan).
+            var saved = false;
+            try { saved = window.localStorage.getItem(storageKey) === '1'; } catch (e) { saved = false; }
+            apply(saved);
+
+            button.addEventListener('click', function () {
+                var hidden = !body.hidden;
+                apply(hidden);
+                try { window.localStorage.setItem(storageKey, hidden ? '1' : '0'); } catch (e) { /* abaikan */ }
+            });
+        })();
+        </script>
 
         <?php if ($flash): ?>
 

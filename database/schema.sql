@@ -338,6 +338,13 @@ CREATE TABLE IF NOT EXISTS crf_kategori (
     sla_tinggi_satuan        ENUM('Menit','Jam','Hari') NULL,
     sla_rendah_nilai       DECIMAL(10,2) NULL,                -- kosong = ikut Normal
     sla_rendah_satuan        ENUM('Menit','Jam','Hari') NULL,
+    -- Target respon PIC (mulai dihitung dari persetujuan Kadep); kosong = tanpa target
+    sla_respon_nilai         DECIMAL(10,2) NULL,                -- urgensi Normal
+    sla_respon_satuan        ENUM('Menit','Jam','Hari') NULL,
+    sla_respon_tinggi_nilai  DECIMAL(10,2) NULL,                -- kosong = ikut Normal
+    sla_respon_tinggi_satuan ENUM('Menit','Jam','Hari') NULL,
+    sla_respon_rendah_nilai  DECIMAL(10,2) NULL,                -- kosong = ikut Normal
+    sla_respon_rendah_satuan ENUM('Menit','Jam','Hari') NULL,
     aktif              TINYINT(1) NOT NULL DEFAULT 1,
     urutan             INT NOT NULL DEFAULT 0,
     tgl_dihapus             DATETIME NULL,
@@ -382,6 +389,12 @@ CALL crf_add_column('crf_pengajuan', 'pic_nama', 'VARCHAR(150) NULL AFTER pic_id
 CALL crf_add_column('crf_pengajuan', 'tgl_ditugaskan', 'DATETIME NULL AFTER pic_nama');
 CALL crf_add_column('crf_pengajuan', 'sla_menit_aktual', 'INT UNSIGNED NULL AFTER sla_tenggat');
 CALL crf_add_column('crf_pengajuan', 'sla_hasil', 'ENUM(''Sesuai SLA'',''Melebihi SLA'') NULL AFTER sla_menit_aktual');
+-- SLA respon PIC: target dibekukan saat disetujui Kadep; sla_respon_at = PIC menekan "Mulai kerjakan"
+CALL crf_add_column('crf_pengajuan', 'sla_respon_nilai', 'DECIMAL(10,2) NULL AFTER sla_hasil');
+CALL crf_add_column('crf_pengajuan', 'sla_respon_satuan', 'ENUM(''Menit'',''Jam'',''Hari'') NULL AFTER sla_respon_nilai');
+CALL crf_add_column('crf_pengajuan', 'sla_respon_tenggat', 'DATETIME NULL AFTER sla_respon_satuan');
+CALL crf_add_column('crf_pengajuan', 'sla_respon_at', 'DATETIME NULL AFTER sla_respon_tenggat');
+CALL crf_add_column('crf_pengajuan', 'sla_respon_hasil', 'ENUM(''Sesuai SLA'',''Melebihi SLA'') NULL AFTER sla_respon_at');
 
 CALL crf_add_index('crf_pengajuan', 'idx_change_requests_crf_category', 'kategori_id');
 CALL crf_add_index('crf_pengajuan', 'idx_change_requests_assigned_handler', 'pic_id');
@@ -426,7 +439,7 @@ CREATE TABLE IF NOT EXISTS crf_notifikasi (
 CREATE TABLE IF NOT EXISTS crf_peringatan_sla (
     id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
     pengajuan_id INT UNSIGNED NOT NULL,
-    jenis_peringatan        ENUM('pengingat','mendesak','terlambat') NOT NULL,
+    jenis_peringatan        ENUM('pengingat','mendesak','terlambat','respon_mendesak','respon_terlambat') NOT NULL,
     urutan_peringatan         SMALLINT UNSIGNED NOT NULL DEFAULT 1,
     tgl_dikirim           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),

@@ -90,6 +90,26 @@ try {
                 $extra['sla_' . $levelKey . '_satuan'] = $levelValue !== null ? $levelUnit : null;
             }
 
+            // Target Response Time per urgensi; kolom tanpa suffix = Normal (wajib). Tinggi/Rendah kosong = ikut Normal.
+            foreach (['' => 'Normal', 'tinggi_' => 'Tinggi', 'rendah_' => 'Rendah'] as $responKey => $responLabel) {
+                $responValueRaw = trim($_POST['sla_respon_' . $responKey . 'nilai'] ?? '');
+                $responUnit = $_POST['sla_respon_' . $responKey . 'satuan'] ?? '';
+                $responValue = null;
+                if ($responValueRaw !== '') {
+                    if (!is_numeric($responValueRaw) || (float) $responValueRaw <= 0) {
+                        $errors[] = 'Nilai target Response Time ' . $responLabel . ' harus angka lebih dari 0.';
+                    } elseif (!in_array($responUnit, ['Menit', 'Jam', 'Hari'], true)) {
+                        $errors[] = 'Satuan target Response Time ' . $responLabel . ' tidak valid.';
+                    } else {
+                        $responValue = (float) $responValueRaw;
+                    }
+                } elseif ($responKey === '') {
+                    $errors[] = 'Target Response Time urgensi Normal wajib diisi.';
+                }
+                $extra['sla_respon_' . $responKey . 'nilai'] = $responValue;
+                $extra['sla_respon_' . $responKey . 'satuan'] = $responValue !== null ? $responUnit : null;
+            }
+
             $legacy = $_POST['kategori_perubahan_lama'] ?? 'Lainnya';
             if (!in_array($legacy, ['Aplikasi', 'Infrastruktur', 'Proses', 'Security', 'Lainnya'], true)) {
                 $errors[] = 'Kelompok kategori laporan tidak valid.';

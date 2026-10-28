@@ -456,6 +456,29 @@ function crfSlaUrgentSeconds(int $totalSeconds): int
     return (int) min(3600, floor($totalSeconds * 0.25));
 }
 
+/**
+ * Durasi jam kerja versi singkat untuk ruang sempit (daftar): "1 hr 8 j", "2 j 6 m".
+ * Maksimal dua satuan; 1 hr = 1 hari kerja (CRF_SLA_WORK_SECONDS_PER_DAY).
+ */
+function formatSlaDurationShort(int $seconds): string
+{
+    $minutes = max(0, intdiv($seconds, 60));
+    $dayMinutes = intdiv(CRF_SLA_WORK_SECONDS_PER_DAY, 60);
+    $parts = [];
+
+    if (($days = intdiv($minutes, $dayMinutes)) > 0) {
+        $parts[] = $days . ' hr';
+    }
+    if (($hours = intdiv($minutes % $dayMinutes, 60)) > 0) {
+        $parts[] = $hours . ' j';
+    }
+    if (($mins = $minutes % 60) > 0 || !$parts) {
+        $parts[] = $mins . ' m';
+    }
+
+    return implode(' ', array_slice($parts, 0, 2));
+}
+
 function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
 {
     $now = $now ?? new DateTimeImmutable('now');
@@ -1241,6 +1264,136 @@ function crfStandardSla(PDO $pdo, ?int $categoryId, ?string $urgency): ?array
     $category = findCrfCategory($pdo, $categoryId);
 
     return $category ? crfCategorySlaMatrix($category)[$urgency] : null;
+}
+
+/**
+ * Matriks target respon PIC satu kategori per level urgensi.
+ * Kolom sla_respon_nilai / sla_respon_satuan = urgensi Normal; Tinggi/Rendah
+ * kosong ikut Normal. Normal kosong berarti kategori tanpa target respon.
+ *
+ * @return array<string,?array{value:float,unit:string}>
+ */
+function crfCategoryResponMatrix(array $category): array
+{
+    $pick = static function ($value, $unit): ?array {
+        return ($value !== null && $value !== '' && (float) $value > 0 && in_array($unit, ['Menit', 'Jam', 'Hari'], true))
+            ? ['value' => (float) $value, 'unit' => (string) $unit]
+            : null;
+    };
+    $normal = $pick($category['sla_respon_nilai'] ?? null, $category['sla_respon_satuan'] ?? null);
+
+    return [
+        'Tinggi' => $pick($category['sla_respon_tinggi_nilai'] ?? null, $category['sla_respon_tinggi_satuan'] ?? null) ?? $normal,
+        'Normal' => $normal,
+        'Rendah' => $pick($category['sla_respon_rendah_nilai'] ?? null, $category['sla_respon_rendah_satuan'] ?? null) ?? $normal,
+    ];
+}
+
+/**
+ * Status SLA respon PIC: dari persetujuan Kadep sampai PIC menekan
+ * "Mulai kerjakan". Null bila tidak ada yang perlu ditampilkan (CRF belum
+ * disetujui, dibatalkan, atau CRF lama tanpa target respon).
+ */
+function getCrfResponStatus(array $crf, ?DateTimeImmutable $now = null): ?array
+{
+    if (($crf['status'] ?? '') === 'Cancel' || empty($crf['sla_mulai'])) {
+        return null;
+    }
+    if (empty($crf['sla_respon_tenggat']) && empty($crf['sla_respon_at'])) {
+        return null;
+    }
+
+    $now = $now ?? new DateTimeImmutable('now');
+    $startedAt = new DateTimeImmutable($crf['sla_mulai']);
+    $dueAt = !empty($crf['sla_respon_tenggat']) ? new DateTimeImmutable($crf['sla_respon_tenggat']) : null;
+    $respondedAt = !empty($crf['sla_respon_at']) ? new DateTimeImmutable($crf['sla_respon_at']) : null;
+
+    $base = ['alert' => null, 'remaining' => null, 'live' => false, 'elapsed' => null];
+
+    if ($respondedAt !== null) {
+        $elapsedSeconds = slaWorkingSecondsBetween($startedAt, $respondedAt);
+        $elapsedText = $elapsedSeconds < 60 ? 'kurang dari 1 menit' : formatSlaDuration($elapsedSeconds);
+        $base['elapsed'] = $elapsedText;
+
+        if ($dueAt === null) {
+            return $base + ['label' => 'Sudah direspons', 'class' => 'secondary',
+                'detail' => 'Response time ' . $elapsedText . '.'];
+        }
+        if ($respondedAt <= $dueAt) {
+            return $base + ['label' => 'Response sesuai SLA', 'class' => 'success',
+                'detail' => 'Response time ' . $elapsedText . ', sesuai target.'];
+        }
+
+        return $base + ['label' => 'Response melebihi SLA', 'class' => 'danger',
+            'detail' => 'Response time ' . $elapsedText . ', melebihi target '
+                . formatSlaDuration(slaWorkingSecondsBetween($dueAt, $respondedAt)) . '.'];
+    }
+
+    if ($now <= $dueAt) {
+        $remaining = slaWorkingSecondsBetween($now, $dueAt);
+        $approaching = $remaining <= crfSlaUrgentSeconds(slaWorkingSecondsBetween($startedAt, $dueAt));
+
+        return [
+            'label' => 'Menunggu respon',
+            'detail' => 'Sisa response time ' . formatSlaDuration($remaining) . '.',
+            'class' => $approaching ? 'warning' : 'primary',
+            'alert' => $approaching ? 'approaching' : null,
+            'remaining' => $remaining,
+            'live' => true,
+            'elapsed' => null,
+        ];
+    }
+
+    return [
+        'label' => 'Response terlewati',
+        'detail' => 'Terlambat ' . formatSlaDuration(slaWorkingSecondsBetween($dueAt, $now)) . ' dari batas response time.',
+        'class' => 'danger',
+        'alert' => 'overdue',
+        'remaining' => null,
+        'overdue' => slaWorkingSecondsBetween($dueAt, $now),
+        'live' => true,
+        'elapsed' => null,
+    ];
+}
+
+/**
+ * Persentase waktu SLA yang sudah terpakai (0-100), dalam jam kerja.
+ * $end kosong = sekarang. Null bila mulai atau batas tidak tersedia.
+ */
+function crfSlaProgressPercent(?string $startedAt, ?string $dueAt, ?string $end = null, ?DateTimeImmutable $now = null): ?int
+{
+    if (empty($startedAt) || empty($dueAt)) {
+        return null;
+    }
+
+    $start = new DateTimeImmutable($startedAt);
+    $total = slaWorkingSecondsBetween($start, new DateTimeImmutable($dueAt));
+    if ($total <= 0) {
+        return null;
+    }
+
+    $stop = !empty($end) ? new DateTimeImmutable($end) : ($now ?? new DateTimeImmutable('now'));
+    $used = slaWorkingSecondsBetween($start, $stop);
+
+    return (int) max(0, min(100, round($used / $total * 100)));
+}
+
+/**
+ * Catat respon PIC (sekali saja): isi sla_respon_at dan hasilnya. Aman dipanggil
+ * berulang; tidak menimpa respon yang sudah tercatat.
+ */
+function recordCrfResponse(PDO $pdo, int $crfId, string $respondedAt): void
+{
+    $pdo->prepare("
+        UPDATE crf_pengajuan
+        SET sla_respon_at = :at,
+            sla_respon_hasil = CASE
+                WHEN sla_respon_tenggat IS NULL THEN NULL
+                WHEN :at2 <= sla_respon_tenggat THEN 'Sesuai SLA'
+                ELSE 'Melebihi SLA'
+            END
+        WHERE id = :id AND sla_respon_at IS NULL
+    ")->execute(['at' => $respondedAt, 'at2' => $respondedAt, 'id' => $crfId]);
 }
 
 function crfSlaEquals(?array $sla, $value, ?string $unit): bool

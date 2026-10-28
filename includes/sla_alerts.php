@@ -175,8 +175,104 @@ function crfSendSlaAlerts(PDO $pdo, ?DateTimeImmutable $now = null): int
         }
     }
 
+    $sent += crfSendResponAlerts($pdo, $now);
+
     if ($sent > 0) {
         dispatchPendingNotificationEmails($pdo);
+    }
+
+    return $sent;
+}
+
+/**
+ * Peringatan SLA response time: CRF disetujui tetapi belum ada PIC yang menekan
+ * "Mulai kerjakan". Dikirim ke PIC kategori, sekali per tahap
+ * (respon_mendesak, lalu respon_terlambat).
+ *
+ * @return int jumlah peringatan yang dikirim
+ */
+function crfSendResponAlerts(PDO $pdo, DateTimeImmutable $now): int
+{
+    try {
+        $rows = $pdo->query("
+            SELECT id, nomor_register, kategori_id, pic_id,
+                   sla_mulai, sla_respon_tenggat
+            FROM crf_pengajuan
+            WHERE status = 'Dalam Proses'
+              AND tahap_alur = 'OTOMASI'
+              AND tgl_disetujui_kadep IS NOT NULL
+              AND otomasi_selesai IS NULL
+              AND pic_id IS NULL
+              AND sla_respon_at IS NULL
+              AND sla_mulai IS NOT NULL
+              AND sla_respon_tenggat IS NOT NULL
+        ")->fetchAll();
+    } catch (PDOException $e) {
+        // Migrasi 026 belum dijalankan: lewati peringatan respon.
+        error_log('crfSendResponAlerts: ' . $e->getMessage());
+        return 0;
+    }
+
+    $insert = $pdo->prepare('
+        INSERT INTO crf_peringatan_sla (pengajuan_id, jenis_peringatan, urutan_peringatan, tgl_dikirim)
+        VALUES (:id, :type, 1, :tgl_dikirim)
+    ');
+
+    $sent = 0;
+    foreach ($rows as $crf) {
+        $started = new DateTimeImmutable($crf['sla_mulai']);
+        $due = new DateTimeImmutable($crf['sla_respon_tenggat']);
+
+        if ($now > $due) {
+            $type = 'respon_terlambat';
+            $remaining = -slaWorkingSecondsBetween($due, $now);
+        } else {
+            $remaining = slaWorkingSecondsBetween($now, $due);
+            if ($remaining > crfSlaUrgentSeconds(slaWorkingSecondsBetween($started, $due))) {
+                continue;
+            }
+            $type = 'respon_mendesak';
+        }
+
+        $recipients = crfSlaAlertRecipients($pdo, $crf);
+        if (!$recipients) {
+            continue;
+        }
+
+        $crfId = (int) $crf['id'];
+        $number = (string) ($crf['nomor_register'] ?: 'CRF #' . $crfId);
+        $dueText = date('d-m-Y H:i', strtotime($crf['sla_respon_tenggat']));
+
+        if ($type === 'respon_terlambat') {
+            $title = 'Response time terlewati: ' . $number;
+            $message = 'CRF ' . $number . ' belum dikerjakan dan sudah melewati batas response time (' . $dueText . ') sejak '
+                . formatSlaDuration(abs($remaining)) . ' yang lalu. Segera tekan Mulai kerjakan.';
+        } else {
+            $title = 'Response time mendesak: ' . $number;
+            $message = 'CRF ' . $number . ' belum dikerjakan. Sisa response time ' . formatSlaDuration($remaining)
+                . ', batas ' . $dueText . '.';
+        }
+
+        try {
+            $pdo->beginTransaction();
+            $insert->execute(['id' => $crfId, 'type' => $type, 'tgl_dikirim' => $now->format('Y-m-d H:i:s')]);
+            notifyUsers($pdo, $recipients, $title, $message, 'crf/open.php?id=' . $crfId, $crfId);
+            logCrfActivity($pdo, $crfId, 'Peringatan SLA', $title . '. ' . $message, 'Sistem');
+            $pdo->commit();
+            $sent++;
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            if ($e->getCode() !== '23000') {
+                error_log('crfSendResponAlerts: ' . $e->getMessage());
+            }
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log('crfSendResponAlerts: ' . $e->getMessage());
+        }
     }
 
     return $sent;

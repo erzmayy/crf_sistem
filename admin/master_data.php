@@ -55,7 +55,16 @@ require_once __DIR__ . '/../includes/header.php';
                         <i class="bi bi-search"></i>
                         <input type="search" class="form-control form-control-sm" placeholder="Cari kategori..." data-master-filter="#tab-crf" aria-label="Cari kategori">
                     </div>
-                    <button type="button" class="btn btn-sm btn-crf-primary" data-bs-toggle="modal" data-bs-target="#crfCategoryModal" data-category-form="{}">
+                    <?php
+                    // Nilai usulan awal Response Time (jam kerja) untuk form yang masih kosong. Hanya mengisi
+                    // form; tidak tersimpan sebelum admin menekan Simpan. Sesuaikan dengan kesepakatan SLA.
+                    $responDefaults = [
+                        'sla_respon_tinggi_nilai' => 1, 'sla_respon_tinggi_satuan' => 'Jam',
+                        'sla_respon_nilai' => 4, 'sla_respon_satuan' => 'Jam',
+                        'sla_respon_rendah_nilai' => 1, 'sla_respon_rendah_satuan' => 'Hari',
+                    ];
+                    ?>
+                    <button type="button" class="btn btn-sm btn-crf-primary" data-bs-toggle="modal" data-bs-target="#crfCategoryModal" data-category-form="<?= h(json_encode($responDefaults)) ?>">
                         <i class="bi bi-plus-circle"></i> Tambah Kategori
                     </button>
                 </div>
@@ -83,8 +92,18 @@ require_once __DIR__ . '/../includes/header.php';
                             'sla_rendah_nilai' => $category['sla_rendah_nilai'] !== null ? (float) $category['sla_rendah_nilai'] : '',
                             'sla_rendah_satuan' => $category['sla_rendah_satuan'] ?? 'Hari',
                             'kategori_perubahan_lama' => $category['kategori_perubahan_lama'],
+                            'sla_respon_nilai' => isset($category['sla_respon_nilai']) ? (float) $category['sla_respon_nilai'] : '',
+                            'sla_respon_satuan' => $category['sla_respon_satuan'] ?? 'Jam',
+                            'sla_respon_tinggi_nilai' => isset($category['sla_respon_tinggi_nilai']) ? (float) $category['sla_respon_tinggi_nilai'] : '',
+                            'sla_respon_tinggi_satuan' => $category['sla_respon_tinggi_satuan'] ?? 'Jam',
+                            'sla_respon_rendah_nilai' => isset($category['sla_respon_rendah_nilai']) ? (float) $category['sla_respon_rendah_nilai'] : '',
+                            'sla_respon_rendah_satuan' => $category['sla_respon_rendah_satuan'] ?? 'Jam',
                         ];
+                        if (!isset($category['sla_respon_nilai'])) {
+                            $formData = array_merge($formData, $responDefaults);
+                        }
                         $slaMatrix = crfCategorySlaMatrix($category);
+                        $responMatrix = crfCategoryResponMatrix($category);
                         ?>
                         <section class="crf-category-member-row is-collapsed" id="crf-<?= $categoryId ?>" data-master-name="<?= h(mb_strtolower($category['nama'])) ?>">
                             <div class="crf-category-member-head">
@@ -103,6 +122,11 @@ require_once __DIR__ . '/../includes/header.php';
                                         SLA<?php foreach ($slaMatrix as $slaLevel => $slaItem): ?>
                                             · <?= h($slaLevel) ?>: <?= $slaItem ? h(slaLabel($slaItem['value'], $slaItem['unit'])) : '-' ?>
                                         <?php endforeach; ?>
+                                        <?php if (array_filter($responMatrix)): ?>
+                                            <br>Response<?php foreach ($responMatrix as $responLevel => $responItem): ?>
+                                                · <?= h($responLevel) ?>: <?= $responItem ? h(slaLabel($responItem['value'], $responItem['unit'])) : '-' ?>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
                                         · <?= (int) $category['usage_count'] ?> CRF
                                         · Laporan: <?= h($category['kategori_perubahan_lama']) ?>
                                     </div>
@@ -194,7 +218,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="crf-readonly-note">Dipakai untuk export laporan &amp; PDF CRF.</div>
                 </div>
                 <div class="mb-3">
-                    <label class="crf-field-label">Target SLA per Level Urgensi</label>
+                    <label class="crf-field-label">Target Resolution Time (SLA) per Level Urgensi</label>
                     <div class="crf-readonly-note mb-2">
                         Terisi otomatis saat CRF lolos verifikasi CMO. Dihitung dengan hari kerja
                         (Sabtu, Minggu, dan libur tidak dihitung). Tinggi / Rendah kosong = ikut Normal.
@@ -218,6 +242,38 @@ require_once __DIR__ . '/../includes/header.php';
                                     <option value="Hari">Hari</option>
                                     <option value="Jam">Jam</option>
                                     <option value="Menit">Menit</option>
+                                </select>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="mb-3">
+                    <label class="crf-field-label">Target Response Time per Level Urgensi<span class="text-danger">*</span></label>
+                    <div class="crf-readonly-note mb-2">
+                        Response Time: batas waktu PIC CRF menekan <strong>Mulai kerjakan</strong>, dihitung sejak
+                        Kepala Departemen menyetujui (jam kerja 08:00-17:00, hari kerja). Wajib diisi untuk
+                        Normal. Tinggi / Rendah kosong = ikut Normal. Bila kategori belum punya target, form terisi
+                        nilai usulan awal (1 jam, 4 jam, 1 hari); ubah sesuai kesepakatan SLA sebelum menyimpan.
+                    </div>
+                    <?php
+                    $responMatrixFields = [
+                        'Tinggi' => ['sla_respon_tinggi_nilai', 'sla_respon_tinggi_satuan'],
+                        'Normal' => ['sla_respon_nilai', 'sla_respon_satuan'],
+                        'Rendah' => ['sla_respon_rendah_nilai', 'sla_respon_rendah_satuan'],
+                    ];
+                    foreach ($responMatrixFields as $responLevel => [$responValueField, $responUnitField]): ?>
+                        <div class="row g-2 align-items-center mb-2">
+                            <div class="col-3">
+                                <span class="crf-badge <?= h(levelBadgeClass($responLevel)) ?>"><?= h($responLevel) ?></span>
+                            </div>
+                            <div class="col-4">
+                                <input type="number" class="form-control" name="<?= h($responValueField) ?>" min="0" step="0.5" <?= $responLevel === 'Normal' ? 'required' : '' ?> aria-label="Target response time <?= h($responLevel) ?>">
+                            </div>
+                            <div class="col-5">
+                                <select class="form-select" name="<?= h($responUnitField) ?>" aria-label="Satuan response time <?= h($responLevel) ?>">
+                                    <option value="Jam">Jam</option>
+                                    <option value="Menit">Menit</option>
+                                    <option value="Hari">Hari</option>
                                 </select>
                             </div>
                         </div>

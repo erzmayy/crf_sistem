@@ -92,6 +92,9 @@ try {
                 id,
                 sla_nilai,
                 sla_satuan,
+                kategori_id,
+                level,
+                level_urgensi_final,
                 pembahasan_forum_terbuka
             FROM crf_pengajuan
             WHERE id = :id
@@ -126,9 +129,24 @@ try {
             throw new RuntimeException('Tenggat SLA tidak dapat dihitung.');
         }
 
+        // Target respon PIC dibekukan dari matriks kategori x urgensi saat ini;
+        // kategori tanpa target respon dibiarkan kosong (tidak ada SLA respon).
+        $responSla = null;
+        if (!empty($approvalCrf['kategori_id'])) {
+            $responCategory = findCrfCategory($pdo, (int) $approvalCrf['kategori_id']);
+            $responUrgency = $approvalCrf['level_urgensi_final'] ?: ($approvalCrf['level'] ?: 'Normal');
+            $responSla = $responCategory ? (crfCategoryResponMatrix($responCategory)[$responUrgency] ?? null) : null;
+        }
+        $responDueAt = $responSla ? slaDueAt($slaStartedAt, $responSla['value'], $responSla['unit']) : null;
+
         $stmt = $pdo->prepare("
             UPDATE crf_pengajuan
             SET
+                sla_respon_nilai = :respon_nilai,
+                sla_respon_satuan = :respon_satuan,
+                sla_respon_tenggat = :respon_tenggat,
+                sla_respon_at = NULL,
+                sla_respon_hasil = NULL,
                 disetujui_kadep_oleh = :approved_by,
                 tgl_disetujui_kadep = :approved_at,
                 catatan_persetujuan_kadep = :approval_note,
@@ -142,6 +160,9 @@ try {
         ");
 
         $stmt->execute([
+            'respon_nilai' => $responDueAt !== null ? $responSla['value'] : null,
+            'respon_satuan' => $responDueAt !== null ? $responSla['unit'] : null,
+            'respon_tenggat' => $responDueAt,
             'approved_by' => $user['id'],
             'approved_at' => $now,
             'approval_note' => $note !== ''

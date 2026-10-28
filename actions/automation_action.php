@@ -64,7 +64,8 @@ try {
             tahap_alur,
             tgl_disetujui_kadep,
             otomasi_selesai,
-            tgl_uat_lulus
+            tgl_uat_lulus,
+            sla_respon_tenggat
         FROM crf_pengajuan
         WHERE id = :id
         FOR UPDATE
@@ -93,6 +94,11 @@ try {
     $actionByPhase = ['eksekusi' => 'execute', 'perbaikan' => 'resubmit_uat', 'implementasi' => 'complete'];
     if (($actionByPhase[$phase] ?? null) !== $action) {
         $failRedirect('Aksi ini tidak tersedia pada fase CRF saat ini.', '../otomasi/detail.php?id=' . $id);
+    }
+
+    // CRF dengan target Response Time harus diambil dulu (Mulai kerjakan) sebelum eksekusi diselesaikan.
+    if ($action === 'execute' && empty($crf['pic_id']) && !empty($crf['sla_respon_tenggat'])) {
+        $failRedirect('Tekan Mulai kerjakan terlebih dahulu sebelum menyelesaikan eksekusi.', '../otomasi/detail.php?id=' . $id);
     }
 
     if ($action === 'complete') {
@@ -129,6 +135,8 @@ try {
             SET pic_id = :handler_id, pic_nama = :handler_name, tgl_ditugaskan = NOW()
             WHERE id = :id
         ')->execute(['handler_id' => (int) $user['id'], 'handler_name' => $actor, 'id' => $id]);
+        // PIC yang langsung menyelesaikan tanpa "Mulai kerjakan": respon dicatat sekarang.
+        recordCrfResponse($pdo, $id, $now);
     }
 
     if ($action === 'execute') {
