@@ -57,13 +57,23 @@ function buildAdminCrfXlsx(array $sheets): string
             . '" topLeftCell="A' . ($headerRow + 1) . '" activePane="bottomLeft" state="frozen"/>'
             . '</sheetView></sheetViews><sheetFormatPr defaultRowHeight="20"/>'
             . '<cols>';
-        foreach ($sheet['widths'] as $index => $width) {
+        // Baris judul (18 pt) dan periode beku di atas, jadi harus muat tanpa digeser. Lembar dengan sedikit
+        // kolom (mis. Tren Bulanan) diberi kolom kosong tambahan agar area judul cukup lebar.
+        $widths = $sheet['widths'];
+        $titleColumns = $columnCount;
+        $titleWidth = array_sum($widths);
+        while ($titleWidth < 125 && $titleColumns < $columnCount + 10) {
+            $widths[] = 14;
+            $titleWidth += 14;
+            $titleColumns++;
+        }
+        foreach ($widths as $index => $width) {
             $column = $index + 1;
             $xml .= '<col min="' . $column . '" max="' . $column
                 . '" width="' . (float) $width . '" customWidth="1"/>';
         }
         $xml .= '</cols><sheetData>';
-        $titleLastColumn = $columnCount > 0 ? $lastColumn : 'A';
+        $titleLastColumn = $titleColumns > 0 ? $columnName($titleColumns) : 'A';
         $xml .= '<row r="1" ht="32" customHeight="1">'
             . $cellXml($sheet['title'], 'A1', 1) . '</row>';
         $xml .= '<row r="2" ht="23" customHeight="1">'

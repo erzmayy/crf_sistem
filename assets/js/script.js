@@ -11,10 +11,15 @@ document.addEventListener('DOMContentLoaded', function () {
   var crfDataEl = crfRoot.getAttribute ? crfRoot : document.body;
 
 
+  // Jam kerja SLA (detik sejak 00:00), sama dengan config/sla.php: 08:00-17:00.
+  var slaWorkStart = Number(crfDataEl.getAttribute('data-sla-work-start')) || 8 * 3600;
+  var slaWorkEnd = Number(crfDataEl.getAttribute('data-sla-work-end')) || 17 * 3600;
+  var slaWorkDayMinutes = Math.floor((slaWorkEnd - slaWorkStart) / 60);
+
   function formatSlaDuration(totalSeconds) {
     var totalMinutes = Math.max(0, Math.floor(totalSeconds / 60));
-    var days = Math.floor(totalMinutes / 1440);
-    var hours = Math.floor((totalMinutes % 1440) / 60);
+    var days = Math.floor(totalMinutes / slaWorkDayMinutes);
+    var hours = Math.floor((totalMinutes % slaWorkDayMinutes) / 60);
     var minutes = totalMinutes % 60;
     var parts = [];
 
@@ -53,9 +58,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     while (cursor < end) {
       var dayEnd = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 1);
-      var segmentEnd = dayEnd < end ? dayEnd : end;
-      if (slaIsWorkingDay(cursor)) { total += (segmentEnd - cursor) / 1000; }
-      cursor = segmentEnd;
+      if (slaIsWorkingDay(cursor)) {
+        var workStart = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate(), 0, 0, slaWorkStart);
+        var workEnd = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate(), 0, 0, slaWorkEnd);
+        var from = cursor > workStart ? cursor : workStart;
+        var to = end < workEnd ? end : workEnd;
+        if (to > from) { total += (to - from) / 1000; }
+      }
+      cursor = dayEnd;
     }
 
     return Math.round(total);
@@ -69,13 +79,40 @@ document.addEventListener('DOMContentLoaded', function () {
     return Math.min(3600, Math.floor(total * 0.25));
   }
 
+  // Versi singkat untuk kolom sempit di daftar: "1 hr 8 j", "2 j 6 m" (sama dengan formatSlaDurationShort PHP).
+  function formatSlaShort(totalSeconds) {
+    var totalMinutes = Math.max(0, Math.floor(totalSeconds / 60));
+    var days = Math.floor(totalMinutes / slaWorkDayMinutes);
+    var hours = Math.floor((totalMinutes % slaWorkDayMinutes) / 60);
+    var minutes = totalMinutes % 60;
+    var parts = [];
+    if (days > 0) { parts.push(days + ' hr'); }
+    if (hours > 0) { parts.push(hours + ' j'); }
+    if (minutes > 0 || parts.length === 0) { parts.push(minutes + ' m'); }
+    return parts.slice(0, 2).join(' ');
+  }
+
+  // Bar progres waktu SLA terpakai (0-100%) pada panel; warna mengikuti status.
+  function setSlaBar(panel, startedAt, dueAt, tone) {
+    var bar = panel.querySelector('[data-sla-bar]');
+    if (!bar || !startedAt) { return; }
+    var total = slaWorkingSecondsBetween(startedAt, dueAt);
+    if (total <= 0) { return; }
+    var remaining = slaWorkingSecondsBetween(Math.floor(Date.now() / 1000), dueAt);
+    var percent = Math.max(0, Math.min(100, Math.round((total - remaining) / total * 100)));
+    var fill = bar.querySelector('span');
+    if (fill) { fill.style.width = percent + '%'; }
+    bar.setAttribute('aria-valuenow', String(percent));
+    bar.className = 'crf-sla-bar is-' + tone;
+  }
+
   function updateLiveSlaStatus() {
     crfRoot.querySelectorAll('[data-sla-live="true"]').forEach(function (slaGrid) {
       var dueAt = Number(slaGrid.getAttribute('data-sla-due-at'));
       var remaining = slaWorkingSecondsBetween(Math.floor(Date.now() / 1000), dueAt);
       var statusBadge = slaGrid.querySelector('[data-sla-status-label]');
       var statusDetail = slaGrid.querySelector('[data-sla-status-detail]');
-      var alertBox = slaGrid.parentElement.querySelector('[data-sla-alert]');
+      var alertBox = slaGrid.querySelector('[data-sla-alert]') || slaGrid.parentElement.querySelector('[data-sla-alert]');
       var alertIcon = alertBox ? alertBox.querySelector('[data-sla-alert-icon]') : null;
       var alertMessage = alertBox ? alertBox.querySelector('[data-sla-alert-message]') : null;
       var state = '';
@@ -94,6 +131,9 @@ document.addEventListener('DOMContentLoaded', function () {
         statusBadge.className = 'badge text-bg-danger';
         state = 'overdue';
       }
+
+      setSlaBar(slaGrid, Number(slaGrid.getAttribute('data-sla-started-at')), dueAt,
+        state === 'overdue' ? 'danger' : (state === 'approaching' ? 'warning' : 'success'));
 
       if (!alertBox) { return; }
       alertBox.classList.remove('alert-warning', 'alert-danger');
@@ -116,6 +156,59 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
+    // SLA respon PIC (berhenti di server begitu PIC menekan "Mulai kerjakan").
+    crfRoot.querySelectorAll('[data-sla-respon-live="true"]').forEach(function (responBox) {
+      var dueAt = Number(responBox.getAttribute('data-sla-due-at'));
+      var startedAt = Number(responBox.getAttribute('data-sla-started-at'));
+      var remaining = slaWorkingSecondsBetween(Math.floor(Date.now() / 1000), dueAt);
+      var label = responBox.querySelector('[data-sla-respon-label]');
+      var detail = responBox.querySelector('[data-sla-respon-detail]');
+      var alertBox = responBox.querySelector('[data-sla-respon-alert]');
+      var alertIcon = alertBox ? alertBox.querySelector('[data-sla-respon-alert-icon]') : null;
+      var alertMessage = alertBox ? alertBox.querySelector('[data-sla-respon-alert-message]') : null;
+      var state = '';
+
+      if (!Number.isFinite(dueAt) || !label || !detail) { return; }
+
+      if (remaining >= 0) {
+        var total = startedAt ? slaWorkingSecondsBetween(startedAt, dueAt) : 0;
+        var approaching = remaining <= Math.min(3600, Math.floor(total * 0.25));
+        label.textContent = 'Menunggu respon';
+        detail.textContent = responBox.hasAttribute('data-sla-short')
+          ? 'sisa ' + formatSlaShort(remaining)
+          : 'Sisa response time ' + formatSlaDuration(remaining) + '.';
+        label.className = 'badge text-bg-' + (approaching ? 'warning' : 'primary');
+        state = approaching ? 'approaching' : '';
+      } else {
+        label.textContent = 'Response terlewati';
+        detail.textContent = responBox.hasAttribute('data-sla-short')
+          ? 'terlambat ' + formatSlaShort(Math.abs(remaining))
+          : 'Terlambat ' + formatSlaDuration(Math.abs(remaining)) + ' dari batas response time.';
+        label.className = 'badge text-bg-danger';
+        state = 'overdue';
+      }
+
+      setSlaBar(responBox, startedAt, dueAt,
+        state === 'overdue' ? 'danger' : (state === 'approaching' ? 'warning' : 'primary'));
+
+      if (!alertBox) { return; }
+      alertBox.classList.remove('alert-warning', 'alert-danger');
+      if (!state) {
+        alertBox.classList.add('d-none');
+        return;
+      }
+      alertBox.classList.remove('d-none');
+      alertBox.classList.add(state === 'overdue' ? 'alert-danger' : 'alert-warning');
+      if (alertIcon) {
+        alertIcon.className = 'bi bi-' + (state === 'overdue' ? 'exclamation-triangle-fill' : 'clock-fill');
+      }
+      if (alertMessage) {
+        alertMessage.textContent = state === 'overdue'
+          ? 'Batas response time terlewati. PIC CRF belum mulai mengerjakan.'
+          : 'Batas response time hampir terlewati.';
+      }
+    });
+
     crfRoot.querySelectorAll('[data-sla-countdown="true"]').forEach(function (slaCell) {
       var dueAt = Number(slaCell.getAttribute('data-sla-due-at'));
       var remaining = slaWorkingSecondsBetween(Math.floor(Date.now() / 1000), dueAt);
@@ -128,20 +221,24 @@ document.addEventListener('DOMContentLoaded', function () {
         var approaching = remaining <= slaUrgentSeconds(slaCell, dueAt);
         statusBadge.textContent = 'Masih dalam SLA';
         statusBadge.className = 'badge text-bg-' + (approaching ? 'warning' : 'success');
-        statusDetail.textContent = 'Sisa waktu ' + formatSlaDuration(remaining) + '.';
+        statusDetail.textContent = slaCell.hasAttribute('data-sla-short')
+          ? 'sisa ' + formatSlaShort(remaining)
+          : 'Sisa waktu ' + formatSlaDuration(remaining) + '.';
         return;
       }
 
       statusBadge.textContent = 'SLA Terlewati';
       statusBadge.className = 'badge text-bg-danger';
-      statusDetail.textContent = 'Sudah melewati SLA selama '
-        + formatSlaDuration(Math.abs(remaining)) + '.';
+      statusDetail.textContent = slaCell.hasAttribute('data-sla-short')
+        ? 'terlambat ' + formatSlaShort(Math.abs(remaining))
+        : 'Sudah melewati SLA selama ' + formatSlaDuration(Math.abs(remaining)) + '.';
     });
   }
 
   updateLiveSlaStatus();
   if (
     crfRoot.querySelector('[data-sla-live="true"]')
+    || crfRoot.querySelector('[data-sla-respon-live="true"]')
     || crfRoot.querySelector('[data-sla-countdown="true"]')
   ) {
     window.setInterval(updateLiveSlaStatus, 60000);

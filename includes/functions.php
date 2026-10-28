@@ -327,7 +327,7 @@ function slaDueAt(?string $startedAt, $value, ?string $unit): ?string
                 $seconds = (int) round($numeric * 3600);
                 break;
             case 'Hari':
-                $seconds = (int) round($numeric * 86400);
+                $seconds = (int) round($numeric * CRF_SLA_WORK_SECONDS_PER_DAY);
                 break;
             default:
                 return null;
@@ -349,33 +349,53 @@ function slaIsWorkingDay(DateTimeInterface $date): bool
 }
 
 /**
- * Tambah durasi SLA yang hanya berjalan di hari kerja.
- * Contoh: Jumat 16:00 + 1 Hari = Senin 16:00.
+ * Awal / akhir jam kerja SLA pada tanggal $date (config/sla.php).
+ *
+ * @return array{0:DateTimeImmutable,1:DateTimeImmutable}
+ */
+function slaWorkWindow(DateTimeInterface $date): array
+{
+    $midnight = DateTimeImmutable::createFromInterface($date)->setTime(0, 0, 0);
+
+    return [
+        $midnight->modify('+' . CRF_SLA_WORK_START . ' seconds'),
+        $midnight->modify('+' . CRF_SLA_WORK_END . ' seconds'),
+    ];
+}
+
+/**
+ * Tambah durasi SLA yang hanya berjalan di hari dan jam kerja.
+ * Contoh (08:00-17:00): Jumat 16:00 + 1 Hari = Senin 16:00.
  */
 function slaAddWorkingSeconds(DateTimeInterface $start, int $seconds): DateTimeImmutable
 {
     $cursor = DateTimeImmutable::createFromInterface($start);
 
     while (true) {
-        if (!slaIsWorkingDay($cursor)) {
+        [$workStart, $workEnd] = slaWorkWindow($cursor);
+
+        if (!slaIsWorkingDay($cursor) || $cursor >= $workEnd) {
             $cursor = $cursor->modify('tomorrow');
             continue;
         }
 
-        $dayEnd = $cursor->modify('tomorrow');
-        $available = $dayEnd->getTimestamp() - $cursor->getTimestamp();
+        if ($cursor < $workStart) {
+            $cursor = $workStart;
+        }
+
+        $available = $workEnd->getTimestamp() - $cursor->getTimestamp();
 
         if ($seconds <= $available) {
             return $cursor->modify('+' . $seconds . ' seconds');
         }
 
         $seconds -= $available;
-        $cursor = $dayEnd;
+        $cursor = $cursor->modify('tomorrow');
     }
 }
 
 /**
- * Durasi (detik) di antara dua waktu yang jatuh pada hari kerja saja.
+ * Durasi (detik) di antara dua waktu yang jatuh pada hari dan jam kerja saja.
  */
 function slaWorkingSecondsBetween(DateTimeInterface $start, DateTimeInterface $end): int
 {
@@ -385,23 +405,32 @@ function slaWorkingSecondsBetween(DateTimeInterface $start, DateTimeInterface $e
 
     while ($cursor < $end) {
         $dayEnd = $cursor->modify('tomorrow');
-        $segmentEnd = $dayEnd < $end ? $dayEnd : $end;
 
         if (slaIsWorkingDay($cursor)) {
-            $total += $segmentEnd->getTimestamp() - $cursor->getTimestamp();
+            [$workStart, $workEnd] = slaWorkWindow($cursor);
+            $from = $cursor > $workStart ? $cursor : $workStart;
+            $to = $end < $workEnd ? $end : $workEnd;
+
+            if ($to > $from) {
+                $total += $to->getTimestamp() - $from->getTimestamp();
+            }
         }
 
-        $cursor = $segmentEnd;
+        $cursor = $dayEnd;
     }
 
     return $total;
 }
 
+/**
+ * Format durasi jam kerja: 1 Hari = 1 hari kerja (CRF_SLA_WORK_SECONDS_PER_DAY).
+ */
 function formatSlaDuration(int $seconds): string
 {
     $minutes = max(0, intdiv($seconds, 60));
-    $days = intdiv($minutes, 1440);
-    $hours = intdiv($minutes % 1440, 60);
+    $dayMinutes = intdiv(CRF_SLA_WORK_SECONDS_PER_DAY, 60);
+    $days = intdiv($minutes, $dayMinutes);
+    $hours = intdiv($minutes % $dayMinutes, 60);
     $remainingMinutes = $minutes % 60;
     $parts = [];
 
@@ -425,6 +454,105 @@ function formatSlaDuration(int $seconds): string
 function crfSlaUrgentSeconds(int $totalSeconds): int
 {
     return (int) min(3600, floor($totalSeconds * 0.25));
+}
+
+/**
+ * Durasi jam kerja versi singkat untuk ruang sempit (daftar): "1 hr 8 j", "2 j 6 m".
+ * Maksimal dua satuan; 1 hr = 1 hari kerja (CRF_SLA_WORK_SECONDS_PER_DAY).
+ */
+function formatSlaDurationShort(int $seconds): string
+{
+    $minutes = max(0, intdiv($seconds, 60));
+    $dayMinutes = intdiv(CRF_SLA_WORK_SECONDS_PER_DAY, 60);
+    $parts = [];
+
+    if (($days = intdiv($minutes, $dayMinutes)) > 0) {
+        $parts[] = $days . ' hr';
+    }
+    if (($hours = intdiv($minutes % $dayMinutes, 60)) > 0) {
+        $parts[] = $hours . ' j';
+    }
+    if (($mins = $minutes % 60) > 0 || !$parts) {
+        $parts[] = $mins . ' m';
+    }
+
+    return implode(' ', array_slice($parts, 0, 2));
+}
+
+/**
+ * Lama CRF menunggu di tahap yang dipegang CMO atau Kadep Operasional (verifikasi CMO, persetujuan Kadep,
+ * UAT, finalisasi). Hanya informasi, tanpa target: supaya CRF yang tertahan terlihat di daftar.
+ * Waktu masuk tahap diambil dari log aktivitas terbaru yang menetapkan status tahap itu
+ * (cadangan: tgl_diubah). Durasi dalam jam kerja, sama dengan SLA.
+ *
+ * @param  array<int,array> $rows baris CRF (butuh id, status, tahap_alur, pembahasan_forum_terbuka, tgl_diubah)
+ * @return array<int,array{since:string,short:string,seconds:int}> diindeks id CRF
+ */
+function crfWaitingInfo(PDO $pdo, array $rows, ?DateTimeImmutable $now = null): array
+{
+    $now = $now ?? new DateTimeImmutable('now');
+    $stageStatuses = [
+        'CMO_FILTER' => 'Menunggu Verifikasi',
+        'kadep_operasional' => 'Menunggu Persetujuan',
+        'UAT' => 'Menunggu UAT',
+        'CMO_FINAL' => 'Menunggu Finalisasi',
+    ];
+
+    $candidates = [];
+    foreach ($rows as $row) {
+        if (
+            isset($stageStatuses[$row['tahap_alur'] ?? ''])
+            && in_array($row['status'] ?? '', ['Belum Ditindak Lanjuti', 'Dalam Proses'], true)
+            && empty($row['pembahasan_forum_terbuka'])
+        ) {
+            $candidates[(int) $row['id']] = $row;
+        }
+    }
+    if (!$candidates) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($candidates), '?'));
+    $stmt = $pdo->prepare("
+        SELECT pengajuan_id, status_baru, MAX(tgl_dibuat) AS tgl
+        FROM crf_log_aktivitas
+        WHERE pengajuan_id IN ({$placeholders})
+          AND (status_baru IN ('Menunggu Verifikasi', 'Menunggu Persetujuan', 'Menunggu UAT', 'Menunggu Finalisasi')
+               OR status_baru LIKE 'Pembahasan Forum selesai%')
+        GROUP BY pengajuan_id, status_baru
+    ");
+    $stmt->execute(array_keys($candidates));
+    $logged = [];
+    foreach ($stmt->fetchAll() as $log) {
+        $logged[(int) $log['pengajuan_id']][] = $log;
+    }
+
+    $result = [];
+    foreach ($candidates as $id => $row) {
+        $stageStatus = $stageStatuses[$row['tahap_alur']];
+        $since = null;
+        foreach ($logged[$id] ?? [] as $log) {
+            // Setelah Forum memutuskan, CRF kembali ke CMO: hitung dari keputusan itu.
+            $matches = $log['status_baru'] === $stageStatus
+                || ($row['tahap_alur'] === 'CMO_FILTER' && strpos((string) $log['status_baru'], 'Pembahasan Forum selesai') === 0);
+            if ($matches && ($since === null || $log['tgl'] > $since)) {
+                $since = $log['tgl'];
+            }
+        }
+        $since = $since ?? ($row['tgl_diubah'] ?? null);
+        if (empty($since)) {
+            continue;
+        }
+
+        $seconds = slaWorkingSecondsBetween(new DateTimeImmutable($since), $now);
+        $result[$id] = [
+            'since' => date('d-m-Y H:i', strtotime($since)),
+            'short' => $seconds < 60 ? 'baru saja' : formatSlaDurationShort($seconds),
+            'seconds' => $seconds,
+        ];
+    }
+
+    return $result;
 }
 
 function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
@@ -457,7 +585,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
     if ($completedAt !== null && $startedAt !== null && $dueAt !== null) {
         $elapsed = slaWorkingSecondsBetween($startedAt, $completedAt);
         if ($completedAt <= $dueAt) {
-            $remaining = $dueAt->getTimestamp() - $completedAt->getTimestamp();
+            $remaining = slaWorkingSecondsBetween($completedAt, $dueAt);
             return [
                 'label' => 'Selesai sebelum SLA',
                 'detail' => 'Lebih cepat ' . formatSlaDuration($remaining) . '.',
@@ -470,7 +598,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
             ];
         }
 
-        $overdue = $completedAt->getTimestamp() - $dueAt->getTimestamp();
+        $overdue = slaWorkingSecondsBetween($dueAt, $completedAt);
         return [
             'label' => 'Terlambat',
             'detail' => 'Melewati batas SLA ' . formatSlaDuration($overdue) . '.',
@@ -741,7 +869,7 @@ function crfPirReminderInfo(PDO $pdo, array $crf): array
     // Penantian PIR dimulai saat Otomasi mengisi implementasi; data lama memakai waktu eksekusi selesai.
     $pirStartedAt = $crf['tgl_implementasi_diisi'] ?? $crf['otomasi_selesai'] ?? null;
     $waitingDays = !empty($pirStartedAt)
-        ? (int) floor(slaWorkingSecondsBetween(new DateTimeImmutable($pirStartedAt), new DateTimeImmutable()) / 86400)
+        ? (int) floor(slaWorkingSecondsBetween(new DateTimeImmutable($pirStartedAt), new DateTimeImmutable()) / CRF_SLA_WORK_SECONDS_PER_DAY)
         : null;
 
     return [
@@ -830,6 +958,14 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
         $categoryId = 0;
     }
 
+    $requestType = $filterString($filters['type'] ?? '');
+    if (in_array($requestType, crfRequestTypeOptions(), true)) {
+        $where[] = 'cr.jenis_pengajuan = :list_request_type';
+        $params['list_request_type'] = $requestType;
+    } else {
+        $requestType = '';
+    }
+
     $displayStatus = $filterString($filters['display_status'] ?? '');
     $displayConditions = crfDisplayStatusConditions('cr');
     if (isset($displayConditions[$displayStatus])) {
@@ -866,6 +1002,7 @@ function applyCrfRequestFilters(PDO $pdo, array &$where, array &$params, array $
         'date_from' => $dateFrom,
         'date_to' => $dateTo,
         'category_id' => $categoryId,
+        'type' => $requestType,
         'display_status' => $displayStatus,
         'departments' => $departmentStmt->fetchAll(PDO::FETCH_COLUMN),
         'categories' => $categories,
@@ -1212,6 +1349,136 @@ function crfStandardSla(PDO $pdo, ?int $categoryId, ?string $urgency): ?array
     $category = findCrfCategory($pdo, $categoryId);
 
     return $category ? crfCategorySlaMatrix($category)[$urgency] : null;
+}
+
+/**
+ * Matriks target respon PIC satu kategori per level urgensi.
+ * Kolom sla_respon_nilai / sla_respon_satuan = urgensi Normal; Tinggi/Rendah
+ * kosong ikut Normal. Normal kosong berarti kategori tanpa target respon.
+ *
+ * @return array<string,?array{value:float,unit:string}>
+ */
+function crfCategoryResponMatrix(array $category): array
+{
+    $pick = static function ($value, $unit): ?array {
+        return ($value !== null && $value !== '' && (float) $value > 0 && in_array($unit, ['Menit', 'Jam', 'Hari'], true))
+            ? ['value' => (float) $value, 'unit' => (string) $unit]
+            : null;
+    };
+    $normal = $pick($category['sla_respon_nilai'] ?? null, $category['sla_respon_satuan'] ?? null);
+
+    return [
+        'Tinggi' => $pick($category['sla_respon_tinggi_nilai'] ?? null, $category['sla_respon_tinggi_satuan'] ?? null) ?? $normal,
+        'Normal' => $normal,
+        'Rendah' => $pick($category['sla_respon_rendah_nilai'] ?? null, $category['sla_respon_rendah_satuan'] ?? null) ?? $normal,
+    ];
+}
+
+/**
+ * Status SLA respon PIC: dari persetujuan Kadep sampai PIC menekan
+ * "Mulai kerjakan". Null bila tidak ada yang perlu ditampilkan (CRF belum
+ * disetujui, dibatalkan, atau CRF lama tanpa target respon).
+ */
+function getCrfResponStatus(array $crf, ?DateTimeImmutable $now = null): ?array
+{
+    if (($crf['status'] ?? '') === 'Cancel' || empty($crf['sla_mulai'])) {
+        return null;
+    }
+    if (empty($crf['sla_respon_tenggat']) && empty($crf['sla_respon_at'])) {
+        return null;
+    }
+
+    $now = $now ?? new DateTimeImmutable('now');
+    $startedAt = new DateTimeImmutable($crf['sla_mulai']);
+    $dueAt = !empty($crf['sla_respon_tenggat']) ? new DateTimeImmutable($crf['sla_respon_tenggat']) : null;
+    $respondedAt = !empty($crf['sla_respon_at']) ? new DateTimeImmutable($crf['sla_respon_at']) : null;
+
+    $base = ['alert' => null, 'remaining' => null, 'live' => false, 'elapsed' => null];
+
+    if ($respondedAt !== null) {
+        $elapsedSeconds = slaWorkingSecondsBetween($startedAt, $respondedAt);
+        $elapsedText = $elapsedSeconds < 60 ? 'kurang dari 1 menit' : formatSlaDuration($elapsedSeconds);
+        $base['elapsed'] = $elapsedText;
+
+        if ($dueAt === null) {
+            return $base + ['label' => 'Sudah direspons', 'class' => 'secondary',
+                'detail' => 'Response time ' . $elapsedText . '.'];
+        }
+        if ($respondedAt <= $dueAt) {
+            return $base + ['label' => 'Response sesuai SLA', 'class' => 'success',
+                'detail' => 'Response time ' . $elapsedText . ', sesuai target.'];
+        }
+
+        return $base + ['label' => 'Response melebihi SLA', 'class' => 'danger',
+            'detail' => 'Response time ' . $elapsedText . ', melebihi target '
+                . formatSlaDuration(slaWorkingSecondsBetween($dueAt, $respondedAt)) . '.'];
+    }
+
+    if ($now <= $dueAt) {
+        $remaining = slaWorkingSecondsBetween($now, $dueAt);
+        $approaching = $remaining <= crfSlaUrgentSeconds(slaWorkingSecondsBetween($startedAt, $dueAt));
+
+        return [
+            'label' => 'Menunggu respon',
+            'detail' => 'Sisa response time ' . formatSlaDuration($remaining) . '.',
+            'class' => $approaching ? 'warning' : 'primary',
+            'alert' => $approaching ? 'approaching' : null,
+            'remaining' => $remaining,
+            'live' => true,
+            'elapsed' => null,
+        ];
+    }
+
+    return [
+        'label' => 'Response terlewati',
+        'detail' => 'Terlambat ' . formatSlaDuration(slaWorkingSecondsBetween($dueAt, $now)) . ' dari batas response time.',
+        'class' => 'danger',
+        'alert' => 'overdue',
+        'remaining' => null,
+        'overdue' => slaWorkingSecondsBetween($dueAt, $now),
+        'live' => true,
+        'elapsed' => null,
+    ];
+}
+
+/**
+ * Persentase waktu SLA yang sudah terpakai (0-100), dalam jam kerja.
+ * $end kosong = sekarang. Null bila mulai atau batas tidak tersedia.
+ */
+function crfSlaProgressPercent(?string $startedAt, ?string $dueAt, ?string $end = null, ?DateTimeImmutable $now = null): ?int
+{
+    if (empty($startedAt) || empty($dueAt)) {
+        return null;
+    }
+
+    $start = new DateTimeImmutable($startedAt);
+    $total = slaWorkingSecondsBetween($start, new DateTimeImmutable($dueAt));
+    if ($total <= 0) {
+        return null;
+    }
+
+    $stop = !empty($end) ? new DateTimeImmutable($end) : ($now ?? new DateTimeImmutable('now'));
+    $used = slaWorkingSecondsBetween($start, $stop);
+
+    return (int) max(0, min(100, round($used / $total * 100)));
+}
+
+/**
+ * Catat respon PIC (sekali saja): isi sla_respon_at dan hasilnya. Aman dipanggil
+ * berulang; tidak menimpa respon yang sudah tercatat.
+ */
+function recordCrfResponse(PDO $pdo, int $crfId, string $respondedAt): void
+{
+    $pdo->prepare("
+        UPDATE crf_pengajuan
+        SET sla_respon_at = :at,
+            sla_respon_hasil = CASE
+                WHEN sla_respon_tenggat IS NULL THEN NULL
+                WHEN :at2 <= sla_respon_tenggat THEN 'Sesuai SLA'
+                ELSE 'Melebihi SLA'
+            END
+        WHERE id = :id AND sla_respon_at IS NULL
+    ")->execute(['at' => $respondedAt, 'at2' => $respondedAt, 'id' => $crfId]);
 }
 
 function crfSlaEquals(?array $sla, $value, ?string $unit): bool

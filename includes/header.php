@@ -54,7 +54,7 @@ if ($crfEmbedded) {
     }
     ?>
 <link href="<?= h($styleUrl) ?>" rel="stylesheet">
-<div class="crf-module crf-module--embedded" data-app-base="<?= h($appBasePath) ?>" data-sla-holidays="<?= h(json_encode(CRF_SLA_HOLIDAYS)) ?>">
+<div class="crf-module crf-module--embedded" data-app-base="<?= h($appBasePath) ?>" data-sla-holidays="<?= h(json_encode(CRF_SLA_HOLIDAYS)) ?>" data-sla-work-start="<?= CRF_SLA_WORK_START ?>" data-sla-work-end="<?= CRF_SLA_WORK_END ?>">
 <div class="crf-content-shell">
 <?php
     return;
@@ -70,7 +70,7 @@ if ($crfEmbedded) {
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="<?= h($styleUrl) ?>" rel="stylesheet">
 </head>
-<body class="crf-module" data-app-base="<?= h($appBasePath) ?>" data-sla-holidays="<?= h(json_encode(CRF_SLA_HOLIDAYS)) ?>">
+<body class="crf-module" data-app-base="<?= h($appBasePath) ?>" data-sla-holidays="<?= h(json_encode(CRF_SLA_HOLIDAYS)) ?>" data-sla-work-start="<?= CRF_SLA_WORK_START ?>" data-sla-work-end="<?= CRF_SLA_WORK_END ?>">
 <a class="visually-hidden-focusable crf-skip-link" href="#crf-main">Lewati ke konten utama</a>
 <div class="crf-app-shell">
     <div class="crf-sidebar-overlay"></div>

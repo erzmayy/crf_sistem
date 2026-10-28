@@ -45,6 +45,7 @@ $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
     'date_from' => $_GET['date_from'] ?? '',
     'date_to' => $_GET['date_to'] ?? '',
     'category_id' => $_GET['category_id'] ?? '',
+    'type' => $_GET['type'] ?? '',
 ]);
 $search = $listFilters['search'];
 
@@ -91,8 +92,13 @@ $sql = "
     WHERE " . implode(' AND ', $where) . "
     ORDER BY " . ($queue === 'history'
         ? 'cr.tgl_diubah DESC'
-        // Tenggat SLA terdekat dulu, lalu urgensi (Tinggi lebih dulu) dan waktu persetujuan.
-        : "cr.sla_tenggat ASC,
+        // Tenggat terdekat dulu (CRF yang belum diambil memakai batas respon bila lebih dekat),
+        // lalu urgensi (Tinggi lebih dulu) dan waktu persetujuan.
+        : "CASE
+            WHEN cr.pic_id IS NULL AND cr.sla_respon_at IS NULL AND cr.sla_respon_tenggat IS NOT NULL
+                THEN LEAST(cr.sla_respon_tenggat, cr.sla_tenggat)
+            ELSE cr.sla_tenggat
+        END ASC,
         FIELD(COALESCE(cr.level_urgensi_final, cr.level), 'Tinggi', 'Normal', 'Rendah') = 0,
         FIELD(COALESCE(cr.level_urgensi_final, cr.level), 'Tinggi', 'Normal', 'Rendah'),
         cr.tgl_disetujui_kadep ASC,
@@ -111,7 +117,9 @@ $requests = $stmt->fetchAll();
 $summaryStmt = $pdo->query("
     SELECT
         COUNT(*) AS in_execution,
-        SUM(CASE WHEN sla_tenggat IS NOT NULL AND sla_tenggat < NOW() THEN 1 ELSE 0 END) AS overdue
+        SUM(CASE WHEN sla_tenggat IS NOT NULL AND sla_tenggat < NOW() THEN 1 ELSE 0 END) AS overdue,
+        SUM(CASE WHEN pic_id IS NULL AND sla_respon_at IS NULL
+                  AND sla_respon_tenggat IS NOT NULL AND sla_respon_tenggat < NOW() THEN 1 ELSE 0 END) AS respon_overdue
     FROM crf_pengajuan cr
     WHERE cr.tahap_alur = 'OTOMASI'
       AND cr.tgl_disetujui_kadep IS NOT NULL
@@ -122,6 +130,7 @@ $summary = $summaryStmt->fetch() ?: [];
 
 $inExecution = (int) ($summary['in_execution'] ?? 0);
 $overdueCount = (int) ($summary['overdue'] ?? 0);
+$responOverdueCount = (int) ($summary['respon_overdue'] ?? 0);
 
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
@@ -181,6 +190,11 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="crf-stat-card">
                 <span><i class="bi bi-exclamation-triangle"></i> SLA Terlewati</span>
                 <strong><?= $overdueCount ?></strong>
+            </div>
+
+            <div class="crf-stat-card">
+                <span><i class="bi bi-hourglass-split"></i> Response Time Terlewati</span>
+                <strong><?= $responOverdueCount ?></strong>
             </div>
         </div>
 
@@ -264,46 +278,78 @@ require_once __DIR__ . '/../includes/header.php';
 
                                 <?php if ($queue !== 'history'): ?>
                                     <?php $rowSlaStatus = getCrfSlaStatus($row); ?>
+                                    <?php
+                                    // Belum diambil PIC: tampilkan status respon; setelah diambil, hanya status SLA.
+                                    $rowResponStatus = empty($row['pic_id']) ? getCrfResponStatus($row) : null;
+                                    $rowResponLive = $rowResponStatus !== null && !empty($rowResponStatus['live']) && !empty($row['sla_respon_tenggat']);
+                                    ?>
+                                    <?php
+                                    // Satu fokus per baris: belum diambil = Response Time (Resolution Time jadi baris abu-abu),
+                                    // sudah diambil = Resolution Time. Durasi dipersingkat agar muat di kolom sempit.
+                                    $rowSlaShort = $rowSlaStatus['remaining'] !== null
+                                        ? 'sisa ' . formatSlaDurationShort((int) $rowSlaStatus['remaining'])
+                                        : ($rowSlaStatus['overdue'] !== null ? 'terlambat ' . formatSlaDurationShort((int) $rowSlaStatus['overdue']) : '');
+                                    $rowSlaTimes = !empty($row['sla_tenggat'])
+                                        ? 'data-sla-started-at="' . (int) strtotime((string) ($row['sla_mulai'] ?? '')) . '" data-sla-due-at="' . (int) strtotime($row['sla_tenggat']) . '"'
+                                        : '';
+                                    ?>
                                     <td data-label="Status SLA">
-                                        <div
-                                            class="automation-sla-status"
-                                            <?= $rowSlaStatus['live'] && !empty($row['sla_tenggat'])
-                                                ? 'data-sla-countdown="true" data-sla-started-at="' . (int) strtotime((string) ($row['sla_mulai'] ?? '')) . '" data-sla-due-at="' . (int) strtotime($row['sla_tenggat']) . '"'
-                                                : '' ?>
-                                        >
-                                            <span class="badge text-bg-<?= h($rowSlaStatus['class']) ?>" data-sla-status-label>
-                                                <?= $rowSlaStatus['label'] === 'Melewati SLA'
-                                                    ? 'SLA Terlewati'
-                                                    : h($rowSlaStatus['label']) ?>
-                                            </span>
-                                            <small class="automation-sla-status-detail" data-sla-status-detail>
-                                                <?= $rowSlaStatus['label'] === 'Melewati SLA'
-                                                    ? 'Sudah melewati SLA selama ' . h(str_replace('Terlambat ', '', rtrim($rowSlaStatus['detail'], '.'))) . '.'
-                                                    : h($rowSlaStatus['detail']) ?>
-                                            </small>
+                                        <div class="automation-sla-cell">
+                                            <?php if ($rowResponLive): ?>
+                                                <div
+                                                    class="automation-sla-main"
+                                                    data-sla-respon-live="true" data-sla-short="true"
+                                                    data-sla-started-at="<?= (int) strtotime((string) ($row['sla_mulai'] ?? '')) ?>"
+                                                    data-sla-due-at="<?= (int) strtotime($row['sla_respon_tenggat']) ?>"
+                                                >
+                                                    <span class="automation-sla-kicker">Response Time</span>
+                                                    <span class="badge text-bg-<?= h($rowResponStatus['class']) ?>" data-sla-respon-label><?= h($rowResponStatus['label']) ?></span>
+                                                    <small class="automation-sla-status-detail" data-sla-respon-detail><?= $rowResponStatus['remaining'] !== null
+                                                        ? 'sisa ' . h(formatSlaDurationShort((int) $rowResponStatus['remaining']))
+                                                        : 'terlambat ' . h(formatSlaDurationShort((int) ($rowResponStatus['overdue'] ?? 0))) ?></small>
+                                                </div>
+                                                <div class="automation-sla-sub">
+                                                    Resolution Time<?= $rowSlaShort !== '' ? ' · ' . h($rowSlaShort) : '' ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <div
+                                                    class="automation-sla-main"
+                                                    <?= $rowSlaStatus['live'] && !empty($row['sla_tenggat'])
+                                                        ? 'data-sla-countdown="true" data-sla-short="true" ' . $rowSlaTimes
+                                                        : '' ?>
+                                                >
+                                                    <span class="automation-sla-kicker">Resolution Time</span>
+                                                    <span class="badge text-bg-<?= h($rowSlaStatus['class']) ?>" data-sla-status-label>
+                                                        <?= $rowSlaStatus['label'] === 'Melewati SLA'
+                                                            ? 'SLA Terlewati'
+                                                            : h($rowSlaStatus['label']) ?>
+                                                    </span>
+                                                    <small class="automation-sla-status-detail" data-sla-status-detail><?= $rowSlaShort !== '' ? h($rowSlaShort) : h($rowSlaStatus['detail']) ?></small>
+                                                </div>
+                                            <?php endif; ?>
                                         </div>
                                     </td>
                                 <?php endif; ?>
 
                                 <td data-label="Aksi">
-                                    <div class="d-flex gap-2">
-                                        <a
-                                            href="view_detail.php?id=<?= (int) $row['id'] ?>"
-                                            class="btn btn-sm btn-crf-outline"
-                                        >
-                                            <i class="bi bi-eye"></i> Detail
-                                        </a>
-
-                                        <?php if ($queue !== 'history'): ?>
-                                            <a
-                                                href="detail.php?id=<?= (int) $row['id'] ?>"
-                                                class="btn btn-sm btn-danger"
-                                            >
-                                                <i class="bi bi-play-circle"></i>
-                                                Eksekusi
-                                            </a>
-                                        <?php endif; ?>
-                                    </div>
+                                    <?php
+                                    // Satu tombol per baris: Buka (belum diambil), Lanjutkan (milik saya),
+                                    // Lihat (dipegang PIC lain, hanya baca), Detail (riwayat).
+                                    if ($queue === 'history' || (!empty($row['pic_id']) && !isAssignedCrfHandler($row))) {
+                                        $rowActionUrl = 'view_detail.php?id=' . (int) $row['id'];
+                                        $rowActionLabel = $queue === 'history' ? 'Detail' : 'Lihat';
+                                        $rowActionClass = 'btn-crf-outline';
+                                        $rowActionIcon = 'bi-eye';
+                                    } else {
+                                        $rowActionUrl = 'detail.php?id=' . (int) $row['id'];
+                                        $rowActionLabel = empty($row['pic_id']) ? 'Buka' : 'Lanjutkan';
+                                        $rowActionClass = 'btn-crf-primary';
+                                        $rowActionIcon = 'bi-arrow-right-circle';
+                                    }
+                                    ?>
+                                    <a href="<?= h($rowActionUrl) ?>" class="btn btn-sm <?= h($rowActionClass) ?>">
+                                        <i class="bi <?= h($rowActionIcon) ?>"></i> <?= h($rowActionLabel) ?>
+                                    </a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

@@ -56,6 +56,7 @@ $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
     'date_from' => $_GET['date_from'] ?? '',
     'date_to' => $_GET['date_to'] ?? '',
     'category_id' => $_GET['category_id'] ?? '',
+    'type' => $_GET['type'] ?? '',
 ]);
 $search = $listFilters['search'];
 
@@ -119,6 +120,7 @@ $sql = "
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $requests = $stmt->fetchAll();
+$waitingInfo = $filter === 'history' ? [] : crfWaitingInfo($pdo, $requests);
 
 
 /* =========================================================
@@ -203,6 +205,7 @@ require_once __DIR__ . '/../includes/header.php';
               <tr>
                 <td data-label="No"><?= $offset + $i + 1 ?></td>
                 <?php require __DIR__ . '/../includes/partials/crf_row_request.php'; ?>
+                <?php $rowWaiting = $waitingInfo[(int) $row['id']] ?? null; ?>
                 <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
                 <td data-label="Aksi"><div class="d-flex gap-2"><a href="detail.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline"><i class="bi bi-eye"></i> Detail</a><?php if (($row['status'] ?? '') !== 'Draft'): ?><a href="../actions/export_crf.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline" target="_blank" rel="noopener" title="Cetak PDF"><i class="bi bi-printer"></i> Cetak</a><?php endif; ?></div></td>
               </tr>

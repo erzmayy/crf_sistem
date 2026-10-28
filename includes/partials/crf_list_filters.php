@@ -13,7 +13,8 @@ $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
 $filtersActive = ($listFilters['search'] ?? '') !== ''
     || ($listFilters['status'] ?? '') !== ''
     || ($listFilters['level'] ?? '') !== ''
-    || (int) ($listFilters['category_id'] ?? 0) > 0;
+    || (int) ($listFilters['category_id'] ?? 0) > 0
+    || ($listFilters['type'] ?? '') !== '';
 $filterFormId = 'crf-list-filters-' . substr(md5($listResetUrl . '|' . ($listContextValue ?? '')), 0, 6);
 ?>
 <button type="button" class="btn btn-crf-outline crf-filter-toggle"
@@ -22,7 +23,7 @@ $filterFormId = 'crf-list-filters-' . substr(md5($listResetUrl . '|' . ($listCon
     <i class="bi bi-funnel" aria-hidden="true"></i>
     <span>Filter dan pencarian<?= $filtersActive ? ' (aktif)' : '' ?></span>
 </button>
-<form id="<?= h($filterFormId) ?>" method="GET" class="crf-list-filters <?= !empty($listFilters['categories']) ? 'crf-list-filters-with-category' : '' ?> <?= $filtersActive ? '' : 'is-collapsed' ?>">
+<form id="<?= h($filterFormId) ?>" method="GET" class="crf-list-filters <?= !empty($listFilters['categories']) ? 'crf-list-filters-with-category' : '' ?> <?= !empty($listFilters['categories']) && isset($listFilters['type']) ? 'crf-list-filters-with-type' : '' ?> <?= $filtersActive ? '' : 'is-collapsed' ?>">
     <?php if (!empty($listContextName)): ?>
         <input type="hidden" name="<?= h($listContextName) ?>" value="<?= h($listContextValue ?? '') ?>">
     <?php endif; ?>
@@ -75,6 +76,20 @@ $filterFormId = 'crf-list-filters-' . substr(md5($listResetUrl . '|' . ($listCon
                 <?php foreach ($listFilters['categories'] as $categoryOption): ?>
                     <option value="<?= (int) $categoryOption['id'] ?>" <?= (int) ($listFilters['category_id'] ?? 0) === (int) $categoryOption['id'] ? 'selected' : '' ?>>
                         <?= h($categoryOption['nama']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+    <?php endif; ?>
+
+    <?php if (isset($listFilters['type'])): ?>
+        <label class="crf-list-filter-field">
+            <span>Tipe Pengajuan</span>
+            <select name="type" class="form-select" aria-label="Filter tipe pengajuan">
+                <option value="">Semua Tipe</option>
+                <?php foreach (crfRequestTypeOptions() as $typeOption): ?>
+                    <option value="<?= h($typeOption) ?>" <?= ($listFilters['type'] ?? '') === $typeOption ? 'selected' : '' ?>>
+                        <?= h($typeOption) ?>
                     </option>
                 <?php endforeach; ?>
             </select>

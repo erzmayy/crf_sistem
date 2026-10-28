@@ -82,6 +82,13 @@ $otomasiPhaseMeta = [
     'implementasi' => ['title' => 'Implementasi', 'action' => 'complete', 'button' => 'Selesaikan', 'icon' => 'bi-journal-check'],
 ][$otomasiPhase] ?? ['title' => 'Eksekusi / Tangani Permintaan', 'action' => 'execute', 'button' => 'Selesai Eksekusi · Kirim ke UAT', 'icon' => 'bi-play-circle'];
 
+// CRF dengan target Response Time harus diambil dulu: sebelum itu hanya tombol "Mulai kerjakan" yang tampil.
+// CRF lama tanpa target Response Time tetap memakai alur sebelumnya.
+$mustStart = !$isAssignedToOther
+    && $otomasiPhase === 'eksekusi'
+    && empty($crf['pic_id'])
+    && !empty($crf['sla_respon_tenggat']);
+
 // Catatan CMO pada UAT terakhir yang meminta perbaikan.
 $uatFailNote = null;
 if ($otomasiPhase === 'perbaikan') {
@@ -119,6 +126,9 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-detail-layout">
           <div class="crf-detail-main">
 
+        <!-- INFORMASI SLA: pertama dicek PIC sebelum mengambil / mengerjakan -->
+        <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
+
         <!-- INFORMASI PENGAJUAN -->
         <?php
         $showStatusInGrid = true;
@@ -144,6 +154,19 @@ require_once __DIR__ . '/../includes/header.php';
             CRF ini sedang ditangani oleh <strong><?= h($crf['pic_nama'] ?? '-') ?></strong>.
             Hanya PIC CRF tersebut yang dapat memprosesnya.
         </div>
+        <?php elseif ($mustStart): ?>
+        <form action="../actions/automation_start.php" method="POST" class="crf-action-bar" data-loading-form>
+            <?= csrfField() ?>
+            <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
+            <div class="crf-action-bar-text">
+                <strong>CRF ini belum diambil</strong>
+                Tekan Mulai kerjakan saat Anda mengerjakannya. Response Time tercatat dan CRF menjadi
+                tanggung jawab Anda. Batas: <?= h(date('d-m-Y H:i', strtotime($crf['sla_respon_tenggat']))) ?>.
+            </div>
+            <button type="submit" class="btn btn-crf-primary">
+                <i class="bi bi-play-circle"></i> Mulai kerjakan
+            </button>
+        </form>
         <?php else: ?>
         <form
             action="../actions/automation_action.php"
@@ -185,19 +208,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                         <?php if ($otomasiPhase === 'eksekusi'): ?>
 
-                            <div class="alert alert-success">
-                                CRF disetujui Kepala Departemen. Silakan jalankan eksekusi perubahan.
-                            </div>
-
-                            <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
-
-                            <div class="crf-readonly-note mb-4">
-                                <i class="bi bi-info-circle"></i>
-                                Setelah eksekusi selesai, tekan <strong>Selesai Eksekusi</strong>. SLA berhenti dan
-                                CRF dikirim ke CMO untuk <strong>UAT</strong> (tidak dihitung dalam SLA).
-                            </div>
-
-                            <div class="mb-4">
+                            <div class="mb-3">
                                 <label for="note" class="form-label fw-semibold">
                                     Catatan untuk UAT <span class="text-muted fw-normal">(opsional)</span>
                                 </label>
@@ -205,7 +216,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     id="note"
                                     name="note"
                                     class="form-control"
-                                    rows="3"
+                                    rows="2"
                                     placeholder="Ringkasan perubahan yang perlu diuji, lingkungan, atau langkah pengujian..."
                                 ></textarea>
                             </div>
@@ -224,15 +235,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?php endif; ?>
                             </div>
 
-                            <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
-
-                            <div class="crf-readonly-note mb-4">
-                                <i class="bi bi-info-circle"></i>
-                                Perbaiki sesuai catatan CMO (koordinasi lewat <strong>Diskusi Forum</strong>), lalu
-                                kirim ulang untuk UAT. Waktu perbaikan tidak dihitung dalam SLA.
-                            </div>
-
-                            <div class="mb-4">
+                            <div class="mb-3">
                                 <label for="note" class="form-label fw-semibold">
                                     Catatan perbaikan <span class="text-muted fw-normal">(opsional)</span>
                                 </label>
@@ -240,7 +243,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     id="note"
                                     name="note"
                                     class="form-control"
-                                    rows="3"
+                                    rows="2"
                                     placeholder="Apa yang diperbaiki dan apa yang perlu diuji ulang..."
                                 ></textarea>
                             </div>
@@ -251,9 +254,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <strong>UAT lulus</strong><?= !empty($crf['tgl_uat_lulus']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['tgl_uat_lulus']))) : '' ?>.
                             </div>
 
-                            <?php require __DIR__ . '/../includes/partials/informasi_sla.php'; ?>
-
-                            <div class="mb-4">
+                            <div class="mb-3">
                                 <label for="tgl_implementasi" class="form-label fw-semibold">
                                     Tanggal Implementasi
                                     <span class="text-danger">*</span>
@@ -268,7 +269,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 >
                             </div>
 
-                            <div class="mb-4">
+                            <div class="mb-3">
                                 <label for="implementasi" class="form-label fw-semibold">
                                     Implementasi / Hasil Perubahan
                                     <span class="text-danger">*</span>
@@ -277,7 +278,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     id="implementasi"
                                     name="implementasi"
                                     class="form-control"
-                                    rows="6"
+                                    rows="4"
                                     required
                                     placeholder="Tuliskan hasil atau perubahan yang sudah diterapkan..."
                                 ><?= h($crf['implementasi'] ?? '') ?></textarea>
@@ -290,7 +291,19 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
 
 
-                <div class="d-flex justify-content-end">
+                <div class="crf-action-bar">
+                    <div class="crf-action-bar-text">
+                        <?php if ($otomasiPhase === 'eksekusi'): ?>
+                            <strong>Eksekusi sudah selesai?</strong>
+                            SLA berhenti dan CRF dikirim ke CMO untuk UAT (UAT tidak dihitung dalam SLA).
+                        <?php elseif ($otomasiPhase === 'perbaikan'): ?>
+                            <strong>Perbaikan sudah selesai?</strong>
+                            Kirim ulang ke CMO untuk UAT. Waktu perbaikan tidak dihitung dalam SLA.
+                        <?php else: ?>
+                            <strong>Implementasi sudah selesai?</strong>
+                            CRF diteruskan ke Pemohon untuk PIR.
+                        <?php endif; ?>
+                    </div>
 
                     <button
                         type="submit"

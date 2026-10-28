@@ -3,10 +3,17 @@
  * config/sla.php
  * Aturan waktu kerja untuk perhitungan SLA (CRF).
  *
- * SLA hanya berjalan pada hari kerja: Sabtu, Minggu, dan tanggal libur
- * di bawah ini tidak dihitung. Contoh: SLA 1 Hari yang dimulai Jumat
- * 16:00 jatuh tempo Senin 16:00.
+ * SLA hanya berjalan pada hari kerja dan jam kerja: Sabtu, Minggu, tanggal
+ * libur di bawah ini, serta waktu di luar jam kerja tidak dihitung.
+ * 1 Hari SLA = 1 hari kerja penuh (jam mulai sampai jam selesai).
+ * Contoh (08:00-17:00): SLA 1 Hari yang dimulai Jumat 16:00 jatuh tempo
+ * Senin 16:00 (1 jam Jumat + 8 jam Senin).
  */
+
+/** Jam kerja SLA (detik sejak 00:00): 08:00 sampai 17:00. */
+const CRF_SLA_WORK_START = 8 * 3600;
+const CRF_SLA_WORK_END = 17 * 3600;
+const CRF_SLA_WORK_SECONDS_PER_DAY = CRF_SLA_WORK_END - CRF_SLA_WORK_START;
 
 /**
  * Tanggal libur nasional / cuti bersama (format Y-m-d).

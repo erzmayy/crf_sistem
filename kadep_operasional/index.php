@@ -41,6 +41,7 @@ $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
     'date_from' => $_GET['date_from'] ?? '',
     'date_to' => $_GET['date_to'] ?? '',
     'category_id' => $_GET['category_id'] ?? '',
+    'type' => $_GET['type'] ?? '',
 ]);
 $search = $listFilters['search'];
 
@@ -88,6 +89,7 @@ $sql = "
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $requests = $stmt->fetchAll();
+$waitingInfo = $view === 'history' ? [] : crfWaitingInfo($pdo, $requests);
 
 /* =========================================================
  * SUMMARY CARD
@@ -208,6 +210,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <td data-label="No"><?= $offset + $i + 1 ?></td>
 
                                 <?php $rowShowDepartment = false; require __DIR__ . '/../includes/partials/crf_row_request.php'; ?>
+                                <?php $rowWaiting = $waitingInfo[(int) $row['id']] ?? null; ?>
                                 <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
 
                                 <td data-label="SLA">

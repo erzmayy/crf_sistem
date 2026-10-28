@@ -1,8 +1,8 @@
 <?php
 /**
  * Kartu penanganan CRF (informasi saja): kategori, target SLA kategori,
- * dan PIC CRF yang memegang CRF. PIC CRF ditetapkan
- * otomatis saat menyelesaikan eksekusi.
+ * dan PIC CRF yang memegang CRF. PIC CRF ditetapkan saat menekan
+ * "Mulai kerjakan" (atau saat menyelesaikan eksekusi bila tombol itu dilewati).
  *
  * Variabel: $crf, $pdo.
  */
@@ -25,7 +25,7 @@ $assignmentCategory = !empty($crf['kategori_id']) ? findCrfCategory($pdo, (int) 
             <?php endif; ?>
         <?php else: ?>
             <strong class="text-muted"><i class="bi bi-person-dash"></i> Belum ada</strong>
-            <small class="text-muted">Tercatat saat eksekusi diselesaikan</small>
+            <small class="text-muted">Tercatat saat PIC menekan "Mulai kerjakan"</small>
         <?php endif; ?>
     </div>
 </div>
