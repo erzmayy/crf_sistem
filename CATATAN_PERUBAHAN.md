@@ -145,5 +145,16 @@ Dua perbaikan lagi di mode module (`assets/css/style.css`):
   menjadi item grid/flex. Pseudo-element `::before/::after` pada `.row`, `.nav`, `.btn-toolbar`, `.modal-header`,
   `.modal-footer` dimatikan di `.crf-module--embedded`.
 
+Perbaikan HTTP 500 pada `actions/save_draft.php` (dan `delete_draft.php`): action itu hanya memuat `session.php` +
+`functions.php`, sehingga `crfRedirect()`/`crfUrl()` tidak ada (fatal saat redirect setelah simpan).
+`includes/functions.php` kini memuat `includes/crf_url.php`. Berkas: `includes/functions.php`.
+
+Informasi SLA sebelum persetujuan Kadep (SLA belum dimulai): panel Response Time dan Resolution Time tidak lagi
+ditampilkan (isinya kosong dan target belum final karena level urgensi baru ditetapkan di Forum). Diganti keterangan
+"SLA dimulai setelah persetujuan Kadep..." plus baris "Target saat disetujui: Response Time X · Resolution Time Y"
+(perkiraan dari matriks kategori x level urgensi, dipakai Kadep yang memeriksa SLA sebelum menyetujui). Rincian waktu
+disembunyikan; CRF dibatalkan sebelum mulai menampilkan "CRF dibatalkan sebelum SLA dimulai." Setelah SLA mulai,
+tampilan tidak berubah. Berkas: `includes/partials/informasi_sla.php` (dipakai halaman Admin, CMO, Kadep, Otomasi, Forum).
+
 Diuji di halaman tiruan (CSS Bootstrap 3 SIAP asli + CSS CRF): tautan header/sidebar SIAP tanpa garis bawah dan
 tetap Open Sans 13px, tombol CRF 16px/14px, `gap-2` = 8px, tab-pane terlihat. Belum diuji di server.

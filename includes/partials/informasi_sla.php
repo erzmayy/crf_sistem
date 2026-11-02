@@ -40,6 +40,25 @@ $responPercent = $responStatus !== null
     ? crfSlaProgressPercent($crf['sla_mulai'] ?? null, $crf['sla_respon_tenggat'] ?? null, $crf['sla_respon_at'] ?? null)
     : null;
 $slaPercent = crfSlaProgressPercent($crf['sla_mulai'] ?? null, $crf['sla_tenggat'] ?? null, $crf['otomasi_selesai'] ?? null);
+// Sebelum persetujuan Kadep SLA belum dimulai dan target belum final (bergantung level urgensi dari Forum):
+// panel Response/Resolution tidak ditampilkan, diganti satu keterangan.
+$slaNotStarted = empty($crf['sla_mulai']);
+$slaNotStartedText = ($crf['status'] ?? '') === 'Cancel'
+    ? 'CRF dibatalkan sebelum SLA dimulai.'
+    : 'SLA dimulai setelah persetujuan Kepala Departemen Operasional dan dihitung dalam jam kerja 08:00-17:00.';
+// Perkiraan target (untuk Kadep yang memeriksa SLA sebelum menyetujui): sama dengan yang akan disalin ke CRF.
+$slaPreviewParts = [];
+if ($slaNotStarted && ($crf['status'] ?? '') !== 'Cancel') {
+    $previewUrgency = crfEffectiveUrgency($crf);
+    $previewCategory = !empty($crf['kategori_id']) ? findCrfCategory(getConnection(), (int) $crf['kategori_id']) : null;
+    $previewRespon = ($previewCategory && $previewUrgency) ? (crfCategoryResponMatrix($previewCategory)[$previewUrgency] ?? null) : null;
+    if ($previewRespon !== null) {
+        $slaPreviewParts[] = 'Response Time ' . slaLabel($previewRespon['value'], $previewRespon['unit']);
+    }
+    if ($slaValueDisplay !== null) {
+        $slaPreviewParts[] = 'Resolution Time ' . $slaValueDisplay;
+    }
+}
 ?>
 <section class="crf-section crf-detail-card crf-sla-card mb-4" aria-labelledby="crf-sla-title">
     <div class="crf-section-header">
@@ -48,6 +67,18 @@ $slaPercent = crfSlaProgressPercent($crf['sla_mulai'] ?? null, $crf['sla_tenggat
     </div>
 
     <div class="crf-section-body">
+        <?php if ($slaNotStarted): ?>
+            <p class="crf-sla-note">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <?= h($slaNotStartedText) ?>
+            </p>
+            <?php if ($slaPreviewParts): ?>
+                <p class="crf-sla-note">
+                    <i class="bi bi-flag" aria-hidden="true"></i>
+                    Target saat disetujui: <?= h(implode(' · ', $slaPreviewParts)) ?> (jam kerja, mengikuti level urgensi).
+                </p>
+            <?php endif; ?>
+        <?php else: ?>
         <div class="crf-sla-panels<?= $responStatus !== null ? ' has-respon' : '' ?>">
 
             <?php if ($responStatus !== null): ?>
@@ -162,7 +193,8 @@ $slaPercent = crfSlaProgressPercent($crf['sla_mulai'] ?? null, $crf['sla_tenggat
                 <div><span class="crf-detail-label">Status</span><strong><?= $slaOnTime ? '✓ Sesuai SLA' : '⚠ Melebihi SLA' ?></strong></div>
             </div>
         <?php endif; ?>
+        <?php endif; /* $slaNotStarted */ ?>
     </div>
 </section>
 <?php
-unset($slaValueDisplay, $slaStatus, $slaStandard, $slaAdjusted, $slaIsLive, $slaStartedEpoch, $slaDueEpoch, $slaDate, $slaOnTime, $responStatus, $responLive, $responTargetDisplay, $responDueEpoch, $responPercent, $slaPercent);
+unset($slaNotStarted, $slaNotStartedText, $slaPreviewParts, $previewUrgency, $previewCategory, $previewRespon, $slaValueDisplay, $slaStatus, $slaStandard, $slaAdjusted, $slaIsLive, $slaStartedEpoch, $slaDueEpoch, $slaDate, $slaOnTime, $responStatus, $responLive, $responTargetDisplay, $responDueEpoch, $responPercent, $slaPercent);
