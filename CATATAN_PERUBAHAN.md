@@ -156,5 +156,10 @@ ditampilkan (isinya kosong dan target belum final karena level urgensi baru dite
 disembunyikan; CRF dibatalkan sebelum mulai menampilkan "CRF dibatalkan sebelum SLA dimulai." Setelah SLA mulai,
 tampilan tidak berubah. Berkas: `includes/partials/informasi_sla.php` (dipakai halaman Admin, CMO, Kadep, Otomasi, Forum).
 
+Panel detail Forum (offcanvas) tidak bisa di-scroll: CSS Bootstrap 3 SIAP punya `.show { display: block !important }`
+yang mengubah offcanvas (flex kolom) menjadi block, sehingga `.offcanvas-body` tidak dibatasi tinggi panel (tab Permintaan
+764px dalam panel 534px). Ditambah `.crf-module--embedded .offcanvas.show/.showing/.hiding { display: flex !important }`.
+Berkas: `assets/css/style.css`.
+
 Diuji di halaman tiruan (CSS Bootstrap 3 SIAP asli + CSS CRF): tautan header/sidebar SIAP tanpa garis bawah dan
 tetap Open Sans 13px, tombol CRF 16px/14px, `gap-2` = 8px, tab-pane terlihat. Belum diuji di server.
