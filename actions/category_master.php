@@ -15,7 +15,7 @@ require_once __DIR__ . '/../includes/functions.php';
 requireAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../admin/master_data.php');
+    crfRedirect(crfUrl('admin.kategori'));
     exit;
 }
 
@@ -24,7 +24,7 @@ verifyCsrf();
 $pdo = getConnection();
 $op = $_POST['op'] ?? '';
 
-$redirect = '../admin/master_data.php';
+$redirect = crfUrl('admin.kategori');
 // Kembali ke kartu kategori yang baru diubah.
 if ((int) ($_POST['id'] ?? 0) > 0 && in_array($op, ['save', 'toggle', 'add_member', 'remove_member'], true)) {
     $redirect .= '#crf-' . (int) $_POST['id'];
@@ -33,7 +33,7 @@ if ((int) ($_POST['id'] ?? 0) > 0 && in_array($op, ['save', 'toggle', 'add_membe
 function categoryMasterFinish(string $type, string $message, string $redirect): void
 {
     $_SESSION['flash'] = ['type' => $type, 'message' => $message];
-    header('Location: ' . $redirect);
+    crfRedirect($redirect);
     exit;
 }
 

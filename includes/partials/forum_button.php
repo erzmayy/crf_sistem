@@ -16,7 +16,7 @@ if ($forumButtonCrfId > 0 && canViewForumCrf($pdo, $forumButtonCrfId)):
         . ($forumInfo['open'] ? '. Pembahasan Level/SLA sedang terbuka' : '');
     ?>
     <a
-        href="../forum/index.php?crf_id=<?= $forumButtonCrfId ?><?= $forumInfo['open'] ? '#forum-pembahasan' : '' ?>"
+        href="<?= h(crfUrl('forum.index', ['crf_id' => $forumButtonCrfId], $forumInfo['open'] ? 'forum-pembahasan' : '')) ?>"
         class="btn btn-crf-outline crf-forum-button"
         title="<?= h($forumTitle) ?>"
     >

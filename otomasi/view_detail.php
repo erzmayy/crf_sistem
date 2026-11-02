@@ -68,7 +68,7 @@ if (!$crf) {
                 CRF tidak ditemukan pada antrean Otomasi.
             </div>
 
-            <a href="index.php" class="crf-back-btn">
+            <a href="<?= h(crfUrl('otomasi.index')) ?>" class="crf-back-btn">
                 <i class="bi bi-arrow-left"></i>
                 Kembali
             </a>
@@ -131,7 +131,7 @@ require_once __DIR__ . '/../includes/header.php';
         $dhEyebrow = 'Detail CRF';
         $dhShowExport = false;
         $dhExtraHtml = ($crf['tahap_alur'] === 'OTOMASI' && !empty($crf['tgl_disetujui_kadep']))
-            ? '<a href="detail.php?id=' . (int) $crf['id'] . '" class="btn btn-crf-primary"><i class="bi bi-gear" aria-hidden="true"></i> Proses CRF</a>'
+            ? '<a href="' . h(crfUrl('otomasi.detail', ['id' => (int) $crf['id']])) . '" class="btn btn-crf-primary"><i class="bi bi-gear" aria-hidden="true"></i> Proses CRF</a>'
             : '';
         require __DIR__ . '/../includes/partials/detail_header.php';
         ?>

@@ -183,7 +183,7 @@ $forumUrl = static function (array $params = []) use ($search, $filterParam): st
         static fn ($value): bool => $value !== null && $value !== '' && $value !== 0
     );
 
-    return 'index.php' . ($query ? '?' . http_build_query($query) : '');
+    return crfSelfUrl($query);
 };
 
 $pageTitle = 'Forum CRF';
@@ -212,7 +212,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <span class="crf-forum-count"><?= count($activeCrfs) ?></span>
                 </div>
                 <div class="crf-forum-room-search">
-                    <form method="get" action="index.php" role="search">
+                    <form method="get" role="search"><?= crfRouteFields() ?>
                         <label class="visually-hidden" for="forum-room-search">Cari ruang pembahasan</label>
                         <i class="bi bi-search" aria-hidden="true"></i>
                         <input
@@ -353,8 +353,8 @@ require_once __DIR__ . '/../includes/header.php';
                                 </p>
                             </div>
                             <a class="btn btn-sm btn-outline-secondary"
-                               href="detail.php?crf_id=<?= $crfId ?>"
-                               data-forum-detail="detail.php?crf_id=<?= $crfId ?>&amp;partial=1"
+                               href="<?= h(crfUrl('forum.detail', ['crf_id' => $crfId])) ?>"
+                               data-forum-detail="<?= h(crfDirectUrl('forum/detail.php', ['crf_id' => $crfId, 'partial' => 1])) ?>"
                                aria-controls="forum-detail-panel">
                                 <i class="bi bi-layout-sidebar-reverse" aria-hidden="true"></i> Detail CRF
                             </a>
@@ -484,7 +484,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 </p>
 
                                 <?php if ($canRecord): ?>
-                                    <form method="post" action="../actions/forum_discussion.php" class="crf-forum-pembahasan-decide" data-result-form data-sla-form>
+                                    <form method="post" action="<?= h(crfActionUrl('forum_discussion.php')) ?>" class="crf-forum-pembahasan-decide" data-result-form data-sla-form>
                                         <?= csrfField() ?>
                                         <input type="hidden" name="op" value="result">
                                         <input type="hidden" name="crf_id" value="<?= $crfId ?>">
@@ -555,7 +555,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?php endif; ?>
 
                                 <?php if ($canCancelDiscussion): ?>
-                                    <form method="post" action="../actions/forum_discussion.php" class="crf-forum-pembahasan-cancel" data-confirm="Batalkan pembahasan ini? Level Urgensi dan SLA tetap memakai nilai sistem dan CMO dapat meneruskan CRF.">
+                                    <form method="post" action="<?= h(crfActionUrl('forum_discussion.php')) ?>" class="crf-forum-pembahasan-cancel" data-confirm="Batalkan pembahasan ini? Level Urgensi dan SLA tetap memakai nilai sistem dan CMO dapat meneruskan CRF.">
                                         <?= csrfField() ?>
                                         <input type="hidden" name="op" value="cancel">
                                         <input type="hidden" name="crf_id" value="<?= $crfId ?>">
@@ -583,7 +583,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         <?php if ($selectedCrf['tahap_alur'] === 'CMO_FILTER'): ?>
                                             CMO dapat mengajukan pembahasan dari
                                             <?php if ($canOpenDiscussion): ?>
-                                                <a href="../cmo/detail.php?id=<?= $crfId ?>">halaman verifikasi CMO</a>.
+                                                <a href="<?= h(crfUrl('cmo.detail', ['id' => $crfId])) ?>">halaman verifikasi CMO</a>.
                                             <?php else: ?>
                                                 halaman verifikasi CMO.
                                             <?php endif; ?>
@@ -696,7 +696,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <?php endif; ?>
                     </div>
 
-                    <form class="crf-forum-form" id="forum-form" method="post" action="../actions/forum_comment.php">
+                    <form class="crf-forum-form" id="forum-form" method="post" action="<?= h(crfActionUrl('forum_comment.php')) ?>">
                         <?= csrfField() ?>
                         <input type="hidden" name="crf_id" value="<?= $crfId ?>">
                         <input type="hidden" name="balasan_untuk_id" id="forum-reply-id" value="<?= $replyTo ? (int) $replyTo['id'] : '' ?>">

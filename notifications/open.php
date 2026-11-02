@@ -16,7 +16,7 @@ $stmt->execute(['id' => $id, 'pengguna_id' => $userId]);
 $url = $stmt->fetchColumn();
 
 if ($url === false) {
-    header('Location: index.php');
+    crfRedirect(crfUrl('notifications.index'));
     exit;
 }
 
@@ -26,9 +26,9 @@ $pdo->prepare('UPDATE crf_notifikasi SET tgl_dibaca = COALESCE(tgl_dibaca, NOW()
 // Hanya tautan relatif internal aplikasi.
 $url = (string) $url;
 if ($url === '' || preg_match('#^(?:[a-z]+:|//)#i', $url) || str_contains($url, '..')) {
-    header('Location: index.php');
+    crfRedirect(crfUrl('notifications.index'));
     exit;
 }
 
-header('Location: ../' . ltrim($url, '/'));
+crfRedirect(crfUrlFromPath($url));
 exit;

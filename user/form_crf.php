@@ -47,7 +47,7 @@ if ($draftId > 0) {
             'message' => 'Draft tidak ditemukan atau tidak dapat diakses.'
         ];
 
-        header('Location: pengajuan_saya.php');
+        crfRedirect(crfUrl('user.pengajuan'));
         exit;
     }
 }
@@ -166,7 +166,7 @@ require_once __DIR__ . '/../includes/header.php';
       <ul id="validationList" class="mb-0 mt-2"></ul>
     </div>
 
-    <form action="../actions/submit_crf.php" method="POST" enctype="multipart/form-data" id="crfForm" novalidate
+    <form action="<?= h(crfActionUrl('submit_crf.php')) ?>" method="POST" enctype="multipart/form-data" id="crfForm" novalidate
           data-unsaved-guard data-save-state="<?= h($saveState) ?>">
 
     <input
@@ -538,7 +538,7 @@ require_once __DIR__ . '/../includes/header.php';
             value="draft"
             id="btnSaveDraft"
             class="btn btn-crf-outline px-4"
-            formaction="../actions/save_draft.php"
+            formaction="<?= h(crfActionUrl('save_draft.php')) ?>"
             formnovalidate
           >
             <i class="bi bi-save2"></i>
@@ -551,7 +551,7 @@ require_once __DIR__ . '/../includes/header.php';
             value="submit"
             id="btnSubmitCrf"
             class="btn btn-crf-primary px-4"
-            formaction="../actions/submit_crf.php"
+            formaction="<?= h(crfActionUrl('submit_crf.php')) ?>"
             data-resubmission="<?= ($draftData['status'] ?? '') === 'Perlu Revisi' ? '1' : '0' ?>"
           >
             <i class="bi bi-send-check"></i>

@@ -16,12 +16,7 @@
 
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/forum.php';
-
-/** True bila CRF ditampilkan di dalam layout SIAP (tanpa header/sidebar sendiri). */
-function crfLayoutIsModule(): bool
-{
-    return (defined('CRF_LAYOUT_MODE') ? CRF_LAYOUT_MODE : '') === 'module' || getenv('CRF_LAYOUT_MODE') === 'module';
-}
+require_once __DIR__ . '/crf_url.php'; // crfLayoutIsModule() dan crfUrl() ada di sini
 
 /**
  * Jumlah CRF yang menunggu tindakan peran antrean (angka pada menu).

@@ -17,7 +17,7 @@ $crf = $stmt->fetch();
 
 if (!$crf || !canAccessCrf($pdo, $id)) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'CRF tidak ditemukan atau Anda tidak memiliki akses.'];
-    header('Location: ../index.php');
+    crfRedirect(crfUrl('user.pengajuan'));
     exit;
 }
 
@@ -59,5 +59,5 @@ if ($isOwner && $crf['tahap_alur'] === 'PEMOHON_PIR') {
     $target = 'user/detail.php';
 }
 
-header('Location: ../' . $target . '?id=' . $id);
+crfRedirect(crfUrlFromPath($target . '?id=' . $id));
 exit;

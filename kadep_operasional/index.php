@@ -156,13 +156,13 @@ require_once __DIR__ . '/../includes/header.php';
                 <h2><?= $view === 'history' ? 'Riwayat Persetujuan' : 'Menunggu Persetujuan' ?></h2>
                 <div class="btn-group">
                     <a
-                        href="?view=queue"
+                        href="<?= h(crfSelfUrl(['view' => 'queue'])) ?>"
                         class="btn btn-sm <?= $view === 'queue' ? 'btn-crf-primary' : 'btn-crf-outline' ?>"
                     >
                         Antrean
                     </a>
                     <a
-                        href="?view=history"
+                        href="<?= h(crfSelfUrl(['view' => 'history'])) ?>"
                         class="btn btn-sm <?= $view === 'history' ? 'btn-crf-primary' : 'btn-crf-outline' ?>"
                     >
                         Riwayat
@@ -222,13 +222,13 @@ require_once __DIR__ . '/../includes/header.php';
                                 <td data-label="Aksi">
                                     <div class="d-flex gap-2">
                                     <a
-                                        href="detail.php?id=<?= (int) $row['id'] ?>"
+                                        href="<?= h(crfUrl('kadep.detail', ['id' => (int) $row['id']])) ?>"
                                         class="btn btn-sm <?= $view === 'history' ? 'btn-crf-outline' : 'btn-crf-primary' ?>"
                                     >
                                         <i class="bi bi-<?= $view === 'history' ? 'eye' : 'check2-square' ?>"></i>
                                         <?= $view === 'history' ? 'Detail' : 'Tinjau' ?>
                                     </a>
-                                    <?php if (($row['status'] ?? '') !== 'Draft'): ?><a href="../actions/export_crf.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline" target="_blank" rel="noopener" title="Cetak PDF"><i class="bi bi-printer"></i> Cetak</a><?php endif; ?>
+                                    <?php if (($row['status'] ?? '') !== 'Draft'): ?><a href="<?= h(crfActionUrl('export_crf.php', ['id' => (int) $row['id']])) ?>" class="btn btn-sm btn-crf-outline" target="_blank" rel="noopener" title="Cetak PDF"><i class="bi bi-printer"></i> Cetak</a><?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

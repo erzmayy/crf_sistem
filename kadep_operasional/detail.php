@@ -70,7 +70,7 @@ if (!$crf) {
                 CRF tidak ditemukan pada antrean persetujuan Kepala Departemen Operasional.
             </div>
 
-            <a href="index.php" class="crf-back-btn">
+            <a href="<?= h(crfUrl('kadep.index')) ?>" class="crf-back-btn">
                 <i class="bi bi-arrow-left"></i>
                 Kembali
             </a>
@@ -187,7 +187,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                 <?php endif; ?>
 
-                <form action="../actions/kadep_operasional_approve.php" method="POST">
+                <form action="<?= h(crfActionUrl('kadep_operasional_approve.php')) ?>" method="POST">
 
                     <?= csrfField() ?>
 

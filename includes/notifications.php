@@ -14,6 +14,7 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/crf_url.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -330,7 +331,14 @@ function sendNotificationEmail(array $config, string $toEmail, string $toName, a
 
         $link = '';
         if (!empty($notification['url'])) {
-            $link = rtrim((string) ($config['app_url'] ?? ''), '/') . '/' . ltrim((string) $notification['url'], '/');
+            $appUrl = (string) ($config['app_url'] ?? '');
+            if (crfLayoutIsModule()) {
+                // Di SIAP, tautan email membuka halaman di layout SIAP: hanya skema+host app_url dipakai.
+                $origin = preg_replace('#^(https?://[^/]+).*$#i', '$1', $appUrl);
+                $link = rtrim((string) $origin, '/') . crfUrlFromPath((string) $notification['url']);
+            } else {
+                $link = rtrim($appUrl, '/') . '/' . ltrim((string) $notification['url'], '/');
+            }
         }
 
         $logoPath = __DIR__ . '/../assets/img/logo-header.png';

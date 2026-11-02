@@ -16,6 +16,12 @@ $filtersActive = ($listFilters['search'] ?? '') !== ''
     || (int) ($listFilters['category_id'] ?? 0) > 0
     || ($listFilters['type'] ?? '') !== '';
 $filterFormId = 'crf-list-filters-' . substr(md5($listResetUrl . '|' . ($listContextValue ?? '')), 0, 6);
+
+// Mode module: Reset tetap di halaman SIAP (mod & submod ikut), bukan ke index.php SIAP.
+$listResetQuery = !empty($listContextName) ? [$listContextName => $listContextValue] : [];
+$listResetHref = crfLayoutIsModule()
+    ? crfSelfUrl($listResetQuery)
+    : $listResetUrl . ($listResetQuery ? '?' . http_build_query($listResetQuery) : '');
 ?>
 <button type="button" class="btn btn-crf-outline crf-filter-toggle"
         data-filter-toggle aria-controls="<?= h($filterFormId) ?>"
@@ -24,6 +30,7 @@ $filterFormId = 'crf-list-filters-' . substr(md5($listResetUrl . '|' . ($listCon
     <span>Filter dan pencarian<?= $filtersActive ? ' (aktif)' : '' ?></span>
 </button>
 <form id="<?= h($filterFormId) ?>" method="GET" class="crf-list-filters <?= !empty($listFilters['categories']) ? 'crf-list-filters-with-category' : '' ?> <?= !empty($listFilters['categories']) && isset($listFilters['type']) ? 'crf-list-filters-with-type' : '' ?> <?= $filtersActive ? '' : 'is-collapsed' ?>">
+    <?= crfRouteFields() ?>
     <?php if (!empty($listContextName)): ?>
         <input type="hidden" name="<?= h($listContextName) ?>" value="<?= h($listContextValue ?? '') ?>">
     <?php endif; ?>
@@ -101,10 +108,10 @@ $filterFormId = 'crf-list-filters-' . substr(md5($listResetUrl . '|' . ($listCon
             <i class="bi bi-search"></i>
             <span>Terapkan</span>
         </button>
-        <a href="<?= h($listResetUrl) ?><?= !empty($listContextName) ? '?' . h(http_build_query([$listContextName => $listContextValue])) : '' ?>" class="btn btn-crf-outline">
+        <a href="<?= h($listResetHref) ?>" class="btn btn-crf-outline">
             Reset
         </a>
     </div>
 </form>
 <?php
-unset($listResetUrl, $filtersActive, $filterFormId);
+unset($listResetUrl, $listResetQuery, $listResetHref, $filtersActive, $filterFormId);

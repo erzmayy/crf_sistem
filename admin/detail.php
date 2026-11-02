@@ -34,7 +34,7 @@ if (!$crf) {
     require_once __DIR__ . '/../includes/header.php';
     echo '<div class="crf-page"><div class="container">';
     echo '<div class="alert alert-danger">Pengajuan CRF dengan ID tersebut tidak ditemukan.</div>';
-    echo '<a href="dashboard.php" class="crf-back-btn"><i class="bi bi-arrow-left"></i> Kembali ke Dashboard</a>';
+    echo '<a href="' . h(crfUrl('admin.dashboard')) . '" class="crf-back-btn"><i class="bi bi-arrow-left"></i> Kembali ke Dashboard</a>';
     echo '</div></div>';
     require_once __DIR__ . '/../includes/footer.php';
     exit;
@@ -198,7 +198,7 @@ require_once __DIR__ . '/../includes/header.php';
           </p>
           <details class="crf-danger-zone">
           <summary class="btn btn-outline-danger btn-sm"><i class="bi bi-x-octagon"></i> Batalkan CRF secara administratif</summary>
-          <form class="mt-3" method="POST" action="../actions/admin_cancel_crf.php" data-confirm="Batalkan CRF <?= h($crf['nomor_register']) ?> secara administratif? Tindakan ini tidak bisa diurungkan.">
+          <form class="mt-3" method="POST" action="<?= h(crfActionUrl('admin_cancel_crf.php')) ?>" data-confirm="Batalkan CRF <?= h($crf['nomor_register']) ?> secara administratif? Tindakan ini tidak bisa diurungkan.">
             <?= csrfField() ?>
             <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
             <label for="admin_cancel_reason" class="form-label fw-semibold">Alasan Pembatalan <span class="text-danger">*</span></label>

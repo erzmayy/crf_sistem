@@ -68,7 +68,7 @@ if (!$crf) {
                     CRF tidak ditemukan pada antrean CMO.
                 </div>
 
-                <a href="index.php" class="crf-back-btn">
+                <a href="' . h(crfUrl('cmo.index')) . '" class="crf-back-btn">
                     <i class="bi bi-arrow-left"></i>
                     Kembali
                 </a>
@@ -184,7 +184,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 : 'Anda mengajukan pembahasan Level Urgensi dan SLA.' ?>
                             Setelah hasil pembahasan dicatat (CMO atau Admin), CRF langsung diteruskan ke Kepala Departemen Operasional
                             <?= !empty($cmoDiscussion['tgl_tenggat']) ? '(target ' . h(date('d-m-Y H:i', strtotime($cmoDiscussion['tgl_tenggat']))) . ')' : '' ?>.
-                            <a href="../forum/index.php?crf_id=<?= (int) $crf['id'] ?>#forum-pembahasan">Buka pembahasan di Forum</a>
+                            <a href="<?= h(crfUrl('forum.index', ['crf_id' => (int) $crf['id']], 'forum-pembahasan')) ?>">Buka pembahasan di Forum</a>
                         </div>
                     <?php elseif ($cmoSlaMissing): ?>
                         <div class="alert alert-warning">
@@ -194,7 +194,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                     <?php endif; ?>
 
-                    <form action="../actions/cmo_action.php" method="POST">
+                    <form action="<?= h(crfActionUrl('cmo_action.php')) ?>" method="POST">
 
                         <?= csrfField() ?>
 
@@ -288,7 +288,7 @@ require_once __DIR__ . '/../includes/header.php';
                         Implementasi dan Post Implementation Review sudah diisi. Tutup CRF setelah memastikan semuanya lengkap.
                     </p>
 
-                    <form action="../actions/cmo_action.php" method="POST">
+                    <form action="<?= h(crfActionUrl('cmo_action.php')) ?>" method="POST">
 
                         <?= csrfField() ?>
 
@@ -366,7 +366,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                     </div>
 
-                    <form action="../actions/cmo_action.php" method="POST">
+                    <form action="<?= h(crfActionUrl('cmo_action.php')) ?>" method="POST">
 
                         <?= csrfField() ?>
 
@@ -435,7 +435,7 @@ require_once __DIR__ . '/../includes/header.php';
                         Pengingat dikirim sebagai notifikasi ke Pemohon, maksimal sekali per 24 jam.
                     </p>
 
-                    <form action="../actions/cmo_action.php" method="POST">
+                    <form action="<?= h(crfActionUrl('cmo_action.php')) ?>" method="POST">
 
                         <?= csrfField() ?>
 

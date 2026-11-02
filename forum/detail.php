@@ -20,7 +20,7 @@ if (!canViewForumCrf($pdo, $crfId)) {
         exit;
     }
     $_SESSION['flash'] = ['type' => 'warning', 'message' => 'Detail hanya tersedia untuk CRF yang masih dibahas di Forum.'];
-    header('Location: index.php');
+    crfRedirect(crfUrl('forum.index'));
     exit;
 }
 
@@ -51,7 +51,7 @@ if (!$isPartial) {
     echo '<div class="crf-page crf-detail-page"><div class="container">';
     echo '<div class="crf-page-header d-flex justify-content-between align-items-start gap-2 flex-wrap">'
         . '<div><h1>Detail CRF ' . h($crfTitle) . '</h1><p>Tampilan baca saja untuk diskusi Forum.</p></div>'
-        . '<a href="index.php?crf_id=' . $crfId . '" class="crf-back-btn"><i class="bi bi-arrow-left"></i> Kembali ke Forum</a>'
+        . '<a href="' . h(crfUrl('forum.index', ['crf_id' => $crfId])) . '" class="crf-back-btn"><i class="bi bi-arrow-left"></i> Kembali ke Forum</a>'
         . '</div>';
 }
 ?>

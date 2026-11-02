@@ -19,7 +19,7 @@ if (!in_array($role, ['admin', 'demo', 'cmo', 'otomasi', 'kadep_operasional'], t
         'type' => 'danger',
         'message' => 'Halaman ini khusus pengelola CRF.',
     ];
-    header('Location: ../user/pengajuan_saya.php');
+    crfRedirect(crfUrl('user.pengajuan'));
     exit;
 }
 
@@ -60,12 +60,12 @@ foreach ($crfCards as $card) {
 }
 
 // Tujuan tombol "Lihat CRF" sesuai peran.
-$crfListPage = [
-    'admin' => '../admin/dashboard.php',
-    'demo' => '../admin/dashboard.php',
-    'cmo' => '../cmo/index.php',
-    'otomasi' => '../otomasi/index.php',
-    'kadep_operasional' => '../kadep_operasional/index.php',
+$crfListRoute = [
+    'admin' => 'admin.dashboard',
+    'demo' => 'admin.dashboard',
+    'cmo' => 'cmo.index',
+    'otomasi' => 'otomasi.index',
+    'kadep_operasional' => 'kadep.index',
 ][$role];
 $crfListExtra = $role === 'otomasi' ? ['queue' => 'all'] : [];
 
@@ -90,7 +90,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <small>CRF selesai</small>
                 </span>
                 <?php if (isAdmin()): ?>
-                    <a href="../admin/master_data.php" class="btn btn-light"><i class="bi bi-people"></i> Master Kategori</a>
+                    <a href="<?= h(crfUrl('admin.kategori')) ?>" class="btn btn-light"><i class="bi bi-people"></i> Master Kategori</a>
                 <?php endif; ?>
             </div>
         </div>
@@ -144,7 +144,7 @@ require_once __DIR__ . '/../includes/header.php';
                             · <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> <?= (int) $card['lewat_sla'] ?> melebihi SLA</span>
                         <?php endif; ?>
                     </div>
-                    <a href="<?= h($crfListPage . '?' . http_build_query($crfListExtra + ['category_id' => (int) $card['id']])) ?>" class="btn btn-crf-outline w-100 mt-auto">
+                    <a href="<?= h(crfUrl($crfListRoute, $crfListExtra + ['category_id' => (int) $card['id']])) ?>" class="btn btn-crf-outline w-100 mt-auto">
                         Lihat CRF <i class="bi bi-arrow-right"></i>
                     </a>
                 </article>

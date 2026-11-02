@@ -18,19 +18,18 @@ $isAdminRole = in_array($role, ['admin', 'demo'], true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || (!$isAdminRole && $role !== 'cmo')) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Anda tidak memiliki akses untuk mengunggah dokumen UAT.'];
-    header('Location: ../index.php');
-    exit;
+    crfRedirect(crfUrl('user.pengajuan'));
 }
 
 verifyCsrf();
 
 $id = (int) ($_POST['id'] ?? 0);
-$backPage = $role === 'cmo' || $role === 'demo' ? '../cmo/detail.php?id=' : '../admin/detail.php?id=';
+$backRoute = $role === 'cmo' || $role === 'demo' ? 'cmo.detail' : 'admin.detail';
 // Admin kembali ke halaman Admin; akun demo mengikuti halaman asal bila dikirim.
 if ($role === 'demo' && ($_POST['back'] ?? '') === 'admin') {
-    $backPage = '../admin/detail.php?id=';
+    $backRoute = 'admin.detail';
 }
-$back = $backPage . $id;
+$back = crfUrl($backRoute, ['id' => $id]);
 
 $stmt = $pdo->prepare('SELECT id, status, tahap_alur, otomasi_selesai, nomor_register FROM crf_pengajuan WHERE id = :id');
 $stmt->execute(['id' => $id]);
@@ -38,20 +37,20 @@ $crf = $stmt->fetch();
 
 if (!$crf || in_array($crf['status'], ['Draft', 'Cancel'], true) || empty($crf['otomasi_selesai'])) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Dokumen UAT hanya dapat diunggah setelah Otomasi menyelesaikan eksekusi.'];
-    header('Location: ' . $back);
+    crfRedirect($back);
     exit;
 }
 
 if ($role === 'cmo' && $crf['tahap_alur'] !== 'UAT') {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'CMO mengunggah dokumen UAT saat CRF berada pada tahap UAT.'];
-    header('Location: ' . $back);
+    crfRedirect($back);
     exit;
 }
 
 $files = $_FILES['uat_files'] ?? null;
 if (!$files || empty($files['name']) || empty($files['name'][0])) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Pilih minimal satu dokumen hasil UAT.'];
-    header('Location: ' . $back);
+    crfRedirect($back);
     exit;
 }
 
@@ -89,5 +88,5 @@ if ($errors) {
     $_SESSION['flash'] = ['type' => 'success', 'message' => $uploaded . ' dokumen hasil UAT berhasil diunggah.'];
 }
 
-header('Location: ' . $back);
+crfRedirect($back);
 exit;

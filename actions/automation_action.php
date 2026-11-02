@@ -21,7 +21,7 @@ require_once __DIR__ . '/../includes/notifications.php';
 requireCrfRole(['otomasi']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../otomasi/index.php');
+    crfRedirect(crfUrl('otomasi.index'));
     exit;
 }
 
@@ -37,7 +37,7 @@ $implementationDate = trim($_POST['tgl_implementasi'] ?? '');
 
 if ($id <= 0) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'CRF tidak valid.'];
-    header('Location: ../otomasi/index.php');
+    crfRedirect(crfUrl('otomasi.index'));
     exit;
 }
 
@@ -46,7 +46,7 @@ $failRedirect = static function (string $message, string $location) use ($pdo): 
         $pdo->rollBack();
     }
     $_SESSION['flash'] = ['type' => 'danger', 'message' => $message];
-    header('Location: ' . $location);
+    crfRedirect($location);
     exit;
 };
 
@@ -74,18 +74,18 @@ try {
     $crf = $stmt->fetch();
 
     if (!$crf || $crf['tahap_alur'] !== 'OTOMASI' || empty($crf['tgl_disetujui_kadep'])) {
-        $failRedirect('CRF tidak ditemukan pada daftar eksekusi.', '../otomasi/index.php');
+        $failRedirect('CRF tidak ditemukan pada daftar eksekusi.', crfUrl('otomasi.index'));
     }
 
     // Hanya PIC CRF kategori CRF ini.
     if (!canHandleCrf($pdo, $crf)) {
-        $failRedirect('CRF ini bukan kategori yang Anda tangani.', '../otomasi/index.php');
+        $failRedirect('CRF ini bukan kategori yang Anda tangani.', crfUrl('otomasi.index'));
     }
 
     if (!empty($crf['pic_id']) && !isAssignedCrfHandler($crf)) {
         $failRedirect(
             'CRF ini sedang ditangani oleh ' . ($crf['pic_nama'] ?? 'PIC CRF lain') . '.',
-            '../otomasi/detail.php?id=' . $id
+            crfUrl('otomasi.detail', ['id' => $id])
         );
     }
 
@@ -93,12 +93,12 @@ try {
     $phase = crfOtomasiPhase($crf);
     $actionByPhase = ['eksekusi' => 'execute', 'perbaikan' => 'resubmit_uat', 'implementasi' => 'complete'];
     if (($actionByPhase[$phase] ?? null) !== $action) {
-        $failRedirect('Aksi ini tidak tersedia pada fase CRF saat ini.', '../otomasi/detail.php?id=' . $id);
+        $failRedirect('Aksi ini tidak tersedia pada fase CRF saat ini.', crfUrl('otomasi.detail', ['id' => $id]));
     }
 
     // CRF dengan target Response Time harus diambil dulu (Mulai kerjakan) sebelum eksekusi diselesaikan.
     if ($action === 'execute' && empty($crf['pic_id']) && !empty($crf['sla_respon_tenggat'])) {
-        $failRedirect('Tekan Mulai kerjakan terlebih dahulu sebelum menyelesaikan eksekusi.', '../otomasi/detail.php?id=' . $id);
+        $failRedirect('Tekan Mulai kerjakan terlebih dahulu sebelum menyelesaikan eksekusi.', crfUrl('otomasi.detail', ['id' => $id]));
     }
 
     if ($action === 'complete') {
@@ -118,7 +118,7 @@ try {
         if (!$isValidImplementationDate || $implementation === '') {
             $failRedirect(
                 'Tanggal Implementasi dan Implementasi / Hasil Perubahan wajib diisi dengan benar.',
-                '../otomasi/detail.php?id=' . $id
+                crfUrl('otomasi.detail', ['id' => $id])
             );
         }
     }
@@ -167,7 +167,7 @@ try {
         $uatTitle = 'UAT CRF: ' . $crfNumber;
         $uatMessage = 'Eksekusi CRF ' . $crfNumber . ' sudah selesai. Silakan lakukan UAT bersama PIC CRF.' . $noteText;
         $flash = 'Eksekusi diselesaikan dan SLA berhenti. CRF diteruskan ke CMO untuk UAT.';
-        $redirect = '../otomasi/index.php';
+        $redirect = crfUrl('otomasi.index');
     } elseif ($action === 'resubmit_uat') {
         $stmt = $pdo->prepare("
             UPDATE crf_pengajuan
@@ -194,7 +194,7 @@ try {
         $uatTitle = 'UAT ulang CRF: ' . $crfNumber;
         $uatMessage = 'Perbaikan CRF ' . $crfNumber . ' sudah selesai. Silakan lakukan UAT ulang.' . $noteText;
         $flash = 'Perbaikan selesai. CRF dikirim ulang ke CMO untuk UAT.';
-        $redirect = '../otomasi/index.php';
+        $redirect = crfUrl('otomasi.index');
     } else {
         $stmt = $pdo->prepare("
             UPDATE crf_pengajuan
@@ -229,7 +229,7 @@ try {
             'Menunggu PIR Pemohon'
         );
         $flash = 'Hasil implementasi berhasil disimpan. CRF diteruskan ke Pemohon untuk mengisi Post Implementation Review.';
-        $redirect = '../otomasi/index.php?queue=history';
+        $redirect = crfUrl('otomasi.index', ['queue' => 'history']);
     }
 
     if ($action === 'complete') {
@@ -257,7 +257,7 @@ try {
     $pdo->commit();
     dispatchPendingNotificationEmails($pdo);
     $_SESSION['flash'] = ['type' => 'success', 'message' => $flash];
-    header('Location: ' . $redirect);
+    crfRedirect($redirect);
     exit;
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
@@ -269,6 +269,6 @@ try {
         'type' => 'danger',
         'message' => 'Terjadi kesalahan saat memproses Otomasi.'
     ];
-    header('Location: ../otomasi/detail.php?id=' . $id);
+    crfRedirect(crfUrl('otomasi.detail', ['id' => $id]));
     exit;
 }

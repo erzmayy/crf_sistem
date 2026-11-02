@@ -55,7 +55,7 @@ if (!$crf) {
     echo 'Pengajuan CRF tidak ditemukan atau bukan milik Anda.';
     echo '</div>';
 
-    echo '<a href="pengajuan_saya.php" class="crf-back-btn">';
+    echo '<a href="' . h(crfUrl('user.pengajuan')) . '" class="crf-back-btn">';
     echo '<i class="bi bi-arrow-left"></i> Kembali ke Pengajuan Saya';
     echo '</a>';
 
@@ -128,7 +128,7 @@ require_once __DIR__ . '/../includes/header.php';
         $dhNumber = $requestNumberDisplay;
         $dhShowUrgency = false;
         $dhExtraHtml = (($crf['status'] ?? '') === 'Perlu Revisi')
-            ? '<a href="form_crf.php?id=' . (int) $crf['id'] . '" class="btn btn-warning"><i class="bi bi-pencil-square" aria-hidden="true"></i> Perbaiki pengajuan</a>'
+            ? '<a href="' . h(crfUrl('user.form', ['id' => (int) $crf['id']])) . '" class="btn btn-warning"><i class="bi bi-pencil-square" aria-hidden="true"></i> Perbaiki pengajuan</a>'
             : '';
         require __DIR__ . '/../includes/partials/detail_header.php';
         ?>
@@ -278,7 +278,7 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
 
                 <?php if ($isPirStage): ?>
-                    <form action="../actions/submit_pir.php" method="POST" class="mt-4">
+                    <form action="<?= h(crfActionUrl('submit_pir.php')) ?>" method="POST" class="mt-4">
                         <?= csrfField() ?>
                         <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
 

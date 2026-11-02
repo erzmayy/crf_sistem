@@ -145,7 +145,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         >
                                             <i class="bi bi-pencil"></i><span class="visually-hidden-sm"> Edit</span>
                                         </button>
-                                        <form method="POST" action="../actions/category_master.php" data-confirm="<?= $category['aktif'] ? 'Nonaktifkan' : 'Aktifkan' ?> kategori <?= h($category['nama']) ?>?">
+                                        <form method="POST" action="<?= h(crfActionUrl('category_master.php')) ?>" data-confirm="<?= $category['aktif'] ? 'Nonaktifkan' : 'Aktifkan' ?> kategori <?= h($category['nama']) ?>?">
                                             <?= csrfField() ?>
                                             <input type="hidden" name="op" value="toggle">
                                             <input type="hidden" name="return" value="master_data.php">
@@ -154,7 +154,7 @@ require_once __DIR__ . '/../includes/header.php';
                                                 <i class="bi <?= $category['aktif'] ? 'bi-toggle-on' : 'bi-toggle-off' ?>"></i>
                                             </button>
                                         </form>
-                                        <form method="POST" action="../actions/category_master.php" data-confirm="Hapus kategori <?= h($category['nama']) ?>?<?= (int) $category['usage_count'] > 0 ? ' Sudah dipakai ' . (int) $category['usage_count'] . ' CRF; data tersebut tetap tersimpan.' : '' ?>">
+                                        <form method="POST" action="<?= h(crfActionUrl('category_master.php')) ?>" data-confirm="Hapus kategori <?= h($category['nama']) ?>?<?= (int) $category['usage_count'] > 0 ? ' Sudah dipakai ' . (int) $category['usage_count'] . ' CRF; data tersebut tetap tersimpan.' : '' ?>">
                                             <?= csrfField() ?>
                                             <input type="hidden" name="op" value="delete">
                                             <input type="hidden" name="return" value="master_data.php">
@@ -190,7 +190,7 @@ require_once __DIR__ . '/../includes/header.php';
 <!-- Modal Kategori CRF -->
 <div class="modal fade" id="crfCategoryModal" tabindex="-1" aria-labelledby="crfCategoryModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form class="modal-content" method="POST" action="../actions/category_master.php" data-loading-form>
+        <form class="modal-content" method="POST" action="<?= h(crfActionUrl('category_master.php')) ?>" data-loading-form>
             <?= csrfField() ?>
             <input type="hidden" name="op" value="save">
             <input type="hidden" name="return" value="master_data.php">

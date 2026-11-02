@@ -19,7 +19,7 @@ if ($crfId <= 0 || !is_string($comment) || trim($comment) === '' || mb_strlen($c
         'type' => 'danger',
         'message' => 'Komentar wajib diisi dan maksimal 5.000 karakter.',
     ];
-    header('Location: ../forum/index.php?crf_id=' . max(0, $crfId));
+    crfRedirect(crfUrl('forum.index', ['crf_id' => max(0, $crfId)]));
     exit;
 }
 
@@ -39,7 +39,7 @@ if (!$crf) {
         'type' => 'danger',
         'message' => 'Komentar tidak terkirim: CRF tidak ditemukan atau sudah tidak dalam proses.',
     ];
-    header('Location: ../forum/index.php');
+    crfRedirect(crfUrl('forum.index'));
     exit;
 }
 
@@ -61,7 +61,7 @@ if ($replyToId > 0) {
             'type' => 'danger',
             'message' => 'Komentar yang akan ditanggapi tidak ditemukan.',
         ];
-        header('Location: ../forum/index.php?crf_id=' . $crfId);
+        crfRedirect(crfUrl('forum.index', ['crf_id' => $crfId]));
         exit;
     }
 } else {
@@ -92,7 +92,7 @@ try {
         'type' => 'danger',
         'message' => 'Komentar gagal disimpan. Silakan coba lagi atau hubungi administrator.',
     ];
-    header('Location: ../forum/index.php?crf_id=' . $crfId);
+    crfRedirect(crfUrl('forum.index', ['crf_id' => $crfId]));
     exit;
 }
 
@@ -135,5 +135,5 @@ $_SESSION['flash'] = [
     'type' => 'success',
     'message' => 'Komentar berhasil ditambahkan.',
 ];
-header('Location: ../forum/index.php?crf_id=' . $crfId . '#comment-' . $commentId);
+crfRedirect(crfUrl('forum.index', ['crf_id' => $crfId], 'comment-' . $commentId));
 exit;
