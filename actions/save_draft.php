@@ -19,7 +19,7 @@ require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../user/form_crf.php');
+    crfRedirect(crfUrl('user.form'));
     exit;
 }
 
@@ -189,7 +189,7 @@ try {
                 'message' => 'Draft tidak ditemukan atau bukan milik Anda.'
             ];
 
-            header('Location: ../user/pengajuan_saya.php');
+            crfRedirect(crfUrl('user.pengajuan'));
             exit;
         }
 
@@ -457,9 +457,7 @@ try {
      * Untuk sekarang draft akan dikembangkan agar bisa
      * dibuka kembali berdasarkan ID pada tahap berikutnya.
      */
-    header(
-        'Location: ../user/form_crf.php?id=' . $draftId
-    );
+    crfRedirect(crfUrl('user.form', ['id' => $draftId]));
 
     exit;
 
@@ -480,9 +478,9 @@ try {
     ];
 
     if ($id > 0) {
-        header('Location: ../user/form_crf.php?id=' . $id);
+        crfRedirect(crfUrl('user.form', ['id' => $id]));
     } else {
-        header('Location: ../user/form_crf.php');
+        crfRedirect(crfUrl('user.form'));
     }
 
     exit;

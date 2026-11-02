@@ -41,7 +41,7 @@ if (!$crf) {
                     CRF tidak ditemukan pada antrean Otomasi.
                 </div>
 
-                <a href="index.php" class="crf-back-btn">
+                <a href="' . h(crfUrl('otomasi.index')) . '" class="crf-back-btn">
                     <i class="bi bi-arrow-left"></i>
                     Kembali
                 </a>
@@ -155,7 +155,7 @@ require_once __DIR__ . '/../includes/header.php';
             Hanya PIC CRF tersebut yang dapat memprosesnya.
         </div>
         <?php elseif ($mustStart): ?>
-        <form action="../actions/automation_start.php" method="POST" class="crf-action-bar" data-loading-form>
+        <form action="<?= h(crfActionUrl('automation_start.php')) ?>" method="POST" class="crf-action-bar" data-loading-form>
             <?= csrfField() ?>
             <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
             <div class="crf-action-bar-text">
@@ -169,7 +169,7 @@ require_once __DIR__ . '/../includes/header.php';
         </form>
         <?php else: ?>
         <form
-            action="../actions/automation_action.php"
+            action="<?= h(crfActionUrl('automation_action.php')) ?>"
             method="POST"
             data-loading-form
         >

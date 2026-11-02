@@ -25,7 +25,7 @@ $crfId = filter_input(INPUT_POST, 'crf_id', FILTER_VALIDATE_INT) ?: 0;
 $discussionId = filter_input(INPUT_POST, 'discussion_id', FILTER_VALIDATE_INT) ?: 0;
 
 $back = static function (int $id): string {
-    return '../forum/index.php' . ($id > 0 ? '?crf_id=' . $id . '#forum-pembahasan' : '');
+    return $id > 0 ? crfUrl('forum.index', ['crf_id' => $id], 'forum-pembahasan') : crfUrl('forum.index');
 };
 
 try {
@@ -65,5 +65,5 @@ try {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Aksi gagal diproses. Silakan coba lagi atau hubungi administrator.'];
 }
 
-header('Location: ' . $back($crfId));
+crfRedirect($back($crfId));
 exit;

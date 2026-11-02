@@ -5,7 +5,7 @@ require_once __DIR__ . '/../includes/forum_discussions.php';
 requireCrfRole(['cmo']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../cmo/index.php');
+    crfRedirect(crfUrl('cmo.index'));
     exit;
 }
 verifyCsrf();
@@ -18,7 +18,7 @@ $tanggapan = trim($_POST['tanggapan'] ?? '');
 
 if ($id <= 0) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'CRF tidak valid.'];
-    header('Location: ../cmo/index.php');
+    crfRedirect(crfUrl('cmo.index'));
     exit;
 }
 
@@ -35,7 +35,7 @@ $crf = $stmt->fetch();
 
 if (!$crf) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'CRF tidak ditemukan.'];
-    header('Location: ../cmo/index.php');
+    crfRedirect(crfUrl('cmo.index'));
     exit;
 }
 
@@ -54,13 +54,13 @@ $allowed = [
 $expected = $allowed[$action] ?? null;
 if ($expected === null || (is_array($expected) ? !in_array($crf['tahap_alur'], $expected, true) : $crf['tahap_alur'] !== $expected)) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Aksi tidak tersedia pada tahap CRF saat ini.'];
-    header('Location: ../cmo/detail.php?id=' . $id);
+    crfRedirect(crfUrl('cmo.detail', ['id' => $id]));
     exit;
 }
 
 if (in_array($action, ['revision','cancel','request_discussion','uat_fail'], true) && $tanggapan === '') {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Tanggapan / Tindak Lanjut wajib diisi untuk aksi ini.'];
-    header('Location: ../cmo/detail.php?id=' . $id);
+    crfRedirect(crfUrl('cmo.detail', ['id' => $id]));
     exit;
 }
 
@@ -72,7 +72,7 @@ if ($action === 'uat_pass') {
     $docStmt->execute(['id' => $id]);
     if ((int) $docStmt->fetchColumn() === 0) {
         $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Unggah minimal satu dokumen hasil UAT sebelum menyatakan UAT lulus.'];
-        header('Location: ../cmo/detail.php?id=' . $id);
+        crfRedirect(crfUrl('cmo.detail', ['id' => $id]));
         exit;
     }
 }
@@ -88,7 +88,7 @@ if ($action === 'remind_pir') {
             'message' => 'Pengingat sudah dikirim. Pengingat berikutnya bisa dikirim setelah '
                 . date('d-m-Y H:i', strtotime($reminder['next_at'])) . '.',
         ];
-        header('Location: ../cmo/detail.php?id=' . $id);
+        crfRedirect(crfUrl('cmo.detail', ['id' => $id]));
         exit;
     }
 
@@ -123,7 +123,7 @@ if ($action === 'remind_pir') {
         $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Terjadi kesalahan saat mengirim pengingat.'];
     }
 
-    header('Location: ../cmo/detail.php?id=' . $id);
+    crfRedirect(crfUrl('cmo.detail', ['id' => $id]));
     exit;
 }
 
@@ -158,7 +158,7 @@ if (in_array($action, ['request_discussion', 'cancel_discussion'], true)) {
         $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Terjadi kesalahan saat memproses pembahasan Forum.'];
     }
 
-    header('Location: ../cmo/detail.php?id=' . $id);
+    crfRedirect(crfUrl('cmo.detail', ['id' => $id]));
     exit;
 }
 
@@ -168,7 +168,7 @@ if ($action === 'to_approval') {
             'type' => 'warning',
             'message' => 'CRF ini menunggu pembahasan Forum. Setelah hasil pembahasan dicatat (CMO atau Admin), CRF otomatis diteruskan ke Kepala Departemen.',
         ];
-        header('Location: ../cmo/detail.php?id=' . $id);
+        crfRedirect(crfUrl('cmo.detail', ['id' => $id]));
         exit;
     }
 
@@ -194,7 +194,7 @@ if ($action === 'to_approval') {
                 'type' => 'warning',
                 'message' => 'SLA CRF ini belum tersedia karena SLA standar kategori belum diatur. Pembahasan Forum dibuka otomatis; CMO atau Admin akan menetapkan SLA sebelum CRF dapat diteruskan.',
             ];
-            header('Location: ../cmo/detail.php?id=' . $id);
+            crfRedirect(crfUrl('cmo.detail', ['id' => $id]));
             exit;
         }
         $crf = array_merge($crf, $fresh);
@@ -326,8 +326,8 @@ try {
 }
 
 if ($action === 'to_approval' && isDemoUser()) {
-    header('Location: ../kadep_operasional/index.php');
+    crfRedirect(crfUrl('kadep.index'));
 } else {
-    header('Location: ../cmo/index.php');
+    crfRedirect(crfUrl('cmo.index'));
 }
 exit;

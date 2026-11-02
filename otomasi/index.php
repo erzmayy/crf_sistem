@@ -152,7 +152,7 @@ require_once __DIR__ . '/../includes/header.php';
 
     .queue-filter-buttons {
         display: flex;
-        gap: 0.4rem;
+        gap: calc(0.4 * var(--crf-rem));
         flex-wrap: wrap;
     }
 
@@ -206,7 +206,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <!-- FILTER ANTREAN -->
                 <div class="btn-group">
                     <a
-                        href="?<?= h(http_build_query(array_filter([
+                        href="<?= h(crfSelfUrl(array_filter([
                             'q' => $search,
                             'queue' => 'all'
                         ], static fn($value) => $value !== ''))) ?>"
@@ -216,7 +216,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </a>
 
                     <a
-                        href="?<?= h(http_build_query(array_filter([
+                        href="<?= h(crfSelfUrl(array_filter([
                             'q' => $search,
                             'queue' => 'history'
                         ], static fn($value) => $value !== ''))) ?>"
@@ -336,12 +336,12 @@ require_once __DIR__ . '/../includes/header.php';
                                     // Satu tombol per baris: Buka (belum diambil), Lanjutkan (milik saya),
                                     // Lihat (dipegang PIC lain, hanya baca), Detail (riwayat).
                                     if ($queue === 'history' || (!empty($row['pic_id']) && !isAssignedCrfHandler($row))) {
-                                        $rowActionUrl = 'view_detail.php?id=' . (int) $row['id'];
+                                        $rowActionUrl = crfUrl('otomasi.view', ['id' => (int) $row['id']]);
                                         $rowActionLabel = $queue === 'history' ? 'Detail' : 'Lihat';
                                         $rowActionClass = 'btn-crf-outline';
                                         $rowActionIcon = 'bi-eye';
                                     } else {
-                                        $rowActionUrl = 'detail.php?id=' . (int) $row['id'];
+                                        $rowActionUrl = crfUrl('otomasi.detail', ['id' => (int) $row['id']]);
                                         $rowActionLabel = empty($row['pic_id']) ? 'Buka' : 'Lanjutkan';
                                         $rowActionClass = 'btn-crf-primary';
                                         $rowActionIcon = 'bi-arrow-right-circle';

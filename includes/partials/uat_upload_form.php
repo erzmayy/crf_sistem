@@ -8,7 +8,7 @@
  */
 $uatUploadBack = $uatUploadBack ?? '';
 ?>
-<form action="../actions/uat_upload.php" method="POST" enctype="multipart/form-data" class="crf-uat-upload" data-loading-form>
+<form action="<?= h(crfActionUrl('uat_upload.php')) ?>" method="POST" enctype="multipart/form-data" class="crf-uat-upload" data-loading-form>
     <?= csrfField() ?>
     <input type="hidden" name="id" value="<?= (int) $crf['id'] ?>">
     <?php if ($uatUploadBack !== ''): ?>

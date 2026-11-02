@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/categories.php';
 require_once __DIR__ . '/../config/sla.php';
+require_once __DIR__ . '/crf_url.php'; // crfUrl()/crfRedirect() dipakai actions yang hanya memuat session.php + functions.php
 
 use Aws\S3\S3Client;
 use Aws\Exception\AwsException;

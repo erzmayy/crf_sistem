@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pdo->prepare('UPDATE crf_notifikasi SET tgl_dibaca = NOW() WHERE pengguna_id = :pengguna_id AND tgl_dibaca IS NULL')
         ->execute(['pengguna_id' => $userId]);
     $_SESSION['flash'] = ['type' => 'success', 'message' => 'Semua notifikasi ditandai sudah dibaca.'];
-    header('Location: index.php');
+    crfRedirect(crfUrl('notifications.index'));
     exit;
 }
 
@@ -74,7 +74,7 @@ require_once __DIR__ . '/../includes/header.php';
             <?php else: ?>
                 <div class="crf-notification-list">
                     <?php foreach ($items as $item): ?>
-                        <a class="crf-notification-item <?= $item['tgl_dibaca'] === null ? 'unread' : '' ?>" href="open.php?id=<?= (int) $item['id'] ?>">
+                        <a class="crf-notification-item <?= $item['tgl_dibaca'] === null ? 'unread' : '' ?>" href="<?= h(crfUrl('notifications.open', ['id' => (int) $item['id']])) ?>">
                             <strong><?= h($item['judul']) ?></strong>
                             <span><?= nl2br(h(getCrfRole() === 'pemohon' ? crfStripSlaText($item['pesan']) : (string) $item['pesan'])) ?></span>
                             <small><?= h(date('d M Y H:i', strtotime($item['tgl_dibuat']))) ?></small>
@@ -84,7 +84,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php if ($totalPages > 1): ?>
                     <nav class="d-flex justify-content-end gap-1 mt-3" aria-label="Halaman notifikasi">
                         <?php for ($p = 1; $p <= $totalPages; $p++): ?>
-                            <a href="?page=<?= $p ?>" class="btn btn-sm <?= $p === $page ? 'btn-crf-primary' : 'btn-crf-outline' ?>"><?= $p ?></a>
+                            <a href="<?= h(crfSelfUrl(['page' => $p])) ?>" class="btn btn-sm <?= $p === $page ? 'btn-crf-primary' : 'btn-crf-outline' ?>"><?= $p ?></a>
                         <?php endfor; ?>
                     </nav>
                 <?php endif; ?>

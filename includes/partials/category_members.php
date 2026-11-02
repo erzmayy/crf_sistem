@@ -26,7 +26,7 @@
                     <small><i class="bi bi-envelope"></i> <?= h($member['email']) ?></small>
                 <?php endif; ?>
             </div>
-            <form method="POST" action="../actions/category_master.php"
+            <form method="POST" action="<?= h(crfActionUrl('category_master.php')) ?>"
                   data-confirm="Hapus <?= h($member['pengguna_nama'] ?? '') ?> dari <?= h($memberLabel) ?> kategori <?= h($memberCategory['nama']) ?>?">
                 <?= csrfField() ?>
                 <input type="hidden" name="op" value="remove_member">
@@ -41,7 +41,7 @@
     <?php endforeach; ?>
 </div>
 
-<form method="POST" action="../actions/category_master.php" class="crf-member-add" data-user-picker>
+<form method="POST" action="<?= h(crfActionUrl('category_master.php')) ?>" class="crf-member-add" data-user-picker>
     <?= csrfField() ?>
     <input type="hidden" name="op" value="add_member">
     <input type="hidden" name="return" value="<?= h($memberReturn) ?>">

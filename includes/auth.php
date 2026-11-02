@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/categories.php';
+require_once __DIR__ . '/crf_url.php';
 
 /**
  * Memastikan user sudah login.
@@ -10,8 +11,7 @@ require_once __DIR__ . '/categories.php';
 function requireLogin(): void
 {
     if (!isset($_SESSION['user_id'])) {
-        header('Location: ../login.php');
-        exit;
+        crfRedirect(crfUrl('login'));
     }
 }
 
@@ -249,22 +249,22 @@ function requireCrfRole($roles): void
 
         switch ($currentRole) {
             case 'admin':
-                header('Location: ../admin/dashboard.php');
+                $homeRoute = 'admin.dashboard';
                 break;
             case 'cmo':
-                header('Location: ../cmo/index.php');
+                $homeRoute = 'cmo.index';
                 break;
             case 'otomasi':
-                header('Location: ../otomasi/index.php');
+                $homeRoute = 'otomasi.index';
                 break;
             case 'kadep_operasional':
-                header('Location: ../kadep_operasional/index.php');
+                $homeRoute = 'kadep.index';
                 break;
             default:
-                header('Location: ../user/pengajuan_saya.php');
+                $homeRoute = 'user.pengajuan';
                 break;
         }
-        exit;
+        crfRedirect(crfUrl($homeRoute));
     }
 }
 

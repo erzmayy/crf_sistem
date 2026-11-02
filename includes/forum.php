@@ -161,16 +161,16 @@ function forumProcessLink(PDO $pdo, array $crf): ?array
 
     switch (getCrfRole()) {
         case 'demo':
-            return ['url' => '../crf/open.php?id=' . $id, 'label' => 'Buka halaman proses'];
+            return ['url' => crfUrl('crf.open', ['id' => $id]), 'label' => 'Buka halaman proses'];
         case 'admin':
-            return ['url' => '../admin/detail.php?id=' . $id, 'label' => 'Buka halaman Admin'];
+            return ['url' => crfUrl('admin.detail', ['id' => $id]), 'label' => 'Buka halaman Admin'];
         case 'cmo':
             return in_array($stage, ['CMO_FILTER', 'UAT', 'PEMOHON_PIR', 'CMO_FINAL'], true)
-                ? ['url' => '../cmo/detail.php?id=' . $id, 'label' => 'Buka halaman proses CMO']
+                ? ['url' => crfUrl('cmo.detail', ['id' => $id]), 'label' => 'Buka halaman proses CMO']
                 : null;
         case 'kadep_operasional':
             return $stage === 'kadep_operasional'
-                ? ['url' => '../kadep_operasional/detail.php?id=' . $id, 'label' => 'Buka halaman persetujuan']
+                ? ['url' => crfUrl('kadep.detail', ['id' => $id]), 'label' => 'Buka halaman persetujuan']
                 : null;
         case 'otomasi':
             $canProcess = $stage === 'OTOMASI'
@@ -179,7 +179,7 @@ function forumProcessLink(PDO $pdo, array $crf): ?array
                 && (empty($crf['pic_id']) || isAssignedCrfHandler($crf));
 
             return $canProcess
-                ? ['url' => '../otomasi/detail.php?id=' . $id, 'label' => 'Buka halaman proses Otomasi']
+                ? ['url' => crfUrl('otomasi.detail', ['id' => $id]), 'label' => 'Buka halaman proses Otomasi']
                 : null;
     }
 

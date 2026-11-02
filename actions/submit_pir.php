@@ -11,7 +11,7 @@ require_once __DIR__ . '/../includes/notifications.php';
 requireLogin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../user/pengajuan_saya.php');
+    crfRedirect(crfUrl('user.pengajuan'));
     exit;
 }
 
@@ -22,7 +22,7 @@ $user = getCurrentUser();
 $id = (int) ($_POST['id'] ?? 0);
 $pir = trim($_POST['tinjauan_pasca_implementasi'] ?? '');
 $pirDate = trim($_POST['tgl_pir'] ?? '');
-$redirect = $id > 0 ? '../user/detail.php?id=' . $id . '#implementation-review' : '../user/pengajuan_saya.php';
+$redirect = $id > 0 ? crfUrl('user.detail', ['id' => $id], 'implementation-review') : crfUrl('user.pengajuan');
 
 $parsedPirDate = DateTime::createFromFormat('!Y-m-d', $pirDate);
 $pirDateErrors = DateTime::getLastErrors();
@@ -38,7 +38,7 @@ if ($id <= 0 || !$isValidPirDate || $pir === '') {
         'type' => 'danger',
         'message' => 'Tanggal PIR dan Post Implementation Review wajib diisi dengan benar.',
     ];
-    header('Location: ' . $redirect);
+    crfRedirect($redirect);
     exit;
 }
 
@@ -61,7 +61,7 @@ try {
             'type' => 'danger',
             'message' => 'CRF tidak ditemukan atau belum/tidak lagi pada tahap Post Implementation Review.',
         ];
-        header('Location: ' . $redirect);
+        crfRedirect($redirect);
         exit;
     }
 
@@ -72,7 +72,7 @@ try {
             'message' => 'Tanggal PIR tidak boleh sebelum Tanggal Implementasi ('
                 . date('d-m-Y', strtotime($crf['tgl_implementasi'])) . ').',
         ];
-        header('Location: ' . $redirect);
+        crfRedirect($redirect);
         exit;
     }
 
@@ -121,7 +121,7 @@ try {
         'type' => 'success',
         'message' => 'Post Implementation Review berhasil dikirim. CRF diteruskan ke CMO untuk finalisasi.',
     ];
-    header('Location: ' . $redirect);
+    crfRedirect($redirect);
     exit;
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
@@ -130,6 +130,6 @@ try {
 
     error_log('submit_pir error: ' . $e->getMessage());
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Terjadi kesalahan saat menyimpan Post Implementation Review.'];
-    header('Location: ' . $redirect);
+    crfRedirect($redirect);
     exit;
 }

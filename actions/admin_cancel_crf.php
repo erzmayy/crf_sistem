@@ -15,7 +15,7 @@ require_once __DIR__ . '/../includes/forum_discussions.php';
 requireAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../admin/dashboard.php');
+    crfRedirect(crfUrl('admin.dashboard'));
     exit;
 }
 
@@ -25,11 +25,11 @@ $pdo = getConnection();
 $user = getCurrentUser();
 $id = (int) ($_POST['id'] ?? 0);
 $reason = trim($_POST['reason'] ?? '');
-$redirect = '../admin/detail.php?id=' . $id;
+$redirect = crfUrl('admin.detail', ['id' => $id]);
 
 if ($id <= 0 || $reason === '' || mb_strlen($reason) > 1000) {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Alasan pembatalan wajib diisi (maks. 1000 karakter).'];
-    header('Location: ' . $redirect);
+    crfRedirect($redirect);
     exit;
 }
 
@@ -48,14 +48,14 @@ try {
     if ($crf && isOwnHandledCrf($crf)) {
         $pdo->rollBack();
         $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Anda sedang memegang CRF ini sebagai PIC CRF. Pembatalan harus dilakukan Admin lain.'];
-        header('Location: ' . $redirect);
+        crfRedirect($redirect);
         exit;
     }
 
     if (!$crf || in_array($crf['status'], ['Draft', 'Solve', 'Cancel'], true)) {
         $pdo->rollBack();
         $_SESSION['flash'] = ['type' => 'danger', 'message' => 'CRF tidak dapat dibatalkan (draft, sudah selesai, atau sudah dibatalkan).'];
-        header('Location: ' . $redirect);
+        crfRedirect($redirect);
         exit;
     }
 
@@ -101,5 +101,5 @@ try {
     $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Terjadi kesalahan saat membatalkan CRF.'];
 }
 
-header('Location: ' . $redirect);
+crfRedirect($redirect);
 exit;

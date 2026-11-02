@@ -11,7 +11,7 @@ require_once __DIR__ . '/../includes/functions.php';
 requireCrfRole(['otomasi']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../otomasi/index.php');
+    crfRedirect(crfUrl('otomasi.index'));
     exit;
 }
 
@@ -20,19 +20,19 @@ verifyCsrf();
 $pdo = getConnection();
 $user = getCurrentUser();
 $id = (int) ($_POST['id'] ?? 0);
-$back = '../otomasi/detail.php?id=' . $id;
+$back = crfUrl('otomasi.detail', ['id' => $id]);
 
 $finish = static function (string $type, string $message, string $location) use ($pdo): void {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
     $_SESSION['flash'] = ['type' => $type, 'message' => $message];
-    header('Location: ' . $location);
+    crfRedirect($location);
     exit;
 };
 
 if ($id <= 0) {
-    $finish('danger', 'CRF tidak valid.', '../otomasi/index.php');
+    $finish('danger', 'CRF tidak valid.', crfUrl('otomasi.index'));
 }
 
 try {
@@ -49,11 +49,11 @@ try {
     $crf = $stmt->fetch();
 
     if (!$crf || $crf['tahap_alur'] !== 'OTOMASI' || empty($crf['tgl_disetujui_kadep']) || !empty($crf['otomasi_selesai'])) {
-        $finish('danger', 'CRF tidak ditemukan pada daftar eksekusi.', '../otomasi/index.php');
+        $finish('danger', 'CRF tidak ditemukan pada daftar eksekusi.', crfUrl('otomasi.index'));
     }
 
     if (!canHandleCrf($pdo, $crf)) {
-        $finish('danger', 'CRF ini bukan kategori yang Anda tangani.', '../otomasi/index.php');
+        $finish('danger', 'CRF ini bukan kategori yang Anda tangani.', crfUrl('otomasi.index'));
     }
 
     if (!empty($crf['pic_id'])) {
@@ -92,5 +92,5 @@ try {
 }
 
 $_SESSION['flash'] = ['type' => 'success', 'message' => 'Anda mulai mengerjakan CRF ini. Response time sudah tercatat.'];
-header('Location: ' . $back);
+crfRedirect($back);
 exit;

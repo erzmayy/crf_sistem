@@ -17,7 +17,7 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/forum_discussions.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../user/form_crf.php');
+    crfRedirect(crfUrl('user.form'));
     exit;
 }
 
@@ -195,9 +195,9 @@ if ($errors) {
      * Jangan kembali ke form kosong.
      */
     if ($draftId > 0) {
-        header('Location: ../user/form_crf.php?id=' . $draftId);
+        crfRedirect(crfUrl('user.form', ['id' => $draftId]));
     } else {
-        header('Location: ../user/form_crf.php');
+        crfRedirect(crfUrl('user.form'));
     }
 
     exit;
@@ -542,9 +542,9 @@ try {
      * tetap kembali ke Draft yang sama agar data tidak hilang.
      */
     if ($draftId > 0) {
-        header('Location: ../user/form_crf.php?id=' . $draftId);
+        crfRedirect(crfUrl('user.form', ['id' => $draftId]));
     } else {
-        header('Location: ../user/form_crf.php');
+        crfRedirect(crfUrl('user.form'));
     }
 
     exit;
@@ -553,5 +553,5 @@ try {
 /* ------------------------------------------------------------------
  * 9. Setelah Submit berhasil
  * ------------------------------------------------------------------ */
-header('Location: ../user/detail.php?id=' . $crfId);
+crfRedirect(crfUrl('user.detail', ['id' => $crfId]));
 exit;

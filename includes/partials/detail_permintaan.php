@@ -103,12 +103,12 @@ $renderFiles = static function (array $files, bool $showDate) use ($attachmentIc
                 </small>
                 <span class="crf-file-actions">
                     <?php if (!empty($file['path_file'])): ?>
-                        <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>&amp;inline=1" target="_blank" rel="noopener"
+                        <a href="<?= h(crfActionUrl('download_attachment.php', ['id' => (int) $file['id'], 'inline' => 1])) ?>" target="_blank" rel="noopener"
                            class="btn btn-sm btn-crf-outline" aria-label="Lihat <?= h($file['nama_asli'] ?? '') ?>">
                             <i class="bi bi-eye" aria-hidden="true"></i> Lihat
                         </a>
                     <?php endif; ?>
-                    <a href="../actions/download_attachment.php?id=<?= (int) $file['id'] ?>" class="btn btn-sm btn-crf-outline"
+                    <a href="<?= h(crfActionUrl('download_attachment.php', ['id' => (int) $file['id']])) ?>" class="btn btn-sm btn-crf-outline"
                        aria-label="Unduh <?= h($file['nama_asli'] ?? '') ?>">
                         <i class="bi bi-download" aria-hidden="true"></i> Unduh
                     </a>

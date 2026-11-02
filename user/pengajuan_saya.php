@@ -233,7 +233,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
             <a
-                href="form_crf.php"
+                href="<?= h(crfUrl('user.form')) ?>"
                 class="btn btn-light pengajuan-create-button"
             >
                 <i class="bi bi-plus-lg"></i>
@@ -306,7 +306,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <p>Ajukan perubahan baru untuk memulai proses CRF.</p>
 
                         <a
-                            href="form_crf.php"
+                            href="<?= h(crfUrl('user.form')) ?>"
                             class="btn btn-primary"
                         >
                             Buat Pengajuan
@@ -327,7 +327,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </span>
                     </div>
 
-                    <form method="GET" class="mb-4 pengajuan-filters">
+                    <form method="GET" class="mb-4 pengajuan-filters"><?= crfRouteFields() ?>
                         <input type="hidden" name="per_page" value="<?= (int) $perPage ?>">
 
                         <div class="row g-2">
@@ -398,7 +398,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                             <div class="pengajuan-filter-reset">
                                 <a
-                                    href="pengajuan_saya.php"
+                                    href="<?= h(crfUrl('user.pengajuan')) ?>"
                                     class="small text-decoration-none"
                                 >
                                     <i class="bi bi-arrow-counterclockwise"></i> Reset filter aktif
@@ -459,7 +459,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                                         <!-- DETAIL -->
                                         <a
-                                            href="detail.php?id=<?= (int) $row['id'] ?>"
+                                            href="<?= h(crfUrl('user.detail', ['id' => (int) $row['id']])) ?>"
                                             class="btn btn-sm btn-crf-outline"
                                         >
                                             <i class="bi bi-eye"></i> Detail
@@ -473,7 +473,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         ): ?>
 
                                             <a
-                                                href="../actions/export_crf.php?id=<?= (int) $row['id'] ?>"
+                                                href="<?= h(crfActionUrl('export_crf.php', ['id' => (int) $row['id']])) ?>"
                                                 class="btn btn-sm btn-crf-outline"
                                                 target="_blank"
                                                 title="Cetak PDF"
@@ -489,7 +489,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         <?php if (($row['tahap_alur'] ?? '') === 'PEMOHON_PIR'): ?>
 
                                             <a
-                                                href="detail.php?id=<?= (int) $row['id'] ?>#implementation-review"
+                                                href="<?= h(crfUrl('user.detail', ['id' => (int) $row['id']], 'implementation-review')) ?>"
                                                 class="btn btn-sm btn-crf-primary"
                                             >
                                                 <i class="bi bi-pencil-square"></i>
@@ -506,7 +506,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         ): ?>
 
                                             <a
-                                                href="form_crf.php?id=<?= (int) $row['id'] ?>"
+                                                href="<?= h(crfUrl('user.form', ['id' => (int) $row['id']])) ?>"
                                                 class="btn btn-sm btn-crf-primary"
                                             >
                                                 <?= $row['status'] === 'Perlu Revisi'
@@ -521,7 +521,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         <?php if ($row['status'] === 'Draft'): ?>
 
                                             <form
-                                                action="../actions/delete_draft.php"
+                                                action="<?= h(crfActionUrl('delete_draft.php')) ?>"
                                                 method="POST"
                                                 onsubmit="return confirm('Hapus draft ini? Tindakan ini tidak bisa dibatalkan.');"
                                                 class="d-inline"

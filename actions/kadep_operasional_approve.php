@@ -6,7 +6,7 @@ require_once __DIR__ . '/../includes/forum_discussions.php';
 requireCrfRole(['kadep_operasional']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../kadep_operasional/index.php');
+    crfRedirect(crfUrl('kadep.index'));
     exit;
 }
 
@@ -26,7 +26,7 @@ if ($id <= 0) {
         'message' => 'CRF tidak valid.'
     ];
 
-    header('Location: ../kadep_operasional/index.php');
+    crfRedirect(crfUrl('kadep.index'));
     exit;
 }
 
@@ -47,7 +47,7 @@ if (!$crf || $crf['tahap_alur'] !== 'kadep_operasional') {
         'message' => 'CRF tidak tersedia untuk persetujuan.'
     ];
 
-    header('Location: ../kadep_operasional/index.php');
+    crfRedirect(crfUrl('kadep.index'));
     exit;
 }
 
@@ -59,7 +59,7 @@ if ($note === '') {
         'message' => 'Catatan persetujuan wajib diisi.'
     ];
 
-    header('Location: ../kadep_operasional/detail.php?id=' . $id);
+    crfRedirect(crfUrl('kadep.detail', ['id' => $id]));
     exit;
 }
 
@@ -117,7 +117,7 @@ try {
                     ? 'CRF ini masih menunggu pembahasan Forum sehingga belum dapat disetujui.'
                     : 'SLA CRF ini belum tersedia, sehingga belum dapat disetujui. Hubungi Admin.',
             ];
-            header('Location: ../kadep_operasional/detail.php?id=' . $id);
+            crfRedirect(crfUrl('kadep.detail', ['id' => $id]));
             exit;
         }
 
@@ -224,7 +224,7 @@ try {
         ];
 
 
-        header('Location: ../kadep_operasional/index.php');
+        crfRedirect(crfUrl('kadep.index'));
         exit;
     }
 
@@ -250,6 +250,6 @@ try {
         'message' => 'Terjadi kesalahan saat memproses persetujuan.'
     ];
 
-    header('Location: ../kadep_operasional/index.php');
+    crfRedirect(crfUrl('kadep.index'));
     exit;
 }

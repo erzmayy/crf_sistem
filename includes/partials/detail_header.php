@@ -51,7 +51,7 @@ $dhSla = (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan']))
         <div class="crf-dh-actions">
             <?php if ($dhShowForum) { require __DIR__ . '/forum_button.php'; } ?>
             <?php if ($dhShowExport): ?>
-                <a href="../actions/export_crf.php?id=<?= (int) $crf['id'] ?>" class="btn btn-crf-outline" target="_blank" rel="noopener">
+                <a href="<?= h(crfActionUrl('export_crf.php', ['id' => (int) $crf['id']])) ?>" class="btn btn-crf-outline" target="_blank" rel="noopener">
                     <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Ekspor PDF
                 </a>
             <?php endif; ?>

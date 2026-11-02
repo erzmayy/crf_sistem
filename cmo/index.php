@@ -153,19 +153,19 @@ require_once __DIR__ . '/../includes/header.php';
     <?php endif; ?>
 
     <div class="crf-stat-grid crf-portal-summary mb-4">
-      <a class="crf-stat-card text-decoration-none" href="?stage=filter">
+      <a class="crf-stat-card text-decoration-none" href="<?= h(crfSelfUrl(['stage' => 'filter'])) ?>">
         <span><i class="bi bi-funnel-fill"></i> Menunggu Verifikasi</span>
         <strong><?= $counts['CMO_FILTER'] ?></strong>
       </a>
-      <a class="crf-stat-card text-decoration-none" href="?stage=uat" title="Eksekusi selesai, menunggu pengujian UAT oleh CMO">
+      <a class="crf-stat-card text-decoration-none" href="<?= h(crfSelfUrl(['stage' => 'uat'])) ?>" title="Eksekusi selesai, menunggu pengujian UAT oleh CMO">
         <span><i class="bi bi-clipboard2-check"></i> Menunggu UAT</span>
         <strong><?= $counts['UAT'] ?></strong>
       </a>
-      <a class="crf-stat-card text-decoration-none" href="?stage=pir" title="Implementasi selesai, menunggu Post Implementation Review dari Pemohon">
+      <a class="crf-stat-card text-decoration-none" href="<?= h(crfSelfUrl(['stage' => 'pir'])) ?>" title="Implementasi selesai, menunggu Post Implementation Review dari Pemohon">
         <span><i class="bi bi-hourglass-split"></i> Menunggu PIR Pemohon</span>
         <strong><?= $counts['PEMOHON_PIR'] ?></strong>
       </a>
-      <a class="crf-stat-card text-decoration-none" href="?stage=final">
+      <a class="crf-stat-card text-decoration-none" href="<?= h(crfSelfUrl(['stage' => 'final'])) ?>">
         <span><i class="bi bi-check2-square"></i> Menunggu Finalisasi</span>
         <strong><?= $counts['CMO_FINAL'] ?></strong>
       </a>
@@ -175,12 +175,12 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="crf-table-heading">
         <h2><?= $filter === 'history' ? 'Riwayat CRF CMO' : 'Daftar CRF CMO' ?></h2>
         <div class="btn-group">
-          <a href="?stage=all" class="btn btn-sm <?= $filter === 'all' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Semua</a>
-          <a href="?stage=filter" class="btn btn-sm <?= $filter === 'filter' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Verifikasi</a>
-          <a href="?stage=uat" class="btn btn-sm <?= $filter === 'uat' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">UAT</a>
-          <a href="?stage=pir" class="btn btn-sm <?= $filter === 'pir' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Menunggu PIR</a>
-          <a href="?stage=final" class="btn btn-sm <?= $filter === 'final' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Finalisasi</a>
-          <a href="?stage=history" class="btn btn-sm <?= $filter === 'history' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Riwayat</a>
+          <a href="<?= h(crfSelfUrl(['stage' => 'all'])) ?>" class="btn btn-sm <?= $filter === 'all' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Semua</a>
+          <a href="<?= h(crfSelfUrl(['stage' => 'filter'])) ?>" class="btn btn-sm <?= $filter === 'filter' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Verifikasi</a>
+          <a href="<?= h(crfSelfUrl(['stage' => 'uat'])) ?>" class="btn btn-sm <?= $filter === 'uat' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">UAT</a>
+          <a href="<?= h(crfSelfUrl(['stage' => 'pir'])) ?>" class="btn btn-sm <?= $filter === 'pir' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Menunggu PIR</a>
+          <a href="<?= h(crfSelfUrl(['stage' => 'final'])) ?>" class="btn btn-sm <?= $filter === 'final' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Finalisasi</a>
+          <a href="<?= h(crfSelfUrl(['stage' => 'history'])) ?>" class="btn btn-sm <?= $filter === 'history' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Riwayat</a>
         </div>
       </div>
 
@@ -207,7 +207,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php require __DIR__ . '/../includes/partials/crf_row_request.php'; ?>
                 <?php $rowWaiting = $waitingInfo[(int) $row['id']] ?? null; ?>
                 <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
-                <td data-label="Aksi"><div class="d-flex gap-2"><a href="detail.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline"><i class="bi bi-eye"></i> Detail</a><?php if (($row['status'] ?? '') !== 'Draft'): ?><a href="../actions/export_crf.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline" target="_blank" rel="noopener" title="Cetak PDF"><i class="bi bi-printer"></i> Cetak</a><?php endif; ?></div></td>
+                <td data-label="Aksi"><div class="d-flex gap-2"><a href="<?= h(crfUrl('cmo.detail', ['id' => (int) $row['id']])) ?>" class="btn btn-sm btn-crf-outline"><i class="bi bi-eye"></i> Detail</a><?php if (($row['status'] ?? '') !== 'Draft'): ?><a href="<?= h(crfActionUrl('export_crf.php', ['id' => (int) $row['id']])) ?>" class="btn btn-sm btn-crf-outline" target="_blank" rel="noopener" title="Cetak PDF"><i class="bi bi-printer"></i> Cetak</a><?php endif; ?></div></td>
               </tr>
             <?php endforeach; ?>
           <?php endif; ?>

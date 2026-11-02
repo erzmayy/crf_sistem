@@ -15,5 +15,5 @@ $_SESSION['flash'] = [
     'type' => 'info',
     'message' => 'Halaman edit status sudah tidak digunakan. Gunakan Tindakan Admin di halaman detail CRF.',
 ];
-header('Location: detail.php?id=' . (int) ($_GET['id'] ?? 0));
+crfRedirect(crfUrl('admin.detail', ['id' => (int) ($_GET['id'] ?? 0)]));
 exit;

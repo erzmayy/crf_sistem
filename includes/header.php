@@ -46,9 +46,11 @@ $styleUrl = $appBasePath . '/assets/css/style.css?v=' . (int) filemtime(__DIR__ 
  * Penutupnya ada di includes/footer.php.
  */
 if ($crfEmbedded) {
-    if (defined('CRF_LOAD_BOOTSTRAP') && CRF_LOAD_BOOTSTRAP) {
-        echo '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">' . "\n";
-    }
+    // Bootstrap 5 versi terbatas (.crf-module saja). Versi global dari CDN akan mengubah tampilan SIAP
+    // (Bootstrap 3): tautan bergaris bawah, font, dan ukuran huruf di header/sidebar. CRF_LOAD_BOOTSTRAP
+    // tidak lagi dipakai di mode module.
+    $scopedBootstrapFile = __DIR__ . '/../assets/css/bootstrap-scoped.css';
+    echo '<link href="' . h($appBasePath . '/assets/css/bootstrap-scoped.css?v=' . (int) filemtime($scopedBootstrapFile)) . '" rel="stylesheet">' . "\n";
     if (!defined('CRF_LOAD_ICONS') || CRF_LOAD_ICONS) {
         echo '<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">' . "\n";
     }

@@ -9,7 +9,7 @@ require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../user/pengajuan_saya.php');
+    crfRedirect(crfUrl('user.pengajuan'));
     exit;
 }
 
@@ -42,7 +42,7 @@ if (!$draft) {
         'message' => 'Draft tidak ditemukan atau tidak dapat dihapus.',
     ];
 
-    header('Location: ../user/pengajuan_saya.php');
+    crfRedirect(crfUrl('user.pengajuan'));
     exit;
 }
 
@@ -76,5 +76,5 @@ try {
     ];
 }
 
-header('Location: ../user/pengajuan_saya.php');
+crfRedirect(crfUrl('user.pengajuan'));
 exit;

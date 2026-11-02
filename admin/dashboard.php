@@ -270,7 +270,7 @@ require_once __DIR__ . '/../includes/header.php';
 
         <div class="crf-stat-grid crf-portal-summary dashboard-summary-grid">
 
-            <a class="crf-stat-card text-decoration-none <?= $listFilters['display_status'] === '' ? 'is-active' : '' ?>" href="<?= h('?' . http_build_query($reportCarry)) ?>#crf-table">
+            <a class="crf-stat-card text-decoration-none <?= $listFilters['display_status'] === '' ? 'is-active' : '' ?>" href="<?= h(crfSelfUrl($reportCarry)) ?>#crf-table">
                 <span><i class="bi bi-inboxes-fill"></i> Total CRF</span>
                 <strong><?= (int) ($displaySummary['total'] ?? 0) ?></strong>
             </a>
@@ -279,7 +279,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php if (in_array($displayKey, ['draft', 'revisi', 'dibatalkan'], true)) { continue; } // Disembunyikan dari ringkasan; tetap bisa difilter di tabel. ?>
                 <a
                     class="crf-stat-card crf-stat-tone-<?= h($displayKey) ?> text-decoration-none <?= $listFilters['display_status'] === $displayKey ? 'is-active' : '' ?>"
-                    href="<?= h('?' . http_build_query(['display_status' => $displayKey] + $reportCarry)) ?>#crf-table"
+                    href="<?= h(crfSelfUrl(['display_status' => $displayKey] + $reportCarry)) ?>#crf-table"
                 >
                     <span><i class="bi <?= h($displayIcons[$displayKey] ?? 'bi-circle') ?>"></i> <?= h($displayCondition['label']) ?></span>
                     <strong><?= (int) ($displaySummary[$displayKey] ?? 0) ?></strong>
@@ -296,10 +296,10 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
                 <div class="admin-report-exports">
                     <?php /* Tombol ekspor mengirim isi kolom tanggal saat ini (form=adminReportFilter), bukan rentang saat halaman dimuat. */ ?>
-                    <button type="submit" form="adminReportFilter" formaction="../actions/export_admin_report.php" formmethod="get" name="format" value="pdf" class="btn btn-sm btn-outline-danger">
+                    <button type="submit" form="adminReportFilter" formaction="<?= h(crfActionUrl('export_admin_report.php')) ?>" formmethod="get" name="format" value="pdf" class="btn btn-sm btn-outline-danger">
                         <i class="bi bi-file-earmark-pdf"></i> Ekspor PDF
                     </button>
-                    <button type="submit" form="adminReportFilter" formaction="../actions/export_admin_report.php" formmethod="get" name="format" value="xlsx" class="btn btn-sm btn-outline-success">
+                    <button type="submit" form="adminReportFilter" formaction="<?= h(crfActionUrl('export_admin_report.php')) ?>" formmethod="get" name="format" value="xlsx" class="btn btn-sm btn-outline-success">
                         <i class="bi bi-file-earmark-spreadsheet"></i> Ekspor Excel (.xlsx)
                     </button>
                 </div>
@@ -336,7 +336,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="alert alert-warning py-2 mb-2" role="alert"><?= h($reportRangeError) ?></div>
             <?php endif; ?>
 
-            <form id="adminReportFilter" class="admin-report-date-filter" method="get" action="dashboard.php">
+            <form id="adminReportFilter" class="admin-report-date-filter" method="get"><?= crfRouteFields() ?>
                 <?php foreach ([
                     'q' => $search,
                     'status' => $statusFilter,
@@ -361,7 +361,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <button type="submit" class="btn btn-sm btn-primary">
                     <i class="bi bi-funnel"></i> Terapkan
                 </button>
-                <a class="btn btn-sm btn-outline-secondary" href="dashboard.php">Reset</a>
+                <a class="btn btn-sm btn-outline-secondary" href="<?= h(crfSelfUrl()) ?>">Reset</a>
             </form>
 
             <div class="admin-report-grid">
@@ -437,7 +437,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <?php foreach ($report['types'] as $typeItem): ?>
                             <?php $typeLinkable = $typeItem['label'] !== 'Belum diisi'; ?>
                             <li>
-                                <<?= $typeLinkable ? 'a' : 'div' ?> class="admin-type-item"<?= $typeLinkable ? ' href="' . h('?' . http_build_query($reportCarry + ['type' => $typeItem['label']])) . '#crf-table" title="Tampilkan CRF bertipe ini di daftar"' : '' ?>>
+                                <<?= $typeLinkable ? 'a' : 'div' ?> class="admin-type-item"<?= $typeLinkable ? ' href="' . h(crfSelfUrl($reportCarry + ['type' => $typeItem['label']])) . '#crf-table" title="Tampilkan CRF bertipe ini di daftar"' : '' ?>>
                                     <span class="admin-type-head">
                                         <span><?= h($typeItem['label']) ?></span>
                                         <strong><?= (int) $typeItem['count'] ?> <small>(<?= number_format($typeItem['percentage'], 1, ',', '.') ?>%)</small></strong>
@@ -553,7 +553,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <tbody>
                                     <?php foreach (array_slice($slaCompliance['violations'], 0, 10) as $violation): ?>
                                         <tr>
-                                            <td><a href="detail.php?id=<?= (int) $violation['id'] ?>"><?= h($violation['nomor_register']) ?></a></td>
+                                            <td><a href="<?= h(crfUrl('admin.detail', ['id' => (int) $violation['id']])) ?>"><?= h($violation['nomor_register']) ?></a></td>
                                             <td><?= h($violation['kategori']) ?></td>
                                             <td><?= h($violation['urgensi']) ?></td>
                                             <td><?= $violation['pic'] !== '' ? h($violation['pic']) : '<span class="admin-sla-empty">Belum ada</span>' ?></td>
@@ -634,7 +634,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <p class="mb-0 text-muted small">
                         Periode pengajuan <strong><?= h(date('d-m-Y', strtotime($reportDateRange['from']))) ?></strong> s.d. <strong><?= h(date('d-m-Y', strtotime($reportDateRange['to']))) ?></strong>
                         · <?= number_format($totalRows, 0, ',', '.') ?> CRF
-                        · <a href="dashboard.php">Hapus filter periode</a>
+                        · <a href="<?= h(crfSelfUrl()) ?>">Hapus filter periode</a>
                     </p>
                 <?php endif; ?>
 
@@ -710,14 +710,14 @@ require_once __DIR__ . '/../includes/header.php';
                                         <div class="dashboard-actions">
 
                                             <a
-                                                href="detail.php?id=<?= (int) $row['id'] ?>"
+                                                href="<?= h(crfUrl('admin.detail', ['id' => (int) $row['id']])) ?>"
                                                 class="btn btn-sm btn-crf-outline"
                                             >
                                                 <i class="bi bi-eye"></i>
                                                 Detail
                                             </a>
 
-                                            <?php if (($row['status'] ?? '') !== 'Draft'): ?><a href="../actions/export_crf.php?id=<?= (int) $row['id'] ?>" class="btn btn-sm btn-crf-outline" target="_blank" rel="noopener" title="Cetak PDF"><i class="bi bi-printer"></i> Cetak</a><?php endif; ?>
+                                            <?php if (($row['status'] ?? '') !== 'Draft'): ?><a href="<?= h(crfActionUrl('export_crf.php', ['id' => (int) $row['id']])) ?>" class="btn btn-sm btn-crf-outline" target="_blank" rel="noopener" title="Cetak PDF"><i class="bi bi-printer"></i> Cetak</a><?php endif; ?>
 
                                         </div>
 

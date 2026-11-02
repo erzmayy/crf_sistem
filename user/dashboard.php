@@ -22,6 +22,6 @@ $pageTitle='Dashboard'; require_once __DIR__ . '/../includes/header.php';
 <div class="crf-stat-card pengajuan-stat-solved"><span>Selesai</span><strong><?= (int)($summary['solved']??0) ?></strong></div>
 <div class="crf-stat-card pengajuan-stat-cancelled"><span>Dibatalkan</span><strong><?= (int)($summary['cancelled']??0) ?></strong></div>
 </div>
-<div class="mt-4 d-flex gap-2"><a href="form_crf.php" class="btn btn-crf-primary"><i class="bi bi-plus-circle"></i> Buat Pengajuan</a><a href="pengajuan_saya.php" class="btn btn-crf-outline"><i class="bi bi-list-check"></i> Pengajuan Saya</a></div>
+<div class="mt-4 d-flex gap-2"><a href="<?= h(crfUrl('user.form')) ?>" class="btn btn-crf-primary"><i class="bi bi-plus-circle"></i> Buat Pengajuan</a><a href="<?= h(crfUrl('user.pengajuan')) ?>" class="btn btn-crf-outline"><i class="bi bi-list-check"></i> Pengajuan Saya</a></div>
 </div></div>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

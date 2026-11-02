@@ -4,9 +4,10 @@ if (crfLayoutIsModule()) {
     ?>
 </div>
 </div>
-<?php if (defined('CRF_LOAD_BOOTSTRAP') && CRF_LOAD_BOOTSTRAP): ?>
+<?php /* JS Bootstrap 5 (tab, modal, offcanvas, data-bs-*) selalu dimuat di mode module. data-bs-no-jquery
+   mencegahnya mendaftar plugin jQuery sehingga plugin modal/tab Bootstrap 3 milik SIAP tidak tertimpa. */ ?>
+<script>document.body.setAttribute('data-bs-no-jquery', '');</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<?php endif; ?>
 <script src="<?= h($appBasePath ?? '') ?>/assets/js/script.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/script.js') ?>"></script>
 <script src="<?= h($appBasePath ?? '') ?>/assets/js/integration.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/integration.js') ?>"></script>
 <?php
