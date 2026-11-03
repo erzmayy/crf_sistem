@@ -187,6 +187,12 @@ Fungsi baru `crfSiapMailConfig()`. Tanpa enkripsi, `SMTPAutoTLS` dimatikan seper
 PHPMailer milik CRF dan templat email CRF (bukan `kirimEmailOtomatis()`), jadi tidak perlu SMTP terpisah.
 `config/mail.php` yang aktif tetap diutamakan. Berkas: `includes/notifications.php`.
 
+Email ke Pemohon saat hasil pembahasan Forum dicatat: pemohon tidak punya akses Forum dan sebelumnya tidak diberi tahu
+hasilnya (penerima "Hasil pembahasan Forum" hanya CMO pengaju dan pemberi komentar). `forumRecordResult()` kini juga
+mengirim notifikasi (in-app + email) ke Pemohon CRF: judul "Level urgensi dan SLA ditetapkan: nomor", isi hasil
+(level urgensi + SLA) dan, bila langsung diteruskan, "CRF diteruskan ke Kepala Departemen Operasional untuk persetujuan".
+Tanpa isi diskusi/komentar; tanpa WhatsApp. Berkas: `includes/forum_discussions.php`. Belum diuji.
+
 Keterangan CRF di luar antrean: tautan "Buka CRF" (email/notifikasi) membuka halaman detail sesuai peran penerima; bila CRF
 tidak ada di antrean peran itu, dulu muncul kotak merah "CRF tidak ditemukan pada antrean ...". Kini tampil keterangan
 (kotak info, dua baris): "Belum sampai di antrean X" atau "Sudah ditindaklanjuti oleh <nama> · <tanggal>" (dari

@@ -605,6 +605,18 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
             (int) $user['id']
         );
 
+        // Pemohon tidak punya akses Forum: kabari hasilnya (level urgensi dan SLA), tanpa isi diskusi.
+        notifyUsers(
+            $pdo,
+            [(int) $crf['pengguna_id']],
+            'Level urgensi dan SLA ditetapkan: ' . $crfNumber,
+            'Pembahasan Forum untuk CRF ' . $crfNumber . ' selesai. Level urgensi dan SLA ditetapkan: ' . $afterText
+                . ($forwarded ? '. CRF diteruskan ke Kepala Departemen Operasional untuk persetujuan.' : '.'),
+            'crf/open.php?id=' . $crfId,
+            $crfId,
+            (int) $user['id']
+        );
+
         $pdo->commit();
 
         return [
