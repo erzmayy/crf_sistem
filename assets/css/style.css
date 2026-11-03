@@ -39,17 +39,51 @@
 /* Mode module: ukuran huruf kontrol. CRF mengandalkan CSS Bootstrap 5 (tidak dimuat di SIAP) untuk
    ukuran huruf tombol dan isian; tanpa ini terpakai ukuran milik SIAP/Bootstrap 3 dan tampil ±9px.
    Aturan khusus komponen CRF yang ada di bawah file ini tetap menimpa karena urutannya lebih akhir. */
-.crf-module--embedded .btn,
-.crf-module--embedded .form-control,
-.crf-module--embedded .form-select {
+:where(.crf-module--embedded) .btn,
+:where(.crf-module--embedded) .form-control,
+:where(.crf-module--embedded) .form-select {
   font-size: calc(1 * var(--crf-rem));
   line-height: 1.5;
 }
-.crf-module--embedded .btn-sm,
-.crf-module--embedded .form-control-sm,
-.crf-module--embedded .form-select-sm {
+:where(.crf-module--embedded) .btn-sm,
+:where(.crf-module--embedded) .form-control-sm,
+:where(.crf-module--embedded) .form-select-sm {
   font-size: calc(0.875 * var(--crf-rem));
 }
+
+/* Mode module: Bootstrap 3 SIAP memberi semua <label> font-weight 700 dan margin-bottom 5px
+   (label pilihan Dampak dan Biaya Anggaran jadi tebal). Bootstrap 5 tidak, jadi dikembalikan;
+   label berkelas (.form-label, .crf-field-label, dst) tetap memakai aturannya sendiri. */
+:where(.crf-module--embedded) label {
+  font-weight: inherit;
+  margin-bottom: 0;
+  max-width: none;
+}
+
+/* Mode module: CSS SIAP (style.css/themes.css/bootstrap.min.css milik SIAP) menimpa tampilan CRF.
+   - h1-h5 dipaksa "Open Sans": sengaja dibiarkan, judul CRF ikut font SIAP.
+   - input/textarea dipaksa border-radius:0 !important dan latar #f9f9f9.
+   - ".theme-blue .btn" mewarnai teks semua tombol #333 (tombol biru jadi teks gelap).
+   Aturan di bawah memakai spesifisitas lebih tinggi supaya tampilan sama dengan mode standalone. */
+.crf-module--embedded .form-control {
+  border-radius: 7px !important;
+  background-color: #fff;
+}
+.crf-module--embedded .form-control-sm { border-radius: 4px !important; }
+.crf-module--embedded .form-check-input[type="checkbox"] { border-radius: 0.25em !important; }
+.crf-module--embedded .form-check-input[type="radio"] { border-radius: 50% !important; }
+
+.crf-module--embedded .btn.btn-crf-primary,
+.crf-module--embedded .btn.btn-crf-primary:hover,
+.crf-module--embedded .btn.pengajuan-create-button,
+.crf-module--embedded .btn.pengajuan-create-button:hover { color: var(--crf-white); }
+.crf-module--embedded .btn.btn-crf-outline { color: var(--crf-blue-700); }
+.crf-module--embedded .btn.btn-crf-outline:hover { color: var(--crf-blue-900); }
+/* Varian Bootstrap (btn-outline-danger, btn-success, dst): kembalikan warna dari variabel Bootstrap 5. */
+.crf-module--embedded .btn:where([class*="btn-outline-"], .btn-primary, .btn-secondary, .btn-success,
+  .btn-danger, .btn-warning, .btn-info, .btn-light, .btn-dark) { color: var(--bs-btn-color); }
+.crf-module--embedded .btn:where([class*="btn-outline-"], .btn-primary, .btn-secondary, .btn-success,
+  .btn-danger, .btn-warning, .btn-info, .btn-light, .btn-dark):hover { color: var(--bs-btn-hover-color); }
 .crf-module--embedded .form-label,
 .crf-module--embedded .form-check-label {
   font-size: calc(1 * var(--crf-rem));

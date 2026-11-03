@@ -161,6 +161,20 @@ yang mengubah offcanvas (flex kolom) menjadi block, sehingga `.offcanvas-body` t
 764px dalam panel 534px). Ditambah `.crf-module--embedded .offcanvas.show/.showing/.hiding { display: flex !important }`.
 Berkas: `assets/css/style.css`.
 
+Mode module: CSS milik SIAP (`style.css`, `themes.css`) masih bocor ke komponen CRF. Hasil pengukuran di 7 halaman
+SIAP (Form CRF, Pengajuan Saya, detail pengajuan, Forum, Dashboard, Kategori, Tindak Lanjut Otomasi) menemukan: judul
+h1-h5 jadi "Open Sans" (SIAP: `h1,h2,h3,h4,h5`), teks semua tombol jadi #333 (`.theme-blue .btn`), input/textarea
+dipaksa `border-radius:0 !important` + latar #f9f9f9, ukuran huruf `.btn` 16px menimpa ukuran khusus tombol halaman.
+Perbaikan di `assets/css/style.css`: ukuran huruf kontrol memakai `:where(.crf-module--embedded)` (spesifisitas rendah,
+kembali ke ukuran khusus halaman), font judul sengaja dibiarkan ikut SIAP (Open Sans), `.form-control` radius 7px/4px (sm) + latar putih
+(`!important` untuk melawan SIAP), checkbox/radio dikembalikan, warna teks `btn-crf-primary`/`btn-crf-outline`/
+`pengajuan-create-button` dan varian Bootstrap (`btn-outline-danger`, dst) dikembalikan lewat variabel. Diuji dengan
+menyuntikkan aturan yang sama ke halaman SIAP (hanya di browser): Pengajuan Saya, Kategori sesuai lokal.
+Label pilihan Dampak dan Biaya Anggaran (Form CRF) tebal karena Bootstrap 3 SIAP: `label{font-weight:700;margin-bottom:5px}`;
+dikembalikan lewat `:where(.crf-module--embedded) label{font-weight:inherit;margin-bottom:0;max-width:none}`
+(label berkelas seperti `.form-label` tetap 650). Berkas: `assets/css/style.css`.
+Belum diuji di server setelah diunggah. Halaman peran CMO/Kadep tidak bisa diukur (akun tanpa akses).
+
 Diuji di halaman tiruan (CSS Bootstrap 3 SIAP asli + CSS CRF): tautan header/sidebar SIAP tanpa garis bawah dan
 tetap Open Sans 13px, tombol CRF 16px/14px, `gap-2` = 8px, tab-pane terlihat. Belum diuji di server.
 
