@@ -202,7 +202,8 @@ try {
             'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional. SLA mulai dihitung dan batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. PIC CRF dapat mengeksekusi CRF.',
             $crfLink,
             $id,
-            (int) $user['id']
+            (int) $user['id'],
+            true
         );
         notifyUsers(
             $pdo,
@@ -211,7 +212,8 @@ try {
             'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional dan diteruskan ke PIC CRF untuk dieksekusi.',
             $crfLink,
             $id,
-            (int) $user['id']
+            (int) $user['id'],
+            true
         );
 
         $pdo->commit();

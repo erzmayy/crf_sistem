@@ -580,7 +580,8 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
                 'CRF ' . $crfNumber . ' selesai dibahas di Forum (' . $outcomeLabel . ': ' . $afterText . ') dan menunggu persetujuan Anda.',
                 'crf/open.php?id=' . $crfId,
                 $crfId,
-                (int) $user['id']
+                (int) $user['id'],
+                true
             );
         }
         // Hanya yang terlibat: pengaju (atau seluruh CMO bila dibuka sistem) dan pemberi komentar.

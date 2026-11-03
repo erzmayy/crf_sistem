@@ -15,6 +15,7 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/crf_url.php';
+require_once __DIR__ . '/whatsapp.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -31,7 +32,8 @@ function notifyUsers(
     string $message,
     string $url = '',
     ?int $crfId = null,
-    ?int $exceptUserId = null
+    ?int $exceptUserId = null,
+    bool $whatsapp = false
 ): void {
     $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
     if ($exceptUserId !== null) {
@@ -42,10 +44,14 @@ function notifyUsers(
         return;
     }
 
-    $stmt = $pdo->prepare('
-        INSERT INTO crf_notifikasi (pengguna_id, judul, pesan, url, pengajuan_id)
-        VALUES (:pengguna_id, :title, :message, :url, :crf_id)
-    ');
+    // status_wa 'pending' hanya bila diminta dan migrasi 027 sudah dijalankan (kolom ada).
+    $withWhatsapp = $whatsapp && crfNotifikasiHasWaColumn($pdo);
+    $stmt = $pdo->prepare($withWhatsapp
+        ? "INSERT INTO crf_notifikasi (pengguna_id, judul, pesan, url, pengajuan_id, status_wa)
+           VALUES (:pengguna_id, :title, :message, :url, :crf_id, 'pending')"
+        : 'INSERT INTO crf_notifikasi (pengguna_id, judul, pesan, url, pengajuan_id)
+           VALUES (:pengguna_id, :title, :message, :url, :crf_id)'
+    );
 
     foreach ($userIds as $userId) {
         $stmt->execute([
@@ -204,6 +210,9 @@ function crfMailConfig(): ?array
  */
 function dispatchPendingNotificationEmails(PDO $pdo, int $limit = 30): void
 {
+    // WhatsApp lewat antrean WA SIAP (includes/whatsapp.php); tidak pernah melempar exception.
+    dispatchPendingNotificationWhatsapp($pdo);
+
     try {
         $config = crfMailConfig();
 

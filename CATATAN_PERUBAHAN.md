@@ -163,3 +163,29 @@ Berkas: `assets/css/style.css`.
 
 Diuji di halaman tiruan (CSS Bootstrap 3 SIAP asli + CSS CRF): tautan header/sidebar SIAP tanpa garis bawah dan
 tetap Open Sans 13px, tombol CRF 16px/14px, `gap-2` = 8px, tab-pane terlihat. Belum diuji di server.
+
+### Notifikasi WhatsApp (antrean WA SIAP, default MATI)
+
+CRF mengikuti pola Help Desk/PKS di SIAP: tidak memanggil API WhatsApp dan tidak menyimpan token, hanya
+menambah baris ke `tbl_wa_send` (`kode = 'CRF'`, `status_kirim = '3'` = antre); pengirim WA SIAP yang sudah ada
+mengirimnya. Alur mengikuti email: `notifyUsers(..., $whatsapp = true)` menyimpan notifikasi dengan
+`crf_notifikasi.status_wa = 'pending'` (ikut transaksi), lalu setelah commit `dispatchPendingNotificationEmails()`
+memanggil `dispatchPendingNotificationWhatsapp()` (`includes/whatsapp.php`). Kegagalan WA tidak menggagalkan proses.
+
+WA dikirim untuk: CRF baru/dikirim ulang (CMO), lolos verifikasi dan Forum selesai (Kadep), disetujui Kadep
+(PIC dan Pemohon), eksekusi selesai (UAT untuk CMO, isi PIR untuk Pemohon), hasil UAT (PIC), perlu revisi,
+dibatalkan, selesai, pengingat PIR, finalisasi, SLA mendesak/terlambat dan response time mendesak/terlambat.
+Tidak untuk komentar Forum dan pengingat SLA 50%. Nomor dari `tbl_user.no_wa`; nomor kosong dilewati; pemohon
+tidak menerima teks SLA; notifikasi kembar dalam satu putaran dilewati.
+
+Konfigurasi `config/siap.php`: `CRF_WA_ENABLED` (default false), `CRF_WA_TEST_USERIDS` (bila diisi hanya userid itu
+yang dikirimi), `CRF_WA_APP_URL`, `CRF_WA_QUEUE_TABLE`. Perlu migrasi `027_wa_notifikasi_migration.sql` (jalankan);
+tanpa kolom `status_wa` kode tetap aman (flag WA diabaikan).
+
+- `includes/whatsapp.php` (baru), `database/migrations/027_wa_notifikasi_migration.sql` (baru, jalankan)
+- `includes/notifications.php`, `includes/sla_alerts.php`, `includes/forum_discussions.php`, `config/siap.php`
+- `actions/submit_crf.php`, `actions/cmo_action.php`, `actions/kadep_operasional_approve.php`
+- `actions/automation_action.php`, `actions/submit_pir.php`, `actions/admin_cancel_crf.php`
+
+Diuji lokal dengan tabel sementara: daftar putih, semua penerima, dan WA mati; tanpa migrasi tidak error.
+Belum diuji di server dan belum dipastikan pengirim WA SIAP memproses baris `kode = 'CRF'`.

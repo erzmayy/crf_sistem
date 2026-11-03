@@ -112,7 +112,8 @@ try {
         'Pemohon sudah mengisi PIR untuk CRF ' . $crf['nomor_register'] . '. CRF menunggu finalisasi CMO.',
         'crf/open.php?id=' . $id,
         $id,
-        (int) $user['id']
+        (int) $user['id'],
+        true
     );
 
     $pdo->commit();

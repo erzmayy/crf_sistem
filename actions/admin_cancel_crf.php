@@ -86,7 +86,8 @@ try {
         'CRF ' . $crf['nomor_register'] . ' dibatalkan oleh Admin. Alasan: ' . $reason,
         'crf/open.php?id=' . $id,
         $id,
-        (int) $user['id']
+        (int) $user['id'],
+        true
     );
 
     forumCloseOpenDiscussions($pdo, $id, 'CRF dibatalkan oleh Admin.');

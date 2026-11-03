@@ -64,3 +64,16 @@ const CRF_BASE_URL = '';
 /* Mode module: muat Bootstrap / Bootstrap Icons sendiri bila SIAP belum memuatnya. */
 const CRF_LOAD_BOOTSTRAP = false;
 const CRF_LOAD_ICONS = true;
+
+/*
+ * Notifikasi WhatsApp: pesan dimasukkan ke antrean WA SIAP (tabel tbl_wa_send, status '3')
+ * dan dikirim oleh pengirim WA SIAP yang sudah ada. Default MATI.
+ * Perlu migrasi 027_wa_notifikasi_migration.sql.
+ *
+ * CRF_WA_TEST_USERIDS: bila tidak kosong, HANYA userid ini yang dikirimi WA (untuk uji).
+ * Kosongkan ([]) setelah uji agar semua penerima mendapat WA.
+ */
+const CRF_WA_ENABLED = false;
+const CRF_WA_TEST_USERIDS = [];
+const CRF_WA_APP_URL = 'https://siap.ptppu.co.id';
+const CRF_WA_QUEUE_TABLE = 'tbl_wa_send';
