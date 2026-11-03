@@ -156,7 +156,8 @@ function crfSendSlaAlerts(PDO $pdo, ?DateTimeImmutable $now = null): int
             $pdo->beginTransaction();
             // Penanda lebih dulu: UNIQUE mencegah kirim ganda bila skrip jalan bersamaan.
             $insert->execute(['id' => $crfId, 'type' => $type, 'seq' => $seq, 'tgl_dikirim' => $now->format('Y-m-d H:i:s')]);
-            notifyUsers($pdo, $recipients, $title, $message, 'crf/open.php?id=' . $crfId, $crfId);
+            // WhatsApp hanya untuk SLA mendesak dan terlambat (pengingat 50% cukup in-app dan email).
+            notifyUsers($pdo, $recipients, $title, $message, 'crf/open.php?id=' . $crfId, $crfId, null, in_array($type, ['mendesak', 'terlambat'], true));
             logCrfActivity($pdo, $crfId, 'Peringatan SLA', $title . '. ' . $message, 'Sistem');
             $pdo->commit();
             $sent++;
@@ -256,7 +257,7 @@ function crfSendResponAlerts(PDO $pdo, DateTimeImmutable $now): int
         try {
             $pdo->beginTransaction();
             $insert->execute(['id' => $crfId, 'type' => $type, 'tgl_dikirim' => $now->format('Y-m-d H:i:s')]);
-            notifyUsers($pdo, $recipients, $title, $message, 'crf/open.php?id=' . $crfId, $crfId);
+            notifyUsers($pdo, $recipients, $title, $message, 'crf/open.php?id=' . $crfId, $crfId, null, true);
             logCrfActivity($pdo, $crfId, 'Peringatan SLA', $title . '. ' . $message, 'Sistem');
             $pdo->commit();
             $sent++;

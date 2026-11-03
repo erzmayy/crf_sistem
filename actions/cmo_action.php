@@ -112,7 +112,8 @@ if ($action === 'remind_pir') {
                 . '. Mohon segera isi Post Implementation Review agar CRF dapat ditutup.' . $note,
             'crf/open.php?id=' . $id,
             $id,
-            (int) $user['id']
+            (int) $user['id'],
+            true
         );
         $pdo->commit();
         dispatchPendingNotificationEmails($pdo);
@@ -245,7 +246,8 @@ try {
             'CRF ' . $crfNumber . ' lolos verifikasi CMO dan menunggu persetujuan Anda.',
             $crfLink,
             $id,
-            (int) $user['id']
+            (int) $user['id'],
+            true
         );
 
         $message = 'CRF berhasil diteruskan ke Kepala Departemen Operasional untuk persetujuan.';
@@ -254,7 +256,7 @@ try {
         $stmt->execute(['tanggapan' => $tanggapan, 'id' => $id]);
         logCrfActivity($pdo, $id, 'Perlu Revisi', $tanggapan, $actor, $oldDisplayStatus, 'Ditolak / Perlu Revisi');
         notifyUsers($pdo, [(int) $crf['pengguna_id']], 'CRF perlu revisi: ' . $crfNumber,
-            'CMO mengembalikan CRF Anda untuk diperbaiki: ' . $tanggapan, $crfLink, $id, (int) $user['id']);
+            'CMO mengembalikan CRF Anda untuk diperbaiki: ' . $tanggapan, $crfLink, $id, (int) $user['id'], true);
         $message = 'CRF dikembalikan ke Pemohon untuk revisi.';
     } elseif ($action === 'cancel') {
         $stmt = $pdo->prepare("UPDATE crf_pengajuan SET status = 'Cancel', tahap_alur = 'SELESAI', tanggapan_tindak_lanjut = :tanggapan, tgl_dibatalkan = :now, tgl_selesai = NULL WHERE id = :id");
@@ -262,7 +264,7 @@ try {
         forumCloseOpenDiscussions($pdo, $id, 'CRF dibatalkan oleh CMO.');
         logCrfActivity($pdo, $id, 'Cancel', $tanggapan, $actor, $oldDisplayStatus, 'Dibatalkan');
         notifyUsers($pdo, [(int) $crf['pengguna_id']], 'CRF dibatalkan: ' . $crfNumber,
-            'CRF ' . $crfNumber . ' dibatalkan oleh CMO: ' . $tanggapan, $crfLink, $id, (int) $user['id']);
+            'CRF ' . $crfNumber . ' dibatalkan oleh CMO: ' . $tanggapan, $crfLink, $id, (int) $user['id'], true);
         $message = 'CRF berhasil dibatalkan.';
     } elseif ($action === 'uat_pass' || $action === 'uat_fail') {
         // UAT dilakukan CMO bersama Otomasi; hasilnya mengembalikan CRF ke Otomasi (SLA tidak berjalan lagi).
@@ -302,7 +304,8 @@ try {
                 : 'UAT CRF ' . $crfNumber . ' menemukan hal yang perlu diperbaiki: ' . $tanggapan,
             $crfLink,
             $id,
-            (int) $user['id']
+            (int) $user['id'],
+            true
         );
         $message = $passed
             ? 'UAT dinyatakan lulus. CRF dikembalikan ke Otomasi untuk mengisi implementasi.'
@@ -312,7 +315,7 @@ try {
         $stmt->execute(['now' => $now, 'id' => $id]);
         logCrfActivity($pdo, $id, 'Solve', 'CMO menyelesaikan dan menutup CRF setelah persetujuan Kepala Departemen Operasional.', $actor, $oldDisplayStatus, 'Selesai');
         notifyUsers($pdo, [(int) $crf['pengguna_id'], (int) $crf['pic_id']], 'CRF selesai: ' . $crfNumber,
-            'CRF ' . $crfNumber . ' telah selesai dan ditutup.', $crfLink, $id, (int) $user['id']);
+            'CRF ' . $crfNumber . ' telah selesai dan ditutup.', $crfLink, $id, (int) $user['id'], true);
         $message = 'CRF berhasil ditandai selesai.';
     }
 

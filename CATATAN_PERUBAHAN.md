@@ -156,5 +156,88 @@ ditampilkan (isinya kosong dan target belum final karena level urgensi baru dite
 disembunyikan; CRF dibatalkan sebelum mulai menampilkan "CRF dibatalkan sebelum SLA dimulai." Setelah SLA mulai,
 tampilan tidak berubah. Berkas: `includes/partials/informasi_sla.php` (dipakai halaman Admin, CMO, Kadep, Otomasi, Forum).
 
+Panel detail Forum (offcanvas) tidak bisa di-scroll: CSS Bootstrap 3 SIAP punya `.show { display: block !important }`
+yang mengubah offcanvas (flex kolom) menjadi block, sehingga `.offcanvas-body` tidak dibatasi tinggi panel (tab Permintaan
+764px dalam panel 534px). Ditambah `.crf-module--embedded .offcanvas.show/.showing/.hiding { display: flex !important }`.
+Berkas: `assets/css/style.css`.
+
+Mode module: CSS milik SIAP (`style.css`, `themes.css`) masih bocor ke komponen CRF. Hasil pengukuran di 7 halaman
+SIAP (Form CRF, Pengajuan Saya, detail pengajuan, Forum, Dashboard, Kategori, Tindak Lanjut Otomasi) menemukan: judul
+h1-h5 jadi "Open Sans" (SIAP: `h1,h2,h3,h4,h5`), teks semua tombol jadi #333 (`.theme-blue .btn`), input/textarea
+dipaksa `border-radius:0 !important` + latar #f9f9f9, ukuran huruf `.btn` 16px menimpa ukuran khusus tombol halaman.
+Perbaikan di `assets/css/style.css`: ukuran huruf kontrol memakai `:where(.crf-module--embedded)` (spesifisitas rendah,
+kembali ke ukuran khusus halaman), font judul sengaja dibiarkan ikut SIAP (Open Sans), `.form-control` radius 7px/4px (sm) + latar putih
+(`!important` untuk melawan SIAP), checkbox/radio dikembalikan, warna teks `btn-crf-primary`/`btn-crf-outline`/
+`pengajuan-create-button` dan varian Bootstrap (`btn-outline-danger`, dst) dikembalikan lewat variabel. Diuji dengan
+menyuntikkan aturan yang sama ke halaman SIAP (hanya di browser): Pengajuan Saya, Kategori sesuai lokal.
+Label pilihan Dampak dan Biaya Anggaran (Form CRF) tebal karena Bootstrap 3 SIAP: `label{font-weight:700;margin-bottom:5px}`;
+dikembalikan lewat `:where(.crf-module--embedded) label{font-weight:inherit;margin-bottom:0;max-width:none}`
+(label berkelas seperti `.form-label` tetap 650). Berkas: `assets/css/style.css`.
+Belum diuji di server setelah diunggah. Halaman peran CMO/Kadep tidak bisa diukur (akun tanpa akses).
+
 Diuji di halaman tiruan (CSS Bootstrap 3 SIAP asli + CSS CRF): tautan header/sidebar SIAP tanpa garis bawah dan
 tetap Open Sans 13px, tombol CRF 16px/14px, `gap-2` = 8px, tab-pane terlihat. Belum diuji di server.
+
+### Email CRF memakai pengaturan SMTP SIAP
+
+`includes/notifications.php`: `crfMailConfig($pdo)` kini, bila `config/mail.php` tidak ada/tidak aktif dan mode layout
+`module`, membaca pengaturan SMTP SIAP dari `tbl_email_settings` (id = 1: smtp_host/port/username/password/encryption,
+from_email, from_name; diisi lewat menu SIAP Email > Pengaturan Email, sama dengan `3rdparty/email_helper.php`).
+Fungsi baru `crfSiapMailConfig()`. Tanpa enkripsi, `SMTPAutoTLS` dimatikan seperti helper SIAP. Pengiriman tetap lewat
+PHPMailer milik CRF dan templat email CRF (bukan `kirimEmailOtomatis()`), jadi tidak perlu SMTP terpisah.
+`config/mail.php` yang aktif tetap diutamakan. Berkas: `includes/notifications.php`.
+
+Email ke Pemohon saat hasil pembahasan Forum dicatat: pemohon tidak punya akses Forum dan sebelumnya tidak diberi tahu
+hasilnya (penerima "Hasil pembahasan Forum" hanya CMO pengaju dan pemberi komentar). `forumRecordResult()` kini juga
+mengirim notifikasi (in-app + email) ke Pemohon CRF: judul "Level urgensi dan SLA ditetapkan: nomor", isi hasil
+(level urgensi + SLA) dan, bila langsung diteruskan, "CRF diteruskan ke Kepala Departemen Operasional untuk persetujuan".
+Tanpa isi diskusi/komentar; tanpa WhatsApp. Berkas: `includes/forum_discussions.php`. Belum diuji.
+
+Keterangan CRF di luar antrean: tautan "Buka CRF" (email/notifikasi) membuka halaman detail sesuai peran penerima; bila CRF
+tidak ada di antrean peran itu, dulu muncul kotak merah "CRF tidak ditemukan pada antrean ...". Kini tampil keterangan
+(kotak info, dua baris): "Belum sampai di antrean X" atau "Sudah ditindaklanjuti oleh <nama> · <tanggal>" (dari
+`crf_log_aktivitas`; bila pelaksananya tidak ditemukan: "Sudah tidak berada di antrean X"), lalu "Saat ini: <tahap>"
+(CRF selesai/dibatalkan menampilkan statusnya); tombol Kembali, dan "Buka detail CRF" untuk Admin. CRF Draft / tanpa akses tetap "tidak ditemukan atau
+Anda tidak memiliki akses". Berkas baru: `includes/crf_queue_notice.php` (`crfQueueNoticeHtml()`); dipakai di
+`cmo/detail.php`, `kadep_operasional/detail.php`, `otomasi/detail.php`, `otomasi/view_detail.php` (judul halaman
+"Keterangan CRF"). Diuji di lokal (akun Otomasi): CRF belum sampai (tahap Verifikasi CMO) dan CRF sudah lewat
+(Finalisasi CMO, dilakukan Fikri Raihan); halaman CMO/Kadep belum diuji karena akun lokal berperan Otomasi.
+
+Templat email CRF dirombak lagi (menggantikan versi di bawah): logo + nama perusahaan di atas, kepala berwarna datar
+dengan label "NOTIFIKASI CRF" dan judul besar, kartu ringkasan CRF (nomor register + pill status, pemohon, unit asal,
+kategori, urgensi, diajukan, ringkasan 140 huruf), tombol "Buka CRF" + tautan cadangan, kaki. Warna aksen menurut jenis
+notifikasi (dibaca dari judul, `crfEmailTone()`): biru (CRF baru/dikirim ulang/lainnya), oranye (revisi, mendesak,
+pengingat), hijau (selesai, disetujui, finalisasi), merah (dibatalkan, terlewati). Kartu hanya muncul bila notifikasi
+punya `pengajuan_id` (data dari `crfEmailCrfData()`, `crf_pengajuan`). Berkas: `includes/notifications.php`
+(`crfEmailHtml`, `sendNotificationEmail` menerima parameter `$crf`).
+
+Tampilan email CRF (`crfEmailHtml()`) disamakan dengan email SIAP (`3rdparty/email_helper.php`): latar #f4f5fb, kartu
+520px bersudut 12px, logo di atas (gambar tersemat cid, tinggi 42px), kepala gradasi biru "SIAP — PT. Persona Prima
+Utama", lingkaran ikon, judul, sapaan "Dear <nama>", tombol biru #2f7fe0 "Buka CRF" + tautan cadangan, kaki biru muda
+"Email ini dikirim otomatis oleh sistem...". Isi/judul/tautan notifikasi tidak berubah.
+
+### Notifikasi WhatsApp (antrean WA SIAP, default MATI)
+
+CRF mengikuti pola Help Desk/PKS di SIAP: tidak memanggil API WhatsApp dan tidak menyimpan token, hanya
+menambah baris ke `tbl_wa_send` (`kode = 'CRF'`, `status_kirim = '3'` = antre); pengirim WA SIAP yang sudah ada
+mengirimnya. Alur mengikuti email: `notifyUsers(..., $whatsapp = true)` menyimpan notifikasi dengan
+`crf_notifikasi.status_wa = 'pending'` (ikut transaksi), lalu setelah commit `dispatchPendingNotificationEmails()`
+memanggil `dispatchPendingNotificationWhatsapp()` (`includes/whatsapp.php`). Kegagalan WA tidak menggagalkan proses.
+
+WA dikirim untuk: CRF baru/dikirim ulang (CMO), lolos verifikasi dan Forum selesai (Kadep), disetujui Kadep
+(PIC dan Pemohon), eksekusi selesai (UAT untuk CMO, isi PIR untuk Pemohon), hasil UAT (PIC), perlu revisi,
+dibatalkan, selesai, pengingat PIR, finalisasi, SLA mendesak/terlambat dan response time mendesak/terlambat.
+Tidak untuk komentar Forum dan pengingat SLA 50%. Nomor dari `tbl_user.no_wa`; nomor kosong dilewati; pemohon
+tidak menerima teks SLA; notifikasi kembar dalam satu putaran dilewati.
+
+Konfigurasi `config/siap.php`: `CRF_WA_ENABLED` (default false), `CRF_WA_TEST_USERIDS` (bila diisi hanya userid itu
+yang dikirimi), `CRF_WA_APP_URL`, `CRF_WA_QUEUE_TABLE`. Perlu migrasi `027_wa_notifikasi_migration.sql` (jalankan);
+tanpa kolom `status_wa` kode tetap aman (flag WA diabaikan).
+
+- `includes/whatsapp.php` (baru), `database/migrations/027_wa_notifikasi_migration.sql` (baru, jalankan)
+- `includes/notifications.php`, `includes/sla_alerts.php`, `includes/forum_discussions.php`, `config/siap.php`
+- `actions/submit_crf.php`, `actions/cmo_action.php`, `actions/kadep_operasional_approve.php`
+- `actions/automation_action.php`, `actions/submit_pir.php`, `actions/admin_cancel_crf.php`
+
+Diuji lokal dengan tabel sementara: daftar putih, semua penerima, dan WA mati; tanpa migrasi tidak error.
+Belum diuji di server dan belum dipastikan pengirim WA SIAP memproses baris `kode = 'CRF'`.

@@ -240,7 +240,8 @@ try {
             'Implementasi CRF ' . $crfNumber . ' sudah selesai. Silakan isi Post Implementation Review.',
             'crf/open.php?id=' . $id,
             $id,
-            (int) $user['id']
+            (int) $user['id'],
+            true
         );
     } else {
         notifyUsers(
@@ -250,7 +251,8 @@ try {
             $uatMessage,
             'crf/open.php?id=' . $id,
             $id,
-            (int) $user['id']
+            (int) $user['id'],
+            true
         );
     }
 

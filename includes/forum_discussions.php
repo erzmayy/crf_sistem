@@ -580,7 +580,8 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
                 'CRF ' . $crfNumber . ' selesai dibahas di Forum (' . $outcomeLabel . ': ' . $afterText . ') dan menunggu persetujuan Anda.',
                 'crf/open.php?id=' . $crfId,
                 $crfId,
-                (int) $user['id']
+                (int) $user['id'],
+                true
             );
         }
         // Hanya yang terlibat: pengaju (atau seluruh CMO bila dibuka sistem) dan pemberi komentar.
@@ -600,6 +601,18 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
                 . ($forwarded
                     ? '. CRF diteruskan ke Kepala Departemen Operasional untuk persetujuan.'
                     : '. CMO dapat meneruskan CRF ke Kepala Departemen Operasional.'),
+            $crfId,
+            (int) $user['id']
+        );
+
+        // Pemohon tidak punya akses Forum: kabari hasilnya (level urgensi dan SLA), tanpa isi diskusi.
+        notifyUsers(
+            $pdo,
+            [(int) $crf['pengguna_id']],
+            'Level urgensi dan SLA ditetapkan: ' . $crfNumber,
+            'Pembahasan Forum untuk CRF ' . $crfNumber . ' selesai. Level urgensi dan SLA ditetapkan: ' . $afterText
+                . ($forwarded ? '. CRF diteruskan ke Kepala Departemen Operasional untuk persetujuan.' : '.'),
+            'crf/open.php?id=' . $crfId,
             $crfId,
             (int) $user['id']
         );

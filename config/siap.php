@@ -27,7 +27,7 @@ const SIAP_USER_TABLE = 'tbl_user';
  *   perannya, ditambah menu Admin. Ia tidak boleh memakai hak Admin
  *   untuk menugaskan ulang / membatalkan CRF yang sedang ia pegang.
  */
-const CRF_ADMIN_USERIDS = ['administrator', 'N76559'];
+const CRF_ADMIN_USERIDS = ['administrator', 'N76559', 'M00026', 'M00025'];
 
 /*
  * Akun DEMO: dapat menjalankan SEMUA peran (Admin, CMO, Handler, Kadep)
@@ -36,7 +36,7 @@ const CRF_ADMIN_USERIDS = ['administrator', 'N76559'];
  */
 const CRF_DEMO_MODE = false;
 const CRF_DEMO_USERIDS = ['CRFDEMO'];
-const CRF_OTOMASI_USERIDS = ['N75392', 'N76559'];
+const CRF_OTOMASI_USERIDS = ['N75392', 'N76559', '3754'];
 const CRF_KADEP_OPERASIONAL_USERIDS = ['3736'];
 const CRF_CMO_DEPTS = ['CMO'];
 
@@ -64,3 +64,16 @@ const CRF_BASE_URL = '';
 /* Mode module: muat Bootstrap / Bootstrap Icons sendiri bila SIAP belum memuatnya. */
 const CRF_LOAD_BOOTSTRAP = false;
 const CRF_LOAD_ICONS = true;
+
+/*
+ * Notifikasi WhatsApp: pesan dimasukkan ke antrean WA SIAP (tabel tbl_wa_send, status '3')
+ * dan dikirim oleh pengirim WA SIAP yang sudah ada. Default MATI.
+ * Perlu migrasi 027_wa_notifikasi_migration.sql.
+ *
+ * CRF_WA_TEST_USERIDS: bila tidak kosong, HANYA userid ini yang dikirimi WA (untuk uji).
+ * Kosongkan ([]) setelah uji agar semua penerima mendapat WA.
+ */
+const CRF_WA_ENABLED = false;
+const CRF_WA_TEST_USERIDS = [];
+const CRF_WA_APP_URL = 'https://siap.ptppu.co.id';
+const CRF_WA_QUEUE_TABLE = 'tbl_wa_send';

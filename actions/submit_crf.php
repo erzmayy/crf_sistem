@@ -483,7 +483,8 @@ try {
         $notifyMessage,
         'crf/open.php?id=' . $crfId,
         $crfId,
-        (int) $user['id']
+        (int) $user['id'],
+        true
     );
 
     /* ------------------------------------------------------------------
