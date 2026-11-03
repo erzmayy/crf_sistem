@@ -178,6 +178,38 @@ Belum diuji di server setelah diunggah. Halaman peran CMO/Kadep tidak bisa diuku
 Diuji di halaman tiruan (CSS Bootstrap 3 SIAP asli + CSS CRF): tautan header/sidebar SIAP tanpa garis bawah dan
 tetap Open Sans 13px, tombol CRF 16px/14px, `gap-2` = 8px, tab-pane terlihat. Belum diuji di server.
 
+### Email CRF memakai pengaturan SMTP SIAP
+
+`includes/notifications.php`: `crfMailConfig($pdo)` kini, bila `config/mail.php` tidak ada/tidak aktif dan mode layout
+`module`, membaca pengaturan SMTP SIAP dari `tbl_email_settings` (id = 1: smtp_host/port/username/password/encryption,
+from_email, from_name; diisi lewat menu SIAP Email > Pengaturan Email, sama dengan `3rdparty/email_helper.php`).
+Fungsi baru `crfSiapMailConfig()`. Tanpa enkripsi, `SMTPAutoTLS` dimatikan seperti helper SIAP. Pengiriman tetap lewat
+PHPMailer milik CRF dan templat email CRF (bukan `kirimEmailOtomatis()`), jadi tidak perlu SMTP terpisah.
+`config/mail.php` yang aktif tetap diutamakan. Berkas: `includes/notifications.php`.
+
+Keterangan CRF di luar antrean: tautan "Buka CRF" (email/notifikasi) membuka halaman detail sesuai peran penerima; bila CRF
+tidak ada di antrean peran itu, dulu muncul kotak merah "CRF tidak ditemukan pada antrean ...". Kini tampil keterangan
+(kotak info, dua baris): "Belum sampai di antrean X" atau "Sudah ditindaklanjuti oleh <nama> · <tanggal>" (dari
+`crf_log_aktivitas`; bila pelaksananya tidak ditemukan: "Sudah tidak berada di antrean X"), lalu "Saat ini: <tahap>"
+(CRF selesai/dibatalkan menampilkan statusnya); tombol Kembali, dan "Buka detail CRF" untuk Admin. CRF Draft / tanpa akses tetap "tidak ditemukan atau
+Anda tidak memiliki akses". Berkas baru: `includes/crf_queue_notice.php` (`crfQueueNoticeHtml()`); dipakai di
+`cmo/detail.php`, `kadep_operasional/detail.php`, `otomasi/detail.php`, `otomasi/view_detail.php` (judul halaman
+"Keterangan CRF"). Diuji di lokal (akun Otomasi): CRF belum sampai (tahap Verifikasi CMO) dan CRF sudah lewat
+(Finalisasi CMO, dilakukan Fikri Raihan); halaman CMO/Kadep belum diuji karena akun lokal berperan Otomasi.
+
+Templat email CRF dirombak lagi (menggantikan versi di bawah): logo + nama perusahaan di atas, kepala berwarna datar
+dengan label "NOTIFIKASI CRF" dan judul besar, kartu ringkasan CRF (nomor register + pill status, pemohon, unit asal,
+kategori, urgensi, diajukan, ringkasan 140 huruf), tombol "Buka CRF" + tautan cadangan, kaki. Warna aksen menurut jenis
+notifikasi (dibaca dari judul, `crfEmailTone()`): biru (CRF baru/dikirim ulang/lainnya), oranye (revisi, mendesak,
+pengingat), hijau (selesai, disetujui, finalisasi), merah (dibatalkan, terlewati). Kartu hanya muncul bila notifikasi
+punya `pengajuan_id` (data dari `crfEmailCrfData()`, `crf_pengajuan`). Berkas: `includes/notifications.php`
+(`crfEmailHtml`, `sendNotificationEmail` menerima parameter `$crf`).
+
+Tampilan email CRF (`crfEmailHtml()`) disamakan dengan email SIAP (`3rdparty/email_helper.php`): latar #f4f5fb, kartu
+520px bersudut 12px, logo di atas (gambar tersemat cid, tinggi 42px), kepala gradasi biru "SIAP — PT. Persona Prima
+Utama", lingkaran ikon, judul, sapaan "Dear <nama>", tombol biru #2f7fe0 "Buka CRF" + tautan cadangan, kaki biru muda
+"Email ini dikirim otomatis oleh sistem...". Isi/judul/tautan notifikasi tidak berubah.
+
 ### Notifikasi WhatsApp (antrean WA SIAP, default MATI)
 
 CRF mengikuti pola Help Desk/PKS di SIAP: tidak memanggil API WhatsApp dan tidak menyimpan token, hanya

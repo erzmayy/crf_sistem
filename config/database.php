@@ -21,6 +21,12 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
+// define('DB_HOST', 'localhost');
+// define('DB_NAME', 'siap');
+// define('DB_USER', 'root');
+// define('DB_PASS', 'PPU22t4hun');
+// define('DB_CHARSET', 'utf8mb4');
+
 function getConnection(): PDO
 {
     static $pdo = null;

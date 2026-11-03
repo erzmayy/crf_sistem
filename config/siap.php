@@ -27,7 +27,7 @@ const SIAP_USER_TABLE = 'tbl_user';
  *   perannya, ditambah menu Admin. Ia tidak boleh memakai hak Admin
  *   untuk menugaskan ulang / membatalkan CRF yang sedang ia pegang.
  */
-const CRF_ADMIN_USERIDS = ['administrator', 'N76559'];
+const CRF_ADMIN_USERIDS = ['administrator', 'N76559', 'M00026', 'M00025'];
 
 /*
  * Akun DEMO: dapat menjalankan SEMUA peran (Admin, CMO, Handler, Kadep)
@@ -36,7 +36,7 @@ const CRF_ADMIN_USERIDS = ['administrator', 'N76559'];
  */
 const CRF_DEMO_MODE = false;
 const CRF_DEMO_USERIDS = ['CRFDEMO'];
-const CRF_OTOMASI_USERIDS = ['N75392', 'N76559'];
+const CRF_OTOMASI_USERIDS = ['N75392', 'N76559', '3754'];
 const CRF_KADEP_OPERASIONAL_USERIDS = ['3736'];
 const CRF_CMO_DEPTS = ['CMO'];
 

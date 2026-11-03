@@ -57,21 +57,22 @@ if (!$crf) {
 
     http_response_code(404);
 
-    $pageTitle = 'CRF Tidak Ditemukan';
+    $pageTitle = 'Keterangan CRF';
 
     require_once __DIR__ . '/../includes/header.php';
+    require_once __DIR__ . '/../includes/crf_queue_notice.php';
 
     echo '
         <div class="crf-page">
             <div class="container">
-                <div class="alert alert-danger">
-                    CRF tidak ditemukan pada antrean CMO.
-                </div>
-
-                <a href="' . h(crfUrl('cmo.index')) . '" class="crf-back-btn">
-                    <i class="bi bi-arrow-left"></i>
-                    Kembali
-                </a>
+                ' . crfQueueNoticeHtml(
+                    $pdo,
+                    $id,
+                    'CMO',
+                    ['PEMOHON'],
+                    ['Lolos Filter CMO', 'Perlu Revisi', 'Cancel', 'Solve', 'UAT Lulus'],
+                    crfUrl('cmo.index')
+                ) . '
             </div>
         </div>
     ';
