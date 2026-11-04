@@ -362,39 +362,70 @@ require_once __DIR__ . '/../includes/header.php';
           <div class="mb-3">
             <?php
             // Penilaian urgensi berbobot dilakukan di server (config/urgensi.php).
-            // Pemohon TIDAK diberi tahu bobot, kelompok, atau hasilnya, agar tidak
-            // selalu memilih dampak tertinggi. Urutan ditampilkan netral (abjad).
-            $dampakTerpilih = crfDampakDipilih($old['dampak_dipilih'] ?? ($old['kategori_dampak'] ?? null));
-            $dampakOpsi = crfImpactOptions();
-            uasort($dampakOpsi, static fn(string $a, string $b): int => strcasecmp($a, $b));
+            // Pemohon menjawab 4 pertanyaan sederhana; jawaban dipetakan ke pernyataan
+            // dampak (crfDampakDariJawaban). Pemohon TIDAK diberi tahu bobot atau hasil level.
+            $dampakPertanyaan = crfDampakQuestions();
+            $dampakTipe = trim((string) ($old['jenis_pengajuan'] ?? ''));
+            $dampakJawabanOld = [];
+            foreach (array_keys($dampakPertanyaan) as $dampakQ) {
+                $dampakJawabanOld[$dampakQ] = (string) ($old['dampak_' . $dampakQ] ?? '');
+            }
+            if (!array_filter($dampakJawabanOld)) {
+                $dampakJawabanOld = crfJawabanDariDampak(
+                    crfDampakDipilih($old['dampak_dipilih'] ?? ($old['kategori_dampak'] ?? null))
+                );
+            }
+            $dampakTersembunyi = crfDampakOpsiTersembunyi($dampakTipe);
+            $dampakJudulPerTipe = [];
+            foreach ($dampakPertanyaan as $dampakQ => $dampakDef) {
+                foreach (array_merge(crfRequestTypeOptions(), ['default']) as $dampakTipeKey) {
+                    $dampakJudulPerTipe[$dampakQ][$dampakTipeKey] = crfDampakJudul($dampakQ, $dampakTipeKey === 'default' ? '' : $dampakTipeKey);
+                }
+            }
+            $dampakTersembunyiPerTipe = [];
+            foreach (crfRequestTypeOptions() as $dampakTipeKey) {
+                $dampakTersembunyiPerTipe[$dampakTipeKey] = crfDampakOpsiTersembunyi($dampakTipeKey);
+            }
             ?>
-            <fieldset class="crf-impact-fieldset" id="dampak_dipilih_group" aria-describedby="dampak_dipilih_hint" data-bertentangan="<?= h(json_encode((object) (crfUrgencyConfig()['bertentangan'] ?? []), JSON_UNESCAPED_UNICODE)) ?>" data-tipe-tolak="<?= h(json_encode((object) array_map(static fn(array $a): array => $a['tolak'] ?? [], (array) (crfUrgencyConfig()['tipe_pengajuan'] ?? [])), JSON_UNESCAPED_UNICODE)) ?>">
+            <fieldset class="crf-impact-fieldset" id="dampak_dipilih_group" aria-describedby="dampak_dipilih_hint"
+                      data-judul="<?= h(json_encode($dampakJudulPerTipe, JSON_UNESCAPED_UNICODE)) ?>"
+                      data-tersembunyi="<?= h(json_encode((object) $dampakTersembunyiPerTipe, JSON_UNESCAPED_UNICODE)) ?>">
               <legend class="crf-field-label">Dampak Jika Tidak Dilakukan Perubahan<span class="text-danger">*</span></legend>
               <p class="crf-hint" id="dampak_dipilih_hint">
-                Centang <strong>semua</strong> pernyataan yang sesuai dengan kondisi sebenarnya.
+                Bayangkan CRF ini tidak dikerjakan. Jawab keempat pertanyaan berikut sesuai keadaan sebenarnya.
               </p>
+              <p class="crf-hint d-none" id="dampak_tipe_info" role="status"></p>
 
-              <div class="crf-impact-group">
-                <?php foreach ($dampakOpsi as $impactKey => $impactLabel): ?>
-                  <label class="crf-impact-option">
-                    <input
-                      type="checkbox"
-                      name="dampak_dipilih[]"
-                      value="<?= h($impactKey) ?>"
-                      <?= in_array($impactKey, $dampakTerpilih, true) ? 'checked' : '' ?>
-                    >
-                    <span><?= h($impactLabel) ?></span>
-                  </label>
-                <?php endforeach; ?>
-              </div>
+              <?php foreach ($dampakPertanyaan as $dampakQ => $dampakDef): ?>
+                <div class="crf-impact-question" data-dampak-q="<?= h($dampakQ) ?>" <?= $dampakQ === 'q2' && ($dampakJawabanOld['q1'] ?? '') === 'd' ? 'hidden' : '' ?>>
+                  <p class="crf-impact-question-title"><span class="crf-impact-question-no" aria-hidden="true"></span><span data-dampak-judul><?= h(crfDampakJudul($dampakQ, $dampakTipe)) ?></span></p>
+                  <?php if (!empty($dampakDef['petunjuk'])): ?>
+                    <p class="crf-hint crf-impact-question-hint"><?= h($dampakDef['petunjuk']) ?></p>
+                  <?php endif; ?>
+                  <div class="crf-impact-group crf-impact-group-<?= in_array($dampakQ, ['q3', 'q4'], true) ? 'yesno' : 'list' ?>">
+                    <?php foreach ($dampakDef['opsi'] as $dampakKode => $dampakOpsi): ?>
+                      <?php $dampakHidden = in_array($dampakKode, $dampakTersembunyi[$dampakQ] ?? [], true); ?>
+                      <label class="crf-impact-option" data-dampak-opsi="<?= h($dampakKode) ?>" <?= $dampakHidden ? 'hidden' : '' ?>>
+                        <input
+                          type="radio"
+                          name="dampak_<?= h($dampakQ) ?>"
+                          value="<?= h($dampakKode) ?>"
+                          <?= ($dampakJawabanOld[$dampakQ] ?? '') === $dampakKode && !$dampakHidden ? 'checked' : '' ?>
+                        >
+                        <span><?= h($dampakOpsi['label']) ?></span>
+                      </label>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+              <?php endforeach; ?>
             </fieldset>
-            <label for="dampak" class="form-label mt-3">Penjelasan Dampak yang Dipilih<span class="text-danger">*</span></label>
+            <label for="dampak" class="form-label mt-3">Jelaskan dampaknya dengan kata-kata Anda<span class="text-danger">*</span></label>
             <textarea
               class="form-control"
               id="dampak"
               name="dampak"
               rows="4"
-              placeholder="Jelaskan kondisi dan dampak yang dialami sesuai pilihan di atas..."
+              placeholder="Ceritakan apa yang terjadi bila CRF ini tidak dikerjakan..."
               required
             ><?= h($old['dampak'] ?? '') ?></textarea>
           </div>
@@ -514,7 +545,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
         <div class="crf-section-body">
           <label for="saran_alternatif" class="crf-field-label">Saran Alternatif <small class="text-muted fw-normal">(opsional)</small></label>
-          <p class="crf-hint">Isi bila ada saran alternatif atas perubahan yang disampaikan.</p>
+          <p class="crf-hint">Isi bila Anda punya usulan solusi lain atas perubahan yang diajukan.</p>
           <textarea class="form-control" id="saran_alternatif" name="saran_alternatif"><?= h($old['saran_alternatif'] ?? '') ?></textarea>
         </div>
       </div>

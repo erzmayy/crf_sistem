@@ -87,7 +87,7 @@ Draft disimpan lewat `actions/save_draft.php` (status `Draft`, tanpa nomor regis
 
 ## 6. Urgensi dan SLA
 
-Urgensi berbobot (`config/urgensi.php`, `crfHitungUrgensi()`): pemohon mencentang semua pernyataan dampak yang berlaku; skor = jumlah bobot (maksimum 100), lalu ambang menentukan Tinggi, Normal, Rendah. Ada pernyataan `wajib_tinggi`, pasangan `bertentangan` (ditolak), dan `batas_banyak` (penanda "perlu dicek" untuk CMO). Nilai bobot adalah usulan awal.
+Urgensi berbobot (`config/urgensi.php`, `crfHitungUrgensi()`): pemohon menjawab 4 pertanyaan dampak (`crfDampakQuestions()`, pilihan menyesuaikan Tipe Pengajuan; Permohonan Tambahan tanpa "aplikasi tidak bisa dipakai"), lalu `crfDampakDariJawaban()` memetakannya ke pernyataan dampak yang disimpan di `dampak_dipilih`; skor = jumlah bobot (maksimum 100), lalu ambang menentukan Tinggi, Normal, Rendah. Ada pernyataan `wajib_tinggi`, pasangan `bertentangan` (ditolak, untuk formulir lama), dan `batas_banyak` (penanda "perlu dicek" untuk CMO). Nilai bobot adalah usulan awal.
 
 SLA (`config/sla.php`, `includes/functions.php`): hanya hari dan jam kerja, 08:00-17:00, tanpa Sabtu, Minggu, dan libur di `CRF_SLA_HOLIDAYS` (perbarui tiap tahun). Satu hari SLA = satu hari kerja penuh. Dua ukuran:
 - Response Time: dari persetujuan Kadep sampai PIC menekan Mulai kerjakan.

@@ -6963,7 +6963,38 @@ body.crf-module {
   transition: border-color 0.12s ease, background-color 0.12s ease;
 }
 .crf-module .crf-impact-option:hover { border-color: #93b4e6; background: #f7faff; }
-.crf-module .crf-impact-option input[type="checkbox"] {
+/* 4 pertanyaan dampak (satu jawaban tiap pertanyaan); nomor mengikuti pertanyaan yang tampil */
+.crf-module .crf-impact-fieldset { counter-reset: dampak-q; }
+.crf-module .crf-impact-question { margin: 0 0 calc(1 * var(--crf-rem)); counter-increment: dampak-q; }
+.crf-module .crf-impact-question-no::before { content: counter(dampak-q); }
+.crf-module .crf-impact-question-title {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(0.5 * var(--crf-rem));
+  margin: 0 0 calc(0.45 * var(--crf-rem));
+  font-weight: 600;
+  color: #1f2a3d;
+}
+.crf-module .crf-impact-question-no {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(1.45 * var(--crf-rem));
+  height: calc(1.45 * var(--crf-rem));
+  border-radius: 50%;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-size: calc(0.8 * var(--crf-rem));
+  font-weight: 700;
+}
+.crf-module .crf-impact-question-hint { margin: calc(-0.2 * var(--crf-rem)) 0 calc(0.45 * var(--crf-rem)) calc(1.95 * var(--crf-rem)); }
+.crf-module .crf-impact-group-list { grid-template-columns: 1fr; }
+.crf-module .crf-impact-group-yesno { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 360px; }
+.crf-module .crf-impact-option[hidden],
+.crf-module .crf-impact-question[hidden] { display: none; }
+.crf-module .crf-impact-option input[type="checkbox"],
+.crf-module .crf-impact-option input[type="radio"] {
   flex: 0 0 auto;
   width: calc(1.1 * var(--crf-rem));
   height: calc(1.1 * var(--crf-rem));
@@ -6974,7 +7005,8 @@ body.crf-module {
 .crf-module .crf-impact-fieldset.is-invalid .crf-impact-option { border-color: #b3261e; }
 .crf-module .crf-impact-fieldset.is-invalid ~ .crf-inline-error { display: block; }
 @media (max-width: 767.98px) {
-  .crf-module .crf-impact-group { grid-template-columns: 1fr; }
+  .crf-module .crf-impact-group,
+  .crf-module .crf-impact-group-yesno { grid-template-columns: 1fr; max-width: none; }
   .crf-module .crf-impact-option { min-height: calc(2.75 * var(--crf-rem)); }
 }
 

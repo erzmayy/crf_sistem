@@ -222,6 +222,68 @@ Tampilan email CRF (`crfEmailHtml()`) disamakan dengan email SIAP (`3rdparty/ema
 Utama", lingkaran ikon, judul, sapaan "Dear <nama>", tombol biru #2f7fe0 "Buka CRF" + tautan cadangan, kaki biru muda
 "Email ini dikirim otomatis oleh sistem...". Isi/judul/tautan notifikasi tidak berubah.
 
+### Pilihan Dampak di Form CRF: 4 pertanyaan bahasa awam, terkait Tipe Pengajuan
+
+Kotak centang 11 pernyataan dampak diganti 4 pertanyaan, masing-masing satu jawaban (pilihan bulat):
+1 keadaan aplikasi/pekerjaan sekarang (a-d), 2 adakah cara lain (a-c), 3 bisa rugi uang/melanggar hukum? (ya/tidak),
+4 bisa membuat pekerjaan salah? (ya/tidak). Jawaban dipetakan ke kunci dampak yang sudah ada
+(`crfDampakDariJawaban()`), sehingga penyimpanan `dampak_dipilih`, bobot, skor, level, SLA, Forum, laporan, ekspor,
+PDF tidak berubah dan tidak ada migrasi. Pasangan `bertentangan` tidak mungkin lagi muncul dari form (tetap dicek
+di server untuk formulir lama). "Tidak perlu cara lain" (2c) hanya boleh bila pertanyaan 1 = c atau d.
+Teks 11 pernyataan di `crfImpactGroups()` ikut diganti ke bahasa awam (dipakai detail CRF, PDF, laporan).
+
+Keterkaitan dengan Tipe Pengajuan: judul pertanyaan 1 menyesuaikan tipe (Problem / Permohonan Perubahan /
+Permohonan Tambahan); untuk Permohonan Tambahan pilihan 1a "tidak bisa dibuka atau dipakai" disembunyikan (diturunkan
+dari `tolak` di `config/urgensi.php`, `crfDampakOpsiTersembunyi()`), jawaban yang tidak berlaku dikosongkan saat tipe
+diganti dan server tetap menolak bila dipaksa. Penanda CMO "perlu dicek": Problem dengan semua jawaban ringan
+(`tandai_hanya` diperluas). Isi ulang draft/revisi: `crfJawabanDariDampak()`; catatan: jawaban "tidak" pada
+pertanyaan 3/4 yang berpasangan dengan "ya" tidak tersimpan sebagai kunci, jadi dikosongkan dan perlu dijawab ulang.
+Draft boleh sebagian; kirim CRF mewajibkan keempat pertanyaan. Formulir lama (`dampak_dipilih[]`) tetap diterima.
+Berkas: `includes/functions.php` (teks, `crfDampakQuestions` dan fungsi terkait, `crfDampakValidasi`),
+`config/urgensi.php` (`tandai_hanya`), `user/form_crf.php`, `assets/js/script.js`, `assets/css/style.css`,
+`actions/submit_crf.php`, `actions/save_draft.php`, `tools/uji_urgensi.php` (66 pemeriksaan lulus).
+Belum diuji di browser lokal/server. Teks sebaiknya disetujui CMO/atasan.
+
+Perbaikan anomali hasil audit semua kombinasi jawaban: (1) bila jawaban pertanyaan 1 = d (pekerjaan masih berjalan
+normal), pertanyaan 2 tidak ditanyakan (disembunyikan, dijawab otomatis "tidak perlu cara lain"; nomor pertanyaan
+menyesuaikan lewat CSS counter). Sebelumnya "pekerjaan normal" + "tidak ada cara lain" + "bisa salah" menghasilkan
+Tinggi. Server mengabaikan jawaban 2 bila 1 = d; isi ulang draft lama dengan kombinasi itu menjadi 2 = c.
+(2) Penanda "perlu dicek" CMO untuk Permohonan Tambahan hanya muncul bila level Tinggi tetap tercapai tanpa jalur
+risiko uang/hukum (`tandai_tinggi_tanpa` di `config/urgensi.php`, dipakai `crfDampakCatatan()`); sebelumnya 22 dari 32
+kombinasi diberi catatan. Berkas tambahan: `assets/js/script.js` (`sesuaikanPertanyaan2`), `assets/css/style.css`
+(counter nomor), `user/form_crf.php`. `tools/uji_urgensi.php`: 74 pemeriksaan lulus.
+
+Teks pertanyaan dampak disederhanakan (versi final): semua memakai kerangka "bila CRF ini tidak dikerjakan" dan satu
+subjek "pekerjaan Anda"; pertanyaan 1 bukan lagi tentang "aplikasi" (cocok untuk kategori Infrastruktur/Proses/
+Security). Pertanyaan 2 menjadi 2 pilihan (Tidak ada / Ada, walau lebih lama atau repot); pilihan "sama mudahnya"
+dihapus karena hampir tidak pernah tampil dan membingungkan. Kunci `low_no_efficiency_impact` kini otomatis ditambahkan
+bila jawaban 1 = d (pekerjaan tetap berjalan). Pertanyaan 3 diberi contoh (denda, kehilangan pendapatan, melanggar
+kontrak); pertanyaan 4 "hampir pasti jadi salah atau harus diulang". Kolom teks di bawahnya berlabel "Jelaskan dampaknya
+dengan kata-kata Anda" (galat: "Penjelasan dampak wajib diisi."), hint Saran Alternatif dibedakan dari "cara lain".
+Pagar Permohonan Tambahan (atas permintaan pemilik; bisa dicabut dengan menghapus `tinggi_hanya_dengan` di
+`config/urgensi.php`): fitur baru hanya bisa berlevel Tinggi bila pertanyaan 3 = Ya (risiko uang/hukum/kontrak); selain
+itu dibatasi Normal walau skor mencapai ambang Tinggi. CMO dapat catatan "dibatasi Normal ... naikkan lewat Forum bila
+memang mendesak". `crfHitungUrgensi()` menerima parameter ketiga `$tipe` (hasil mengandung `dibatasi`); dipakai
+`submit_crf.php`, `save_draft.php`, `detail_permintaan.php`, `crfUrgensiSistem()` (CRF lama membaca `jenis_pengajuan`).
+Skor tersimpan tetap skor mentah, jadi meter skor bisa menunjukkan skor di atas ambang Tinggi dengan level Normal untuk
+Permohonan Tambahan. CRF Tambahan yang sudah diajukan memakai level tersimpan (SLA tidak berubah); hanya "level sistem"
+yang dihitung ulang. `tools/uji_urgensi.php`: 87 pemeriksaan lulus.
+
+Bobot urgensi disetel kecil (usulan B, atas permintaan pemilik; belum disetujui CMO, bisa dikembalikan lewat
+`config/urgensi.php`): `high_no_alternative` 25 -> 20, `normal_temporary_workaround` 10 -> 5 (menghindari hitung ganda
+"melambat" dengan pertanyaan 1), `normal_operational_risk` 15 -> 10 (pertanyaan 4 terlalu mudah dijawab Ya), ambang
+Tinggi 35 -> 40. Kunci Tinggi (`wajib_tinggi`: tidak bisa berjalan, rugi uang/hukum) tetap. Dari 28 kombinasi jawaban
+(tipe Problem): Tinggi 24 -> 21, Normal 3 -> 6, Rendah 1. Contoh yang turun ke Normal: tersendat + ada cara lain + pekerjaan
+salah; sebagian tidak bisa dipakai + tidak ada cara lain. `tools/uji_urgensi.php` disesuaikan (77 pemeriksaan lulus).
+Pengukuran data nyata: bandingkan `level` dan `level_urgensi_final` di `crf_pengajuan` sebelum dan sesudah.
+Jawaban pertanyaan 2 dipersingkat: "Tidak ada" dan "Ada (walau lebih lama atau repot)" (kunci dan skor tetap).
+Pertanyaan 3 dan 4 memakai usulan awal (atas permintaan pemilik): 3 "Bisa membuat perusahaan rugi uang, atau melanggar
+hukum dan perjanjian?" (contoh: denda, kehilangan pendapatan, atau melanggar kontrak); 4 "Bisa membuat pekerjaan jadi
+salah atau berantakan?" (contoh: salah hitung, data tidak cocok, atau harus input dua kali). Kunci dan skor tetap. Teks 11 pernyataan di detail/PDF/laporan ikut disamakan. CRF/draft versi 3 pilihan (q2 = c) terbaca sebagai q2 kosong
+dan dijawab ulang. Hasil level kombinasi tertentu bergeser sedikit: sebagian bagian tidak bisa dipakai + "Ada cara lain"
++ pekerjaan salah = skor 35 (Tinggi). Berkas: `includes/functions.php`, `user/form_crf.php`, `actions/submit_crf.php`,
+`assets/js/script.js`, `assets/css/style.css`, `tools/uji_urgensi.php` (77 pemeriksaan lulus).
+
 ### Notifikasi WhatsApp (antrean WA SIAP, default MATI)
 
 CRF mengikuti pola Help Desk/PKS di SIAP: tidak memanggil API WhatsApp dan tidak menyimpan token, hanya

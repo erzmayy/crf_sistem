@@ -73,7 +73,7 @@ if ($filled($crf['detail_kategori_perubahan'] ?? '')) {
 $scoreInfo = null;
 if ($showUrgencyScore) {
     $cfgUrgensi = crfUrgencyConfig();
-    $hasilSkor = crfHitungUrgensi($impactKeys);
+    $hasilSkor = crfHitungUrgensi($impactKeys, null, (string) ($crf['jenis_pengajuan'] ?? ''));
     $scoreMax = (float) ($cfgUrgensi['maks'] ?? 100);
     $scoreInfo = [
         'skor' => (float) $crf['skor_urgensi'],

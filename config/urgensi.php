@@ -33,12 +33,12 @@ return [
         // Tinggi
         'high_system_stopped'         => 40,  // Fungsi aplikasi berhenti total
         'high_liquidity_legal_risk'   => 35,  // Risiko likuiditas dan hukum
-        'high_no_alternative'         => 25,  // Belum ada alternatif
+        'high_no_alternative'         => 20,  // Belum ada alternatif
         // Normal
         'normal_operations_disrupted' => 20,  // Operasional terganggu berat
-        'normal_operational_risk'     => 15,  // Risiko operasional
+        'normal_operational_risk'     => 10,  // Risiko operasional
         'normal_partial_access'       => 10,  // Aplikasi masih bisa diakses sebagian
-        'normal_temporary_workaround' => 10,  // Ada solusi sementara yang merepotkan
+        'normal_temporary_workaround' => 5,   // Ada solusi sementara yang merepotkan
         // Rendah
         'low_new_issue_or_feature'    => 5,   // Masalah atau permintaan fitur baru
         'low_no_efficiency_impact'    => 0,   // Tidak mempengaruhi efisiensi kerja
@@ -49,7 +49,7 @@ return [
     'maks' => 100,
 
     'ambang' => [
-        'Tinggi' => 35,
+        'Tinggi' => 40,
         'Normal' => 10,
     ],
 
@@ -74,9 +74,22 @@ return [
         'Permohonan Tambahan' => [
             'tolak'  => ['high_system_stopped'],
             'tandai' => ['high_liquidity_legal_risk', 'high_no_alternative'],
+            // Tandai hanya bila level Tinggi tetap tercapai TANPA risiko uang/hukum (jalur yang sah
+            // untuk fitur baru); jadi catatan "periksa dampaknya" tidak muncul di hampir semua CRF.
+            'tandai_tinggi_tanpa' => ['high_liquidity_legal_risk'],
+            // Pagar: fitur baru yang belum ada tidak bisa menjadi darurat tanpa alasan kuat. Level Tinggi
+            // hanya bila salah satu pernyataan ini dipilih; selain itu dibatasi Normal (CMO tetap bisa
+            // menaikkan lewat Forum).
+            'tinggi_hanya_dengan' => ['high_liquidity_legal_risk'],
         ],
         'Problem' => [
-            'tandai_hanya' => ['low_new_issue_or_feature'],
+            // Problem tetapi semua jawaban dampak ringan (pekerjaan masih berjalan normal).
+            'tandai_hanya' => [
+                'low_new_issue_or_feature',
+                'low_no_daily_interruption',
+                'low_no_efficiency_impact',
+                'low_no_risk',
+            ],
         ],
     ],
 ];

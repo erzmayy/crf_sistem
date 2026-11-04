@@ -1051,23 +1051,245 @@ function crfImpactGroups(): array
 {
     return [
         'Tinggi' => [
-            'high_system_stopped' => 'Fungsi Aplikasi SIAP berhenti total.',
-            'high_no_alternative' => 'Belum ada alternatif.',
-            'high_liquidity_legal_risk' => 'Dapat menimbulkan risiko likuiditas dan hukum.',
+            'high_system_stopped' => 'Pekerjaan tidak bisa berjalan sama sekali.',
+            'high_no_alternative' => 'Tidak ada cara lain agar pekerjaan tetap selesai.',
+            'high_liquidity_legal_risk' => 'Bisa membuat perusahaan rugi uang, atau melanggar hukum dan perjanjian.',
         ],
         'Normal' => [
-            'normal_operations_disrupted' => 'Operasional terganggu berat.',
-            'normal_partial_access' => 'Aplikasi masih bisa diakses sebagian.',
-            'normal_temporary_workaround' => 'Ada solusi alternatif sementara yang merepotkan.',
-            'normal_operational_risk' => 'Dapat menimbulkan risiko operasional.',
+            'normal_operations_disrupted' => 'Pekerjaan sangat tersendat.',
+            'normal_partial_access' => 'Sebagian pekerjaan atau fitur tidak bisa dipakai.',
+            'normal_temporary_workaround' => 'Ada cara lain, walau mungkin lebih lama atau lebih repot.',
+            'normal_operational_risk' => 'Bisa membuat pekerjaan jadi salah atau berantakan.',
         ],
         'Rendah' => [
-            'low_new_issue_or_feature' => 'Masalah atau permintaan fitur baru.',
-            'low_no_efficiency_impact' => 'Tidak mempengaruhi efisiensi kerja.',
-            'low_no_daily_interruption' => 'Tidak menghentikan operasional harian.',
-            'low_no_risk' => 'Tidak menimbulkan risiko.',
+            'low_new_issue_or_feature' => 'Hanya masalah kecil atau permintaan fitur baru, belum mendesak.',
+            'low_no_efficiency_impact' => 'Pekerjaan tidak jadi lebih lambat atau lebih susah.',
+            'low_no_daily_interruption' => 'Pekerjaan tetap berjalan seperti biasa.',
+            'low_no_risk' => 'Tidak ada risiko rugi uang, melanggar aturan, atau pekerjaan jadi salah.',
         ],
     ];
+}
+
+/**
+ * Pertanyaan dampak di Form CRF (bahasa awam). Tiap jawaban dipetakan ke kunci
+ * pernyataan dampak di crfImpactGroups(), jadi penyimpanan (dampak_dipilih),
+ * skor, level, dan SLA tidak berubah. 'judul' bisa berbeda menurut Tipe Pengajuan;
+ * 'petunjuk' (opsional) tampil di bawah judul. Pertanyaan 2 tidak ditanyakan bila
+ * jawaban 1 = d (pekerjaan tetap berjalan); kunci low_no_efficiency_impact lalu
+ * ditambahkan otomatis oleh crfDampakDariJawaban().
+ *
+ * @return array<string,array{judul:array<string,string>,petunjuk?:string,opsi:array<string,array{label:string,kunci:?string}>}>
+ */
+function crfDampakQuestions(): array
+{
+    return [
+        'q1' => [
+            'judul' => [
+                'default' => 'Bila CRF ini tidak dikerjakan, bagaimana keadaan pekerjaan Anda?',
+                'Permohonan Perubahan' => 'Bila perubahan ini tidak dilakukan, bagaimana keadaan pekerjaan Anda?',
+                'Permohonan Tambahan' => 'Bila hal baru ini tidak ada, bagaimana keadaan pekerjaan Anda?',
+            ],
+            'opsi' => [
+                'a' => ['label' => 'Pekerjaan tidak bisa berjalan sama sekali.', 'kunci' => 'high_system_stopped'],
+                'b' => ['label' => 'Pekerjaan sangat tersendat.', 'kunci' => 'normal_operations_disrupted'],
+                'c' => ['label' => 'Sebagian pekerjaan atau fitur tidak bisa dipakai.', 'kunci' => 'normal_partial_access'],
+                'd' => ['label' => 'Pekerjaan tetap berjalan seperti biasa.', 'kunci' => 'low_no_daily_interruption'],
+            ],
+        ],
+        'q2' => [
+            'judul' => ['default' => 'Adakah cara lain agar pekerjaan Anda tetap selesai?'],
+            'opsi' => [
+                'a' => ['label' => 'Tidak ada', 'kunci' => 'high_no_alternative'],
+                'b' => ['label' => 'Ada (walau lebih lama atau repot)', 'kunci' => 'normal_temporary_workaround'],
+            ],
+        ],
+        'q3' => [
+            'judul' => ['default' => 'Bisa membuat perusahaan rugi uang, atau melanggar hukum dan perjanjian?'],
+            'petunjuk' => '(misalnya denda, kehilangan pendapatan, atau melanggar kontrak)',
+            'opsi' => [
+                'ya' => ['label' => 'Ya', 'kunci' => 'high_liquidity_legal_risk'],
+                'tidak' => ['label' => 'Tidak', 'kunci' => null],
+            ],
+        ],
+        'q4' => [
+            'judul' => ['default' => 'Bisa membuat pekerjaan jadi salah atau berantakan?'],
+            'petunjuk' => '(misalnya salah hitung, data tidak cocok, atau harus input dua kali)',
+            'opsi' => [
+                'ya' => ['label' => 'Ya', 'kunci' => 'normal_operational_risk'],
+                'tidak' => ['label' => 'Tidak', 'kunci' => null],
+            ],
+        ],
+    ];
+}
+
+/** Judul pertanyaan dampak untuk tipe pengajuan tertentu. */
+function crfDampakJudul(string $q, ?string $tipe = null): string
+{
+    $judul = crfDampakQuestions()[$q]['judul'] ?? [];
+
+    return (string) ($judul[trim((string) $tipe)] ?? $judul['default'] ?? '');
+}
+
+/**
+ * Jawaban yang tidak berlaku untuk sebuah tipe: opsi yang kuncinya masuk
+ * daftar 'tolak' tipe itu (config/urgensi.php), mis. Permohonan Tambahan
+ * tidak punya "aplikasi tidak bisa dipakai".
+ *
+ * @return array<string,string[]> contoh ['q1' => ['a']]
+ */
+function crfDampakOpsiTersembunyi(?string $tipe): array
+{
+    $tolak = (array) ((crfUrgencyConfig()['tipe_pengajuan'][trim((string) $tipe)] ?? [])['tolak'] ?? []);
+    $hasil = [];
+    foreach (crfDampakQuestions() as $q => $pertanyaan) {
+        foreach ($pertanyaan['opsi'] as $kode => $opsi) {
+            if ($opsi['kunci'] !== null && in_array($opsi['kunci'], $tolak, true)) {
+                $hasil[$q][] = $kode;
+            }
+        }
+    }
+
+    return $hasil;
+}
+
+/**
+ * Jawaban q1..q4 dari data POST. Hanya kode yang dikenal; sisanya ''.
+ * Mengembalikan null bila tidak ada satu pun jawaban baru (formulir lama).
+ *
+ * @return array<string,string>|null
+ */
+function crfDampakJawabanDariPost(array $post): ?array
+{
+    $jawaban = [];
+    $ada = false;
+    foreach (crfDampakQuestions() as $q => $pertanyaan) {
+        $nilai = trim((string) ($post['dampak_' . $q] ?? ''));
+        if ($nilai !== '') {
+            $ada = true;
+        }
+        $jawaban[$q] = isset($pertanyaan['opsi'][$nilai]) ? $nilai : '';
+    }
+
+    return $ada ? $jawaban : null;
+}
+
+/**
+ * Jawaban q1..q4 menjadi kunci dampak (urutan: Tinggi, Normal, Rendah).
+ * Tidak pernah menghasilkan pasangan 'bertentangan'. Jawaban kosong dilewati.
+ *
+ * @param array<string,string> $jawaban
+ * @return string[]
+ */
+function crfDampakDariJawaban(array $jawaban, ?string $tipe = null): array
+{
+    $q = crfDampakQuestions();
+    $kunci = static fn(string $pertanyaan): ?string => $q[$pertanyaan]['opsi'][$jawaban[$pertanyaan] ?? '']['kunci'] ?? null;
+
+    $q1 = (string) ($jawaban['q1'] ?? '');
+    $q3 = (string) ($jawaban['q3'] ?? '');
+    $q4 = (string) ($jawaban['q4'] ?? '');
+
+    $hasil = [];
+    foreach (['q1', 'q2', 'q3', 'q4'] as $pertanyaan) {
+        // Pekerjaan tetap berjalan (1 = d): pertanyaan 2 tidak ditanyakan, jawabannya diabaikan.
+        if ($pertanyaan === 'q2' && $q1 === 'd') {
+            continue;
+        }
+        $k = $kunci($pertanyaan);
+        if ($k !== null) {
+            $hasil[] = $k;
+        }
+    }
+
+    if ($q1 === 'd') {
+        $hasil[] = 'low_no_efficiency_impact'; // tanpa tambahan beban kerja
+        if (trim((string) $tipe) !== 'Problem') {
+            $hasil[] = 'low_new_issue_or_feature';
+        }
+    }
+    if ($q3 === 'tidak' && $q4 === 'tidak') {
+        $hasil[] = 'low_no_risk';
+    }
+
+    $urutan = array_keys(crfImpactOptions());
+    usort($hasil, static fn(string $a, string $b): int => array_search($a, $urutan, true) <=> array_search($b, $urutan, true));
+
+    return array_values(array_unique($hasil));
+}
+
+/**
+ * Kebalikan crfDampakDariJawaban(): isi ulang jawaban dari kunci tersimpan
+ * (draft, revisi, CRF lama). Kombinasi lama yang tak terwakili diisi dengan
+ * pendekatan terdekat. 'tidak' pada q3/q4 hanya bisa disimpulkan dari
+ * low_no_risk; jawaban "tidak" yang berpasangan dengan "ya" tidak tersimpan
+ * sebagai kunci, sehingga dikosongkan dan perlu dijawab ulang.
+ *
+ * @param string[] $keys
+ * @return array<string,string>
+ */
+function crfJawabanDariDampak(array $keys): array
+{
+    $keys = crfDampakDipilih($keys);
+    $ada = static fn(string $k): bool => in_array($k, $keys, true);
+
+    $q1 = '';
+    foreach (['high_system_stopped' => 'a', 'normal_operations_disrupted' => 'b', 'normal_partial_access' => 'c',
+        'low_no_daily_interruption' => 'd', 'low_new_issue_or_feature' => 'd'] as $kunci => $kode) {
+        if ($ada($kunci)) {
+            $q1 = $kode;
+            break;
+        }
+    }
+
+    $q2 = '';
+    foreach (['high_no_alternative' => 'a', 'normal_temporary_workaround' => 'b'] as $kunci => $kode) {
+        if ($ada($kunci)) {
+            $q2 = $kode;
+            break;
+        }
+    }
+
+    if ($q1 === 'd') {
+        $q2 = ''; // pekerjaan tetap berjalan: pertanyaan 2 tidak ditanyakan
+    }
+
+    $q3 = $ada('high_liquidity_legal_risk') ? 'ya' : '';
+    $q4 = $ada('normal_operational_risk') ? 'ya' : '';
+    if ($ada('low_no_risk')) {
+        $q3 = $q3 ?: 'tidak';
+        $q4 = $q4 ?: 'tidak';
+    }
+
+    return ['q1' => $q1, 'q2' => $q2, 'q3' => $q3, 'q4' => $q4];
+}
+
+/**
+ * Validasi pilihan dampak untuk pengiriman CRF. Mengembalikan pesan kesalahan
+ * atau null bila sah. $jawaban null = formulir lama (kunci dipilih langsung).
+ *
+ * @param array<string,string>|null $jawaban
+ * @param string[]                  $kunci
+ */
+function crfDampakValidasi(?array $jawaban, array $kunci, ?string $tipe): ?string
+{
+    if ($jawaban !== null) {
+        foreach ($jawaban as $q => $nilai) {
+            // Pertanyaan 2 tidak ditanyakan bila pekerjaan masih berjalan normal (jawaban 1 = d).
+            if ($nilai === '' && !($q === 'q2' && ($jawaban['q1'] ?? '') === 'd')) {
+                return 'Jawab keempat pertanyaan dampak.';
+            }
+        }
+    } elseif (!$kunci) {
+        return 'Pilih minimal satu pernyataan dampak.';
+    } elseif (crfDampakBertentangan($kunci)) {
+        return 'Beberapa pernyataan dampak saling bertentangan. Periksa kembali pilihan Anda.';
+    }
+
+    if (crfTipeBertentangan($tipe, $kunci)) {
+        return 'Tipe pengajuan dan pernyataan dampak tidak sesuai. Periksa kembali pilihan Anda.';
+    }
+
+    return null;
 }
 
 function crfImpactOptions(): array
@@ -1147,11 +1369,13 @@ function crfDampakDipilih($raw): array
 /**
  * Hitung skor dan Level Urgensi dari pernyataan dampak yang dipilih.
  *
- * @param string[]   $keys    hasil crfDampakDipilih()
- * @param array|null $config  menimpa config/urgensi.php (untuk uji)
- * @return array{skor:float,level:?string,dikunci:bool,rincian:array<string,float>}
+ * @param string[]    $keys    hasil crfDampakDipilih()
+ * @param array|null  $config  menimpa config/urgensi.php (untuk uji)
+ * @param string|null $tipe    Tipe Pengajuan; tipe dengan 'tinggi_hanya_dengan' (Permohonan Tambahan)
+ *                             dibatasi Normal bila tidak ada pernyataan syaratnya
+ * @return array{skor:float,level:?string,dikunci:bool,rincian:array<string,float>,dibatasi:bool}
  */
-function crfHitungUrgensi(array $keys, ?array $config = null): array
+function crfHitungUrgensi(array $keys, ?array $config = null, ?string $tipe = null): array
 {
     $config = array_replace_recursive(crfUrgencyConfig(), $config ?? []);
     $bobot = (array) ($config['bobot'] ?? []);
@@ -1170,7 +1394,7 @@ function crfHitungUrgensi(array $keys, ?array $config = null): array
     }
 
     if (!$rincian) {
-        return ['skor' => 0.0, 'level' => null, 'dikunci' => false, 'rincian' => []];
+        return ['skor' => 0.0, 'level' => null, 'dikunci' => false, 'rincian' => [], 'dibatasi' => false];
     }
 
     $skor = min($maks, array_sum($rincian));
@@ -1182,7 +1406,16 @@ function crfHitungUrgensi(array $keys, ?array $config = null): array
         $level = 'Rendah';
     }
 
-    return ['skor' => (float) $skor, 'level' => $level, 'dikunci' => $dikunci, 'rincian' => $rincian];
+    // Pagar per tipe: Tinggi hanya bila ada pernyataan syarat (mis. risiko uang/hukum pada Permohonan Tambahan).
+    $dibatasi = false;
+    $syarat = (array) ($config['tipe_pengajuan'][trim((string) $tipe)]['tinggi_hanya_dengan'] ?? []);
+    if ($level === 'Tinggi' && $syarat && !array_intersect($syarat, array_keys($rincian))) {
+        $level = 'Normal';
+        $dikunci = false;
+        $dibatasi = true;
+    }
+
+    return ['skor' => (float) $skor, 'level' => $level, 'dikunci' => $dikunci, 'rincian' => $rincian, 'dibatasi' => $dibatasi];
 }
 
 /**
@@ -1241,10 +1474,15 @@ function crfDampakCatatan(array $keys, ?string $tipe = null): array
     if ($keys && $aturanTipe) {
         if (crfTipeBertentangan($tipe, $keys)) {
             $catatan[] = 'Tipe "' . $tipe . '" tidak lazim dengan salah satu pernyataan dampak yang dipilih.';
-        } elseif (array_intersect((array) ($aturanTipe['tandai'] ?? []), $keys)) {
+        } elseif (crfHitungUrgensi($keys, null, $tipe)['dibatasi']) {
+            $catatan[] = 'Skor mencapai Tinggi, tetapi tipe "' . $tipe . '" dibatasi Normal karena tidak ada risiko uang/hukum/kontrak. Naikkan lewat Forum bila memang mendesak.';
+        } elseif (array_intersect((array) ($aturanTipe['tandai'] ?? []), $keys)
+            && crfHitungUrgensi(array_values(array_diff($keys, (array) ($aturanTipe['tandai_tinggi_tanpa'] ?? []))))['level'] === 'Tinggi') {
+            // Ditandai hanya bila level Tinggi tetap tercapai tanpa jalur yang sah untuk tipe ini
+            // (mis. risiko uang/hukum pada Permohonan Tambahan).
             $catatan[] = 'Tipe "' . $tipe . '" dengan pernyataan dampak tinggi: periksa apakah dampaknya nyata.';
         } elseif (!empty($aturanTipe['tandai_hanya']) && !array_diff($keys, (array) $aturanTipe['tandai_hanya'])) {
-            $catatan[] = 'Tipe "' . $tipe . '" tetapi dampak yang dipilih hanya permintaan baru/fitur.';
+            $catatan[] = 'Tipe "' . $tipe . '" tetapi dampak yang dipilih hanya yang ringan (pekerjaan masih berjalan normal atau permintaan fitur baru).';
         }
     }    $batas = (int) (crfUrgencyConfig()['batas_banyak'] ?? 0);
     if ($batas > 0 && count($keys) >= $batas) {
@@ -1287,7 +1525,7 @@ function crfUrgensiSistem(array $crf): ?string
 {
     $keys = crfDampakDipilih($crf['dampak_dipilih'] ?? null);
     if ($keys) {
-        return crfHitungUrgensi($keys)['level'];
+        return crfHitungUrgensi($keys, null, (string) ($crf['jenis_pengajuan'] ?? ''))['level'];
     }
 
     return crfUrgencyForImpact($crf['kategori_dampak'] ?? null);

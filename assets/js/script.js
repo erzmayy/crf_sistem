@@ -467,6 +467,106 @@ if (fileInput && fileList) {
     });
   }
 
+  /* -----------------------------------------------------------------
+   * Pertanyaan dampak: judul dan pilihan menyesuaikan Tipe Pengajuan.
+   * (data-judul / data-tersembunyi dibuat user/form_crf.php dari config)
+   * ----------------------------------------------------------------- */
+  var dampakGroup = document.getElementById('dampak_dipilih_group');
+  var dampakTipeField = document.getElementById('jenis_pengajuan');
+  var dampakTipeInfo = document.getElementById('dampak_tipe_info');
+  var dampakJudul = {};
+  var dampakTersembunyi = {};
+  if (dampakGroup) {
+    try { dampakJudul = JSON.parse(dampakGroup.getAttribute('data-judul') || '{}'); } catch (e) { dampakJudul = {}; }
+    try { dampakTersembunyi = JSON.parse(dampakGroup.getAttribute('data-tersembunyi') || '{}'); } catch (e) { dampakTersembunyi = {}; }
+  }
+
+  function dampakJawaban(q) {
+    var terpilih = dampakGroup
+      ? dampakGroup.querySelector('input[name="dampak_' + q + '"]:checked')
+      : null;
+    return terpilih ? terpilih.value : '';
+  }
+
+  function dampakSemuaDijawab() {
+    if (!dampakGroup) {
+      return true;
+    }
+    // Pertanyaan 2 tidak ditanyakan bila pekerjaan masih berjalan normal (jawaban 1 = d).
+    var perlu = dampakJawaban('q1') === 'd' ? ['q1', 'q3', 'q4'] : ['q1', 'q2', 'q3', 'q4'];
+    return perlu.every(function (q) { return dampakJawaban(q) !== ''; });
+  }
+
+  // Jawaban 1 = d (pekerjaan tetap berjalan): pertanyaan 2 tidak ditanyakan, disembunyikan dan dikosongkan.
+  function sesuaikanPertanyaan2() {
+    if (!dampakGroup) {
+      return;
+    }
+    var blok = dampakGroup.querySelector('[data-dampak-q="q2"]');
+    if (!blok) {
+      return;
+    }
+    var lewati = dampakJawaban('q1') === 'd';
+    blok.hidden = lewati;
+    if (lewati) {
+      Array.prototype.forEach.call(dampakGroup.querySelectorAll('input[name="dampak_q2"]'), function (radio) {
+        radio.checked = false;
+      });
+    }
+  }
+
+  function terapkanDampakTipe() {
+    if (!dampakGroup) {
+      return;
+    }
+    var tipe = dampakTipeField ? dampakTipeField.value : '';
+    var sembunyi = (tipe && dampakTersembunyi[tipe]) || {};
+    var dikosongkan = false;
+
+    sesuaikanPertanyaan2();
+
+    Array.prototype.forEach.call(dampakGroup.querySelectorAll('[data-dampak-q]'), function (blok) {
+      var q = blok.getAttribute('data-dampak-q');
+      var judul = (dampakJudul[q] || {});
+      var teks = judul[tipe] || judul['default'];
+      var penanda = blok.querySelector('[data-dampak-judul]');
+      if (penanda && teks) {
+        penanda.textContent = teks;
+      }
+
+      Array.prototype.forEach.call(blok.querySelectorAll('[data-dampak-opsi]'), function (opsi) {
+        var kode = opsi.getAttribute('data-dampak-opsi');
+        var tersembunyi = (sembunyi[q] || []).indexOf(kode) !== -1;
+        var radio = opsi.querySelector('input');
+        opsi.hidden = tersembunyi;
+        if (tersembunyi && radio && radio.checked) {
+          radio.checked = false;
+          dikosongkan = true;
+        }
+      });
+    });
+
+    if (dampakTipeInfo) {
+      dampakTipeInfo.textContent = dikosongkan
+        ? 'Sebagian jawaban dampak dikosongkan karena tidak berlaku untuk pilihan Anda. Silakan jawab kembali.'
+        : '';
+      dampakTipeInfo.classList.toggle('d-none', !dikosongkan);
+    }
+  }
+
+  if (dampakGroup) {
+    if (dampakTipeField) {
+      dampakTipeField.addEventListener('change', terapkanDampakTipe);
+    }
+    dampakGroup.addEventListener('change', function (event) {
+      // Jawaban pertanyaan 1 menentukan apakah pertanyaan 2 ditanyakan.
+      if (event.target && event.target.name === 'dampak_q1') {
+        terapkanDampakTipe();
+      }
+    });
+    terapkanDampakTipe();
+  }
+
   function isCrfFormComplete() {
     var requiredFieldIds = [
       'nama_pemohon',
@@ -491,7 +591,7 @@ if (fileInput && fileList) {
       isComplete = false;
     }
 
-    if (isComplete && !crfRoot.querySelector('input[name="dampak_dipilih[]"]:checked')) {
+    if (isComplete && !dampakSemuaDijawab()) {
       isComplete = false;
     }
 
@@ -572,29 +672,8 @@ if (fileInput && fileList) {
     }
 
     var impactGroup = document.getElementById('dampak_dipilih_group');
-    if (impactGroup && !impactGroup.querySelector('input[type="checkbox"]:checked')) {
-      addInlineError(impactGroup, 'Pilih minimal satu pernyataan dampak.', errors);
-    } else if (impactGroup) {
-      var konflik = {};
-      try { konflik = JSON.parse(impactGroup.getAttribute('data-bertentangan') || '{}'); } catch (e) { konflik = {}; }
-      var dicentang = Array.prototype.map.call(
-        impactGroup.querySelectorAll('input[type="checkbox"]:checked'),
-        function (box) { return box.value; }
-      );
-      var bentrok = dicentang.some(function (key) {
-        return (konflik[key] || []).some(function (lawan) { return dicentang.indexOf(lawan) !== -1; });
-      });
-      if (bentrok) {
-        addInlineError(impactGroup, 'Beberapa pernyataan dampak saling bertentangan. Periksa kembali pilihan Anda.', errors);
-      } else {
-        var tipeTolak = {};
-        try { tipeTolak = JSON.parse(impactGroup.getAttribute('data-tipe-tolak') || '{}'); } catch (e) { tipeTolak = {}; }
-        var tipeField = document.getElementById('jenis_pengajuan');
-        var daftarTolak = (tipeField && tipeTolak[tipeField.value]) || [];
-        if (dicentang.some(function (key) { return daftarTolak.indexOf(key) !== -1; })) {
-          addInlineError(impactGroup, 'Tipe pengajuan dan pernyataan dampak tidak sesuai. Periksa kembali pilihan Anda.', errors);
-        }
-      }
+    if (impactGroup && !dampakSemuaDijawab()) {
+      addInlineError(impactGroup, 'Jawab keempat pertanyaan dampak.', errors);
     }
 
     var category = document.getElementById('kategori_perubahan');

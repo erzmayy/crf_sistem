@@ -40,11 +40,11 @@ $cek('akses sebagian: skor 10', $h['skor'], 10.0);
 $cek('akses sebagian: Normal', $h['level'], 'Normal');
 
 $h = crfHitungUrgensi(['normal_operations_disrupted', 'normal_temporary_workaround']);
-$cek('terganggu + solusi merepotkan: skor 30', $h['skor'], 30.0);
+$cek('terganggu + solusi merepotkan: skor 25', $h['skor'], 25.0);
 $cek('terganggu + solusi merepotkan: Normal', $h['level'], 'Normal');
 
 $h = crfHitungUrgensi(['normal_operations_disrupted', 'high_no_alternative']);
-$cek('terganggu + tanpa alternatif: skor 45', $h['skor'], 45.0);
+$cek('terganggu + tanpa alternatif: skor 40', $h['skor'], 40.0);
 $cek('terganggu + tanpa alternatif: Tinggi (kombinasi menaikkan)', $h['level'], 'Tinggi');
 
 $h = crfHitungUrgensi(['high_liquidity_legal_risk']);
@@ -52,7 +52,7 @@ $cek('risiko hukum saja: skor 35', $h['skor'], 35.0);
 $cek('risiko hukum saja: Tinggi (tepat di ambang)', $h['level'], 'Tinggi');
 
 $h = crfHitungUrgensi(['high_no_alternative']);
-$cek('tanpa alternatif saja: skor 25', $h['skor'], 25.0);
+$cek('tanpa alternatif saja: skor 20', $h['skor'], 20.0);
 $cek('tanpa alternatif saja: Normal', $h['level'], 'Normal');
 
 $h = crfHitungUrgensi(['high_system_stopped', 'high_liquidity_legal_risk', 'high_no_alternative', 'normal_operations_disrupted']);
@@ -99,13 +99,129 @@ $cek('catatan: 7 centang tanpa konflik -> 1 catatan',
 $cek('tipe: Tambahan + berhenti total ditolak', crfTipeBertentangan('Permohonan Tambahan', ['high_system_stopped']), true);
 $cek('tipe: Problem + berhenti total boleh', crfTipeBertentangan('Problem', ['high_system_stopped']), false);
 $cek('tipe: tanpa tipe tidak menolak', crfTipeBertentangan('', ['high_system_stopped']), false);
-$cek('tipe: Tambahan + dampak tinggi lain ditandai',
-    count(crfDampakCatatan(['high_no_alternative'], 'Permohonan Tambahan')), 1);
+$cek('tipe: Tambahan + hanya tanpa alternatif (Normal) tidak ditandai',
+    crfDampakCatatan(['high_no_alternative'], 'Permohonan Tambahan'), []);
+$cek('tipe: Tambahan + Tinggi tanpa jalur uang/hukum ditandai',
+    count(crfDampakCatatan(['high_no_alternative', 'normal_operations_disrupted'], 'Permohonan Tambahan')), 1);
+$cek('tipe: Tambahan + risiko uang/hukum saja (jalur sah) tidak ditandai',
+    crfDampakCatatan(['high_liquidity_legal_risk'], 'Permohonan Tambahan'), []);
+$cek('tipe: Tambahan + risiko uang/hukum + tanpa alternatif saja tidak ditandai',
+    crfDampakCatatan(['high_liquidity_legal_risk', 'high_no_alternative'], 'Permohonan Tambahan'), []);
+$cek('tipe: Tambahan + uang/hukum + tersendat + tanpa alternatif ditandai',
+    count(crfDampakCatatan(['high_liquidity_legal_risk', 'high_no_alternative', 'normal_operations_disrupted'], 'Permohonan Tambahan')), 1);
 $cek('tipe: Tambahan + dampak normal wajar', crfDampakCatatan(['normal_partial_access'], 'Permohonan Tambahan'), []);
 $cek('tipe: Problem hanya fitur baru ditandai', count(crfDampakCatatan(['low_new_issue_or_feature'], 'Problem')), 1);
 $cek('tipe: Problem fitur baru + operasional terganggu wajar',
     crfDampakCatatan(['low_new_issue_or_feature', 'normal_operations_disrupted'], 'Problem'), []);
 $cek('tipe: tidak mengubah skor',
-    crfHitungUrgensi(['high_no_alternative'])['skor'], 25.0);
+    crfHitungUrgensi(['high_no_alternative'])['skor'], 20.0);
+echo "\nPertanyaan dampak (4 pertanyaan -> kunci dampak)\n";
+
+$tipeSemua = crfRequestTypeOptions();
+$kombinasi = 0;
+$bentrokKombinasi = [];
+$roundTripSalah = [];
+foreach ($tipeSemua as $tipe) {
+    $sembunyi = crfDampakOpsiTersembunyi($tipe);
+    foreach (['a', 'b', 'c', 'd'] as $q1) {
+        if (in_array($q1, $sembunyi['q1'] ?? [], true)) {
+            continue;
+        }
+        // Pertanyaan 2 tidak ditanyakan bila pekerjaan tetap berjalan (q1 = d).
+        foreach ($q1 === 'd' ? [''] : ['a', 'b'] as $q2) {
+            foreach (['ya', 'tidak'] as $q3) {
+                foreach (['ya', 'tidak'] as $q4) {
+                    $jawaban = ['q1' => $q1, 'q2' => $q2, 'q3' => $q3, 'q4' => $q4];
+                    $err = crfDampakValidasi($jawaban, crfDampakDariJawaban($jawaban, $tipe), $tipe);
+                    $kombinasi++;
+                    $kunci = crfDampakDariJawaban($jawaban, $tipe);
+                    if ($err !== null || crfDampakBertentangan($kunci)) {
+                        $bentrokKombinasi[] = "$tipe " . json_encode($jawaban) . ' ' . (string) $err;
+                    }
+                    $balik = crfJawabanDariDampak($kunci);
+                    // q3/q4 "tidak" yang berpasangan dengan "ya" memang tidak tersimpan.
+                    foreach (['q1', 'q2', 'q3', 'q4'] as $q) {
+                        $dikosongkanSah = in_array($q, ['q3', 'q4'], true) && $jawaban[$q] === 'tidak' && $balik[$q] === '';
+                        if ($balik[$q] !== $jawaban[$q] && !$dikosongkanSah) {
+                            $roundTripSalah[] = "$tipe $q " . json_encode($jawaban) . ' -> ' . json_encode($balik);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+$cek("semua $kombinasi kombinasi jawaban sah dan tanpa pertentangan", $bentrokKombinasi, []);
+$cek('isi ulang jawaban dari kunci konsisten', $roundTripSalah, []);
+
+$cek('opsi tersembunyi: Tambahan menyembunyikan q1 a', crfDampakOpsiTersembunyi('Permohonan Tambahan'), ['q1' => ['a']]);
+$cek('opsi tersembunyi: Problem tidak menyembunyikan apa pun', crfDampakOpsiTersembunyi('Problem'), []);
+$cek('judul q1 per tipe berbeda', crfDampakJudul('q1', 'Permohonan Tambahan') !== crfDampakJudul('q1', 'Problem'), true);
+
+$cek('level: q1 a (tidak bisa dipakai) -> Tinggi',
+    crfHitungUrgensi(crfDampakDariJawaban(['q1' => 'a', 'q2' => 'b', 'q3' => 'tidak', 'q4' => 'tidak'], 'Problem'))['level'], 'Tinggi');
+$cek('level: tersendat + cara lama -> Normal',
+    crfHitungUrgensi(crfDampakDariJawaban(['q1' => 'b', 'q2' => 'b', 'q3' => 'tidak', 'q4' => 'tidak'], 'Problem'))['level'], 'Normal');
+$cek('level: normal semua -> Rendah',
+    crfHitungUrgensi(crfDampakDariJawaban(['q1' => 'd', 'q2' => '', 'q3' => 'tidak', 'q4' => 'tidak'], 'Problem'))['level'], 'Rendah');
+$cek('level: rugi uang/hukum -> Tinggi',
+    crfHitungUrgensi(crfDampakDariJawaban(['q1' => 'd', 'q2' => '', 'q3' => 'ya', 'q4' => 'tidak'], 'Problem'))['level'], 'Tinggi');
+$cek('kunci: bukan Problem + berjalan normal menambah permintaan fitur baru',
+    in_array('low_new_issue_or_feature', crfDampakDariJawaban(['q1' => 'd', 'q2' => '', 'q3' => 'tidak', 'q4' => 'tidak'], 'Permohonan Perubahan'), true), true);
+$cek('kunci: Problem tidak menambah permintaan fitur baru',
+    in_array('low_new_issue_or_feature', crfDampakDariJawaban(['q1' => 'd', 'q2' => '', 'q3' => 'tidak', 'q4' => 'tidak'], 'Problem'), true), false);
+$cek('kunci: tersendat tidak menambah "tidak ada beban kerja tambahan"',
+    in_array('low_no_efficiency_impact', crfDampakDariJawaban(['q1' => 'b', 'q2' => 'b'], 'Problem'), true), false);
+echo "\nPagar Permohonan Tambahan (Tinggi hanya dengan risiko uang/hukum)\n";
+$tersendatTanpaCara = ['q1' => 'b', 'q2' => 'a', 'q3' => 'tidak', 'q4' => 'ya'];
+$cek('Tambahan: tersendat + tanpa cara lain (skor 50) dibatasi Normal',
+    crfHitungUrgensi(crfDampakDariJawaban($tersendatTanpaCara, 'Permohonan Tambahan'), null, 'Permohonan Tambahan')['level'], 'Normal');
+$cek('Tambahan: pembatasan ditandai dibatasi=true',
+    crfHitungUrgensi(crfDampakDariJawaban($tersendatTanpaCara, 'Permohonan Tambahan'), null, 'Permohonan Tambahan')['dibatasi'], true);
+$cek('Perubahan: jawaban sama tetap Tinggi',
+    crfHitungUrgensi(crfDampakDariJawaban($tersendatTanpaCara, 'Permohonan Perubahan'), null, 'Permohonan Perubahan')['level'], 'Tinggi');
+$cek('Problem: jawaban sama tetap Tinggi',
+    crfHitungUrgensi(crfDampakDariJawaban($tersendatTanpaCara, 'Problem'), null, 'Problem')['level'], 'Tinggi');
+$cek('Tambahan tanpa tipe diberikan tidak dibatasi (kompatibel)',
+    crfHitungUrgensi(crfDampakDariJawaban($tersendatTanpaCara, 'Permohonan Tambahan'))['level'], 'Tinggi');
+$cek('Tambahan + risiko uang/hukum tetap Tinggi',
+    crfHitungUrgensi(crfDampakDariJawaban(['q1' => 'd', 'q2' => '', 'q3' => 'ya', 'q4' => 'tidak'], 'Permohonan Tambahan'), null, 'Permohonan Tambahan')['level'], 'Tinggi');
+$cek('Tambahan: normal semua tetap Rendah',
+    crfHitungUrgensi(crfDampakDariJawaban(['q1' => 'd', 'q2' => '', 'q3' => 'tidak', 'q4' => 'tidak'], 'Permohonan Tambahan'), null, 'Permohonan Tambahan')['level'], 'Rendah');
+$cek('Tambahan: CMO dapat catatan pembatasan',
+    count(array_filter(crfDampakCatatan(crfDampakDariJawaban($tersendatTanpaCara, 'Permohonan Tambahan'), 'Permohonan Tambahan'), static fn($c) => str_contains($c, 'dibatasi Normal'))), 1);
+$cek('urgensi sistem CRF Tambahan mengikuti pagar',
+    crfUrgensiSistem(['dampak_dipilih' => implode(',', crfDampakDariJawaban($tersendatTanpaCara, 'Permohonan Tambahan')), 'jenis_pengajuan' => 'Permohonan Tambahan']), 'Normal');
+$cek('urgensi sistem CRF Problem tidak dibatasi',
+    crfUrgensiSistem(['dampak_dipilih' => implode(',', crfDampakDariJawaban($tersendatTanpaCara, 'Problem')), 'jenis_pengajuan' => 'Problem']), 'Tinggi');
+echo "\n";
+$cek('q1 = d: jawaban q2 a/b diabaikan, kunci "tanpa beban tambahan" otomatis',
+    crfDampakDariJawaban(['q1' => 'd', 'q2' => 'a', 'q3' => 'tidak', 'q4' => 'ya'], 'Problem'),
+    ['normal_operational_risk', 'low_no_efficiency_impact', 'low_no_daily_interruption']);
+$cek('q1 = d: pekerjaan salah saja -> Normal (bukan Tinggi)',
+    crfHitungUrgensi(crfDampakDariJawaban(['q1' => 'd', 'q2' => 'a', 'q3' => 'tidak', 'q4' => 'ya'], 'Problem'))['level'], 'Normal');
+$cek('validasi: q1 = d tanpa jawaban q2 sah',
+    crfDampakValidasi(['q1' => 'd', 'q2' => '', 'q3' => 'tidak', 'q4' => 'tidak'], [], 'Problem'), null);
+$cek('isi ulang: q1 = d mengosongkan q2',
+    crfJawabanDariDampak(['low_no_daily_interruption', 'high_no_alternative'])['q2'], '');
+$cek('isi ulang: CRF versi 3 pilihan (q2 c lama) dikosongkan, bukan error',
+    crfJawabanDariDampak(['normal_partial_access', 'low_no_efficiency_impact'])['q2'], '');
+$cek('post: kode lama q2 = c dibuang',
+    crfDampakJawabanDariPost(['dampak_q1' => 'c', 'dampak_q2' => 'c'])['q2'], '');
+$cek('pertanyaan 2 hanya 2 pilihan', array_keys(crfDampakQuestions()['q2']['opsi']), ['a', 'b']);
+$cek('pertanyaan 3 dan 4 punya contoh "misalnya"',
+    [str_starts_with((string) (crfDampakQuestions()['q3']['petunjuk'] ?? ''), '(misalnya'), str_starts_with((string) (crfDampakQuestions()['q4']['petunjuk'] ?? ''), '(misalnya')], [true, true]);
+$cek('draft sebagian: hanya q1 menghasilkan satu kunci', crfDampakDariJawaban(['q1' => 'c', 'q2' => '', 'q3' => '', 'q4' => ''], 'Problem'), ['normal_partial_access']);
+
+$cek('validasi: jawaban belum lengkap ditolak',
+    crfDampakValidasi(['q1' => 'a', 'q2' => '', 'q3' => 'ya', 'q4' => 'ya'], ['high_system_stopped'], 'Problem'), 'Jawab keempat pertanyaan dampak.');
+$cek('validasi: Tambahan + q1 a dipaksa kirim ditolak',
+    crfDampakValidasi(['q1' => 'a', 'q2' => 'b', 'q3' => 'ya', 'q4' => 'ya'], crfDampakDariJawaban(['q1' => 'a', 'q2' => 'b', 'q3' => 'ya', 'q4' => 'ya'], 'Permohonan Tambahan'), 'Permohonan Tambahan') !== null, true);
+$cek('validasi: formulir lama kosong ditolak', crfDampakValidasi(null, [], 'Problem'), 'Pilih minimal satu pernyataan dampak.');
+$cek('validasi: formulir lama sah', crfDampakValidasi(null, ['normal_partial_access'], 'Problem'), null);
+$cek('post: tanpa jawaban baru -> null', crfDampakJawabanDariPost(['dampak_dipilih' => ['low_no_risk']]), null);
+$cek('post: kode tak dikenal dikosongkan',
+    crfDampakJawabanDariPost(['dampak_q1' => 'z', 'dampak_q2' => 'a']), ['q1' => '', 'q2' => 'a', 'q3' => '', 'q4' => '']);
+
 echo "\n$total pemeriksaan, $gagal gagal\n";
 exit($gagal > 0 ? 1 : 0);
