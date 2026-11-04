@@ -187,6 +187,12 @@ Fungsi baru `crfSiapMailConfig()`. Tanpa enkripsi, `SMTPAutoTLS` dimatikan seper
 PHPMailer milik CRF dan templat email CRF (bukan `kirimEmailOtomatis()`), jadi tidak perlu SMTP terpisah.
 `config/mail.php` yang aktif tetap diutamakan. Berkas: `includes/notifications.php`.
 
+Berkas konteks `CLAUDE.md` (baru, di akar project): konteks lengkap sistem CRF (peta berkas, peran dan akses, alur, data,
+urgensi dan SLA, Forum, kategori dan PIC, notifikasi, lampiran, keamanan) dan CRF di server SIAP (pola hibrida
+`pages/crf`, mode layout dan URL, menu dan hak akses SIAP, bentrok Bootstrap, email/WA/cron, jebakan yang pernah terjadi),
+pengembangan lokal, aturan kerja, dan status tertunda. Hanya dokumentasi, tidak mengubah perilaku aplikasi; tidak perlu
+diunggah ke server.
+
 Email ke Pemohon saat hasil pembahasan Forum dicatat: pemohon tidak punya akses Forum dan sebelumnya tidak diberi tahu
 hasilnya (penerima "Hasil pembahasan Forum" hanya CMO pengaju dan pemberi komentar). `forumRecordResult()` kini juga
 mengirim notifikasi (in-app + email) ke Pemohon CRF: judul "Level urgensi dan SLA ditetapkan: nomor", isi hasil
