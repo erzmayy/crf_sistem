@@ -4,7 +4,7 @@
  * ---------------------------------------------------------------
  * Peringatan SLA untuk PIC CRF (hanya PIC CRF, tidak ke atasan).
  * Dihitung dalam waktu kerja (sama dengan batas SLA), sejak Kepala
- * Departemen Operasional menyetujui sampai PIC CRF menekan Selesaikan.
+ * Departemen Operasional menyetujui sampai PIC CRF menekan Selesai Eksekusi.
  *
  *   pengingat : 50% waktu SLA terpakai (dilewati bila SLA < 1 jam)
  *   mendesak  : sisa waktu <= min(25% SLA, 1 jam)

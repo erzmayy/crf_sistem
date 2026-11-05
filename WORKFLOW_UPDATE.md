@@ -34,7 +34,7 @@ Tahap `OTOMASI` dipakai ulang untuk tiga fase milik PIC CRF yang dibedakan lewat
 |------|---------|--------------|
 | Eksekusi | `otomasi_selesai` kosong | **Selesai Eksekusi · Kirim ke UAT** (`execute`) |
 | Perbaikan hasil UAT | `otomasi_selesai` ada, `tgl_uat_lulus` kosong | **Kirim Ulang ke UAT** (`resubmit_uat`) |
-| Isi implementasi | `tgl_uat_lulus` ada | **Selesaikan** (`complete`) |
+| Isi implementasi | `tgl_uat_lulus` ada | **Implementasikan** (`complete`) |
 
 Aksi di `actions/automation_action.php` divalidasi menurut fase di server, jadi UAT tidak dapat dilewati.
 

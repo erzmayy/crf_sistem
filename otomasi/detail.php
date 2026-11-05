@@ -80,7 +80,7 @@ $otomasiPhase = crfOtomasiPhase($crf);
 $otomasiPhaseMeta = [
     'eksekusi' => ['title' => 'Eksekusi / Tangani Permintaan', 'action' => 'execute', 'button' => 'Selesai Eksekusi · Kirim ke UAT', 'icon' => 'bi-play-circle'],
     'perbaikan' => ['title' => 'Perbaikan Hasil UAT', 'action' => 'resubmit_uat', 'button' => 'Kirim Ulang ke UAT', 'icon' => 'bi-arrow-repeat'],
-    'implementasi' => ['title' => 'Implementasi', 'action' => 'complete', 'button' => 'Selesaikan', 'icon' => 'bi-journal-check'],
+    'implementasi' => ['title' => 'Implementasi', 'action' => 'complete', 'button' => 'Implementasikan', 'icon' => 'bi-journal-check'],
 ][$otomasiPhase] ?? ['title' => 'Eksekusi / Tangani Permintaan', 'action' => 'execute', 'button' => 'Selesai Eksekusi · Kirim ke UAT', 'icon' => 'bi-play-circle'];
 
 // CRF dengan target Response Time harus diambil dulu: sebelum itu hanya tombol "Mulai kerjakan" yang tampil.

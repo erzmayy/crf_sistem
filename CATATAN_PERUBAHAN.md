@@ -403,3 +403,9 @@ Diuji lokal: endpoint tanpa login 401 JSON; skrip diuji dengan menu tiruan dan r
 induk, dan total; item lain tidak tersentuh). Belum diuji dengan login nyata dan belum di server.
 
 Perbaikan: badge dibatasi ke navbar (`#navigation .main-nav`); sebelumnya tautan `mod=crf` di isi halaman (tab, tombol Reset, kartu ringkasan) ikut diberi badge.
+
+### Tombol fase implementasi
+
+Pada Tindak Lanjut Otomasi, tombol fase isi implementasi (setelah UAT lulus) diganti dari "Selesaikan" menjadi "Implementasikan". Aksi `complete` tidak berubah.
+
+- `otomasi/detail.php`, `WORKFLOW_UPDATE.md`
