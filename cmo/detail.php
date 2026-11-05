@@ -173,7 +173,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <?php
                     $cmoDiscussion = forumOpenDiscussion($pdo, (int) $crf['id']);
                     $cmoSlaMissing = !crfHasValidSla($crf);
-                    // Pembahasan dari sistem (SLA kosong) wajib diselesaikan CMO atau Admin, tidak boleh dibatalkan.
+                    // Pembahasan dari sistem (SLA kosong) wajib diselesaikan CMO, tidak boleh dibatalkan.
                     $cmoCanCancelDiscussion = $cmoDiscussion && !($cmoDiscussion['sumber_pemicu'] === 'sistem' && $cmoSlaMissing);
                     ?>
                     <?php if ($cmoDiscussion): ?>
@@ -181,9 +181,9 @@ require_once __DIR__ . '/../includes/header.php';
                             <i class="bi bi-flag-fill"></i>
                             <strong>Menunggu Pembahasan Forum.</strong>
                             <?= $cmoDiscussion['sumber_pemicu'] === 'sistem'
-                                ? 'SLA default belum tersedia, sehingga CMO atau Admin perlu menetapkannya lewat pembahasan Forum.'
+                                ? 'SLA default belum tersedia, sehingga CMO perlu menetapkannya lewat pembahasan Forum.'
                                 : 'Anda mengajukan pembahasan Level Urgensi dan SLA.' ?>
-                            Setelah hasil pembahasan dicatat (CMO atau Admin), CRF langsung diteruskan ke Kepala Departemen Operasional
+                            Setelah hasil pembahasan dicatat (CMO), CRF langsung diteruskan ke Kepala Departemen Operasional
                             <?= !empty($cmoDiscussion['tgl_tenggat']) ? '(target ' . h(date('d-m-Y H:i', strtotime($cmoDiscussion['tgl_tenggat']))) . ')' : '' ?>.
                             <a href="<?= h(crfUrl('forum.index', ['crf_id' => (int) $crf['id']], 'forum-pembahasan')) ?>">Buka pembahasan di Forum</a>
                         </div>
@@ -191,7 +191,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <div class="alert alert-warning">
                             <i class="bi bi-exclamation-triangle"></i>
                             SLA default belum tersedia karena SLA standar kategori belum diatur. Saat Anda menekan
-                            <strong>Teruskan</strong>, pembahasan Forum dibuka otomatis agar CMO atau Admin menetapkan SLA.
+                            <strong>Teruskan</strong>, pembahasan Forum dibuka otomatis agar CMO menetapkan SLA.
                         </div>
                     <?php endif; ?>
 

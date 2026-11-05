@@ -15,11 +15,11 @@ function requireForumAccess(): void
 /**
  * Peran yang mencatat hasil pembahasan Forum dan menerapkannya ke data CRF
  * (satu-satunya jalur yang mengubah Level Urgensi dan SLA setelah pengajuan).
- * Sesuai hasil rapat: CMO dan Admin. Ubah di sini untuk mengganti penentu.
+ * Hanya CMO. Ubah di sini untuk mengganti penentu.
  */
 function forumResultRoles(): array
 {
-    return ['admin', 'cmo'];
+    return ['cmo'];
 }
 
 /**

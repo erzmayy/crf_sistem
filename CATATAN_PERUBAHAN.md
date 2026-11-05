@@ -8,6 +8,16 @@ yang bertanda (jalankan).
 
 ---
 
+## 2026-11-05
+
+- `includes/forum.php` (`forumResultRoles()` jadi CMO saja: hanya CMO yang bisa mengubah Level Urgensi dan SLA lewat hasil Forum)
+- `includes/forum_discussions.php`, `cmo/detail.php`, `actions/cmo_action.php`, `actions/forum_discussion.php`, `includes/partials/timeline.php` (teks "CMO atau Admin" jadi "CMO")
+- `assets/js/forum.js` (Forum memuat komentar baru otomatis tiap 8 detik tanpa refresh manual)
+- `includes/forum_discussions.php` (balasan otomatis "Asisten CRF": `forumMaybeAutoReply()`, 3 template)
+- `forum/index.php` (memanggil `forumMaybeAutoReply()`)
+
+---
+
 ## 2026-10-28
 
 - `actions/automation_action.php`

@@ -12,7 +12,7 @@
  *   4. Hasil pembahasan: TETAP (nilai sistem dipakai) atau DIUBAH (nilai kesepakatan).
  *   5. Setelah hasil dicatat, CRF langsung diteruskan ke Kepala Departemen
  *      Operasional untuk persetujuan (tanpa kembali ke verifikasi CMO).
- *   6. Hanya penentu (forumResultRoles(), saat ini CMO dan Admin) yang mencatat hasil dan
+ *   6. Hanya penentu (forumResultRoles(), saat ini CMO) yang mencatat hasil dan
  *      menerapkannya ke data CRF, lengkap nilai sebelum/sesudah, alasan, waktu, pelaksana.
  *
  * Satu CRF hanya punya satu pembahasan terbuka (UNIQUE crf_terbuka_id).
@@ -433,7 +433,7 @@ function forumRaiseSystemDiscussion(PDO $pdo, array $crf, array $actingUser, str
         $pdo,
         forumDiscussionAudience($pdo, $crf),
         'SLA perlu ditetapkan: ' . $crfNumber,
-        $reason . ' CMO atau Admin mencatat hasil pembahasan di Forum, lalu CRF langsung diteruskan ke Kepala Departemen. Target hasil '
+        $reason . ' CMO mencatat hasil pembahasan di Forum, lalu CRF langsung diteruskan ke Kepala Departemen. Target hasil '
             . date('d-m-Y H:i', strtotime($dueAt)) . '.',
         $crfId,
         (int) $actingUser['id']
@@ -651,13 +651,13 @@ function forumCancelDiscussion(PDO $pdo, int $discussionId, array $user): int
             throw new DomainException('Pembahasan ini sudah selesai atau dibatalkan.');
         }
         if (!canOpenForumDiscussion() && !canRecordForumResult()) {
-            throw new DomainException('Hanya CMO atau Admin yang dapat membatalkan pembahasan.');
+            throw new DomainException('Hanya CMO yang dapat membatalkan pembahasan.');
         }
 
         $crfId = (int) $discussion['pengajuan_id'];
         $crf = forumLockCrf($pdo, $crfId);
         if ($discussion['sumber_pemicu'] === 'sistem' && $crf && !crfHasValidSla($crf)) {
-            throw new DomainException('Pembahasan ini tidak dapat dibatalkan karena SLA CRF belum tersedia. CMO atau Admin perlu mencatat hasilnya (Diubah) dengan nilai SLA.');
+            throw new DomainException('Pembahasan ini tidak dapat dibatalkan karena SLA CRF belum tersedia. CMO perlu mencatat hasilnya (Diubah) dengan nilai SLA.');
         }
 
         $actor = crfActorName($user);
@@ -767,13 +767,203 @@ function forumSendDueReminders(PDO $pdo): void
 }
 
 /* =================================================================
+ * Balasan otomatis (chatbot "Asisten CRF")
+ * ================================================================= */
+
+const FORUM_BOT_NAME = 'Asisten CRF';
+/** Menit menunggu di jam kerja sebelum bot membalas komentar yang belum direspons PIC. */
+const FORUM_BOT_WAIT_MINUTES = 5;
+/** Di luar jam kerja bot membalas hampir langsung (menit). */
+const FORUM_BOT_WAIT_OFF_HOURS_MINUTES = 1;
+/** Jeda minimum antar balasan bot pada CRF yang sama (jam). */
+const FORUM_BOT_COOLDOWN_HOURS = 2;
+
+function forumBotIsWorkingTime(DateTimeInterface $at): bool
+{
+    if (!slaIsWorkingDay($at)) {
+        return false;
+    }
+    [$start, $end] = slaWorkWindow($at);
+
+    return $at >= $start && $at < $end;
+}
+
+function forumBotNextWorkingDay(DateTimeImmutable $from): DateTimeImmutable
+{
+    $day = $from;
+    for ($i = 0; $i < 14; $i++) {
+        $day = $day->modify('+1 day');
+        if (slaIsWorkingDay($day)) {
+            return $day;
+        }
+    }
+
+    return $day;
+}
+
+/**
+ * Template balasan otomatis menurut kondisi CRF. Prioritas:
+ * di luar jam kerja, pembahasan Forum terbuka, belum disetujui Kadep,
+ * PIC belum Mulai kerjakan, lalu umum.
+ */
+function forumBotMessage(array $crf, DateTimeImmutable $now): string
+{
+    $open = 'Terima kasih, komentar Anda sudah diterima. ';
+
+    if (!forumBotIsWorkingTime($now)) {
+        $next = forumBotNextWorkingDay($now);
+
+        return $open . 'Saat ini di luar jam kerja (Senin-Jumat 08:00-17:00). '
+            . 'PIC akan merespons pada hari kerja berikutnya, ' . $next->format('d-m-Y') . '. Mohon ditunggu.';
+    }
+
+    if (!empty($crf['pembahasan_forum_terbuka'])) {
+        $due = !empty($crf['pembahasan_tenggat'])
+            ? ' Target hasil pembahasan: ' . date('d-m-Y H:i', strtotime($crf['pembahasan_tenggat'])) . '.'
+            : '';
+
+        return $open . 'CRF ini sedang dalam pembahasan Forum untuk menentukan Level Urgensi dan SLA. '
+            . 'Hasilnya akan dicatat oleh CMO.' . $due . ' Mohon ditunggu.';
+    }
+
+    if (empty($crf['tgl_disetujui_kadep'])) {
+        return $open . 'CRF ini masih pada tahap "' . workflowStageLabel((string) ($crf['tahap_alur'] ?? '')) . '" '
+            . 'dan belum disetujui Kepala Departemen Operasional, sehingga PIC belum dapat mengerjakannya. Mohon ditunggu.';
+    }
+
+    if (empty($crf['sla_respon_at']) && ($crf['tahap_alur'] ?? '') === 'OTOMASI') {
+        $who = !empty($crf['pic_nama']) ? ' (' . $crf['pic_nama'] . ')' : '';
+        $due = !empty($crf['sla_respon_tenggat'])
+            ? ' Target respons PIC: ' . date('d-m-Y H:i', strtotime($crf['sla_respon_tenggat'])) . '.'
+            : '';
+
+        return $open . 'CRF sudah disetujui, PIC' . $who . ' belum menekan Mulai kerjakan.' . $due
+            . ' PIC sudah diingatkan lewat notifikasi.';
+    }
+
+    return $open . 'Mohon ditunggu, PIC CRF akan segera merespons. PIC sudah diingatkan lewat notifikasi.';
+}
+
+/**
+ * Notifikasi lonceng (tanpa email dan WA) ke PIC bahwa komentar belum direspons.
+ * Dikirim bersama balasan bot, jadi mengikuti batas satu per komentar dan jeda per CRF.
+ */
+function forumBotNotifyPic(PDO $pdo, array $crf, array $last): void
+{
+    $recipients = !empty($crf['pic_id'])
+        ? [(int) $crf['pic_id']]
+        : (!empty($crf['kategori_id']) ? crfCategoryHandlerIds($pdo, (int) $crf['kategori_id']) : []);
+    $recipients = array_values(array_unique(array_filter(array_map('intval', $recipients))));
+    if (!$recipients) {
+        return;
+    }
+
+    $label = $crf['nomor_register'] ?: 'CRF #' . (int) $crf['id'];
+    $stmt = $pdo->prepare(
+        "INSERT INTO crf_notifikasi (pengguna_id, judul, pesan, url, pengajuan_id, status_email)
+         VALUES (:pengguna_id, :judul, :pesan, :url, :crf_id, 'skipped')"
+    );
+    foreach ($recipients as $userId) {
+        $stmt->execute([
+            'pengguna_id' => $userId,
+            'judul' => mb_substr('Komentar Forum belum direspons: ' . $label, 0, 150),
+            'pesan' => ($last['pengguna_nama'] ?? 'Seseorang') . ' menulis di Forum ' . $label . ' dan belum ada tanggapan dari PIC.',
+            'url' => 'forum/index.php?crf_id=' . (int) $crf['id'],
+            'crf_id' => (int) $crf['id'],
+        ]);
+    }
+}
+
+/**
+ * Balas otomatis komentar terakhir yang belum direspons PIC. Dijalankan "malas"
+ * saat Forum CRF dibuka (termasuk muat otomatis). Satu balasan per komentar,
+ * paling banyak satu per FORUM_BOT_COOLDOWN_HOURS jam per CRF, aman untuk permintaan
+ * bersamaan. Sekaligus mengirim notifikasi lonceng ke PIC. Tidak pernah menggagalkan halaman.
+ */
+function forumMaybeAutoReply(PDO $pdo, int $crfId): void
+{
+    try {
+        $crfStmt = $pdo->prepare(
+            'SELECT id, nomor_register, kategori_id, pic_id, pic_nama, tahap_alur, tgl_disetujui_kadep,
+                    pembahasan_forum_terbuka, sla_respon_at, sla_respon_tenggat
+             FROM crf_pengajuan WHERE id = :id'
+        );
+        $crfStmt->execute(['id' => $crfId]);
+        $crf = $crfStmt->fetch();
+        if (!$crf) {
+            return;
+        }
+
+        $lastStmt = $pdo->prepare(
+            'SELECT id, pengguna_id, pengguna_nama, pengguna_peran, tgl_dibuat
+             FROM crf_forum_komentar
+             WHERE pengajuan_id = :id AND dari_sistem = 0
+             ORDER BY id DESC LIMIT 1'
+        );
+        $lastStmt->execute(['id' => $crfId]);
+        $last = $lastStmt->fetch();
+        if (!$last) {
+            return;
+        }
+
+        // PIC (atau peran Otomasi) yang menulis berarti sudah merespons.
+        if ($last['pengguna_peran'] === 'otomasi'
+            || (!empty($crf['pic_id']) && (int) $crf['pic_id'] === (int) $last['pengguna_id'])) {
+            return;
+        }
+
+        $now = new DateTimeImmutable('now');
+        $wait = forumBotIsWorkingTime($now) ? FORUM_BOT_WAIT_MINUTES : FORUM_BOT_WAIT_OFF_HOURS_MINUTES;
+        $age = $now->getTimestamp() - (new DateTimeImmutable($last['tgl_dibuat']))->getTimestamp();
+        if ($age < $wait * 60) {
+            return;
+        }
+
+        if (!empty($crf['pembahasan_forum_terbuka'])) {
+            $dueStmt = $pdo->prepare("SELECT MIN(tgl_tenggat) FROM crf_forum_pembahasan WHERE pengajuan_id = :id AND status = 'menunggu'");
+            $dueStmt->execute(['id' => $crfId]);
+            $crf['pembahasan_tenggat'] = $dueStmt->fetchColumn() ?: null;
+        }
+
+        // Satu balasan per komentar dan jeda minimum per CRF: tidak disisipkan bila bot
+        // sudah membalas setelah komentar ini atau dalam FORUM_BOT_COOLDOWN_HOURS terakhir.
+        $insert = $pdo->prepare(
+            "INSERT INTO crf_forum_komentar
+                (pengajuan_id, pengguna_id, pengguna_nama, pengguna_peran, komentar, dari_sistem, balasan_untuk_id)
+             SELECT :crf_id, 0, :nama, 'sistem', :komentar, 1, :reply_id FROM DUAL
+             WHERE NOT EXISTS (
+                SELECT 1 FROM crf_forum_komentar
+                WHERE pengajuan_id = :crf_id2 AND dari_sistem = 1 AND pengguna_id = 0
+                  AND pengguna_nama = :nama2
+                  AND (id > :last_id OR tgl_dibuat >= NOW() - INTERVAL " . (int) FORUM_BOT_COOLDOWN_HOURS . " HOUR)
+             )"
+        );
+        $insert->execute([
+            'crf_id' => $crfId,
+            'nama' => FORUM_BOT_NAME,
+            'komentar' => forumBotMessage($crf, $now),
+            'reply_id' => (int) $last['id'],
+            'crf_id2' => $crfId,
+            'last_id' => (int) $last['id'],
+            'nama2' => FORUM_BOT_NAME,
+        ]);
+
+        if ($insert->rowCount() === 1 && !empty($crf['tgl_disetujui_kadep']) && empty($crf['pembahasan_forum_terbuka'])) {
+            forumBotNotifyPic($pdo, $crf, $last);
+        }
+    } catch (Throwable $e) {
+        error_log('forumMaybeAutoReply: ' . $e->getMessage());
+    }
+}
+
+/* =================================================================
  * SLA default
  * ================================================================= */
 
 /**
  * Isi Level/SLA default CRF dari matriks Kategori x Urgensi (saat pemohon submit,
  * atau saat CMO meneruskan bila matriks baru diisi belakangan). Bila tetap tidak
- * ada SLA standar, buka pembahasan Forum otomatis agar CMO atau Admin menetapkannya.
+ * ada SLA standar, buka pembahasan Forum otomatis agar CMO menetapkannya.
  * CRF yang sudah punya hasil Forum "Diubah" (level_urgensi_final) tidak ditimpa.
  * Dipanggil DI DALAM transaksi pemanggil.
  */

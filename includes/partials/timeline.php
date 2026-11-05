@@ -77,7 +77,7 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
         case 'CMO_FILTER':
             // Forum tidak terbuka bagi Pemohon; baginya CRF tetap "Verifikasi CMO".
             $pendingStep = (!empty($crf['pembahasan_forum_terbuka']) && empty($timelineHideSla))
-                ? ['title' => 'Menunggu Pembahasan Forum', 'deskripsi' => 'CMO mengajukan pembahasan Level Urgensi dan SLA. Setelah hasil dicatat CMO atau Admin, CRF langsung diteruskan ke Kepala Departemen Operasional.']
+                ? ['title' => 'Menunggu Pembahasan Forum', 'deskripsi' => 'CMO mengajukan pembahasan Level Urgensi dan SLA. Setelah hasil dicatat CMO, CRF langsung diteruskan ke Kepala Departemen Operasional.']
                 : ['title' => 'Verifikasi CMO', 'deskripsi' => 'Menunggu verifikasi permohonan oleh CMO.'];
             break;
         case 'OTOMASI':

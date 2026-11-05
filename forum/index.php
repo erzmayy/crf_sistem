@@ -90,6 +90,9 @@ if ($crfId > 0) {
         $crfId = 0;
         $errorMessage = 'Forum hanya tersedia untuk CRF yang masih dalam proses.';
     } else {
+        // Balasan otomatis "Asisten CRF" bila komentar terakhir belum direspons PIC.
+        forumMaybeAutoReply($pdo, $crfId);
+
         if (isset($_GET['reply_to'])) {
             $replyId = filter_input(INPUT_GET, 'reply_to', FILTER_VALIDATE_INT);
             if ($replyId) {

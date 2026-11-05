@@ -2,7 +2,7 @@
 
 ```
 Pemohon → CMO (screening) ─┬→ Kepala Departemen Operasional (approve; SLA mulai)
-                           └→ Pembahasan Forum → hasil Tetap/Diubah (CMO atau Admin) → langsung ke Kepala Departemen Operasional
+                           └→ Pembahasan Forum → hasil Tetap/Diubah (CMO) → langsung ke Kepala Departemen Operasional
   → PIC CRF: Selesai Eksekusi (SLA berhenti)
   → UAT oleh CMO bersama PIC CRF ─┬→ Perlu perbaikan → kembali ke PIC CRF → UAT ulang
                                    └→ Lulus
@@ -50,7 +50,7 @@ Selama pembahasan Forum terbuka, CRF di tahap `CMO_FILTER` bertanda
    - **Teruskan ke Kepala Departemen Operasional** bila Level/SLA default tidak perlu dibahas.
    - **Ajukan Pembahasan Forum** (alasan wajib) bila perlu dibahas. CRF bertanda
      *Menunggu Pembahasan Forum* dan **tidak dapat diteruskan** sampai hasil dicatat.
-     Setelah CMO atau Admin mencatat hasil (Tetap atau Diubah), CRF **otomatis diteruskan ke Kepala
+     Setelah CMO mencatat hasil (Tetap atau Diubah), CRF **otomatis diteruskan ke Kepala
      Departemen Operasional** tanpa kembali ke verifikasi CMO.
    - Kembalikan untuk perbaikan atau batalkan.
 3. **Kepala Departemen Operasional** menyetujui (tidak ada jalur tolak). **SLA mulai
@@ -91,7 +91,7 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
 |---|---|
 | **CMO** | Mengajukan pembahasan dari halaman verifikasi CMO; membatalkannya selama belum ada hasil |
 | **Semua pengguna Forum** | Memberi komentar/pertimbangan. Level/SLA **tidak** dapat diubah dari kolom diskusi |
-| **CMO dan Admin** (`forumResultRoles()` di `includes/forum.php`; hasil rapat) | Mencatat **hasil** dan menerapkannya ke CRF. Hanya kedua peran ini yang dapat mengubah Level Urgensi dan SLA |
+| **CMO** (`forumResultRoles()` di `includes/forum.php`; hasil rapat) | Mencatat **hasil** dan menerapkannya ke CRF. Hanya peran ini yang dapat mengubah Level Urgensi dan SLA |
 
 - **Hasil pembahasan** selalu salah satu dari:
   - **Tetap** — Level dan SLA tetap memakai nilai sistem (data CRF tidak berubah).
@@ -102,10 +102,10 @@ Forum membahas apakah Level Urgensi dan SLA default **tetap** atau **perlu diuba
   satu-satunya jalan mengubah Level/SLA adalah hasil pembahasan "Diubah".
 - **Satu pembahasan terbuka per CRF** (UNIQUE `crf_forum_pembahasan.crf_terbuka_id`).
 - **Pembahasan otomatis**: bila kategori belum punya SLA standar sehingga SLA default
-  kosong, sistem membuka pembahasan; CMO atau Admin wajib menetapkannya (hasil "Diubah") sebelum
+  kosong, sistem membuka pembahasan; CMO wajib menetapkannya (hasil "Diubah") sebelum
   CRF dapat diteruskan. Pembahasan jenis ini tidak dapat dibatalkan selama SLA kosong.
 - **Target hasil** 2 hari kerja (`FORUM_DISCUSSION_DECISION_DAYS`). Lewat target,
-  CMO dan Admin mendapat satu pengingat (dikirim saat Forum dibuka).
+  CMO mendapat satu pengingat (dikirim saat Forum dibuka).
 - Level/SLA tidak dapat diubah lagi setelah Kepala Departemen Operasional menyetujui.
 - **Tombol "Diskusi Forum"** di halaman detail CRF (CMO, Kadep, PIC CRF, Admin) membuka ruang Forum CRF itu,
   dengan jumlah komentar dan yang belum dibaca. Hanya tampil untuk CRF yang masih aktif (aturan yang
