@@ -7011,6 +7011,31 @@ body.crf-module {
 }
 
 /* Detail: pernyataan dampak sebagai chip */
+/* Detail: dampak sebagai pertanyaan dan jawaban (CRF dari form 4 pertanyaan) */
+.crf-module .crf-impact-qa { display: grid; gap: calc(0.5 * var(--crf-rem)); margin: 0; }
+.crf-module .crf-impact-qa-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: calc(0.2 * var(--crf-rem)) calc(1 * var(--crf-rem));
+  padding: calc(0.5 * var(--crf-rem)) calc(0.75 * var(--crf-rem));
+  border: 1px solid #d9e5f5;
+  border-radius: 10px;
+  background: #f3f7fd;
+}
+.crf-module .crf-impact-qa-row dt { margin: 0; font-weight: 600; font-size: calc(0.85 * var(--crf-rem)); color: #4b5a70; line-height: 1.35; }
+.crf-module .crf-impact-qa-row dd {
+  display: flex;
+  align-items: center;
+  gap: calc(0.45 * var(--crf-rem));
+  margin: 0;
+  font-size: calc(0.9 * var(--crf-rem));
+  color: #1f2a3d;
+  line-height: 1.35;
+}
+@media (max-width: 767.98px) {
+  .crf-module .crf-impact-qa-row { grid-template-columns: 1fr; }
+}
+
 .crf-module .crf-impact-chips { display: flex; flex-wrap: wrap; gap: calc(0.4 * var(--crf-rem)); margin: 0; padding: 0; list-style: none; }
 .crf-module .crf-impact-chip {
   display: inline-flex;

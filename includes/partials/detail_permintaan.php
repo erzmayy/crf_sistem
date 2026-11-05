@@ -40,6 +40,8 @@ $impactKeys = crfDampakKunci($crf);
 $impactLabels = crfDampakLabels($crf)
     ?: array_values(array_filter([crfImpactLabel($crf['kategori_dampak'] ?? null)]));
 $impactWeights = (array) (crfUrgencyConfig()['bobot'] ?? []);
+// CRF dari form 4 pertanyaan tampil sebagai pertanyaan dan jawaban; CRF lama (centang) tetap daftar pernyataan.
+$impactAnswers = crfDampakJawabanTampil($impactKeys, (string) ($crf['jenis_pengajuan'] ?? ''));
 // Skor berbobot hanya untuk peran internal (Pemohon cukup melihat Level Urgensi).
 $showUrgencyScore = getCrfRole() !== 'pemohon'
     && isset($crf['skor_urgensi']) && $crf['skor_urgensi'] !== '' && $filled($crf['dampak_dipilih'] ?? '');
@@ -86,6 +88,16 @@ if ($showUrgencyScore) {
         'ambangTinggi' => (float) ($cfgUrgensi['ambang']['Tinggi'] ?? 35),
         'dikunci' => !empty($hasilSkor['dikunci']),
     ];
+}
+// Level mengikuti butir dengan bobot tertinggi; tampilkan butir itu sebagai penentu level.
+$penentuLevel = 'Semua jawaban ringan';
+$bobotTerbesar = 0.0;
+foreach ($impactKeys as $impactKey) {
+    $bobotKey = (float) ($impactWeights[$impactKey] ?? 0);
+    if ($bobotKey > $bobotTerbesar) {
+        $bobotTerbesar = $bobotKey;
+        $penentuLevel = rtrim((string) ($impactOptions[$impactKey] ?? $impactKey), '.');
+    }
 }
 $impactCatatan = $showUrgencyScore ? crfDampakCatatan($impactKeys, (string) ($crf['jenis_pengajuan'] ?? '')) : [];
 $formatSkor = static fn(float $v): string => rtrim(rtrim(number_format($v, 1, ',', ''), '0'), ',');
@@ -135,16 +147,24 @@ $renderFiles = static function (array $files, bool $showDate) use ($attachmentIc
 
         <?php if ($impactLabels || $filled($crf['dampak'] ?? '')): ?>
             <div class="crf-prose-block crf-impact-block">
-                <h3 class="crf-prose-label">Dampak<?= count($impactLabels) > 1 ? ' (' . count($impactLabels) . ' pernyataan)' : '' ?></h3>
-                <?php if ($impactKeys): ?>
+                <h3 class="crf-prose-label">Dampak<?= $impactAnswers === null && count($impactLabels) > 1 ? ' (' . count($impactLabels) . ' pernyataan)' : '' ?></h3>
+                <?php if ($impactAnswers !== null): ?>
+                    <dl class="crf-impact-qa">
+                        <?php foreach ($impactAnswers as $impactRow): ?>
+                            <div class="crf-impact-qa-row">
+                                <dt><?= h($impactRow['judul']) ?></dt>
+                                <dd>
+                                    <span><?= h($impactRow['jawaban']) ?></span>
+                                </dd>
+                            </div>
+                        <?php endforeach; ?>
+                    </dl>
+                <?php elseif ($impactKeys): ?>
                     <ul class="crf-impact-chips">
                         <?php foreach ($impactKeys as $impactKey): ?>
                             <li class="crf-impact-chip">
                                 <i class="bi bi-check2-circle" aria-hidden="true"></i>
                                 <span class="crf-impact-chip-text"><?= h($impactOptions[$impactKey] ?? $impactKey) ?></span>
-                                <?php if ($scoreInfo !== null): ?>
-                                    <b class="crf-impact-weight" title="Bobot pernyataan">+<?= h($formatSkor((float) ($impactWeights[$impactKey] ?? 0))) ?></b>
-                                <?php endif; ?>
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -173,42 +193,24 @@ $renderFiles = static function (array $files, bool $showDate) use ($attachmentIc
                 <?php endif; ?>
 
                 <?php if ($scoreInfo !== null): ?>
-                    <div class="crf-score" role="group" aria-label="Skor urgensi">
+                    <div class="crf-score" role="group" aria-label="Penentu level urgensi">
                         <div class="crf-score-head">
-                            <span class="crf-score-title">Skor urgensi (sistem)</span>
-                            <strong class="crf-score-value"><?= h($formatSkor($scoreInfo['skor'])) ?><small> / <?= h($formatSkor($scoreInfo['maks'])) ?></small></strong>
+                            <span class="crf-score-title">Level urgensi (sistem)</span>
                             <?php if ($scoreInfo['level'] !== null): ?>
                                 <span class="crf-badge <?= h(levelBadgeClass($scoreInfo['level'])) ?>"><?= h($scoreInfo['level']) ?></span>
                             <?php endif; ?>
                         </div>
-                        <div
-                            class="crf-score-bar is-<?= h(mb_strtolower((string) $scoreInfo['level'])) ?>"
-                            role="meter"
-                            aria-valuemin="0"
-                            aria-valuemax="<?= h($formatSkor($scoreInfo['maks'])) ?>"
-                            aria-valuenow="<?= h($formatSkor($scoreInfo['skor'])) ?>"
-                            aria-valuetext="Skor <?= h($formatSkor($scoreInfo['skor'])) ?> dari <?= h($formatSkor($scoreInfo['maks'])) ?>, urgensi <?= h((string) $scoreInfo['level']) ?>"
-                        >
-                            <span class="crf-score-fill" style="width: <?= h(number_format($scoreInfo['persen'], 1, '.', '')) ?>%"></span>
-                            <i class="crf-score-mark" style="left: <?= h(number_format($scoreInfo['ambangNormal'] / max(1, $scoreInfo['maks']) * 100, 1, '.', '')) ?>%" aria-hidden="true"></i>
-                            <i class="crf-score-mark" style="left: <?= h(number_format($scoreInfo['ambangTinggi'] / max(1, $scoreInfo['maks']) * 100, 1, '.', '')) ?>%" aria-hidden="true"></i>
-                        </div>
+                        <p class="crf-score-legend">
+                            Penentu level: <strong><?= h($penentuLevel) ?></strong>
+                        </p>
                         <?php if ($scoreInfo['levelFinal'] !== null && $scoreInfo['level'] !== null && $scoreInfo['levelFinal'] !== $scoreInfo['level']): ?>
                             <p class="crf-score-legend">
                                 <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
                                 Level urgensi diubah dari <strong><?= h($scoreInfo['level']) ?></strong>
                                 ke <span class="crf-badge <?= h(levelBadgeClass($scoreInfo['levelFinal'])) ?>"><?= h($scoreInfo['levelFinal']) ?></span>
-                                lewat keputusan Forum. Skor di atas adalah hitungan sistem saat pengajuan.
+                                lewat keputusan Forum. Level di atas adalah hitungan sistem saat pengajuan.
                             </p>
                         <?php endif; ?>
-                        <p class="crf-score-legend">
-                            Rendah &lt; <?= h($formatSkor($scoreInfo['ambangNormal'])) ?>
-                            &middot; Normal <?= h($formatSkor($scoreInfo['ambangNormal'])) ?> sampai &lt; <?= h($formatSkor($scoreInfo['ambangTinggi'])) ?>
-                            &middot; Tinggi &ge; <?= h($formatSkor($scoreInfo['ambangTinggi'])) ?>
-                            <?php if ($scoreInfo['dikunci']): ?>
-                                <span class="crf-score-lock"><i class="bi bi-lock-fill" aria-hidden="true"></i> Dikunci Tinggi oleh pernyataan kritis</span>
-                            <?php endif; ?>
-                        </p>
                     </div>
                 <?php endif; ?>
                 <?php if ($filled($crf['dampak'] ?? '')): ?>
@@ -253,4 +255,4 @@ $renderFiles = static function (array $files, bool $showDate) use ($attachmentIc
     </div>
 </section>
 <?php
-unset($sectionTitle, $attachmentIcon, $attachmentSize, $filled, $impactLabels, $impactOptions, $impactKeys, $impactWeights, $impactKey, $scoreInfo, $cfgUrgensi, $hasilSkor, $scoreMax, $formatSkor, $impactCatatan, $catatanDampak, $showUrgencyScore, $impactText, $proseBlocks, $metaItems, $budgetText, $renderFiles, $label, $value);
+unset($sectionTitle, $attachmentIcon, $attachmentSize, $filled, $impactLabels, $impactOptions, $impactKeys, $impactAnswers, $impactRow, $impactWeights, $impactKey, $scoreInfo, $cfgUrgensi, $hasilSkor, $scoreMax, $formatSkor, $impactCatatan, $catatanDampak, $showUrgencyScore, $impactText, $proseBlocks, $metaItems, $budgetText, $renderFiles, $label, $value);

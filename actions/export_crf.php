@@ -461,7 +461,14 @@ ob_start();
     <tr><td class="lbl">Tipe Pengajuan</td><td class="val"><?= pdfValue($crf['jenis_pengajuan'] ?? '') ?></td></tr>
     <tr><td class="lbl">Rincian Permohonan Perubahan</td><td class="val"><?= pdfValue($crf['deskripsi_perubahan']) ?></td></tr>
     <tr><td class="lbl">Benefit dari Perubahan yang Diharapkan</td><td class="val"><?= pdfValue($crf['manfaat']) ?></td></tr>
-    <tr><td class="lbl">Kategori Dampak</td><td class="val"><?= pdfValue(implode('; ', crfDampakLabels($crf)) ?: crfImpactLabel($crf['kategori_dampak'] ?? null)) ?></td></tr>
+    <?php
+    // CRF dari form 4 pertanyaan: tampil sebagai pertanyaan dan jawaban; CRF lama tetap daftar pernyataan.
+    $dampakJawabanPdf = crfDampakJawabanTampil(crfDampakKunci($crf), (string) ($crf['jenis_pengajuan'] ?? ''));
+    $dampakTeksPdf = $dampakJawabanPdf !== null
+        ? implode("\n", array_map(static fn(array $r): string => $r['judul'] . ' ' . $r['jawaban'], $dampakJawabanPdf))
+        : (implode('; ', crfDampakLabels($crf)) ?: crfImpactLabel($crf['kategori_dampak'] ?? null));
+    ?>
+    <tr><td class="lbl">Kategori Dampak</td><td class="val"><?= pdfValue($dampakTeksPdf) ?></td></tr>
     <tr><td class="lbl">Dampak Jika Tidak Dilakukan Perubahan</td><td class="val"><?= pdfValue($crf['dampak']) ?></td></tr>
     <tr><td class="lbl">Alasan Permohonan Perubahan</td><td class="val"><?= pdfValue($crf['alasan']) ?></td></tr>
     <tr><td class="lbl">Bukti dan Informasi Pendukung</td><td class="val"><?= $attachmentHtml ?></td></tr>

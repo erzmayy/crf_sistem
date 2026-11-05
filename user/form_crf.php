@@ -119,6 +119,20 @@ $old = array_merge(
 unset($_SESSION['old_crf']);
 
 /*
+ * Tipe Pengajuan dari Helpdesk SIAP: formulir Helpdesk (kategori "Aplikasi SIAP") mengalihkan
+ * pemohon ke sini dengan ?tipe=<Permohonan Tambahan|Permohonan Perubahan>. Tipe dipilih
+ * otomatis dan dikunci supaya sama dengan pilihan di Helpdesk. Hanya berlaku untuk form baru
+ * (bukan membuka Draft) dan hanya untuk nilai yang ada di crfRequestTypeOptions().
+ * Dibuka dari menu tanpa ?tipe= -> dropdown tetap bebas dipilih.
+ */
+$tipeDariHelpdesk = trim((string) ($_GET['tipe'] ?? ''));
+$tipeDikunci = '';
+if ($draftId === 0 && $tipeDariHelpdesk !== '' && in_array($tipeDariHelpdesk, crfRequestTypeOptions(), true)) {
+    $tipeDikunci = $tipeDariHelpdesk;
+    $old['jenis_pengajuan'] = $tipeDikunci;
+}
+
+/*
  * Status penyimpanan form (ditampilkan di samping tombol & dipakai untuk
  * konfirmasi browser saat meninggalkan halaman yang belum disimpan).
  */
@@ -336,7 +350,11 @@ require_once __DIR__ . '/../includes/header.php';
 
           <div class="mb-3" style="max-width: 360px;">
             <label for="jenis_pengajuan" class="crf-field-label">Tipe Pengajuan<span class="text-danger">*</span></label>
-            <select class="form-select" id="jenis_pengajuan" name="jenis_pengajuan" required>
+            <?php if ($tipeDikunci !== ''): ?>
+              <?php /* select disabled tidak ikut terkirim, jadi nilainya dikirim lewat input hidden */ ?>
+              <input type="hidden" name="jenis_pengajuan" value="<?= h($tipeDikunci) ?>">
+            <?php endif; ?>
+            <select class="form-select" id="jenis_pengajuan" <?= $tipeDikunci !== '' ? 'disabled' : 'name="jenis_pengajuan"' ?> required>
               <option value="">Pilih tipe pengajuan</option>
               <?php foreach (crfRequestTypeOptions() as $requestType): ?>
                 <option
@@ -345,6 +363,9 @@ require_once __DIR__ . '/../includes/header.php';
                 ><?= h($requestType) ?></option>
               <?php endforeach; ?>
             </select>
+            <?php if ($tipeDikunci !== ''): ?>
+              <p class="crf-hint mb-0">Tipe pengajuan mengikuti pilihan Anda di Helpdesk.</p>
+            <?php endif; ?>
           </div>
 
           <div class="mb-3">
@@ -375,6 +396,7 @@ require_once __DIR__ . '/../includes/header.php';
                     crfDampakDipilih($old['dampak_dipilih'] ?? ($old['kategori_dampak'] ?? null))
                 );
             }
+            $dampakJawabanOld = crfDampakNormalisasi($dampakJawabanOld, $dampakTipe);
             $dampakTersembunyi = crfDampakOpsiTersembunyi($dampakTipe);
             $dampakJudulPerTipe = [];
             foreach ($dampakPertanyaan as $dampakQ => $dampakDef) {
@@ -392,27 +414,28 @@ require_once __DIR__ . '/../includes/header.php';
                       data-tersembunyi="<?= h(json_encode((object) $dampakTersembunyiPerTipe, JSON_UNESCAPED_UNICODE)) ?>">
               <legend class="crf-field-label">Dampak Jika Tidak Dilakukan Perubahan<span class="text-danger">*</span></legend>
               <p class="crf-hint" id="dampak_dipilih_hint">
-                Bayangkan CRF ini tidak dikerjakan. Jawab keempat pertanyaan berikut sesuai keadaan sebenarnya.
+                Jawab pertanyaan berikut sesuai keadaan sebenarnya.
               </p>
               <p class="crf-hint d-none" id="dampak_tipe_info" role="status"></p>
 
               <?php foreach ($dampakPertanyaan as $dampakQ => $dampakDef): ?>
-                <div class="crf-impact-question" data-dampak-q="<?= h($dampakQ) ?>" <?= $dampakQ === 'q2' && ($dampakJawabanOld['q1'] ?? '') === 'd' ? 'hidden' : '' ?>>
+                <div class="crf-impact-question" data-dampak-q="<?= h($dampakQ) ?>" <?= crfDampakPertanyaanTampil($dampakQ, $dampakJawabanOld) ? '' : 'hidden' ?>>
                   <p class="crf-impact-question-title"><span class="crf-impact-question-no" aria-hidden="true"></span><span data-dampak-judul><?= h(crfDampakJudul($dampakQ, $dampakTipe)) ?></span></p>
                   <?php if (!empty($dampakDef['petunjuk'])): ?>
                     <p class="crf-hint crf-impact-question-hint"><?= h($dampakDef['petunjuk']) ?></p>
                   <?php endif; ?>
-                  <div class="crf-impact-group crf-impact-group-<?= in_array($dampakQ, ['q3', 'q4'], true) ? 'yesno' : 'list' ?>">
+                  <div class="crf-impact-group crf-impact-group-list">
                     <?php foreach ($dampakDef['opsi'] as $dampakKode => $dampakOpsi): ?>
-                      <?php $dampakHidden = in_array($dampakKode, $dampakTersembunyi[$dampakQ] ?? [], true); ?>
-                      <label class="crf-impact-option" data-dampak-opsi="<?= h($dampakKode) ?>" <?= $dampakHidden ? 'hidden' : '' ?>>
+                      <?php $dampakHidden = !crfDampakPertanyaanTampil($dampakQ, $dampakJawabanOld) || !crfDampakOpsiTampil($dampakQ, $dampakKode, $dampakJawabanOld, $dampakTipe); ?>
+                      <label class="crf-impact-option" data-dampak-opsi="<?= h($dampakKode) ?>"
+                             data-label="<?= h(json_encode($dampakOpsi['label'], JSON_UNESCAPED_UNICODE)) ?>" <?= $dampakHidden ? 'hidden' : '' ?>>
                         <input
                           type="radio"
                           name="dampak_<?= h($dampakQ) ?>"
                           value="<?= h($dampakKode) ?>"
                           <?= ($dampakJawabanOld[$dampakQ] ?? '') === $dampakKode && !$dampakHidden ? 'checked' : '' ?>
                         >
-                        <span><?= h($dampakOpsi['label']) ?></span>
+                        <span data-dampak-label><?= h(crfDampakLabel($dampakQ, $dampakKode, $dampakTipe)) ?></span>
                       </label>
                     <?php endforeach; ?>
                   </div>

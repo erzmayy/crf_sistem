@@ -284,6 +284,72 @@ dan dijawab ulang. Hasil level kombinasi tertentu bergeser sedikit: sebagian bag
 + pekerjaan salah = skor 35 (Tinggi). Berkas: `includes/functions.php`, `user/form_crf.php`, `actions/submit_crf.php`,
 `assets/js/script.js`, `assets/css/style.css`, `tools/uji_urgensi.php` (77 pemeriksaan lulus).
 
+**Penyederhanaan alur q3 dan penentu level (paling baru).** Audit semua kombinasi menemukan: q1 "sebagian terhambat" + q3
+"tidak mempengaruhi efisiensi" bertentangan (opsi q3 c tidak pernah sah); q3 hanya satu pilihan bila q2 = "tidak
+menghentikan operasional"; meter skor jumlah menyesatkan karena level kini = butir tertinggi. Perubahan: q3 hanya
+ditanyakan bila q1 = berhenti total atau q2 = terganggu berat; q3 punya 2 pilihan ("Tanpa ada solusi alternatif",
+"Ada solusi alternatif sementara, tetapi merepotkan"), opsi c dihapus (kunci `low_no_efficiency_impact` tetap otomatis bila
+q1 = c); jawaban lama tidak berlaku dikosongkan (`crfDampakOpsiTampil` menolak kode yang tak ada). Detail CRF: meter
+"skor / 100" dan "+bobot" diganti baris "Penentu level" (jawaban dengan bobot tertinggi); `skor_urgensi` tetap disimpan.
+CRF lama/dengan jawaban q3 yang kini tak berlaku tampil sebagai daftar pernyataan. `tools/uji_urgensi.php`: 116
+pemeriksaan lulus. Belum diuji di browser. Berkas: `includes/functions.php`, `assets/js/script.js`,
+`includes/partials/detail_permintaan.php`, `tools/uji_urgensi.php`.
+
+**Pertanyaan dampak mengikuti tabel resmi "Keterangan Level Urgensi" (menggantikan versi
+cakupan di bawah dan versi 4 pertanyaan sebelumnya).** Tabel resmi (3 level, 11 butir) dijadikan patokan: tiap pilihan
+jawaban = satu butir tabel dengan kalimat tabel, dipetakan ke satu kunci dampak yang sudah ada; teks 11 pernyataan di
+`crfImpactGroups()` sama persis dengan tabel (diuji). Pertanyaan: 1 keadaan fungsi aplikasi/layanan (berhenti total /
+hanya bisa diakses sebagian / berfungsi normal), 2 dampak pada operasional harian (terganggu berat / tidak menghentikan),
+3 solusi alternatif (tanpa solusi / ada tetapi merepotkan / tidak mempengaruhi efisiensi kerja), 4 risiko (likuiditas dan
+hukum / operasional / tidak ada). Pertanyaan cakupan dihapus karena tidak ada di tabel resmi. Butir Rendah "Masalah atau
+permintaan fitur baru" ditentukan Tipe Pengajuan (kunci ditambahkan untuk selain Problem bila pekerjaan normal).
+Alur (`crfDampakPertanyaanTampil`, `crfDampakOpsiTampil`, `crfDampakNormalisasi`; JS `script.js` mengikuti):
+q1 = berfungsi normal: q2 dan q3 tidak ditanyakan dan kunci "tidak menghentikan operasional harian" + "tidak
+mempengaruhi efisiensi kerja" ditambahkan otomatis (menghilangkan kombinasi janggal "normal tetapi tanpa solusi
+alternatif = Tinggi"); q1 = berhenti total: q2 dilewati, q3 hanya "tanpa solusi" / "merepotkan"; q3 "tidak mempengaruhi
+efisiensi" hanya bila operasional tidak terganggu berat. Per tipe: Perubahan dan Tambahan tanpa "berhenti total"
+(`tolak`); judul q1 dan teks pilihan q1 berbeda per tipe ("Bila hal baru ini tidak ada, apakah pekerjaan Anda
+terhambat?", "Sebagian pekerjaan terhambat", dst.); Tambahan tetap dengan pagar "Tinggi hanya bila risiko likuiditas
+dan hukum". Bobot "tertinggi menang": butir kolom Tinggi 50, Normal 10, Rendah 0, ambang Tinggi 50 / Normal 10; satu butir
+Tinggi sudah Tinggi, satu butir Normal sudah Normal, empat butir Normal sekaligus (40) tetap Normal. Pilihan q3
+"Tanpa ada solusi alternatif" disembunyikan bila q2 = "tidak menghentikan operasional harian" (diganti oleh
+penyederhanaan alur q3 di bawah). Tanpa catatan CMO untuk banyak butir Normal (sengaja). Sebelumnya butir "solusi sementara yang merepotkan" bernilai 5 (di bawah ambang Normal) dan
+"tanpa solusi alternatif" 20: tidak sesuai kolom tabel. Sebaran (kombinasi dianggap sama sering): Problem 17 Tinggi / 6
+Normal / 1 Rendah dari 24; Perubahan 11/6/1 dari 18; Tambahan 6/11/1 dari 18 (5 dibatasi pagar). Detail dan PDF
+menampilkan pertanyaan yang ditanyakan saja (`crfDampakJawabanTampil`); CRF lama dan versi sebelumnya tetap daftar
+pernyataan. `tandai_hanya` Problem kembali tanpa kunci cakupan; kunci `scope_*` dihapus. `tools/uji_urgensi.php`: 115
+pemeriksaan lulus. Belum diuji di browser lokal/server. Berkas: `includes/functions.php`, `config/urgensi.php`,
+`user/form_crf.php`, `assets/js/script.js`, `tools/uji_urgensi.php` (+ berkas detail/PDF/CSS dari catatan di bawah).
+
+**Pertanyaan dampak per Tipe Pengajuan + cakupan terdampak (DIGANTI oleh perbaruan di atas; disimpan sebagai riwayat).** Atas permintaan
+pemilik: faktor baru hanya cakupan terdampak, tetap 4 pertanyaan per tipe. Pertanyaan 4 lama ("pekerjaan jadi salah atau
+berantakan", terlalu mudah dijawab Ya dan tumpang tindih dengan pertanyaan 1/3) diganti **"Siapa yang terkena masalah
+ini?"** (Problem) / "Siapa yang akan terdampak oleh perubahan ini?" (Permohonan Perubahan) / "Siapa yang akan memakai hal
+baru ini?" (Permohonan Tambahan), satu jawaban dari 4: satu orang, satu departemen/divisi, beberapa departemen, seluruh
+perusahaan atau klien. Pertanyaan 1-3 dan kalimatnya tidak berubah. Kunci dampak baru `scope_individual` (0),
+`scope_department` (5), `scope_multi_department` (10), `scope_company_client` (15), grup "Cakupan" di
+`crfImpactGroups()`, bobot di `config/urgensi.php`; disimpan di `dampak_dipilih` seperti kunci lain, tanpa migrasi.
+Cakupan menaikkan gangguan yang sudah ada dan tidak pernah membuat Tinggi sendirian (maks 15). Kunci lama
+`normal_operational_risk` dan `low_no_risk` tetap valid untuk CRF lama tetapi tidak lagi dihasilkan form baru.
+Permohonan Perubahan sekarang juga menyembunyikan pilihan 1a "pekerjaan tidak bisa berjalan sama sekali" (`tolak` di
+config, karena yang diubah sudah berjalan); Permohonan Tambahan tetap dengan pagar "Tinggi hanya bila pertanyaan 3 = Ya".
+`tandai_hanya` Problem diperluas dengan kunci cakupan (Problem yang pekerjaannya tetap berjalan ditandai untuk CMO
+apa pun cakupannya). Isi ulang draft/revisi (`crfJawabanDariDampak`): jawaban "Tidak" pada pertanyaan 3 kini
+tersimpan lewat adanya kunci cakupan (tidak lagi hilang), dan hanya disimpulkan bila jawaban lain lengkap. CRF versi
+4 pertanyaan sebelumnya (tanpa cakupan) dan CRF centang lama tetap tampil sebagai daftar pernyataan di detail.
+Sebaran (kombinasi dianggap sama sering): Problem 43 Tinggi / 11 Normal / 2 Rendah dari 56; Perubahan 27/12/1 dari 40;
+Tambahan 20/19/1 dari 40 (7 kombinasi dibatasi pagar). Sebaran masih condong Tinggi karena dua kunci (tidak bisa
+berjalan; rugi uang/hukum): bobot dan ambang bisa disetel di `config/urgensi.php`.
+
+Detail CRF dan PDF kini menampilkan dampak sebagai pertanyaan dan jawaban (sama dengan form), bukan daftar pernyataan:
+`crfDampakJawabanTampil()` menyusun 4 baris (baris pertanyaan 2 dilewati bila pekerjaan tetap berjalan) dari kunci
+tersimpan; bobot per jawaban + meter skor + catatan hanya untuk peran internal (jumlah bobot dibatasi maks 100 seperti
+skor). Pernyataan otomatis tidak tampil sebagai jawaban pemohon; jawaban "Tidak" di pertanyaan 3 ikut tampil.
+Berkas: `includes/functions.php`, `config/urgensi.php`, `user/form_crf.php`, `includes/partials/detail_permintaan.php`
+(juga dipakai Forum), `actions/export_crf.php`, `assets/css/style.css` (`.crf-impact-qa`), `tools/uji_urgensi.php`
+(107 pemeriksaan lulus). Belum diuji di browser lokal/server. Kalimat "Bayangkan CRF ini tidak dikerjakan." di
+`user/form_crf.php` dihapus pemilik; dibiarkan. Teks dan bobot sebaiknya disetujui CMO/atasan sebelum dipakai.
+
 ### Notifikasi WhatsApp (antrean WA SIAP, default MATI)
 
 CRF mengikuti pola Help Desk/PKS di SIAP: tidak memanggil API WhatsApp dan tidak menyimpan token, hanya
