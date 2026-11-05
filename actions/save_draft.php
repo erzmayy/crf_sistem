@@ -109,7 +109,7 @@ $allowedCategories = [
     'Security',
     'Lainnya'
 ];
-$allowedRequestTypes = crfRequestTypeOptions();
+$allowedRequestTypes = crfRequestTypeAllowedForSave($pdo, $id, (int) $user['id']);
 $allowedImpactCategories = array_keys(crfImpactOptions());
 
 if (

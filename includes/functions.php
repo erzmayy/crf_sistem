@@ -1047,6 +1047,37 @@ function crfRequestTypeOptions(): array
     ];
 }
 
+/**
+ * Tipe Pengajuan yang boleh dipilih untuk CRF baru. Problem diproses di Helpdesk SIAP, jadi tidak
+ * ditawarkan lagi; crfRequestTypeOptions() tetap memuatnya untuk data lama (filter, detail, laporan).
+ *
+ * @return string[]
+ */
+function crfRequestTypeOptionsBaru(): array
+{
+    return array_values(array_diff(crfRequestTypeOptions(), ['Problem']));
+}
+
+/**
+ * Tipe yang diterima saat menyimpan: tipe baru, ditambah 'Problem' hanya bila CRF yang sedang
+ * diedit (Draft/Perlu Revisi milik pengguna) memang sudah bertipe Problem.
+ *
+ * @return string[]
+ */
+function crfRequestTypeAllowedForSave(PDO $pdo, int $id, int $penggunaId): array
+{
+    $allowed = crfRequestTypeOptionsBaru();
+    if ($id > 0) {
+        $stmt = $pdo->prepare('SELECT jenis_pengajuan FROM crf_pengajuan WHERE id = :id AND pengguna_id = :pengguna_id LIMIT 1');
+        $stmt->execute(['id' => $id, 'pengguna_id' => $penggunaId]);
+        if ((string) $stmt->fetchColumn() === 'Problem') {
+            $allowed[] = 'Problem';
+        }
+    }
+
+    return $allowed;
+}
+
 function crfImpactGroups(): array
 {
     return [

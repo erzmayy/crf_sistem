@@ -289,5 +289,9 @@ $cek('detail: jawaban dan label per tipe tampil',
     array_column(crfDampakJawabanTampil(crfDampakDariJawaban(['q1' => 'b', 'q2' => 'a', 'q3' => 'b', 'q4' => 'c'], 'Permohonan Perubahan'), 'Permohonan Perubahan'), 'jawaban'),
     ['Sebagian pekerjaan terhambat', 'Operasional terganggu berat', 'Ada solusi alternatif sementara, tetapi merepotkan', 'Tidak menimbulkan risiko']);
 
+echo "\nTipe pengajuan untuk CRF baru (Problem diproses di Helpdesk SIAP)\n";
+$cek('form baru hanya Perubahan dan Tambahan', crfRequestTypeOptionsBaru(), ['Permohonan Perubahan', 'Permohonan Tambahan']);
+$cek('daftar lengkap tetap memuat Problem untuk data lama', in_array('Problem', crfRequestTypeOptions(), true), true);
+
 echo "\n$total pemeriksaan, $gagal gagal\n";
 exit($gagal > 0 ? 1 : 0);

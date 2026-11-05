@@ -16,6 +16,8 @@
   var endpoint = scriptEl.src.replace(/assets\/js\/[^?]*(\?.*)?$/, 'actions/queue_counts.php');
   var REFRESH_MS = 60000;
   var BADGE_CLASS = 'crf-menu-badge';
+  // Hanya tautan di navbar atas SIAP; isi halaman (tab, tombol, kartu) tidak disentuh.
+  var NAV_LINKS = '#navigation .main-nav a[href*="mod=crf"]';
 
   function submodOf(a) {
     var href = a.getAttribute('href') || '';
@@ -46,7 +48,7 @@
   function apply(data) {
     var counts = data.counts || {};
     var total = data.total || 0;
-    var links = document.querySelectorAll('a[href*="mod=crf"]');
+    var links = document.querySelectorAll(NAV_LINKS);
     var parents = [];
 
     Array.prototype.forEach.call(links, function (a) {
@@ -72,7 +74,7 @@
 
   function load() {
     if (document.hidden) { return; }
-    if (!document.querySelector('a[href*="mod=crf"]')) { return; } // user tanpa menu CRF
+    if (!document.querySelector(NAV_LINKS)) { return; } // user tanpa menu CRF
     fetch(endpoint, { credentials: 'same-origin', cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) { if (data && data.ok) { apply(data); } })

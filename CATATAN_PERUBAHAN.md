@@ -284,7 +284,17 @@ dan dijawab ulang. Hasil level kombinasi tertentu bergeser sedikit: sebagian bag
 + pekerjaan salah = skor 35 (Tinggi). Berkas: `includes/functions.php`, `user/form_crf.php`, `actions/submit_crf.php`,
 `assets/js/script.js`, `assets/css/style.css`, `tools/uji_urgensi.php` (77 pemeriksaan lulus).
 
-**Penyederhanaan alur q3 dan penentu level (paling baru).** Audit semua kombinasi menemukan: q1 "sebagian terhambat" + q3
+**Tipe Problem dikeluarkan dari form CRF baru (paling baru).** Problem kini diproses di Helpdesk SIAP: formulir Helpdesk
+(kategori "Aplikasi SIAP") mengalihkan Permohonan Tambahan/Perubahan ke `index.php?mod=crf&submod=form_crf&tipe=<nama tipe>`.
+Di CRF: `crfRequestTypeOptionsBaru()` (Perubahan dan Tambahan saja) dipakai untuk dropdown dan kunci `?tipe=` di
+`user/form_crf.php`; `crfRequestTypeAllowedForSave()` dipakai `actions/submit_crf.php` dan `actions/save_draft.php`: Problem
+ditolak untuk pengajuan baru (pesan "Problem diproses lewat Helpdesk SIAP..."), tetapi tetap diterima bila CRF yang diedit
+(Draft/Perlu Revisi) memang sudah bertipe Problem. `crfRequestTypeOptions()` tetap memuat Problem untuk filter, detail,
+PDF, dan laporan; data dan level CRF Problem lama tidak berubah. Pertanyaan dampak belum disederhanakan (tahap 2, setelah
+tidak ada draft Problem terbuka). `tools/uji_urgensi.php`: 118 pemeriksaan lulus. Belum diuji di browser. Berkas:
+`includes/functions.php`, `user/form_crf.php`, `actions/submit_crf.php`, `actions/save_draft.php`, `tools/uji_urgensi.php`.
+
+**Penyederhanaan alur q3 dan penentu level.** Audit semua kombinasi menemukan: q1 "sebagian terhambat" + q3
 "tidak mempengaruhi efisiensi" bertentangan (opsi q3 c tidak pernah sah); q3 hanya satu pilihan bila q2 = "tidak
 menghentikan operasional"; meter skor jumlah menyesatkan karena level kini = butir tertinggi. Perubahan: q3 hanya
 ditanyakan bila q1 = berhenti total atau q2 = terganggu berat; q3 punya 2 pilihan ("Tanpa ada solusi alternatif",
@@ -391,3 +401,5 @@ Agar tampil di semua halaman SIAP (termasuk beranda), SIAP perlu satu baris di `
 
 Diuji lokal: endpoint tanpa login 401 JSON; skrip diuji dengan menu tiruan dan respons tiruan (badge muncul di item,
 induk, dan total; item lain tidak tersentuh). Belum diuji dengan login nyata dan belum di server.
+
+Perbaikan: badge dibatasi ke navbar (`#navigation .main-nav`); sebelumnya tautan `mod=crf` di isi halaman (tab, tombol Reset, kartu ringkasan) ikut diberi badge.

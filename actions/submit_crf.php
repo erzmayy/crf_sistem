@@ -88,7 +88,7 @@ $allowedBudgetTypes = [
 ];
 
 $errors = [];
-$allowedRequestTypes = crfRequestTypeOptions();
+$allowedRequestTypes = crfRequestTypeAllowedForSave($pdo, $draftId, (int) $user['id']);
 $allowedImpactCategories = array_keys(crfImpactOptions());
 $level = $urgensi['level'];
 
@@ -107,7 +107,9 @@ if ($email === '') {
     $errors[] = 'Format email tidak valid.';
 }
 
-if (!in_array($requestType, $allowedRequestTypes, true)) {
+if ($requestType === 'Problem' && !in_array($requestType, $allowedRequestTypes, true)) {
+    $errors[] = 'Problem diproses lewat Helpdesk SIAP. Buat tiket Helpdesk, atau pilih Permohonan Perubahan/Tambahan bila ini permintaan perubahan.';
+} elseif (!in_array($requestType, $allowedRequestTypes, true)) {
     $errors[] = 'Tipe Pengajuan wajib dipilih.';
 }
 

@@ -122,14 +122,21 @@ unset($_SESSION['old_crf']);
  * Tipe Pengajuan dari Helpdesk SIAP: formulir Helpdesk (kategori "Aplikasi SIAP") mengalihkan
  * pemohon ke sini dengan ?tipe=<Permohonan Tambahan|Permohonan Perubahan>. Tipe dipilih
  * otomatis dan dikunci supaya sama dengan pilihan di Helpdesk. Hanya berlaku untuk form baru
- * (bukan membuka Draft) dan hanya untuk nilai yang ada di crfRequestTypeOptions().
+ * (bukan membuka Draft) dan hanya untuk nilai yang ada di crfRequestTypeOptionsBaru().
  * Dibuka dari menu tanpa ?tipe= -> dropdown tetap bebas dipilih.
  */
 $tipeDariHelpdesk = trim((string) ($_GET['tipe'] ?? ''));
 $tipeDikunci = '';
-if ($draftId === 0 && $tipeDariHelpdesk !== '' && in_array($tipeDariHelpdesk, crfRequestTypeOptions(), true)) {
+if ($draftId === 0 && $tipeDariHelpdesk !== '' && in_array($tipeDariHelpdesk, crfRequestTypeOptionsBaru(), true)) {
     $tipeDikunci = $tipeDariHelpdesk;
     $old['jenis_pengajuan'] = $tipeDikunci;
+}
+
+// Form baru hanya menawarkan Perubahan/Tambahan (Problem diproses di Helpdesk SIAP). Tipe Problem
+// tetap tampil hanya bila CRF yang dibuka (Draft/Perlu Revisi lama) memang sudah bertipe Problem.
+$tipeOpsiForm = crfRequestTypeOptionsBaru();
+if (($old['jenis_pengajuan'] ?? '') === 'Problem') {
+    array_unshift($tipeOpsiForm, 'Problem');
 }
 
 /*
@@ -356,7 +363,7 @@ require_once __DIR__ . '/../includes/header.php';
             <?php endif; ?>
             <select class="form-select" id="jenis_pengajuan" <?= $tipeDikunci !== '' ? 'disabled' : 'name="jenis_pengajuan"' ?> required>
               <option value="">Pilih tipe pengajuan</option>
-              <?php foreach (crfRequestTypeOptions() as $requestType): ?>
+              <?php foreach ($tipeOpsiForm as $requestType): ?>
                 <option
                   value="<?= h($requestType) ?>"
                   <?= ($old['jenis_pengajuan'] ?? '') === $requestType ? 'selected' : '' ?>
