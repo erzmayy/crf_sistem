@@ -375,3 +375,19 @@ tanpa kolom `status_wa` kode tetap aman (flag WA diabaikan).
 
 Diuji lokal dengan tabel sementara: daftar putih, semua penerima, dan WA mati; tanpa migrasi tidak error.
 Belum diuji di server dan belum dipastikan pengirim WA SIAP memproses baris `kode = 'CRF'`.
+
+## 2026-11-05
+
+### Badge merah antrean CRF di menu SIAP
+
+Angka antrean (Verifikasi CMO, Tindak Lanjut Otomasi, Persetujuan Kadep, Forum belum dibaca) tampil sebagai badge
+merah di menu SIAP, juga di "Change Request Form" dan "Menu Saya" (total). `actions/queue_counts.php` hanya membaca,
+memakai `crfQueueCounts()` yang sama dengan menu CRF. Skrip memberi badge hanya pada tautan `mod=crf`.
+Agar tampil di semua halaman SIAP (termasuk beranda), SIAP perlu satu baris di `footer.php`:
+`<script src="/crf/assets/js/siap_badge_crf.js"></script>` (setelah navbar; cadangkan `footer.php` dulu).
+
+- `actions/queue_counts.php` (baru)
+- `assets/js/siap_badge_crf.js` (baru)
+
+Diuji lokal: endpoint tanpa login 401 JSON; skrip diuji dengan menu tiruan dan respons tiruan (badge muncul di item,
+induk, dan total; item lain tidak tersentuh). Belum diuji dengan login nyata dan belum di server.

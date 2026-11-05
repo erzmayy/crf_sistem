@@ -182,6 +182,6 @@ Email: SMTP SIAP (`tbl_email_settings`). WA: antrean `tbl_wa_send`. Cron peringa
 - Cron peringatan SLA belum dipasang di server.
 - WA belum aktif: migrasi 027 dan pengecekan pengirim WA SIAP (kode `CRF`) belum dikonfirmasi.
 - Email notifikasi sudah terbukti terkirim dari server (CRF baru ke CMO).
-- Badge angka antrean di menu SIAP baru dibahas: perlu endpoint JSON CRF dan satu potongan JS di layout SIAP.
+- Badge angka antrean di menu SIAP: `actions/queue_counts.php` dan `assets/js/siap_badge_crf.js` sudah dibuat di lokal; tinggal diunggah, lalu satu baris `<script src="/crf/assets/js/siap_badge_crf.js"></script>` ditempel di `footer.php` SIAP (belum).
 - Kemungkinan perubahan kecil: pesan "Aksi tidak tersedia pada tahap CRF saat ini" dibuat lebih ramah.
 - Perubahan yang belum di-commit saat dokumen ini ditulis: `includes/forum_discussions.php` (email ke pemohon saat hasil Forum dicatat), `CATATAN_PERUBAHAN.md`, `CLAUDE.md`.
