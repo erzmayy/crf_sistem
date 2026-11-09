@@ -36,10 +36,10 @@ require_once __DIR__ . '/../includes/header.php';
             <div>
                 <span class="crf-portal-eyebrow">MASTER DATA · CRF</span>
                 <h1>Kategori CRF</h1>
-                <p>Kelola kategori CRF, SLA per level urgensi, dan PIC CRF.</p>
+                <p>Kelola kategori CRF, SLA per level urgensi, dan PIC Otomasi.</p>
             </div>
             <div class="crf-banner-actions">
-                <span class="crf-banner-pill"><i class="bi bi-bookmarks"></i> <?= count($crfCategoryRows) ?> Kategori CRF · <?= $totalHandler ?> PIC CRF</span>
+                <span class="crf-banner-pill"><i class="bi bi-bookmarks"></i> <?= count($crfCategoryRows) ?> Kategori CRF · <?= $totalHandler ?> PIC Otomasi</span>
             </div>
         </div>
 
@@ -55,16 +55,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <i class="bi bi-search"></i>
                         <input type="search" class="form-control form-control-sm" placeholder="Cari kategori..." data-master-filter="#tab-crf" aria-label="Cari kategori">
                     </div>
-                    <?php
-                    // Nilai usulan awal Response Time (jam kerja) untuk form yang masih kosong. Hanya mengisi
-                    // form; tidak tersimpan sebelum admin menekan Simpan. Sesuaikan dengan kesepakatan SLA.
-                    $responDefaults = [
-                        'sla_respon_tinggi_nilai' => 1, 'sla_respon_tinggi_satuan' => 'Jam',
-                        'sla_respon_nilai' => 4, 'sla_respon_satuan' => 'Jam',
-                        'sla_respon_rendah_nilai' => 1, 'sla_respon_rendah_satuan' => 'Hari',
-                    ];
-                    ?>
-                    <button type="button" class="btn btn-sm btn-crf-primary" data-bs-toggle="modal" data-bs-target="#crfCategoryModal" data-category-form="<?= h(json_encode($responDefaults)) ?>">
+                    <button type="button" class="btn btn-sm btn-crf-primary" data-bs-toggle="modal" data-bs-target="#crfCategoryModal" data-category-form="{}">
                         <i class="bi bi-plus-circle"></i> Tambah Kategori
                     </button>
                 </div>
@@ -92,18 +83,8 @@ require_once __DIR__ . '/../includes/header.php';
                             'sla_rendah_nilai' => $category['sla_rendah_nilai'] !== null ? (float) $category['sla_rendah_nilai'] : '',
                             'sla_rendah_satuan' => $category['sla_rendah_satuan'] ?? 'Hari',
                             'kategori_perubahan_lama' => $category['kategori_perubahan_lama'],
-                            'sla_respon_nilai' => isset($category['sla_respon_nilai']) ? (float) $category['sla_respon_nilai'] : '',
-                            'sla_respon_satuan' => $category['sla_respon_satuan'] ?? 'Jam',
-                            'sla_respon_tinggi_nilai' => isset($category['sla_respon_tinggi_nilai']) ? (float) $category['sla_respon_tinggi_nilai'] : '',
-                            'sla_respon_tinggi_satuan' => $category['sla_respon_tinggi_satuan'] ?? 'Jam',
-                            'sla_respon_rendah_nilai' => isset($category['sla_respon_rendah_nilai']) ? (float) $category['sla_respon_rendah_nilai'] : '',
-                            'sla_respon_rendah_satuan' => $category['sla_respon_rendah_satuan'] ?? 'Jam',
                         ];
-                        if (!isset($category['sla_respon_nilai'])) {
-                            $formData = array_merge($formData, $responDefaults);
-                        }
                         $slaMatrix = crfCategorySlaMatrix($category);
-                        $responMatrix = crfCategoryResponMatrix($category);
                         ?>
                         <section class="crf-category-member-row is-collapsed" id="crf-<?= $categoryId ?>" data-master-name="<?= h(mb_strtolower($category['nama'])) ?>">
                             <div class="crf-category-member-head">
@@ -112,7 +93,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div>
                                     <h2><?= h($category['nama']) ?></h2>
                                     <span class="crf-banner-pill crf-banner-pill--soft">
-                                        <i class="bi bi-people"></i> <?= count($crfMembers[$categoryId] ?? []) ?> PIC CRF
+                                        <i class="bi bi-people"></i> <?= count($crfMembers[$categoryId] ?? []) ?> PIC Otomasi
                                     </span>
                                     <?php if (!$category['aktif']): ?>
                                         <span class="crf-badge badge-status-draft">Nonaktif</span>
@@ -122,17 +103,12 @@ require_once __DIR__ . '/../includes/header.php';
                                         SLA<?php foreach ($slaMatrix as $slaLevel => $slaItem): ?>
                                             · <?= h($slaLevel) ?>: <?= $slaItem ? h(slaLabel($slaItem['value'], $slaItem['unit'])) : '-' ?>
                                         <?php endforeach; ?>
-                                        <?php if (array_filter($responMatrix)): ?>
-                                            <br>Response<?php foreach ($responMatrix as $responLevel => $responItem): ?>
-                                                · <?= h($responLevel) ?>: <?= $responItem ? h(slaLabel($responItem['value'], $responItem['unit'])) : '-' ?>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
                                         · <?= (int) $category['usage_count'] ?> CRF
                                         · Laporan: <?= h($category['kategori_perubahan_lama']) ?>
                                     </div>
                                     <div class="d-flex gap-1 mt-2">
-                                        <button type="button" class="btn btn-sm btn-crf-outline" data-master-toggle aria-expanded="false" title="Tampilkan / sembunyikan PIC CRF">
-                                            <i class="bi bi-chevron-down"></i> PIC CRF
+                                        <button type="button" class="btn btn-sm btn-crf-outline" data-master-toggle aria-expanded="false" title="Tampilkan / sembunyikan PIC Otomasi">
+                                            <i class="bi bi-chevron-down"></i> PIC Otomasi
                                         </button>
                                         <button
                                             type="button"
@@ -171,7 +147,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 $memberCategory = $category;
                                 $memberList = $crfMembers[$categoryId] ?? [];
                                 $memberReturn = 'master_data.php';
-                                $memberLabel = 'PIC CRF';
+                                $memberLabel = 'PIC Otomasi';
                                 require __DIR__ . '/../includes/partials/category_members.php';
                                 ?>
                             </div>
@@ -182,6 +158,77 @@ require_once __DIR__ . '/../includes/header.php';
                         <p>Tidak ada kategori yang cocok.</p>
                     </div>
                 </div>
+
+                <?php
+                // Target Response Time semua peran (global, sama untuk semua kategori).
+                if (crfRespTableReady($pdo)) {
+                    $respTargets = [];
+                    foreach ($pdo->query('SELECT tahap, urgensi, nilai, satuan FROM crf_sla_respon_target')->fetchAll() as $respTargetRow) {
+                        $respTargets[$respTargetRow['tahap']][$respTargetRow['urgensi']] = $respTargetRow;
+                    }
+                    $respTargetStages = crfRespStages();
+                ?>
+                <section class="crf-section crf-detail-card mt-4" id="crf-target-respon">
+                    <div class="crf-section-header">
+                        <span class="crf-section-number"><i class="bi bi-stopwatch" aria-hidden="true"></i></span>
+                        <h2>Target Response Time (CMO, Kadep, PIC)</h2>
+                    </div>
+                    <div class="crf-section-body">
+                        <p class="crf-readonly-note mb-3">
+                            Batas waktu tiap peran mengambil tindakan pertama, dalam jam kerja (satu Hari = satu hari kerja penuh),
+                            sama untuk semua kategori. Kosongkan untuk tanpa target: lamanya tetap dicatat di Riwayat tetapi tidak
+                            dinilai dan tanpa peringatan (disarankan untuk UAT dan finalisasi). Perubahan hanya berlaku untuk CRF yang
+                            masuk tahap itu sesudahnya. Target PIC harus lebih kecil dari Resolution Time terkecil di semua kategori.
+                        </p>
+                        <form method="POST" action="<?= h(crfActionUrl('sla_respon_target.php')) ?>" data-loading-form>
+                            <?= csrfField() ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Tahap</th>
+                                            <th>Tinggi</th>
+                                            <th>Normal</th>
+                                            <th>Rendah</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($respTargetStages as $respStageKey => $respStage): ?>
+                                            <tr>
+                                                <td>
+                                                    <strong><?= h($respStage['label']) ?></strong>
+                                                    <small class="d-block text-muted"><?= h($respStage['peran']) ?><?= in_array($respStageKey, ['CMO_UAT', 'CMO_FINAL'], true) ? ' · disarankan tanpa target' : '' ?></small>
+                                                </td>
+                                                <?php foreach (['Tinggi', 'Normal', 'Rendah'] as $respLevel): ?>
+                                                    <?php
+                                                    $respCell = $respTargets[$respStageKey][$respLevel] ?? null;
+                                                    $respCellValue = $respCell ? (float) $respCell['nilai'] : '';
+                                                    $respCellUnit = $respCell['satuan'] ?? 'Jam';
+                                                    ?>
+                                                    <td>
+                                                        <div class="input-group input-group-sm">
+                                                            <input type="number" class="form-control" min="0" step="0.5"
+                                                                   name="target[<?= h($respStageKey) ?>][<?= h($respLevel) ?>][nilai]"
+                                                                   value="<?= h((string) $respCellValue) ?>"
+                                                                   aria-label="<?= h($respStage['label'] . ' ' . $respLevel) ?>">
+                                                            <select class="form-select" name="target[<?= h($respStageKey) ?>][<?= h($respLevel) ?>][satuan]" aria-label="Satuan">
+                                                                <?php foreach (['Menit', 'Jam', 'Hari'] as $respUnit): ?>
+                                                                    <option value="<?= h($respUnit) ?>"<?= $respCellUnit === $respUnit ? ' selected' : '' ?>><?= h($respUnit) ?></option>
+                                                                <?php endforeach; ?>
+                                                            </select>
+                                                        </div>
+                                                    </td>
+                                                <?php endforeach; ?>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button type="submit" class="btn btn-crf-primary btn-sm"><i class="bi bi-check2-circle"></i> Simpan Target</button>
+                        </form>
+                    </div>
+                </section>
+                <?php } ?>
             </div>
         </div>
     </div>
@@ -242,38 +289,6 @@ require_once __DIR__ . '/../includes/header.php';
                                     <option value="Hari">Hari</option>
                                     <option value="Jam">Jam</option>
                                     <option value="Menit">Menit</option>
-                                </select>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                <div class="mb-3">
-                    <label class="crf-field-label">Target Response Time per Level Urgensi<span class="text-danger">*</span></label>
-                    <div class="crf-readonly-note mb-2">
-                        Response Time: batas waktu PIC CRF menekan <strong>Mulai kerjakan</strong>, dihitung sejak
-                        Kepala Departemen menyetujui (jam kerja 08:00-17:00, hari kerja). Wajib diisi untuk
-                        Normal. Tinggi / Rendah kosong = ikut Normal. Bila kategori belum punya target, form terisi
-                        nilai usulan awal (1 jam, 4 jam, 1 hari); ubah sesuai kesepakatan SLA sebelum menyimpan.
-                    </div>
-                    <?php
-                    $responMatrixFields = [
-                        'Tinggi' => ['sla_respon_tinggi_nilai', 'sla_respon_tinggi_satuan'],
-                        'Normal' => ['sla_respon_nilai', 'sla_respon_satuan'],
-                        'Rendah' => ['sla_respon_rendah_nilai', 'sla_respon_rendah_satuan'],
-                    ];
-                    foreach ($responMatrixFields as $responLevel => [$responValueField, $responUnitField]): ?>
-                        <div class="row g-2 align-items-center mb-2">
-                            <div class="col-3">
-                                <span class="crf-badge <?= h(levelBadgeClass($responLevel)) ?>"><?= h($responLevel) ?></span>
-                            </div>
-                            <div class="col-4">
-                                <input type="number" class="form-control" name="<?= h($responValueField) ?>" min="0" step="0.5" <?= $responLevel === 'Normal' ? 'required' : '' ?> aria-label="Target response time <?= h($responLevel) ?>">
-                            </div>
-                            <div class="col-5">
-                                <select class="form-select" name="<?= h($responUnitField) ?>" aria-label="Satuan response time <?= h($responLevel) ?>">
-                                    <option value="Jam">Jam</option>
-                                    <option value="Menit">Menit</option>
-                                    <option value="Hari">Hari</option>
                                 </select>
                             </div>
                         </div>

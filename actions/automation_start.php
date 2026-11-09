@@ -49,7 +49,7 @@ try {
     $crf = $stmt->fetch();
 
     if (!$crf || $crf['tahap_alur'] !== 'OTOMASI' || empty($crf['tgl_disetujui_kadep']) || !empty($crf['otomasi_selesai'])) {
-        $finish('danger', 'CRF tidak ditemukan pada daftar eksekusi.', crfUrl('otomasi.index'));
+        $finish('danger', 'CRF tidak ditemukan pada daftar pengerjaan.', crfUrl('otomasi.index'));
     }
 
     if (!canHandleCrf($pdo, $crf)) {
@@ -59,7 +59,7 @@ try {
     if (!empty($crf['pic_id'])) {
         $message = isAssignedCrfHandler($crf)
             ? 'Anda sudah mulai mengerjakan CRF ini.'
-            : 'CRF ini sudah dikerjakan oleh ' . ($crf['pic_nama'] ?? 'PIC CRF lain') . '.';
+            : 'CRF ini sudah dikerjakan oleh ' . ($crf['pic_nama'] ?? 'PIC Otomasi lain') . '.';
         $finish('warning', $message, $back);
     }
 
@@ -81,8 +81,8 @@ try {
         'PIC Mulai Mengerjakan',
         $actor . ' mulai mengerjakan CRF ' . $crfNumber . '. Response time tercatat.',
         $actor,
-        'Disetujui · Eksekusi',
-        'Disetujui · Eksekusi'
+        'Disetujui · Pengerjaan',
+        'Disetujui · Pengerjaan'
     );
 
     $pdo->commit();

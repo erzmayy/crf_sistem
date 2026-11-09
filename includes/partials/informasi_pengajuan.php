@@ -62,7 +62,7 @@ $picNama = trim((string) ($crf['pic_nama'] ?? ''));
                 </dd>
             </div>
             <div>
-                <dt>PIC CRF</dt>
+                <dt>PIC Otomasi</dt>
                 <dd><?= $picNama !== '' ? h($picNama) : '<span class="text-muted">Belum ada</span>' ?></dd>
             </div>
         </dl>

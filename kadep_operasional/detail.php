@@ -128,7 +128,7 @@ $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
 
-$pageTitle = 'Persetujuan Kepala Departemen Operasional';
+$pageTitle = 'Detail CRF - ' . ($crf['nomor_register'] ?? '');
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -177,7 +177,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <p class="text-muted">
                     Periksa detail CRF serta Level Urgensi dan SLA sebelum menyetujui.
-                    SLA mulai dihitung sejak Anda menyetujui, lalu CRF diserahkan ke PIC CRF untuk dieksekusi.
+                    Resolution Time mulai dihitung sejak Anda menyetujui, lalu CRF diserahkan ke PIC Otomasi untuk dikerjakan.
                 </p>
 
                 <?php $approvalHasSla = slaDueAt(date('Y-m-d H:i:s'), $crf['sla_nilai'], $crf['sla_satuan']) !== null; ?>

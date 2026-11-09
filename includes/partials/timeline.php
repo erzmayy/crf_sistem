@@ -13,20 +13,23 @@ $activityLabels = [
     'Lolos Filter CMO' => 'Verifikasi CMO',
     'Otomasi - SLA Ditentukan' => 'SLA Ditentukan',
     'SLA Otomatis' => 'SLA Standar Kategori',
-    'SLA Disesuaikan Handler' => 'SLA Disesuaikan PIC CRF',
+    'SLA Disesuaikan Handler' => 'SLA Disesuaikan PIC Otomasi',
     'Approval Kepala Departemen Operasional' => 'Persetujuan Kepala Departemen Operasional',
+    'Diteruskan ke Kepala Departemen' => 'Diteruskan ke Kepala Departemen Operasional',
     // Istilah riwayat lama sebelum alur Forum diperbarui.
     'Kesepakatan Urgensi dan SLA Forum' => 'Hasil Pembahasan Forum',
     'Penyesuaian Alur' => 'Penyesuaian Alur Sistem',
     'Otomasi Selesai' => 'Implementasi Selesai',
+    // Nilai lama yang tersimpan di riwayat; tampil dengan istilah pengerjaan.
+    'Eksekusi Selesai' => 'Pengerjaan Selesai',
     'PIR Diisi Pemohon' => 'Post Implementation Review',
     'Pengingat PIR' => 'Pengingat PIR ke Pemohon',
     'Solve' => 'CRF Selesai',
     'Cancel' => 'CRF Dibatalkan',
     // Riwayat lama dari masa modul Helpdesk (sudah dihapus).
     'Dibuat dari Helpdesk' => 'Draft CRF Dibuat',
-    'CRF Diambil Handler' => 'CRF Diterima PIC CRF',
-    'Handler Ditugaskan' => 'PIC CRF Ditugaskan',
+    'CRF Diambil Handler' => 'CRF Diterima PIC Otomasi',
+    'Handler Ditugaskan' => 'PIC Otomasi Ditugaskan',
 ];
 
 // Istilah lama pada riwayat yang tersimpan, diseragamkan saat ditampilkan.
@@ -36,11 +39,24 @@ $legacyTerms = [
     'untuk approval' => 'untuk persetujuan',
     'setelah approval' => 'setelah persetujuan',
     'lolos filter CMO' => 'lolos verifikasi CMO',
-    'Handler kategori' => 'PIC CRF',
-    'ke Handler' => 'ke PIC CRF',
+    'Handler kategori' => 'PIC Otomasi',
+    'ke Handler' => 'ke PIC Otomasi',
     // Riwayat lama yang tersimpan sebelum istilah diganti.
-    'Petugas Otomasi' => 'PIC CRF',
-    'Petugas otomasi' => 'PIC CRF',
+    'Petugas Otomasi' => 'PIC Otomasi',
+    'Petugas otomasi' => 'PIC Otomasi',
+    // Kalimat dan label lama pada riwayat tersimpan.
+    'SLA berhenti' => 'Resolution Time berhenti',
+    'SLA mulai dihitung' => 'Resolution Time mulai dihitung',
+    'SLA berjalan' => 'Resolution Time berjalan',
+    'dihitung dalam SLA' => 'dihitung dalam Resolution Time',
+    'Ditolak / Perlu Revisi' => 'Perlu Revisi',
+    'Tindak Lanjut Divisi Otomasi' => 'Tindak Lanjut Otomasi',
+    // Riwayat lama yang masih menulis "PIC CRF".
+    'PIC CRF' => 'PIC Otomasi',
+    // Istilah eksekusi diganti pengerjaan (riwayat lama tetap tampil seragam).
+    'dieksekusi' => 'dikerjakan',
+    'Eksekusi' => 'Pengerjaan',
+    'eksekusi' => 'pengerjaan',
 ];
 $modernizeTerm = static fn(?string $text): string => strtr((string) $text, $legacyTerms);
 
@@ -83,13 +99,13 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
         case 'OTOMASI':
             $otomasiPhase = crfOtomasiPhase($crf);
             $pendingStep = $otomasiPhase === 'perbaikan'
-                ? ['title' => 'Perbaikan Hasil UAT', 'deskripsi' => 'CMO meminta perbaikan. Menunggu PIC CRF memperbaiki dan mengirim ulang untuk UAT (tidak dihitung dalam SLA).']
+                ? ['title' => 'Perbaikan Hasil UAT', 'deskripsi' => 'CMO meminta perbaikan. Menunggu PIC Otomasi memperbaiki dan mengirim ulang untuk UAT (tidak dihitung dalam Resolution Time).']
                 : ($otomasiPhase === 'implementasi'
-                    ? ['title' => 'Isi Implementasi', 'deskripsi' => 'UAT lulus. Menunggu PIC CRF mencatat Tanggal Implementasi dan hasil implementasi.']
-                    : ['title' => 'Tindak Lanjut Divisi Otomasi', 'deskripsi' => 'SLA berjalan sejak persetujuan. Menunggu PIC CRF menyelesaikan eksekusi.']);
+                    ? ['title' => 'Isi Implementasi', 'deskripsi' => 'UAT lulus. Menunggu PIC Otomasi mencatat Tanggal Implementasi dan hasil implementasi.']
+                    : ['title' => 'Tindak Lanjut Otomasi', 'deskripsi' => 'Resolution Time berjalan sejak persetujuan. Menunggu PIC Otomasi menyelesaikan pengerjaan.']);
             break;
         case 'UAT':
-            $pendingStep = ['title' => 'UAT oleh CMO', 'deskripsi' => 'Eksekusi selesai dan SLA berhenti. Menunggu CMO menguji bersama PIC CRF (tidak dihitung dalam SLA).'];
+            $pendingStep = ['title' => 'UAT oleh CMO', 'deskripsi' => 'Pengerjaan selesai dan Resolution Time berhenti. Menunggu CMO menguji bersama PIC Otomasi (tidak dihitung dalam Resolution Time).'];
             break;
         case 'kadep_operasional':
             $pendingStep = ['title' => 'Persetujuan Kepala Departemen Operasional', 'deskripsi' => 'Menunggu persetujuan Kepala Departemen Operasional.'];
@@ -100,6 +116,69 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
         case 'CMO_FINAL':
             $pendingStep = ['title' => 'Finalisasi CMO', 'deskripsi' => 'Menunggu CMO menyelesaikan atau menutup CRF.'];
             break;
+    }
+}
+
+/*
+ * Keterangan waktu respon (hanya peran internal): tiap entri yang menutup satu tahap menampilkan
+ * berapa lama peran itu merespons, dan langkah yang sedang menunggu menampilkan sisa/terlambatnya.
+ * Baris crf_sla_respon dicocokkan dengan entri riwayat yang waktunya paling dekat (maks. 10 detik),
+ * karena keduanya dicatat dalam satu aksi.
+ */
+$respNoteByIndex = [];
+$respPendingNote = null;
+if (empty($timelineHideSla) && !empty($crf['id'])) {
+    $respRowsAll = crfRespRows(getConnection(), (int) $crf['id']);
+    $respRoleShort = ['CMO_VERIFIKASI' => 'CMO', 'CMO_UAT' => 'CMO', 'CMO_FINAL' => 'CMO', 'KADEP' => 'Kadep', 'PIC_MULAI' => 'PIC Otomasi'];
+    $respNoteText = static function (array $row, array $status) use ($respRoleShort): string {
+        $who = $respRoleShort[$row['tahap']] ?? '';
+        // UAT dan finalisasi bukan soal kecepatan merespons: yang dicatat adalah lamanya.
+        $phaseNames = ['CMO_UAT' => 'Lama UAT', 'CMO_FINAL' => 'Lama finalisasi'];
+        if (!empty($row['respon_at'])) {
+            $text = ($phaseNames[$row['tahap']] ?? 'Respon ' . $who) . ': ' . ($status['elapsed'] ?? '-');
+            if ($status['class'] === 'success') {
+                $text .= ' · tepat waktu';
+            } elseif ($status['class'] === 'danger') {
+                $text .= ' · terlambat';
+            }
+
+            return $text;
+        }
+
+        if (empty($row['tenggat'])) {
+            return (isset($phaseNames[$row['tahap']]) ? 'Berjalan' : 'Menunggu ' . $who) . ' sejak ' . date('d-m-Y H:i', strtotime((string) $row['mulai']));
+        }
+
+        return 'Menunggu ' . $who . ' · ' . rtrim($status['detail'], '.');
+    };
+
+    $usedIndexes = [];
+    foreach ($respRowsAll as $respRowItem) {
+        $status = crfRespRowStatus($respRowItem);
+        if (empty($respRowItem['respon_at'])) {
+            $respPendingNote = ['text' => $respNoteText($respRowItem, $status), 'class' => $status['class']];
+            continue;
+        }
+        if (($respRowItem['hasil'] ?? '') === 'Dibatalkan') {
+            continue;
+        }
+        $closedAt = strtotime((string) $respRowItem['respon_at']);
+        $bestIndex = null;
+        $bestGap = 11;
+        foreach (($timeline ?? []) as $respIndex => $respItem) {
+            if (isset($usedIndexes[$respIndex])) {
+                continue;
+            }
+            $gap = abs(strtotime((string) ($respItem['tgl_dibuat'] ?? '')) - $closedAt);
+            if ($gap < $bestGap) {
+                $bestGap = $gap;
+                $bestIndex = $respIndex;
+            }
+        }
+        if ($bestIndex !== null) {
+            $usedIndexes[$bestIndex] = true;
+            $respNoteByIndex[$bestIndex] = ['text' => $respNoteText($respRowItem, $status), 'class' => $status['class']];
+        }
     }
 }
 
@@ -153,7 +232,7 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
                             <strong class="crf-timeline-title"><?= h($activityTitle) ?></strong>
                             <?php if ($createdAt !== false): ?>
                                 <time class="crf-timeline-date" datetime="<?= h(date('c', $createdAt)) ?>">
-                                    <?= h(date('d M Y, h:i A', $createdAt)) ?>
+                                    <?= h(date('d-m-Y H:i', $createdAt)) ?>
                                 </time>
                             <?php endif; ?>
                             <?php if (!empty($item['deskripsi'])): ?>
@@ -170,6 +249,9 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
                             <?php if (!empty($item['pelaksana'])): ?>
                                 <div class="crf-timeline-actor">Dilakukan oleh <?= h($item['pelaksana']) ?></div>
                             <?php endif; ?>
+                            <?php if (!empty($respNoteByIndex[$timelineIndex])): ?>
+                                <div class="crf-timeline-response is-<?= h($respNoteByIndex[$timelineIndex]['class']) ?>"><i class="bi bi-stopwatch" aria-hidden="true"></i> <?= h($respNoteByIndex[$timelineIndex]['text']) ?></div>
+                            <?php endif; ?>
                         </div>
                     </li>
                 <?php endforeach; ?>
@@ -181,6 +263,9 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
                             <strong class="crf-timeline-title"><?= h($pendingStep['title']) ?></strong>
                             <span class="crf-timeline-date">-</span>
                             <div class="crf-timeline-description"><?= h(!empty($timelineHideSla) ? $modernizeTerm($pendingStep['deskripsi']) : $pendingStep['deskripsi']) ?></div>
+                            <?php if ($respPendingNote !== null): ?>
+                                <div class="crf-timeline-response is-<?= h($respPendingNote['class']) ?>"><i class="bi bi-stopwatch" aria-hidden="true"></i> <?= h($respPendingNote['text']) ?></div>
+                            <?php endif; ?>
                         </div>
                     </li>
                 <?php endif; ?>
@@ -189,4 +274,4 @@ if ($workflowStage === 'SELESAI' && $requestStatus !== 'Solve' && $requestStatus
     </div>
 </section>
 <?php
-unset($timelineKeep, $timelineOlder, $timelineIndex, $activityLabels, $pendingStep, $workflowStage, $requestStatus);
+unset($timelineKeep, $timelineOlder, $timelineIndex, $activityLabels, $pendingStep, $workflowStage, $requestStatus, $respNoteByIndex, $respPendingNote, $respRowsAll, $respRoleShort, $respNoteText, $usedIndexes, $respRowItem, $respIndex, $respItem);

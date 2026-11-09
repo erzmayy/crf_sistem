@@ -135,7 +135,7 @@ $responOverdueCount = (int) ($summary['respon_overdue'] ?? 0);
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$pageTitle = 'Otomasi';
+$pageTitle = 'Tindak Lanjut Otomasi';
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -167,8 +167,8 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-portal-banner">
             <div>
                 <span class="crf-portal-eyebrow">PORTAL CRF · TINDAK LANJUT OTOMASI</span>
-                <h1>Tindak Lanjut Permohonan Perubahan</h1>
-                <p>CRF yang sudah disetujui Kepala Departemen Operasional pada kategori yang Anda tangani. SLA mulai dihitung sejak persetujuan; isi hasil implementasi untuk menyelesaikan CRF.</p>
+                <h1>Tindak Lanjut Otomasi</h1>
+                <p>CRF yang sudah disetujui Kepala Departemen Operasional pada kategori yang Anda tangani. Resolution Time mulai dihitung sejak persetujuan; isi hasil implementasi untuk menyelesaikan CRF.</p>
             </div>
         </div>
 
@@ -183,7 +183,7 @@ require_once __DIR__ . '/../includes/header.php';
              ===================================================== -->
         <div class="crf-stat-grid crf-portal-summary mb-4">
             <div class="crf-stat-card">
-                <span><i class="bi bi-gear-wide-connected"></i> Menunggu Eksekusi</span>
+                <span><i class="bi bi-gear-wide-connected"></i> Menunggu Pengerjaan</span>
                 <strong><?= $inExecution ?></strong>
             </div>
 
@@ -201,7 +201,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-table-card crf-list-table-card">
 
             <div class="crf-table-heading">
-                <h2><?= $queue === 'history' ? 'Riwayat Tindak Lanjut' : 'Eksekusi CRF' ?></h2>
+                <h2><?= $queue === 'history' ? 'Riwayat Tindak Lanjut' : 'Pengerjaan CRF' ?></h2>
 
                 <!-- FILTER ANTREAN -->
                 <div class="btn-group">
@@ -268,7 +268,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <td data-label="No"><?= $offset + $i + 1 ?></td>
 
                                 <?php $rowShowDepartment = false; $rowShowHandler = true; require __DIR__ . '/../includes/partials/crf_row_request.php'; ?>
-                                <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
+                                <?php $rowHideResp = true; /* kolom Status SLA di sebelahnya sudah menampilkan Response Time */ require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
 
                                 <td data-label="SLA">
                                     <?= $row['sla_nilai'] !== null && $row['sla_satuan']

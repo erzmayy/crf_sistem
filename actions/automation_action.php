@@ -74,7 +74,7 @@ try {
     $crf = $stmt->fetch();
 
     if (!$crf || $crf['tahap_alur'] !== 'OTOMASI' || empty($crf['tgl_disetujui_kadep'])) {
-        $failRedirect('CRF tidak ditemukan pada daftar eksekusi.', crfUrl('otomasi.index'));
+        $failRedirect('CRF tidak ditemukan pada daftar pengerjaan.', crfUrl('otomasi.index'));
     }
 
     // Hanya PIC CRF kategori CRF ini.
@@ -84,7 +84,7 @@ try {
 
     if (!empty($crf['pic_id']) && !isAssignedCrfHandler($crf)) {
         $failRedirect(
-            'CRF ini sedang ditangani oleh ' . ($crf['pic_nama'] ?? 'PIC CRF lain') . '.',
+            'CRF ini sedang ditangani oleh ' . ($crf['pic_nama'] ?? 'PIC Otomasi lain') . '.',
             crfUrl('otomasi.detail', ['id' => $id])
         );
     }
@@ -98,7 +98,7 @@ try {
 
     // CRF dengan target Response Time harus diambil dulu (Mulai kerjakan) sebelum eksekusi diselesaikan.
     if ($action === 'execute' && empty($crf['pic_id']) && !empty($crf['sla_respon_tenggat'])) {
-        $failRedirect('Tekan Mulai kerjakan terlebih dahulu sebelum menyelesaikan eksekusi.', crfUrl('otomasi.detail', ['id' => $id]));
+        $failRedirect('Tekan Mulai kerjakan terlebih dahulu sebelum menyelesaikan pengerjaan.', crfUrl('otomasi.detail', ['id' => $id]));
     }
 
     if ($action === 'complete') {
@@ -158,15 +158,15 @@ try {
             $pdo,
             $id,
             'Eksekusi Selesai',
-            'Eksekusi diselesaikan oleh ' . $actor . '. SLA berhenti; CRF diteruskan ke CMO untuk UAT (tidak dihitung dalam SLA).' . $noteText,
+            'Pengerjaan diselesaikan oleh ' . $actor . '. Resolution Time berhenti; CRF diteruskan ke CMO untuk UAT (tidak dihitung dalam Resolution Time).' . $noteText,
             $actor,
-            'Disetujui · Eksekusi',
+            'Disetujui · Pengerjaan',
             'Menunggu UAT'
         );
         finalizeCrfSla($pdo, $id);
         $uatTitle = 'UAT CRF: ' . $crfNumber;
-        $uatMessage = 'Eksekusi CRF ' . $crfNumber . ' sudah selesai. Silakan lakukan UAT bersama PIC CRF.' . $noteText;
-        $flash = 'Eksekusi diselesaikan dan SLA berhenti. CRF diteruskan ke CMO untuk UAT.';
+        $uatMessage = 'Pengerjaan CRF ' . $crfNumber . ' sudah selesai. Silakan lakukan UAT bersama PIC Otomasi.' . $noteText;
+        $flash = 'Pengerjaan diselesaikan dan Resolution Time berhenti. CRF diteruskan ke CMO untuk UAT.';
         $redirect = crfUrl('otomasi.index');
     } elseif ($action === 'resubmit_uat') {
         $stmt = $pdo->prepare("

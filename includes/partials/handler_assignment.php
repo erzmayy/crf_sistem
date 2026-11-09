@@ -17,7 +17,7 @@ $assignmentCategory = !empty($crf['kategori_id']) ? findCrfCategory($pdo, (int) 
         <?php endif; ?>
     </div>
     <div class="crf-assignment-item">
-        <span class="crf-request-caption">PIC CRF</span>
+        <span class="crf-request-caption">PIC Otomasi</span>
         <?php if (!empty($crf['pic_id'])): ?>
             <strong><i class="bi bi-person-check"></i> <?= h($crf['pic_nama'] ?? '-') ?></strong>
             <?php if (!empty($crf['tgl_ditugaskan'])): ?>

@@ -8,6 +8,60 @@ yang bertanda (jalankan).
 
 ---
 
+## 2026-11-09
+
+Penyeragaman istilah dan tampilan (hasil tinjauan konsistensi):
+
+- Label status: satu istilah "Perlu Revisi" (sebelumnya "Ditolak / Perlu Revisi"), keterangan tahap Pemohon "Perbaikan oleh Pemohon" (sebelumnya "Menunggu Pemeriksaan"), cadangan "Menunggu Tindakan" (sebelumnya "Submitted"), tahap Otomasi "Tindak Lanjut Otomasi": `includes/functions.php`, `actions/cmo_action.php`, `includes/partials/timeline.php`
+- Format tanggal seragam `dd-mm-yyyy HH:mm` (24 jam, tanpa bulan Inggris dan AM/PM): `includes/partials/timeline.php`, `forum/index.php`, `includes/forum.php`, `includes/header.php`, `notifications/index.php`. Tidak diubah: format panjang berbahasa Indonesia di email dan keterangan antrean (`includes/crf_queue_notice.php`, `includes/notifications.php`)
+- "SLA" untuk Resolution diganti "Resolution Time" pada judul peringatan ("Resolution time terlewati/mendesak", "Pengingat resolution time") dan kalimat mulai/berhenti/tidak dihitung: `includes/sla_alerts.php`, `actions/automation_action.php`, `actions/kadep_operasional_approve.php`, `cmo/detail.php`, `otomasi/detail.php`, `otomasi/index.php`, `kadep_operasional/index.php`, `kadep_operasional/detail.php`, `includes/partials/informasi_sla.php`, `includes/partials/timeline.php`. `crfStripSlaText()` kini juga menyaring "Resolution Time" dan "Response time" agar Pemohon tetap tidak melihatnya (efek samping: kalimat "Response time tercatat" ikut tersaring untuk Pemohon)
+- Judul notifikasi: "Pengingat isi PIR CRF: N" dan "UAT lulus, isi implementasi: N" (`actions/cmo_action.php`)
+- Judul halaman daftar = label menu ("Dashboard CRF", "Pengajuan CRF Saya", "Handling CRF", "Tindak Lanjut Otomasi", "Verifikasi CMO", "Persetujuan Kepala Departemen Operasional") dan judul detail seragam "Detail CRF - nomor": `admin/dashboard.php`, `cmo/index.php`, `cmo/detail.php`, `crf/handling.php`, `forum/detail.php`, `kadep_operasional/index.php`, `kadep_operasional/detail.php`, `otomasi/index.php`, `otomasi/detail.php`, `otomasi/view_detail.php`, `user/pengajuan_saya.php`
+- Kadep: nama lengkap "Kepala Departemen Operasional" di kalimat, "Kadep" hanya di tabel dan badge: `actions/cmo_action.php`, `actions/export_admin_report.php`, `actions/export_crf.php`, `admin/dashboard.php`, `includes/forum_discussions.php`, `includes/partials/informasi_sla.php`; riwayat lama "Diteruskan ke Kepala Departemen" tampil lengkap lewat pemetaan di `timeline.php`
+- Rincian bulanan PDF dan Excel: kolom `kategori_perubahan` berlabel "Kelompok Laporan" (bukan "Kategori"): `actions/export_admin_report.php`
+- Riwayat lama tetap tampil seragam lewat pemetaan di `timeline.php` (SLA berhenti/mulai dihitung, Ditolak / Perlu Revisi, Tindak Lanjut Divisi Otomasi); tanpa migrasi data
+- `assets/css/style.css`: aturan CSS tak terpakai dibuang (kelas `crf-sla-panels`, `-metrics`, `-line`, `-target`, `-due`, `-grid`, `-item`, `-value`)
+- Dokumen: `CLAUDE.md` (hasil Forum hanya CMO, target Resolution vs Response, peringatan Resolution vs Response, daftar nilai tersimpan versi lama), `WORKFLOW_UPDATE.md`, `README.md`, komentar `includes/sla_alerts.php` dan `database/maintenance/kirim_peringatan_sla.php`
+- Sengaja tidak diubah: nilai tersimpan (aktivitas, status, kunci tahap), menu SIAP, dan buku panduan docx/pdf (perlu diperbarui manual)
+
+Perubahan lain pada hari yang sama:
+
+Istilah "PIC CRF" diganti "PIC Otomasi" pada semua teks yang tampil (tombol, judul, pesan, notifikasi, email, laporan PDF, riwayat, peran di header):
+
+- Sekitar 80 baris di 28 berkas: `actions/admin_cancel_crf.php`, `automation_action.php`, `automation_start.php`, `category_master.php`, `export_crf.php`, `kadep_operasional_approve.php`, `admin/detail.php`, `admin/master_data.php`, `assets/js/integration.js`, `assets/js/script.js`, `cmo/detail.php`, `crf/handling.php`, `forum/index.php`, `includes/auth.php` (label peran), `forum_discussions.php`, `functions.php` (label tahap "Mulai dikerjakan PIC Otomasi"), `partials/crf_row_request.php`, `partials/handler_assignment.php`, `partials/informasi_pengajuan.php`, `partials/timeline.php`, `kadep_operasional/detail.php`, `kadep_operasional/index.php`, `otomasi/detail.php`, `user/form_crf.php`
+- Riwayat lama yang menulis "PIC CRF" tetap tampil "PIC Otomasi" lewat pemetaan di `timeline.php`; tidak ada migrasi data
+- `README.md`, `WORKFLOW_UPDATE.md`, `docs/alur-helpdesk-crf.html`, `CLAUDE.md`
+- Tidak diganti: kata "PIC" yang berdiri sendiri (mis. "Response PIC", "PIC kategori"), nama peran di kode (`otomasi`), dan nama menu "Tindak Lanjut Otomasi"
+
+Istilah "eksekusi" diganti "pengerjaan" pada semua teks yang tampil (tombol, judul, pesan, notifikasi, email, laporan PDF, riwayat). Kata "implementasi" kini hanya untuk fase setelah UAT lulus (isi hasil implementasi), jadi tidak ada dua langkah yang bernama sama:
+
+- `otomasi/detail.php` (judul "Pengerjaan / Tangani Permintaan", tombol "Selesai Pengerjaan · Kirim ke UAT"), `otomasi/index.php`, `actions/automation_action.php`, `actions/automation_start.php`, `actions/kadep_operasional_approve.php`, `actions/uat_upload.php`, `actions/export_crf.php`, `cmo/detail.php`, `cmo/index.php`, `kadep_operasional/detail.php`, `admin/dashboard.php`, `includes/functions.php` (label status "Disetujui · Pengerjaan"), `includes/partials/informasi_sla.php`, `includes/partials/timeline.php`, `includes/sla_alerts.php`
+- Riwayat lama tetap tampil seragam: `timeline.php` memetakan nilai tersimpan "Eksekusi Selesai" menjadi "Pengerjaan Selesai" dan kata eksekusi/dieksekusi menjadi pengerjaan/dikerjakan saat ditampilkan
+- Sengaja tidak diganti: nilai aktivitas "Eksekusi Selesai" di `crf_log_aktivitas` (dipakai untuk pencarian) dan kunci fase kode `'eksekusi'`; tanpa migrasi data
+- `README.md`, `WORKFLOW_UPDATE.md`, `docs/alur-helpdesk-crf.html`, `CLAUDE.md` (kalimatnya disesuaikan)
+- Fase setelah UAT lulus tidak berubah: judul "Implementasi", tombol "Implementasikan", entri Riwayat "Implementasi Selesai"
+- `includes/crf_nav.php` (tooltip antrean PIC: "CRF menunggu tindak lanjut PIC", karena antrean mencakup pengerjaan, perbaikan UAT, dan implementasi)
+
+Response Time untuk semua peran selain Pemohon (CMO verifikasi, Kadep, PIC mulai dikerjakan, CMO UAT, CMO finalisasi), ditampilkan sederhana: satu keterangan waktu respon di Riwayat, satu angka gabungan di dashboard. Response PIC digabung ke mekanisme yang sama (kolom `sla_respon_*` tetap ditulis dan dibekukan saat Kadep menyetujui, lalu disalin ke tabel baru). Target semua peran kini satu tabel global (tahap x urgensi), sama untuk semua kategori; UAT dan finalisasi sengaja tanpa target (lamanya tetap dicatat).
+
+- `database/migrations/028_sla_respon_tahap_migration.sql` (jalankan; tabel `crf_sla_respon`, `crf_sla_respon_target` beserta target awal, penanda peringatan, dan salinan Response PIC yang sudah ada) dan `database/schema.sql`
+- `includes/functions.php` (`crfRespSync()` dan fungsi pendukung; `logCrfActivity()` memanggil `crfRespSync()`; `getCrfResponStatus()` kini pembungkus `crfRespRowStatus()`; `crfSlaSeconds()`)
+- `includes/partials/timeline.php` (keterangan "Respon CMO/Kadep/PIC: 2 Menit · tepat waktu" pada entri yang menutup satu tahap, dan "Menunggu CMO · sisa/terlambat" pada langkah yang sedang menunggu; hanya peran internal, tidak untuk Pemohon)
+- `includes/partials/informasi_sla.php` (panel Informasi SLA kini hanya Resolution Time dengan tampilan baru)
+- `includes/partials/crf_row_status.php` (penanda "Response mendesak / melewati target" di daftar, tidak untuk Pemohon), `otomasi/index.php` (daftar Otomasi tidak memakai penanda itu karena kolom Status SLA sudah menampilkannya)
+- `includes/sla_alerts.php` (`crfSendTahapAlerts()` menggantikan `crfSendResponAlerts()`: pengingat 50%, mendesak, terlambat berulang tiap hari kerja; eskalasi ke Admin pada terlambat pertama)
+- Istilah status seragam (Masih dalam target, Melewati target, Sesuai target, Terlambat): `includes/functions.php`, `assets/js/script.js`
+- Perbaikan: tahap yang ditutup oleh sistem (mis. Forum dibuka otomatis saat SLA standar kategori kosong) tidak lagi dihitung sebagai respon CMO dan tidak dicatat atas nama pemohon (`crfRespSync()` menerima pelaku; `logCrfActivity()` meneruskannya). Riwayat menyebut "Lama UAT" dan "Lama finalisasi" (bukan "Respon") untuk tahap tanpa target (`includes/partials/timeline.php`)
+- Target PIC global: `actions/kadep_operasional_approve.php` membekukan target dari tabel global (matriks lama per kategori hanya cadangan bila tabel belum diisi); kolom Response dihapus dari formulir kategori (`admin/master_data.php`, kolom lama di `crf_kategori` dibiarkan sebagai cadangan); `includes/partials/informasi_sla.php` (perkiraan target sebelum disetujui). Validasi dua arah: target PIC harus lebih kecil dari Resolution terkecil (`actions/sla_respon_target.php`) dan Resolution kategori harus lebih besar dari target PIC (`actions/category_master.php`). Tambahan di `actions/category_master.php`: urutan Resolution per urgensi dijaga (Tinggi tidak lebih lama dari Normal, Normal tidak lebih lama dari Rendah; kolom kosong ikut Normal). Data kategori (bukan berkas): Resolution Tinggi dan Rendah diisi untuk Security (4 jam / 2 hari) dan Infrastruktur, Proses, Lainnya (1,5 hari / 5 hari) hanya bila masih kosong; Aplikasi tidak diubah. Di database lokal sudah dijalankan; untuk server lewat skrip SQL yang dikirim lewat chat
+- Target Response semua peran (tahap x urgensi, termasuk PIC) diatur Admin dalam satu tabel: bagian baru di `admin/master_data.php` dan **berkas baru** `actions/sla_respon_target.php`. Nilai awal (migrasi 028, usulan): CMO verifikasi 30 menit/2 jam/4 jam, Kadep 1 jam/4 jam/1 hari, PIC 1 jam/2 jam/4 jam, UAT dan finalisasi kosong
+- Dashboard Admin: panel Response Time kini gabungan semua peran (satu angka, dihitung tiap kali CRF menunggu satu peran), Resolution tetap per CRF; tabel per kategori dan per urgensi, PDF, dan Excel mengikuti. `getAdminCrfRespCombined()` di `includes/admin_crf_report.php`; `admin/dashboard.php`, `actions/export_admin_report.php`. Daftar "CRF yang Melewati SLA" dan kolom per CRF tetap memakai Response PIC (dilabeli Response PIC)
+- `assets/css/style.css` (gaya Resolution baru, keterangan Riwayat, `.admin-sla-kpis--v2`)
+- Sengaja tidak dibuat (disederhanakan): daftar Response per tahap di panel detail, rincian per peran di dashboard, tabel dan lembar Excel per tahap
+- `CLAUDE.md`, `database/README.md`
+- Unggah bersamaan: `includes/functions.php`, `includes/sla_alerts.php`, `includes/admin_crf_report.php`, `includes/partials/informasi_sla.php`, `includes/partials/timeline.php`, `includes/partials/crf_row_status.php`, `otomasi/index.php`, `admin/dashboard.php`, `admin/master_data.php`, `actions/category_master.php`, `actions/kadep_operasional_approve.php`, `actions/sla_respon_target.php` (baru), `actions/export_admin_report.php`, `assets/js/script.js`, `assets/css/style.css`. Jalankan migrasi 028 lebih dulu. Tanpa migrasi, fitur diam dan halaman tetap normal.
+
+---
+
 ## 2026-11-06
 
 - `includes/whatsapp.php` (templat pesan WA minimalis: judul tebal, nomor CRF di baris sendiri, satu kalimat inti, baris Pemohon dan Kategori·Urgensi untuk penerima selain pemohon termasuk PIC, tautan tanpa kata "Buka:", tanpa tanda tangan perusahaan; kalimat inti maks. 200 karakter)

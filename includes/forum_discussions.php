@@ -433,7 +433,7 @@ function forumRaiseSystemDiscussion(PDO $pdo, array $crf, array $actingUser, str
         $pdo,
         forumDiscussionAudience($pdo, $crf),
         'SLA perlu ditetapkan: ' . $crfNumber,
-        $reason . ' CMO mencatat hasil pembahasan di Forum, lalu CRF langsung diteruskan ke Kepala Departemen. Target hasil '
+        $reason . ' CMO mencatat hasil pembahasan di Forum, lalu CRF langsung diteruskan ke Kepala Departemen Operasional. Target hasil '
             . date('d-m-Y H:i', strtotime($dueAt)) . '.',
         $crfId,
         (int) $actingUser['id']
@@ -841,7 +841,7 @@ function forumBotMessage(array $crf, DateTimeImmutable $now): string
             . ' PIC sudah diingatkan lewat notifikasi.';
     }
 
-    return $open . 'Mohon ditunggu, PIC CRF akan segera merespons. PIC sudah diingatkan lewat notifikasi.';
+    return $open . 'Mohon ditunggu, PIC Otomasi akan segera merespons. PIC sudah diingatkan lewat notifikasi.';
 }
 
 /**

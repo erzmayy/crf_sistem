@@ -106,7 +106,7 @@ if ($action === 'remind_pir') {
         notifyUsers(
             $pdo,
             [(int) $crf['pengguna_id']],
-            'Pengingat: isi PIR CRF ' . $crf['nomor_register'],
+            'Pengingat isi PIR CRF: ' . $crf['nomor_register'],
             'Implementasi CRF ' . $crf['nomor_register'] . ' sudah selesai'
                 . ($reminder['waiting_days'] ? ' sejak ' . $reminder['waiting_days'] . ' hari kerja lalu' : '')
                 . '. Mohon segera isi Post Implementation Review agar CRF dapat ditutup.' . $note,
@@ -167,7 +167,7 @@ if ($action === 'to_approval') {
     if (!empty($crf['pembahasan_forum_terbuka'])) {
         $_SESSION['flash'] = [
             'type' => 'warning',
-            'message' => 'CRF ini menunggu pembahasan Forum. Setelah hasil pembahasan dicatat (CMO), CRF otomatis diteruskan ke Kepala Departemen.',
+            'message' => 'CRF ini menunggu pembahasan Forum. Setelah hasil pembahasan dicatat (CMO), CRF otomatis diteruskan ke Kepala Departemen Operasional.',
         ];
         crfRedirect(crfUrl('cmo.detail', ['id' => $id]));
         exit;
@@ -254,7 +254,7 @@ try {
     } elseif ($action === 'revision') {
         $stmt = $pdo->prepare("UPDATE crf_pengajuan SET status = 'Perlu Revisi', tahap_alur = 'PEMOHON', tanggapan_tindak_lanjut = :tanggapan WHERE id = :id AND tahap_alur = 'CMO_FILTER'");
         $stmt->execute(['tanggapan' => $tanggapan, 'id' => $id]);
-        logCrfActivity($pdo, $id, 'Perlu Revisi', $tanggapan, $actor, $oldDisplayStatus, 'Ditolak / Perlu Revisi');
+        logCrfActivity($pdo, $id, 'Perlu Revisi', $tanggapan, $actor, $oldDisplayStatus, 'Perlu Revisi');
         notifyUsers($pdo, [(int) $crf['pengguna_id']], 'CRF perlu revisi: ' . $crfNumber,
             'CMO mengembalikan CRF Anda untuk diperbaiki: ' . $tanggapan, $crfLink, $id, (int) $user['id'], true);
         $message = 'CRF dikembalikan ke Pemohon untuk revisi.';
@@ -298,7 +298,7 @@ try {
         notifyUsers(
             $pdo,
             $picIds,
-            $passed ? 'UAT lulus: isi implementasi ' . $crfNumber : 'UAT perlu perbaikan: ' . $crfNumber,
+            $passed ? 'UAT lulus, isi implementasi: ' . $crfNumber : 'UAT perlu perbaikan: ' . $crfNumber,
             $passed
                 ? 'UAT CRF ' . $crfNumber . ' lulus. Silakan isi Tanggal Implementasi dan Implementasi / Hasil Perubahan.' . $noteSuffix
                 : 'UAT CRF ' . $crfNumber . ' menemukan hal yang perlu diperbaiki: ' . $tanggapan,

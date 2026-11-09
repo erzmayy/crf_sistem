@@ -46,11 +46,11 @@ $processLink = forumProcessLink($pdo, $crf);
 $crfTitle = $crf['nomor_register'] ?: 'CRF #' . $crfId;
 
 if (!$isPartial) {
-    $pageTitle = 'Detail CRF ' . $crfTitle;
+    $pageTitle = 'Detail CRF - ' . $crfTitle;
     require_once __DIR__ . '/../includes/header.php';
     echo '<div class="crf-page crf-detail-page"><div class="container">';
     echo '<div class="crf-page-header d-flex justify-content-between align-items-start gap-2 flex-wrap">'
-        . '<div><h1>Detail CRF ' . h($crfTitle) . '</h1><p>Tampilan baca saja untuk diskusi Forum.</p></div>'
+        . '<div><h1>Detail CRF - ' . h($crfTitle) . '</h1><p>Tampilan baca saja untuk diskusi Forum.</p></div>'
         . '<a href="' . h(crfUrl('forum.index', ['crf_id' => $crfId])) . '" class="crf-back-btn"><i class="bi bi-arrow-left"></i> Kembali ke Forum</a>'
         . '</div>';
 }

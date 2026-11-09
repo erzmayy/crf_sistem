@@ -262,7 +262,7 @@ function forumRelativeTime(?string $datetime): string
         return 'Kemarin';
     }
 
-    return date('d M', $time);
+    return date('d-m', $time);
 }
 
 /**
@@ -279,7 +279,7 @@ function forumDateLabel(string $datetime): string
         return 'Kemarin';
     }
 
-    return date('d M Y', strtotime($datetime));
+    return date('d-m-Y', strtotime($datetime));
 }
 
 function forumInitials(string $name): string

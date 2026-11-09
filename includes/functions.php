@@ -244,11 +244,11 @@ function workflowStageLabel(string $stage): string
 {
     switch ($stage) {
         case 'PEMOHON':
-            return 'Menunggu Pemeriksaan';
+            return 'Perbaikan oleh Pemohon';
         case 'CMO_FILTER':
             return 'Verifikasi CMO';
         case 'OTOMASI':
-            return 'Tindak Lanjut Divisi Otomasi';
+            return 'Tindak Lanjut Otomasi';
         case 'UAT':
             return 'UAT oleh CMO';
         case 'PEMOHON_PIR':
@@ -303,6 +303,24 @@ function workflowStageBadgeClass(string $stage): string
         case 'PEMOHON':
         default:
             return 'badge-stage-pemohon';
+    }
+}
+
+/**
+ * Durasi target SLA dalam detik kerja: Menit, Jam, atau Hari (1 Hari = satu hari kerja penuh).
+ * Dipakai untuk membandingkan target, bukan untuk menghitung tenggat (lihat slaDueAt()).
+ */
+function crfSlaSeconds(float $value, string $unit): int
+{
+    switch ($unit) {
+        case 'Menit':
+            return (int) round($value * 60);
+        case 'Jam':
+            return (int) round($value * 3600);
+        case 'Hari':
+            return (int) round($value * CRF_SLA_WORK_SECONDS_PER_DAY);
+        default:
+            return 0;
     }
 }
 
@@ -629,8 +647,8 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
 
     if ($startedAt === null || $dueAt === null) {
         return [
-            'label' => 'SLA belum dimulai',
-            'detail' => 'SLA dimulai setelah persetujuan Kepala Departemen Operasional.',
+            'label' => 'Belum dimulai',
+            'detail' => 'Resolution Time dimulai setelah persetujuan Kepala Departemen Operasional.',
             'class' => 'secondary',
             'alert' => null,
             'elapsed' => null,
@@ -714,6 +732,9 @@ function logCrfActivity(
         'status_lama' => $oldStatus,
         'status_baru' => $newStatus,
     ]);
+
+    // Setiap aksi yang tercatat bisa memindahkan CRF antar tahap: selaraskan jam Response Time.
+    crfRespSync($pdo, $crfId, null, $actor);
 }
 
 /**
@@ -724,6 +745,11 @@ function logCrfActivity(
 function crfStripSlaText(?string $text): string
 {
     $text = strtr((string) $text, [
+        ' dan Resolution Time berhenti' => '',
+        'Resolution Time berhenti; ' => '',
+        'Resolution Time berjalan sejak persetujuan. ' => '',
+        ' (tidak dihitung dalam Resolution Time)' => '',
+        '(tidak dihitung dalam Resolution Time)' => '',
         ' dan SLA berhenti' => '',
         'SLA berhenti; ' => '',
         'SLA berjalan sejak persetujuan. ' => '',
@@ -731,7 +757,7 @@ function crfStripSlaText(?string $text): string
         '(tidak dihitung dalam SLA)' => '',
     ]);
     $sentences = preg_split('/(?<=[.!?])\s+/u', trim($text)) ?: [];
-    $sentences = array_filter($sentences, static fn(string $s): bool => !preg_match('/\bSLA\b/u', $s));
+    $sentences = array_filter($sentences, static fn(string $s): bool => !preg_match('/\b(?:SLA|Resolution Time|Response time)\b/iu', $s));
 
     return trim(implode(' ', $sentences));
 }
@@ -758,7 +784,7 @@ function crfDisplayStatus(array $crf): array
         return ['key' => 'dibatalkan', 'label' => 'Dibatalkan', 'class' => 'badge-status-cancel'];
     }
     if ($status === 'Perlu Revisi') {
-        return ['key' => 'revisi', 'label' => 'Ditolak / Perlu Revisi', 'class' => 'badge-status-revisi'];
+        return ['key' => 'revisi', 'label' => 'Perlu Revisi', 'class' => 'badge-status-revisi'];
     }
     if ($stage === 'CMO_FILTER' && !empty($crf['pembahasan_forum_terbuka'])) {
         return ['key' => 'pembahasan', 'label' => 'Menunggu Pembahasan Forum', 'class' => 'badge-status-pembahasan'];
@@ -773,7 +799,7 @@ function crfDisplayStatus(array $crf): array
         $phase = crfOtomasiPhase($crf);
         $label = $phase === 'perbaikan'
             ? 'Perbaikan Hasil UAT'
-            : ($phase === 'implementasi' ? 'Isi Implementasi' : 'Disetujui · Eksekusi');
+            : ($phase === 'implementasi' ? 'Isi Implementasi' : 'Disetujui · Pengerjaan');
 
         return ['key' => 'disetujui', 'label' => $label, 'class' => 'badge-stage-otomasi'];
     }
@@ -787,7 +813,7 @@ function crfDisplayStatus(array $crf): array
         return ['key' => 'finalisasi', 'label' => 'Menunggu Finalisasi', 'class' => 'badge-stage-cmo-final'];
     }
 
-    return ['key' => 'submitted', 'label' => 'Submitted', 'class' => 'badge-status-belum'];
+    return ['key' => 'submitted', 'label' => 'Menunggu Tindakan', 'class' => 'badge-status-belum'];
 }
 
 /**
@@ -804,8 +830,8 @@ function crfDisplayStatusConditions(string $alias = 'cr'): array
         'review'     => ['label' => 'Menunggu Verifikasi', 'sql' => "{$a}status = 'Belum Ditindak Lanjuti' AND {$a}tahap_alur = 'CMO_FILTER' AND {$a}pembahasan_forum_terbuka = 0"],
         'pembahasan' => ['label' => 'Menunggu Pembahasan Forum', 'sql' => "{$a}tahap_alur = 'CMO_FILTER' AND {$a}pembahasan_forum_terbuka = 1 AND {$a}status NOT IN ('Draft','Solve','Cancel')"],
         'approval'   => ['label' => 'Menunggu Persetujuan', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}tahap_alur = 'kadep_operasional'"],
-        'disetujui'  => ['label' => 'Disetujui · Eksekusi', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}tahap_alur IN ('OTOMASI','UAT','PEMOHON_PIR','CMO_FINAL') AND {$a}tgl_disetujui_kadep IS NOT NULL"],
-        'revisi'     => ['label' => 'Ditolak / Perlu Revisi', 'sql' => "{$a}status = 'Perlu Revisi'"],
+        'disetujui'  => ['label' => 'Disetujui · Pengerjaan', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}tahap_alur IN ('OTOMASI','UAT','PEMOHON_PIR','CMO_FINAL') AND {$a}tgl_disetujui_kadep IS NOT NULL"],
+        'revisi'     => ['label' => 'Perlu Revisi', 'sql' => "{$a}status = 'Perlu Revisi'"],
         'selesai'    => ['label' => 'Selesai', 'sql' => "{$a}status = 'Solve'"],
         'dibatalkan' => ['label' => 'Dibatalkan', 'sql' => "{$a}status = 'Cancel'"],
     ];
@@ -1808,9 +1834,9 @@ function crfCategoryResponMatrix(array $category): array
 }
 
 /**
- * Status SLA respon PIC: dari persetujuan Kadep sampai PIC menekan
- * "Mulai kerjakan". Null bila tidak ada yang perlu ditampilkan (CRF belum
- * disetujui, dibatalkan, atau CRF lama tanpa target respon).
+ * Status Response Time PIC dari kolom sla_respon_* (dipakai daftar Otomasi dan halaman yang belum
+ * membaca crf_sla_respon). Aturan dan istilah memakai crfRespRowStatus() agar sama di semua tempat.
+ * Null bila tidak ada yang perlu ditampilkan (CRF belum disetujui, dibatalkan, atau tanpa target respon).
  */
 function getCrfResponStatus(array $crf, ?DateTimeImmutable $now = null): ?array
 {
@@ -1821,57 +1847,12 @@ function getCrfResponStatus(array $crf, ?DateTimeImmutable $now = null): ?array
         return null;
     }
 
-    $now = $now ?? new DateTimeImmutable('now');
-    $startedAt = new DateTimeImmutable($crf['sla_mulai']);
-    $dueAt = !empty($crf['sla_respon_tenggat']) ? new DateTimeImmutable($crf['sla_respon_tenggat']) : null;
-    $respondedAt = !empty($crf['sla_respon_at']) ? new DateTimeImmutable($crf['sla_respon_at']) : null;
-
-    $base = ['alert' => null, 'remaining' => null, 'live' => false, 'elapsed' => null];
-
-    if ($respondedAt !== null) {
-        $elapsedSeconds = slaWorkingSecondsBetween($startedAt, $respondedAt);
-        $elapsedText = $elapsedSeconds < 60 ? 'kurang dari 1 menit' : formatSlaDuration($elapsedSeconds);
-        $base['elapsed'] = $elapsedText;
-
-        if ($dueAt === null) {
-            return $base + ['label' => 'Sudah direspons', 'class' => 'secondary',
-                'detail' => 'Response time ' . $elapsedText . '.'];
-        }
-        if ($respondedAt <= $dueAt) {
-            return $base + ['label' => 'Response sesuai SLA', 'class' => 'success',
-                'detail' => 'Response time ' . $elapsedText . ', sesuai target.'];
-        }
-
-        return $base + ['label' => 'Response melebihi SLA', 'class' => 'danger',
-            'detail' => 'Response time ' . $elapsedText . ', melebihi target '
-                . formatSlaDuration(slaWorkingSecondsBetween($dueAt, $respondedAt)) . '.'];
-    }
-
-    if ($now <= $dueAt) {
-        $remaining = slaWorkingSecondsBetween($now, $dueAt);
-        $approaching = $remaining <= crfSlaUrgentSeconds(slaWorkingSecondsBetween($startedAt, $dueAt));
-
-        return [
-            'label' => 'Menunggu respon',
-            'detail' => 'Sisa response time ' . formatSlaDuration($remaining) . '.',
-            'class' => $approaching ? 'warning' : 'primary',
-            'alert' => $approaching ? 'approaching' : null,
-            'remaining' => $remaining,
-            'live' => true,
-            'elapsed' => null,
-        ];
-    }
-
-    return [
-        'label' => 'Response terlewati',
-        'detail' => 'Terlambat ' . formatSlaDuration(slaWorkingSecondsBetween($dueAt, $now)) . ' dari batas response time.',
-        'class' => 'danger',
-        'alert' => 'overdue',
-        'remaining' => null,
-        'overdue' => slaWorkingSecondsBetween($dueAt, $now),
-        'live' => true,
-        'elapsed' => null,
-    ];
+    return crfRespRowStatus([
+        'mulai' => $crf['sla_mulai'],
+        'tenggat' => $crf['sla_respon_tenggat'] ?? null,
+        'respon_at' => $crf['sla_respon_at'] ?? null,
+        'hasil' => null,
+    ], $now);
 }
 
 /**
@@ -1912,6 +1893,292 @@ function recordCrfResponse(PDO $pdo, int $crfId, string $respondedAt): void
             END
         WHERE id = :id AND sla_respon_at IS NULL
     ")->execute(['at' => $respondedAt, 'at2' => $respondedAt, 'id' => $crfId]);
+}
+
+/* =====================================================================
+ * Response Time per tahap (CMO verifikasi, Kadep, CMO UAT, CMO finalisasi)
+ * ---------------------------------------------------------------------
+ * Satu baris crf_sla_respon per "putaran" tahap. Jam dibuka saat CRF masuk
+ * antrean sebuah peran dan ditutup pada tindakan pertama peran itu. Response
+ * Time PIC tetap memakai kolom sla_respon_* (lihat getCrfResponStatus()).
+ *
+ * crfRespSync() mencocokkan baris terbuka dengan keadaan CRF saat ini dan
+ * idempoten; dipanggil dari logCrfActivity() sehingga semua aksi tercakup.
+ * Aturan jeda: pembahasan Forum terbuka dan CRF di tangan Pemohon / PIC tidak
+ * punya baris terbuka. Dibatalkan menutup baris tanpa penilaian.
+ * ===================================================================== */
+
+/** Tahap dan labelnya. */
+function crfRespStages(): array
+{
+    return [
+        'CMO_VERIFIKASI' => ['label' => 'Verifikasi CMO', 'peran' => 'CMO', 'icon' => 'bi-person-check'],
+        'KADEP'          => ['label' => 'Persetujuan Kepala Departemen Operasional', 'peran' => 'Kepala Departemen Operasional', 'icon' => 'bi-patch-check'],
+        'PIC_MULAI'      => ['label' => 'Mulai dikerjakan PIC Otomasi', 'peran' => 'PIC Otomasi', 'icon' => 'bi-play-circle'],
+        'CMO_UAT'        => ['label' => 'UAT oleh CMO', 'peran' => 'CMO', 'icon' => 'bi-clipboard-check'],
+        'CMO_FINAL'      => ['label' => 'Finalisasi CMO', 'peran' => 'CMO', 'icon' => 'bi-flag'],
+    ];
+}
+
+/** True bila tabel crf_sla_respon ada (migrasi 028 sudah dijalankan). */
+function crfRespTableReady(PDO $pdo): bool
+{
+    static $ready = null;
+
+    if ($ready === null) {
+        try {
+            $ready = (bool) $pdo->query("SHOW TABLES LIKE 'crf_sla_respon'")->fetch();
+        } catch (Throwable $e) {
+            $ready = false;
+        }
+    }
+
+    return $ready;
+}
+
+/** Tahap Response Time yang seharusnya berjalan untuk CRF ini; null bila tidak ada. */
+function crfRespDesiredStage(array $crf): ?string
+{
+    if (in_array($crf['status'] ?? '', ['Draft', 'Solve', 'Cancel'], true)) {
+        return null;
+    }
+
+    switch ($crf['tahap_alur'] ?? '') {
+        case 'CMO_FILTER':
+            // Selama pembahasan Forum terbuka, jam CMO berhenti (CMO sudah merespons dengan mengajukannya).
+            return empty($crf['pembahasan_forum_terbuka']) ? 'CMO_VERIFIKASI' : null;
+        case 'kadep_operasional':
+            return 'KADEP';
+        case 'OTOMASI':
+            // Fase eksekusi, belum diambil PIC, dan CRF punya target respon (dibekukan saat Kadep menyetujui).
+            return empty($crf['pic_id']) && empty($crf['otomasi_selesai']) && !empty($crf['sla_respon_tenggat'])
+                ? 'PIC_MULAI'
+                : null;
+        case 'UAT':
+            return 'CMO_UAT';
+        case 'CMO_FINAL':
+            return 'CMO_FINAL';
+        default:
+            return null;
+    }
+}
+
+/** Target tahap x urgensi (Normal bila urgensi kosong), atau null bila belum diatur. */
+function crfRespTarget(PDO $pdo, string $stage, ?string $urgency): ?array
+{
+    $urgency = in_array($urgency, ['Tinggi', 'Normal', 'Rendah'], true) ? $urgency : 'Normal';
+    $stmt = $pdo->prepare('SELECT nilai, satuan FROM crf_sla_respon_target WHERE tahap = :t AND urgensi = :u LIMIT 1');
+    $stmt->execute(['t' => $stage, 'u' => $urgency]);
+    $row = $stmt->fetch();
+
+    return $row && (float) $row['nilai'] > 0 ? ['value' => (float) $row['nilai'], 'unit' => (string) $row['satuan'], 'urgency' => $urgency] : null;
+}
+
+/**
+ * Cocokkan baris Response Time dengan keadaan CRF: tutup baris terbuka yang
+ * tahapnya sudah lewat, buka baris baru bila CRF masuk tahap yang diukur.
+ * Tidak pernah melempar exception (tidak boleh menggagalkan proses utama).
+ */
+function crfRespSync(PDO $pdo, int $crfId, ?string $now = null, ?string $actor = null): void
+{
+    try {
+        if (!crfRespTableReady($pdo)) {
+            return;
+        }
+
+        $now = $now ?? date('Y-m-d H:i:s');
+        $crfStmt = $pdo->prepare('
+            SELECT status, tahap_alur, pembahasan_forum_terbuka, level, level_urgensi_final,
+                   pic_id, pic_nama, otomasi_selesai, sla_mulai,
+                   sla_respon_nilai, sla_respon_satuan, sla_respon_tenggat, sla_respon_at, sla_respon_hasil
+            FROM crf_pengajuan WHERE id = :id
+        ');
+        $crfStmt->execute(['id' => $crfId]);
+        $crf = $crfStmt->fetch();
+        if (!$crf) {
+            return;
+        }
+
+        $desired = crfRespDesiredStage($crf);
+        $openStmt = $pdo->prepare('SELECT * FROM crf_sla_respon WHERE pengajuan_id = :id AND respon_at IS NULL ORDER BY id DESC LIMIT 1');
+        $openStmt->execute(['id' => $crfId]);
+        $open = $openStmt->fetch();
+
+        if ($open && $open['tahap'] === $desired) {
+            return;
+        }
+
+        if ($open) {
+            $closedAt = $now;
+            $actorId = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+            $actorName = null;
+            if ($actorId !== null && function_exists('getCurrentUser') && function_exists('crfActorName')) {
+                $actorName = crfActorName(getCurrentUser());
+            }
+
+            // PIC: waktu dan pelaku respon sudah dicatat saat "Mulai kerjakan" (recordCrfResponse).
+            if ($open['tahap'] === 'PIC_MULAI' && !empty($crf['pic_id'])) {
+                if (!empty($crf['sla_respon_at'])) {
+                    $closedAt = (string) $crf['sla_respon_at'];
+                }
+                $actorId = (int) $crf['pic_id'];
+                $actorName = (string) ($crf['pic_nama'] ?? '');
+            }
+
+            if (($crf['status'] ?? '') === 'Cancel') {
+                $result = 'Dibatalkan';
+            } elseif (empty($open['tenggat'])) {
+                $result = 'Tanpa target';
+            } else {
+                $result = $closedAt <= $open['tenggat'] ? 'Sesuai SLA' : 'Melebihi SLA';
+            }
+
+            // Tahap ditutup oleh sistem (mis. Forum dibuka otomatis saat SLA standar kosong): bukan respon
+            // peran itu, jadi tidak dinilai dan tidak dicatat atas nama pengguna yang sedang login.
+            if ($actor === 'Sistem') {
+                $result = 'Dibatalkan';
+                $actorId = null;
+                $actorName = 'Sistem';
+            }
+
+            $pdo->prepare('UPDATE crf_sla_respon SET respon_at = :at, respon_oleh = :uid, respon_oleh_nama = :nama, hasil = :hasil WHERE id = :id AND respon_at IS NULL')
+                ->execute(['at' => $closedAt, 'uid' => $actorId, 'nama' => $actorName !== null && $actorName !== '' ? mb_substr($actorName, 0, 150) : null, 'hasil' => $result, 'id' => $open['id']]);
+        }
+
+        if ($desired !== null) {
+            $urgency = $crf['level_urgensi_final'] ?: ($crf['level'] ?: 'Normal');
+            $startAt = $now;
+            if ($desired === 'PIC_MULAI') {
+                // Target PIC mengikuti matriks kategori dan sudah dibekukan di CRF saat Kadep menyetujui.
+                $target = ['value' => (float) $crf['sla_respon_nilai'], 'unit' => (string) $crf['sla_respon_satuan'], 'urgency' => $urgency];
+                $picDue = (string) $crf['sla_respon_tenggat'];
+                $startAt = !empty($crf['sla_mulai']) ? (string) $crf['sla_mulai'] : $now;
+            } else {
+                $target = crfRespTarget($pdo, $desired, $urgency);
+            }
+            $roundStmt = $pdo->prepare('SELECT COUNT(*) FROM crf_sla_respon WHERE pengajuan_id = :id AND tahap = :t');
+            $roundStmt->execute(['id' => $crfId, 't' => $desired]);
+
+            $pdo->prepare('
+                INSERT INTO crf_sla_respon (pengajuan_id, tahap, putaran, urgensi, target_nilai, target_satuan, mulai, tenggat)
+                VALUES (:id, :tahap, :putaran, :urgensi, :nilai, :satuan, :mulai, :tenggat)
+            ')->execute([
+                'id' => $crfId,
+                'tahap' => $desired,
+                'putaran' => (int) $roundStmt->fetchColumn() + 1,
+                'urgensi' => $target['urgency'] ?? (in_array($urgency, ['Tinggi', 'Normal', 'Rendah'], true) ? $urgency : 'Normal'),
+                'nilai' => $target['value'] ?? null,
+                'satuan' => $target['unit'] ?? null,
+                'mulai' => $startAt,
+                'tenggat' => $desired === 'PIC_MULAI'
+                    ? $picDue
+                    : ($target ? slaDueAt($now, $target['value'], $target['unit']) : null),
+            ]);
+        }
+    } catch (Throwable $e) {
+        error_log('crfRespSync: ' . $e->getMessage());
+    }
+}
+
+/** Semua putaran Response Time sebuah CRF, terlama dulu. */
+function crfRespRows(PDO $pdo, int $crfId): array
+{
+    if (!crfRespTableReady($pdo)) {
+        return [];
+    }
+
+    // Urut menurut waktu mulai (baris PIC hasil salinan migrasi punya id lebih besar dari tahap sesudahnya).
+    $stmt = $pdo->prepare('SELECT * FROM crf_sla_respon WHERE pengajuan_id = :id ORDER BY mulai ASC, id ASC');
+    $stmt->execute(['id' => $crfId]);
+
+    return $stmt->fetchAll();
+}
+
+/**
+ * Baris Response Time yang sedang berjalan untuk sebuah CRF (null bila tidak ada).
+ * Semua baris terbuka dimuat sekali per permintaan (jumlahnya kecil), jadi aman
+ * dipakai per baris di daftar tanpa query tambahan.
+ */
+function crfRespOpenRow(PDO $pdo, int $crfId): ?array
+{
+    static $map = null;
+
+    if ($map === null) {
+        $map = [];
+        if (crfRespTableReady($pdo)) {
+            try {
+                foreach ($pdo->query('SELECT * FROM crf_sla_respon WHERE respon_at IS NULL ORDER BY id ASC')->fetchAll() as $row) {
+                    $map[(int) $row['pengajuan_id']] = $row;
+                }
+            } catch (Throwable $e) {
+                error_log('crfRespOpenRow: ' . $e->getMessage());
+            }
+        }
+    }
+
+    return $map[$crfId] ?? null;
+}
+
+/**
+ * Status satu baris Response Time untuk tampilan: label, detail, class, alert
+ * ('approaching' | 'overdue' | null), remaining, live. Pola sama dengan getCrfResponStatus().
+ */
+function crfRespRowStatus(array $row, ?DateTimeImmutable $now = null): array
+{
+    $now = $now ?? new DateTimeImmutable('now');
+    $startedAt = new DateTimeImmutable($row['mulai']);
+    $dueAt = !empty($row['tenggat']) ? new DateTimeImmutable($row['tenggat']) : null;
+    $base = ['alert' => null, 'remaining' => null, 'live' => false, 'elapsed' => null];
+
+    if (!empty($row['respon_at'])) {
+        $respondedAt = new DateTimeImmutable($row['respon_at']);
+        $seconds = slaWorkingSecondsBetween($startedAt, $respondedAt);
+        $elapsed = $seconds < 60 ? 'kurang dari 1 menit' : formatSlaDuration($seconds);
+        $base['elapsed'] = $elapsed;
+
+        if (($row['hasil'] ?? '') === 'Dibatalkan') {
+            return $base + ['label' => 'Dibatalkan', 'class' => 'secondary', 'detail' => 'CRF dibatalkan sebelum direspons.'];
+        }
+        if ($dueAt === null) {
+            return $base + ['label' => 'Sudah direspons', 'class' => 'secondary', 'detail' => 'Response time ' . $elapsed . ' (tanpa target).'];
+        }
+        if ($respondedAt <= $dueAt) {
+            return $base + ['label' => 'Sesuai target', 'class' => 'success', 'detail' => 'Response time ' . $elapsed . ', sesuai target.'];
+        }
+
+        return $base + ['label' => 'Terlambat', 'class' => 'danger',
+            'detail' => 'Response time ' . $elapsed . ', melebihi target ' . formatSlaDuration(slaWorkingSecondsBetween($dueAt, $respondedAt)) . '.'];
+    }
+
+    if ($dueAt === null) {
+        return ['label' => 'Menunggu respon', 'class' => 'primary', 'detail' => 'Tanpa target response time.', 'alert' => null, 'remaining' => null, 'live' => true, 'elapsed' => null];
+    }
+
+    if ($now <= $dueAt) {
+        $remaining = slaWorkingSecondsBetween($now, $dueAt);
+        $approaching = $remaining <= crfSlaUrgentSeconds(slaWorkingSecondsBetween($startedAt, $dueAt));
+
+        return [
+            'label' => 'Masih dalam target',
+            'detail' => 'Sisa response time ' . formatSlaDuration($remaining) . '.',
+            'class' => $approaching ? 'warning' : 'success',
+            'alert' => $approaching ? 'approaching' : null,
+            'remaining' => $remaining,
+            'live' => true,
+            'elapsed' => null,
+        ];
+    }
+
+    return [
+        'label' => 'Melewati target',
+        'detail' => 'Terlambat ' . formatSlaDuration(slaWorkingSecondsBetween($dueAt, $now)) . ' dari batas response time.',
+        'class' => 'danger',
+        'alert' => 'overdue',
+        'remaining' => null,
+        'overdue' => slaWorkingSecondsBetween($dueAt, $now),
+        'live' => true,
+        'elapsed' => null,
+    ];
 }
 
 function crfSlaEquals(?array $sla, $value, ?string $unit): bool

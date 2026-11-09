@@ -173,14 +173,14 @@ document.addEventListener('DOMContentLoaded', function () {
       if (remaining >= 0) {
         var total = startedAt ? slaWorkingSecondsBetween(startedAt, dueAt) : 0;
         var approaching = remaining <= Math.min(3600, Math.floor(total * 0.25));
-        label.textContent = 'Menunggu respon';
+        label.textContent = 'Masih dalam target';
         detail.textContent = responBox.hasAttribute('data-sla-short')
           ? 'sisa ' + formatSlaShort(remaining)
           : 'Sisa response time ' + formatSlaDuration(remaining) + '.';
-        label.className = 'badge text-bg-' + (approaching ? 'warning' : 'primary');
+        label.className = 'badge text-bg-' + (approaching ? 'warning' : 'success');
         state = approaching ? 'approaching' : '';
       } else {
-        label.textContent = 'Response terlewati';
+        label.textContent = 'Melewati target';
         detail.textContent = responBox.hasAttribute('data-sla-short')
           ? 'terlambat ' + formatSlaShort(Math.abs(remaining))
           : 'Terlambat ' + formatSlaDuration(Math.abs(remaining)) + ' dari batas response time.';
@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       setSlaBar(responBox, startedAt, dueAt,
-        state === 'overdue' ? 'danger' : (state === 'approaching' ? 'warning' : 'primary'));
+        state === 'overdue' ? 'danger' : (state === 'approaching' ? 'warning' : 'success'));
 
       if (!alertBox) { return; }
       alertBox.classList.remove('alert-warning', 'alert-danger');
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       if (alertMessage) {
         alertMessage.textContent = state === 'overdue'
-          ? 'Batas response time terlewati. PIC CRF belum mulai mengerjakan.'
+          ? 'Batas response time terlewati. PIC Otomasi belum mulai mengerjakan.'
           : 'Batas response time hampir terlewati.';
       }
     });

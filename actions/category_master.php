@@ -90,26 +90,45 @@ try {
                 $extra['sla_' . $levelKey . '_satuan'] = $levelValue !== null ? $levelUnit : null;
             }
 
-            // Target Response Time per urgensi; kolom tanpa suffix = Normal (wajib). Tinggi/Rendah kosong = ikut Normal.
-            foreach (['' => 'Normal', 'tinggi_' => 'Tinggi', 'rendah_' => 'Rendah'] as $responKey => $responLabel) {
-                $responValueRaw = trim($_POST['sla_respon_' . $responKey . 'nilai'] ?? '');
-                $responUnit = $_POST['sla_respon_' . $responKey . 'satuan'] ?? '';
-                $responValue = null;
-                if ($responValueRaw !== '') {
-                    if (!is_numeric($responValueRaw) || (float) $responValueRaw <= 0) {
-                        $errors[] = 'Nilai target Response Time ' . $responLabel . ' harus angka lebih dari 0.';
-                    } elseif (!in_array($responUnit, ['Menit', 'Jam', 'Hari'], true)) {
-                        $errors[] = 'Satuan target Response Time ' . $responLabel . ' tidak valid.';
-                    } else {
-                        $responValue = (float) $responValueRaw;
-                    }
-                } elseif ($responKey === '') {
-                    $errors[] = 'Target Response Time urgensi Normal wajib diisi.';
+            // Urutan Resolution Time per urgensi: Tinggi tidak boleh lebih lama dari Normal, dan Normal
+            // tidak boleh lebih lama dari Rendah (yang kosong ikut Normal, jadi hanya nilai terisi yang dicek).
+            $resolutionSeconds = [];
+            foreach ([
+                'Tinggi' => [$extra['sla_tinggi_nilai'] ?? null, $extra['sla_tinggi_satuan'] ?? null],
+                'Normal' => [$slaValue, $slaUnit],
+                'Rendah' => [$extra['sla_rendah_nilai'] ?? null, $extra['sla_rendah_satuan'] ?? null],
+            ] as $orderLevel => [$orderValue, $orderUnit]) {
+                if ($orderValue !== null && $orderUnit !== null) {
+                    $resolutionSeconds[$orderLevel] = [crfSlaSeconds((float) $orderValue, (string) $orderUnit), slaLabel($orderValue, $orderUnit)];
                 }
-                $extra['sla_respon_' . $responKey . 'nilai'] = $responValue;
-                $extra['sla_respon_' . $responKey . 'satuan'] = $responValue !== null ? $responUnit : null;
             }
-
+            foreach ([['Tinggi', 'Normal'], ['Normal', 'Rendah'], ['Tinggi', 'Rendah']] as [$faster, $slower]) {
+                if (isset($resolutionSeconds[$faster], $resolutionSeconds[$slower])
+                    && $resolutionSeconds[$faster][0] > $resolutionSeconds[$slower][0]
+                    && !(($faster === 'Tinggi' && $slower === 'Rendah') && isset($resolutionSeconds['Normal']))
+                ) {
+                    $errors[] = 'Resolution Time ' . $faster . ' (' . $resolutionSeconds[$faster][1] . ') tidak boleh lebih lama dari ' . $slower . ' (' . $resolutionSeconds[$slower][1] . ').';
+                }
+            }
+            // Resolution Time harus lebih besar dari target Response PIC (global) pada urgensi yang sama
+            // (Tinggi/Rendah yang kosong ikut Normal, sama seperti saat dipakai di CRF).
+            if (crfRespTableReady($pdo)) {
+                $resolutionByLevel = [
+                    'Normal' => [$slaValue, $slaUnit],
+                    'Tinggi' => [$extra['sla_tinggi_nilai'] ?? null, $extra['sla_tinggi_satuan'] ?? null],
+                    'Rendah' => [$extra['sla_rendah_nilai'] ?? null, $extra['sla_rendah_satuan'] ?? null],
+                ];
+                foreach (['Tinggi', 'Normal', 'Rendah'] as $level) {
+                    $res = $resolutionByLevel[$level][0] !== null ? $resolutionByLevel[$level] : $resolutionByLevel['Normal'];
+                    $resp = crfRespTarget($pdo, 'PIC_MULAI', $level);
+                    if ($res[0] === null || $resp === null) {
+                        continue;
+                    }
+                    if (crfSlaSeconds($resp['value'], $resp['unit']) >= crfSlaSeconds((float) $res[0], (string) $res[1])) {
+                        $errors[] = 'Resolution Time ' . $level . ' (' . slaLabel($res[0], $res[1]) . ') harus lebih besar dari target Response PIC ' . $level . ' (' . slaLabel($resp['value'], $resp['unit']) . ').';
+                    }
+                }
+            }
             $legacy = $_POST['kategori_perubahan_lama'] ?? 'Lainnya';
             if (!in_array($legacy, ['Aplikasi', 'Infrastruktur', 'Proses', 'Security', 'Lainnya'], true)) {
                 $errors[] = 'Kelompok kategori laporan tidak valid.';
@@ -196,11 +215,11 @@ try {
                     VALUES (:category_id, :pengguna_id, :pengguna_nama)
                     ON DUPLICATE KEY UPDATE pengguna_nama = VALUES(pengguna_nama)
                 ')->execute(['category_id' => $categoryId, 'pengguna_id' => $userId, 'pengguna_nama' => $memberName]);
-                $message = $memberName . ' ditambahkan sebagai PIC CRF kategori ' . $category['nama'] . '.';
+                $message = $memberName . ' ditambahkan sebagai PIC Otomasi kategori ' . $category['nama'] . '.';
             } else {
                 $pdo->prepare('DELETE FROM crf_kategori_pic WHERE kategori_id = :category_id AND pengguna_id = :pengguna_id')
                     ->execute(['category_id' => $categoryId, 'pengguna_id' => $userId]);
-                $message = $memberName . ' dihapus dari PIC CRF kategori ' . $category['nama'] . '.';
+                $message = $memberName . ' dihapus dari PIC Otomasi kategori ' . $category['nama'] . '.';
             }
             categoryMasterFinish('success', $message, $redirect);
             break;

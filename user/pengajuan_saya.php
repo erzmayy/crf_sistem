@@ -204,7 +204,7 @@ unset($_SESSION['flash']);
 /*
  * Judul halaman untuk browser dan breadcrumb.
  */
-$pageTitle = 'Pengajuan Saya';
+$pageTitle = 'Pengajuan CRF Saya';
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -225,7 +225,7 @@ require_once __DIR__ . '/../includes/header.php';
 
             <div class="crf-page-header">
                 <span class="pengajuan-page-eyebrow">PORTAL CRF</span>
-                <h1>Pengajuan Saya</h1>
+                <h1>Pengajuan CRF Saya</h1>
 
                 <p class="text-muted mb-0">
                     Pantau status dan tindak lanjut pengajuan perubahan Anda.

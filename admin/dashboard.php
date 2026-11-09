@@ -244,7 +244,7 @@ $urgencyDonutStyle = $urgencyStops
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$pageTitle = 'Dashboard Admin';
+$pageTitle = 'Dashboard CRF';
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -458,7 +458,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="admin-report-heading">
                 <div>
                     <h2 id="admin-sla-title">Kepatuhan SLA</h2>
-                    <p>Response Time dan Resolution Time CRF yang disetujui Kadep Operasional pada periode ini, dalam jam kerja.</p>
+                    <p>Response Time (waktu menunggu sebelum ditanggapi, semua peran) dan Resolution Time (waktu sampai selesai), dalam jam kerja.</p>
                 </div>
                 <div class="admin-sla-actions">
                     <?php if ($slaCompliance['total'] > 0): ?>
@@ -479,34 +479,58 @@ require_once __DIR__ . '/../includes/header.php';
             <?php if ($slaCompliance['total'] === 0): ?>
                 <div class="crf-empty-state">
                     <i class="bi bi-hourglass-split"></i>
-                    <p>Belum ada CRF yang disetujui Kadep Operasional pada periode ini, jadi belum ada data SLA.</p>
+                    <p>Belum ada CRF yang disetujui Kepala Departemen Operasional pada periode ini, jadi belum ada data SLA.</p>
                 </div>
             <?php else: ?>
-                <div class="admin-sla-kpis">
-                    <?php foreach ([
-                        ['key' => 'response', 'title' => 'Response Time', 'hint' => 'Sampai PIC menekan Mulai kerjakan'],
-                        ['key' => 'resolution', 'title' => 'Resolution Time', 'hint' => 'Sampai eksekusi selesai'],
-                    ] as $kpi): ?>
-                        <?php $kpiData = $slaCompliance[$kpi['key']]; ?>
-                        <article class="admin-sla-kpi">
-                            <header>
-                                <h3><?= h($kpi['title']) ?></h3>
-                                <small><?= h($kpi['hint']) ?></small>
-                            </header>
-                            <div class="admin-sla-kpi-main">
-                                <strong class="is-<?= h($kpiData['tone']) ?>"><?= h($slaPercentLabel($kpiData['percent'])) ?></strong>
-                                <span><?= $kpiData['percent'] === null ? 'belum ada hasil' : 'tepat waktu' ?></span>
-                            </div>
-                            <div class="admin-sla-bar is-<?= h($kpiData['tone']) ?>" role="progressbar" aria-label="<?= h($kpi['title']) ?> tepat waktu" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= (int) round((float) $kpiData['percent']) ?>">
-                                <span style="width: <?= (int) round((float) $kpiData['percent']) ?>%"></span>
-                            </div>
-                            <dl class="admin-sla-kpi-meta">
-                                <div><dt>Sudah diukur</dt><dd><?= (int) $kpiData['measured'] ?> CRF</dd></div>
-                                <div><dt>Rata-rata</dt><dd><?= $kpiData['average'] !== null ? h(formatSlaDurationShort($kpiData['average'])) : '-' ?></dd></div>
-                                <div class="<?= $kpiData['open_late'] > 0 ? 'is-alert' : '' ?>"><dt>Berjalan, terlewati</dt><dd><?= (int) $kpiData['open_late'] ?></dd></div>
-                            </dl>
-                        </article>
-                    <?php endforeach; ?>
+                <?php
+                $kpiResponse = $slaCompliance['response'];
+                $kpiResolution = $slaCompliance['resolution'];
+                $kpiCombined = !empty($kpiResponse['combined']);
+                ?>
+                <div class="admin-sla-kpis admin-sla-kpis--v2">
+
+                    <!-- RESPONSE TIME: gabungan semua peran + rincian per peran -->
+                    <article class="admin-sla-kpi admin-sla-kpi--response">
+                        <header>
+                            <h3>Response Time</h3>
+                            <small><?= $kpiCombined ? 'Semua peran (CMO, Kadep, PIC)' : 'Sampai PIC menekan Mulai kerjakan' ?></small>
+                        </header>
+                        <div class="admin-sla-kpi-main">
+                            <strong class="is-<?= h($kpiResponse['tone']) ?>"><?= h($slaPercentLabel($kpiResponse['percent'])) ?></strong>
+                            <span><?= $kpiResponse['percent'] === null ? 'belum ada hasil' : 'tepat waktu' ?></span>
+                        </div>
+                        <div class="admin-sla-bar is-<?= h($kpiResponse['tone']) ?>" role="progressbar" aria-label="Response Time tepat waktu" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= (int) round((float) $kpiResponse['percent']) ?>">
+                            <span style="width: <?= (int) round((float) $kpiResponse['percent']) ?>%"></span>
+                        </div>
+                        <dl class="admin-sla-kpi-meta">
+                            <div><dt>Sudah diukur</dt><dd><?= (int) $kpiResponse['measured'] ?> <?= $kpiCombined ? 'kali' : 'CRF' ?></dd></div>
+                            <?php if (!$kpiCombined): ?>
+                                <div><dt>Rata-rata</dt><dd><?= $kpiResponse['average'] !== null ? h(formatSlaDurationShort($kpiResponse['average'])) : '-' ?></dd></div>
+                            <?php endif; ?>
+                            <div class="<?= $kpiResponse['open_late'] > 0 ? 'is-alert' : '' ?>"><dt>Berjalan, terlewati</dt><dd><?= (int) $kpiResponse['open_late'] ?></dd></div>
+                        </dl>
+
+</article>
+
+                    <!-- RESOLUTION TIME -->
+                    <article class="admin-sla-kpi admin-sla-kpi--resolution">
+                        <header>
+                            <h3>Resolution Time</h3>
+                            <small>Sampai pengerjaan selesai</small>
+                        </header>
+                        <div class="admin-sla-kpi-main">
+                            <strong class="is-<?= h($kpiResolution['tone']) ?>"><?= h($slaPercentLabel($kpiResolution['percent'])) ?></strong>
+                            <span><?= $kpiResolution['percent'] === null ? 'belum ada hasil' : 'tepat waktu' ?></span>
+                        </div>
+                        <div class="admin-sla-bar is-<?= h($kpiResolution['tone']) ?>" role="progressbar" aria-label="Resolution Time tepat waktu" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= (int) round((float) $kpiResolution['percent']) ?>">
+                            <span style="width: <?= (int) round((float) $kpiResolution['percent']) ?>%"></span>
+                        </div>
+                        <dl class="admin-sla-kpi-meta">
+                            <div><dt>Sudah diukur</dt><dd><?= (int) $kpiResolution['measured'] ?> CRF</dd></div>
+                            <div><dt>Rata-rata</dt><dd><?= $kpiResolution['average'] !== null ? h(formatSlaDurationShort($kpiResolution['average'])) : '-' ?></dd></div>
+                            <div class="<?= $kpiResolution['open_late'] > 0 ? 'is-alert' : '' ?>"><dt>Berjalan, terlewati</dt><dd><?= (int) $kpiResolution['open_late'] ?></dd></div>
+                        </dl>
+                    </article>
                 </div>
 
                 <div class="admin-sla-tables">
@@ -548,7 +572,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <div class="table-responsive">
                             <table class="admin-sla-table">
                                 <thead>
-                                    <tr><th>No. Register</th><th>Kategori</th><th>Urgensi</th><th>PIC</th><th>Response</th><th>Resolution</th></tr>
+                                    <tr><th>No. Register</th><th>Kategori</th><th>Urgensi</th><th>PIC</th><th>Response PIC</th><th>Resolution</th></tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach (array_slice($slaCompliance['violations'], 0, 10) as $violation): ?>
@@ -571,11 +595,13 @@ require_once __DIR__ . '/../includes/header.php';
                 </section>
 
                 <p class="admin-sla-note">
-                    Persentase = CRF tepat waktu dari CRF yang sudah punya hasil (sudah direspons atau eksekusi selesai).
-                    Warna: hijau 90% ke atas, kuning 75-89%, merah di bawah 75%. CRF tanpa target Response Time
-                    (disetujui sebelum fitur ini) tidak dihitung pada Response Time.
+                    Persentase = tepat waktu dari yang sudah punya hasil. Response dihitung tiap kali CRF menunggu satu peran
+                    (satu CRF bisa dihitung beberapa kali, misalnya setelah revisi); Resolution dihitung satu kali per CRF.
+                    Warna: hijau 90% ke atas, kuning 75-89%, merah di bawah 75%. Putaran tanpa target (CRF lama yang
+                    disetujui sebelum fitur ini) tidak dihitung pada persentase.
                 </p>
             <?php endif; ?>
+
             </div>
         </section>
         <script>

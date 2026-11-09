@@ -78,10 +78,10 @@ $isAssignedToOther = !empty($crf['pic_id']) && !isAssignedCrfHandler($crf);
 // Tahap OTOMASI punya tiga fase (eksekusi, perbaikan hasil UAT, isi implementasi).
 $otomasiPhase = crfOtomasiPhase($crf);
 $otomasiPhaseMeta = [
-    'eksekusi' => ['title' => 'Eksekusi / Tangani Permintaan', 'action' => 'execute', 'button' => 'Selesai Eksekusi · Kirim ke UAT', 'icon' => 'bi-play-circle'],
+    'eksekusi' => ['title' => 'Pengerjaan / Tangani Permintaan', 'action' => 'execute', 'button' => 'Selesai Pengerjaan · Kirim ke UAT', 'icon' => 'bi-play-circle'],
     'perbaikan' => ['title' => 'Perbaikan Hasil UAT', 'action' => 'resubmit_uat', 'button' => 'Kirim Ulang ke UAT', 'icon' => 'bi-arrow-repeat'],
     'implementasi' => ['title' => 'Implementasi', 'action' => 'complete', 'button' => 'Implementasikan', 'icon' => 'bi-journal-check'],
-][$otomasiPhase] ?? ['title' => 'Eksekusi / Tangani Permintaan', 'action' => 'execute', 'button' => 'Selesai Eksekusi · Kirim ke UAT', 'icon' => 'bi-play-circle'];
+][$otomasiPhase] ?? ['title' => 'Pengerjaan / Tangani Permintaan', 'action' => 'execute', 'button' => 'Selesai Pengerjaan · Kirim ke UAT', 'icon' => 'bi-play-circle'];
 
 // CRF dengan target Response Time harus diambil dulu: sebelum itu hanya tombol "Mulai kerjakan" yang tampil.
 // CRF lama tanpa target Response Time tetap memakai alur sebelumnya.
@@ -107,7 +107,7 @@ if ($otomasiPhase === 'perbaikan') {
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$pageTitle = 'Otomasi - Eksekusi CRF';
+$pageTitle = 'Detail CRF - ' . ($crf['nomor_register'] ?? '');
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -117,7 +117,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="container">
 
         <?php
-        $dhEyebrow = 'Eksekusi PIC CRF';
+        $dhEyebrow = 'Pengerjaan PIC Otomasi';
         $dhShowExport = false;
         require __DIR__ . '/../includes/partials/detail_header.php';
         ?>
@@ -153,7 +153,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="alert alert-warning crf-alert">
             <i class="bi bi-person-lock"></i>
             CRF ini sedang ditangani oleh <strong><?= h($crf['pic_nama'] ?? '-') ?></strong>.
-            Hanya PIC CRF tersebut yang dapat memprosesnya.
+            Hanya PIC Otomasi tersebut yang dapat memprosesnya.
         </div>
         <?php elseif ($mustStart): ?>
         <form action="<?= h(crfActionUrl('automation_start.php')) ?>" method="POST" class="crf-action-bar" data-loading-form>
@@ -187,7 +187,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 
                 <!-- =================================================
-                     2. EKSEKUSI PERUBAHAN
+                     2. PENGERJAAN PERUBAHAN
                      ================================================= -->
 
                 <div class="crf-section crf-detail-card crf-action-card mb-4">
@@ -295,13 +295,13 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="crf-action-bar">
                     <div class="crf-action-bar-text">
                         <?php if ($otomasiPhase === 'eksekusi'): ?>
-                            <strong>Eksekusi sudah selesai?</strong>
-                            SLA berhenti dan CRF dikirim ke CMO untuk UAT (UAT tidak dihitung dalam SLA).
+                            <strong>Pengerjaan sudah selesai?</strong>
+                            Resolution Time berhenti dan CRF dikirim ke CMO untuk UAT (UAT tidak dihitung dalam Resolution Time).
                         <?php elseif ($otomasiPhase === 'perbaikan'): ?>
                             <strong>Perbaikan sudah selesai?</strong>
-                            Kirim ulang ke CMO untuk UAT. Waktu perbaikan tidak dihitung dalam SLA.
+                            Kirim ulang ke CMO untuk UAT. Waktu perbaikan tidak dihitung dalam Resolution Time.
                         <?php else: ?>
-                            <strong>Implementasi sudah selesai?</strong>
+                            <strong>Pengerjaan sudah selesai?</strong>
                             CRF diteruskan ke Pemohon untuk PIR.
                         <?php endif; ?>
                     </div>

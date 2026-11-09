@@ -118,7 +118,7 @@ $logStmt->execute(['id' => $id]);
 $timeline = $logStmt->fetchAll();
 
 
-$pageTitle = 'Otomasi - Detail CRF';
+$pageTitle = 'Detail CRF - ' . ($crf['nomor_register'] ?? '');
 
 require_once __DIR__ . '/../includes/header.php';
 ?>

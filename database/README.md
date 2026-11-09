@@ -48,7 +48,13 @@ Skrip pemeliharaan (jalankan dari terminal, bukan browser):
 
 - `maintenance/kirim_peringatan_sla.php` — mengirim peringatan SLA ke PIC CRF. **Jadwalkan tiap 5 menit** (Windows Task Scheduler atau cron), mis. `php C:\path\crf_sistem\database\maintenance\kirim_peringatan_sla.php`.
 
-Migrasi baru berikutnya diberi nomor `026_...`.
+Migrasi 026 (SLA Response Time PIC) dan 027 (`crf_notifikasi.status_wa`) ada di folder `migrations/`.
+
+| No | Berkas | Isi |
+|---|---|---|
+| 028 | `sla_respon_tahap_migration.sql` | **Response Time per tahap** untuk CMO (verifikasi, UAT, finalisasi), Kadep, dan PIC (mulai dikerjakan, disalin dari kolom `sla_respon_*`): tabel `crf_sla_respon` (satu baris per putaran) dan `crf_sla_respon_target` (tahap x urgensi untuk semua peran; usulan awal: CMO verifikasi 30 menit/2 jam/4 jam, Kadep 1 jam/4 jam/1 hari, PIC 1 jam/2 jam/4 jam, UAT dan finalisasi tanpa target). Hanya CRF baru yang terukur. Aman dijalankan ulang. |
+
+Migrasi baru berikutnya diberi nomor `029_...`.
 
 > Migrasi 001–022 di atas ditulis dengan nama tabel lama (bahasa Inggris). Untuk instalasi baru tidak perlu dijalankan; cukup `schema.sql`.
 

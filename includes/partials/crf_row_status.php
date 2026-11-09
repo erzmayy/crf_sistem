@@ -35,7 +35,18 @@ $rowWaiting = $rowWaiting ?? null;
                 <?= $rowWaiting['short'] === 'baru saja' ? 'Baru masuk' : 'Menunggu ' . h($rowWaiting['short']) ?>
             </span>
         <?php endif; ?>
+        <?php
+        // Response Time tahap (CMO, Kadep): penanda hanya saat mendesak atau terlewati. Tidak untuk Pemohon.
+        $rowResp = (!$rowPemohonView && empty($rowHideResp) && !empty($row['id'])) ? crfRespOpenRow(getConnection(), (int) $row['id']) : null;
+        $rowRespStatus = $rowResp ? crfRespRowStatus($rowResp) : null;
+        ?>
+        <?php if ($rowRespStatus !== null && !empty($rowRespStatus['alert'])): ?>
+            <span class="crf-badge <?= $rowRespStatus['alert'] === 'overdue' ? 'badge-status-cancel' : 'badge-status-revisi' ?>" title="<?= h($rowRespStatus['detail']) ?>">
+                <i class="bi bi-<?= $rowRespStatus['alert'] === 'overdue' ? 'exclamation-triangle-fill' : 'clock-fill' ?>" aria-hidden="true"></i>
+                <?= $rowRespStatus['alert'] === 'overdue' ? 'Response melewati target' : 'Response mendesak' ?>
+            </span>
+        <?php endif; ?>
     </div>
 </td>
 <?php
-unset($rowStage, $rowPemohonView, $rowWaiting);
+unset($rowStage, $rowPemohonView, $rowWaiting, $rowResp, $rowRespStatus, $rowHideResp);

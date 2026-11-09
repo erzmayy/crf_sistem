@@ -274,7 +274,7 @@ function crfRoleLabel(string $role): string
         case 'cmo':
             return 'CMO';
         case 'otomasi':
-            return 'PIC CRF';
+            return 'PIC Otomasi';
         case 'kadep_operasional':
             return 'Kepala Departemen Operasional';
         case 'admin':

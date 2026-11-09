@@ -6,7 +6,7 @@ Isi: 1 Ringkasan, 2 Peta berkas, 3 Peran dan akses, 4 Alur, 5 Data, 6 Urgensi da
 
 ## 1. Ringkasan
 
-Change Request Form (CRF): pengajuan, persetujuan, eksekusi, UAT, dan pelaporan permintaan perubahan, dengan modul Forum dan Notifikasi. PHP native (PDO) dan MySQL, tanpa framework. Library Composer (`vendor/`, tidak masuk git): `dompdf/dompdf` (PDF), `phpmailer/phpmailer` (email), `aws/aws-sdk-php` (lampiran di storage S3/Wasabi). Zona waktu `Asia/Jakarta` (diset di `config/database.php`, koneksi `+07:00`).
+Change Request Form (CRF): pengajuan, persetujuan, pengerjaan, UAT, dan pelaporan permintaan perubahan, dengan modul Forum dan Notifikasi. PHP native (PDO) dan MySQL, tanpa framework. Library Composer (`vendor/`, tidak masuk git): `dompdf/dompdf` (PDF), `phpmailer/phpmailer` (email), `aws/aws-sdk-php` (lampiran di storage S3/Wasabi). Zona waktu `Asia/Jakarta` (diset di `config/database.php`, koneksi `+07:00`).
 
 Helpdesk dipegang modul Helpdesk SIAP; modul Helpdesk di CRF sudah dihapus (migrasi 022).
 
@@ -29,7 +29,7 @@ CRF berjalan dua cara dengan kode yang sama: mandiri (`standalone`, login dan la
 | `includes/partials/` | Potongan tampilan bersama: `informasi_sla`, `informasi_pengajuan`, `detail_header`, `detail_permintaan`, `timeline`, `handler_assignment`, `category_members`, `crf_list_filters`, `crf_list_pagination`, `crf_row_request`, `crf_row_status`, `forum_button`, `uat_upload_form` |
 | `config/` | `siap.php` (sumber user, peran, mode layout, WA), `sla.php` (jam kerja, libur), `urgensi.php` (bobot), `database.php`; contoh: `mail.example.php`, `wasabi.example.php`, `dev_login.example.php` |
 | `assets/` | `css/style.css`, `css/bootstrap-scoped.css` (dibuat otomatis, jangan diedit), `js/script.js`, `forum.js`, `integration.js`, `img/logo-header.png` |
-| `database/` | `schema.sql` (instalasi baru), `migrations/001-027`, `maintenance/` (cron dan ekspor) |
+| `database/` | `schema.sql` (instalasi baru), `migrations/001-028`, `maintenance/` (cron dan ekspor) |
 | `tools/` | Skrip bantu: `check_login.php`, `uji_urgensi.php`, `wasabi_make_private.php` |
 | `index.php`, `login.php`, `logout.php` | Pintu masuk mandiri. Tidak dipakai di SIAP |
 
@@ -50,8 +50,8 @@ Peran dihitung dari data user SIAP (`CRF_USER_SOURCE = 'siap_db'` membaca `siap.
 |---|---|---|
 | Pemohon | semua user lain | ajukan CRF, revisi, isi PIR |
 | CMO | departemen user ada di `CRF_CMO_DEPTS` (`CMO`); tidak ada daftar userid CMO | verifikasi, UAT, finalisasi, Forum (ajukan dan catat hasil) |
-| Otomasi / PIC CRF | `CRF_OTOMASI_USERIDS` atau handler kategori | mulai kerjakan, eksekusi, implementasi |
-| Kadep Operasional | `CRF_KADEP_OPERASIONAL_USERIDS` | setujui sebelum eksekusi |
+| Otomasi (tampil sebagai PIC Otomasi) | `CRF_OTOMASI_USERIDS` atau handler kategori | mulai kerjakan, pengerjaan, implementasi |
+| Kadep Operasional | `CRF_KADEP_OPERASIONAL_USERIDS` | setujui sebelum pengerjaan |
 | Admin | `CRF_ADMIN_USERIDS`, hak tambahan di atas peran kerja | pantau, laporan, kelola kategori dan handler, tugaskan ulang, batalkan |
 | Demo | `CRF_DEMO_USERIDS` hanya bila `CRF_DEMO_MODE` true | semua peran, untuk presentasi |
 
@@ -62,7 +62,7 @@ Dua lapis akses (jangan dicampur): CRF mengecek peran sendiri lewat `requireCrfR
 ## 4. Alur
 
 ```
-Pemohon -> CMO (verifikasi) -> Kadep (setuju; SLA mulai) -> PIC (Mulai kerjakan, eksekusi) -> UAT oleh CMO
+Pemohon -> CMO (verifikasi) -> Kadep (setuju; SLA mulai) -> PIC (Mulai kerjakan, pengerjaan) -> UAT oleh CMO
   UAT perlu perbaikan: kembali ke PIC, lalu UAT ulang
   UAT lulus: PIC isi tanggal dan hasil implementasi -> Pemohon isi PIR -> CMO finalisasi -> Selesai
 CMO boleh mengajukan pembahasan Forum; hasil (Tetap/Diubah) mencatat level urgensi dan SLA, lalu CRF langsung ke Kadep.
@@ -71,13 +71,17 @@ CMO boleh meminta revisi (kembali ke Pemohon) atau membatalkan. Admin boleh memb
 
 Tahap (`crf_pengajuan.tahap_alur`): `PEMOHON`, `CMO_FILTER`, `kadep_operasional`, `OTOMASI`, `UAT`, `PEMOHON_PIR`, `CMO_FINAL`, `SELESAI`. Status (`status`): `Draft`, `Belum Ditindak Lanjuti` (Menunggu Tindakan), `Perlu Revisi`, `Dalam Proses` (Sedang Diproses), `Solve` (Selesai), `Cancel` (Dibatalkan). Label: `statusLabel()`, `workflowStageLabel()`.
 
+(Tampilan: fase "eksekusi" disebut Pengerjaan, sedangkan Implementasi hanya untuk fase ketiga (isi hasil implementasi setelah UAT lulus). Kunci fase kode `'eksekusi'` dan nilai aktivitas riwayat `Eksekusi Selesai` tidak diganti; riwayat menampilkannya sebagai "Pengerjaan Selesai".)
+
 Tahap `OTOMASI` dipakai tiga kali, dibedakan `crfOtomasiPhase()`: eksekusi (`otomasi_selesai` kosong), perbaikan hasil UAT (`otomasi_selesai` ada, `tgl_uat_lulus` kosong), isi implementasi (`tgl_uat_lulus` ada). Aksi divalidasi menurut fase di server, jadi UAT tidak bisa dilewati. Aksi yang tidak cocok dengan tahap ditolak dengan pesan "Aksi tidak tersedia pada tahap CRF saat ini" (biasa terjadi bila tombol diklik dua kali atau halaman lama dipakai); datanya aman.
+
+Nilai tersimpan versi lama tetap dipakai sebagai kunci dan dipetakan saat ditampilkan (`timeline.php`): aktivitas `Lolos Filter CMO` (tampil Verifikasi CMO), `Approval Kepala Departemen Operasional` (Persetujuan ...), `Eksekusi Selesai` (Pengerjaan Selesai), `Otomasi Selesai` (Implementasi Selesai); status `Solve` dan `Cancel` (Selesai, Dibatalkan); kunci tahap `kadep_operasional` memakai huruf kecil sedangkan tahap lain kapital. Jangan mengganti nilai-nilai ini tanpa migrasi data.
 
 Setiap tindakan dicatat di `crf_log_aktivitas` lewat `logCrfActivity()` (aktivitas, deskripsi, `pelaksana` berupa nama, status lama dan baru). Riwayat di halaman detail membaca tabel ini.
 
 ## 5. Data
 
-Tabel (semua awalan `crf_`; nama tabel dan kolom sudah berbahasa Indonesia sejak migrasi 023 dan 024): `crf_pengajuan` (inti), `crf_nomor_urut`, `crf_lampiran`, `crf_log_aktivitas`, `crf_peran_pengguna`, `crf_forum_komentar`, `crf_forum_status_baca`, `crf_forum_pembahasan`, `crf_kategori`, `crf_kategori_pic`, `crf_notifikasi`, `crf_peringatan_sla`. Instalasi baru cukup `schema.sql`; database berjalan memakai migrasi bernomor berurutan.
+Tabel (semua awalan `crf_`; nama tabel dan kolom sudah berbahasa Indonesia sejak migrasi 023 dan 024): `crf_pengajuan` (inti), `crf_nomor_urut`, `crf_lampiran`, `crf_log_aktivitas`, `crf_peran_pengguna`, `crf_forum_komentar`, `crf_forum_status_baca`, `crf_forum_pembahasan`, `crf_kategori`, `crf_kategori_pic`, `crf_notifikasi`, `crf_peringatan_sla`, `crf_sla_respon`, `crf_sla_respon_target`. Instalasi baru cukup `schema.sql`; database berjalan memakai migrasi bernomor berurutan.
 
 `crf_pengajuan` (kolom penting): `nomor_register` (unik), `pengguna_id` (id di `tbl_user`), `nama_pemohon`, `dept_asal`, `dept_tujuan`, `kategori_perubahan` (Aplikasi, Infrastruktur, Proses, Security, Lainnya), `kategori_id`, `deskripsi_perubahan`, `dampak_dipilih`, `skor_urgensi`, `level`, `level_urgensi_final`, `status`, `tahap_alur`, `pic_id`, `pembahasan_forum_terbuka`, kolom SLA (`sla_nilai`, `sla_satuan`, `sla_mulai`, `sla_tenggat`, `sla_respon_*`), `otomasi_mulai`, `otomasi_selesai`, `tgl_uat_lulus`, `tgl_disetujui_kadep`, `tgl_selesai`, `tgl_dibatalkan`, `tanggapan_tindak_lanjut`. Aturan wajib isi ditegakkan di PHP (`actions/submit_crf.php`), bukan di skema.
 
@@ -91,19 +95,21 @@ Tipe Problem tidak lagi ditawarkan di form CRF baru (diproses di Helpdesk SIAP; 
 
 SLA (`config/sla.php`, `includes/functions.php`): hanya hari dan jam kerja, 08:00-17:00, tanpa Sabtu, Minggu, dan libur di `CRF_SLA_HOLIDAYS` (perbarui tiap tahun). Satu hari SLA = satu hari kerja penuh. Dua ukuran:
 - Response Time: dari persetujuan Kadep sampai PIC menekan Mulai kerjakan.
-- Resolution Time: dari persetujuan Kadep sampai PIC menyelesaikan eksekusi. SLA berhenti saat eksekusi selesai; UAT dan perbaikan tidak dihitung ulang.
+- Resolution Time: dari persetujuan Kadep sampai PIC menyelesaikan pengerjaan. SLA berhenti saat pengerjaan selesai; UAT dan perbaikan tidak dihitung ulang.
 
-Target dari matriks kategori x level urgensi (`crfCategorySlaMatrix`, `crfCategoryResponMatrix`), disalin ke CRF saat Kadep menyetujui. Sebelum disetujui, SLA belum berjalan dan panel Informasi SLA menampilkan keterangan "SLA dimulai setelah persetujuan Kepala Departemen Operasional" beserta target perkiraan.
+Response Time per tahap (migrasi 028, `includes/functions.php` bagian "Response Time per tahap"): semua peran selain Pemohon punya target respon, satu baris `crf_sla_respon` per putaran. Tahap: `PIC_MULAI` (Kadep menyetujui sampai PIC menekan Mulai kerjakan), `CMO_VERIFIKASI` (CRF masuk antrean CMO sampai keputusan pertama), `KADEP` (sampai setuju atau tolak), `CMO_UAT` (dikirim ke UAT sampai lulus atau perbaikan), `CMO_FINAL` (PIR diisi sampai finalisasi). Jam berhenti pada tindakan pertama, tidak berjalan saat CRF di Pemohon atau PIC, dan berhenti saat pembahasan Forum dibuka (CMO sudah merespons dengan mengajukannya); dibatalkan menutup baris tanpa penilaian. `crfRespSync()` idempoten dan dipanggil dari `logCrfActivity()`, jadi semua aksi yang tercatat otomatis tercakup; ia diam bila tabel belum ada. Target dari `crf_sla_respon_target` (tahap x urgensi, satu tabel untuk semua peran; usulan awal, perlu persetujuan atasan: CMO verifikasi 30 menit/2 jam/4 jam, Kadep 1 jam/4 jam/1 hari, PIC 1 jam/2 jam/4 jam; UAT dan finalisasi sengaja tanpa target karena yang diukur keputusan akhir, bukan sekadar mulai, jadi hanya lamanya yang dicatat di Riwayat). Tampil hanya untuk peran internal, sederhana: keterangan "Respon CMO: 2 Menit · tepat waktu" pada entri Riwayat yang menutup satu tahap dan "Menunggu CMO · sisa ..." pada langkah yang sedang menunggu (`timeline.php`, entri dicocokkan dengan baris respon lewat waktu terdekat maks. 10 detik), plus penanda mendesak atau terlewati di daftar (`crf_row_status`). Panel Informasi SLA hanya memuat Resolution Time. Peringatan `crfSendTahapAlerts()` (jenjang sama dengan Resolution: pengingat 50% bila target minimal 1 jam, mendesak sekali, terlewati diulang tiap hari kerja; berlaku untuk semua tahap termasuk PIC; terlewati pertama dieskalasi ke Admin; WA hanya mendesak dan terlewati). Response Time PIC: target dari tabel global `crf_sla_respon_target` (tahap `PIC_MULAI`, sama untuk semua kategori; matriks lama per kategori hanya cadangan bila tabel belum diisi) dan dibekukan di kolom `sla_respon_*` saat Kadep menyetujui (kolom itu tetap ditulis `recordCrfResponse()`); barisnya disalin ke `crf_sla_respon` oleh `crfRespSync()`. Tanpa baris di tabel (migrasi belum dijalankan), keterangan Riwayat tidak muncul dan daftar Otomasi tetap memakai kolom lama.
 
-Peringatan SLA ke PIC (`includes/sla_alerts.php`, dijalankan `database/maintenance/kirim_peringatan_sla.php`): pengingat 50% (dilewati bila SLA di bawah 1 jam), mendesak (sisa waktu di bawah atau sama dengan 25% SLA atau 1 jam), terlewati (diulang tiap hari kerja); untuk Response Time: mendesak dan terlewati. Penanda anti-ganda di `crf_peringatan_sla`. Skrip lain: `hitung_tenggat_sla.php`, `ekspor_portabel.php` (manual).
+Target Resolution Time dari matriks kategori x level urgensi (`crfCategorySlaMatrix`), disalin ke CRF saat pengajuan (bisa berubah lewat hasil Forum); batasnya dihitung saat Kadep menyetujui. Target Response Time dari tabel global `crf_sla_respon_target` (lihat di atas); `crfCategoryResponMatrix` hanya cadangan. Sebelum disetujui, Resolution Time belum berjalan dan panel Informasi SLA menampilkan keterangan "Resolution Time dimulai setelah persetujuan Kepala Departemen Operasional" beserta target perkiraan.
+
+Peringatan Resolution Time ke PIC Otomasi (`includes/sla_alerts.php`, dijalankan `database/maintenance/kirim_peringatan_sla.php`): pengingat 50% (dilewati bila di bawah 1 jam), mendesak (sisa waktu di bawah atau sama dengan 25% atau 1 jam), terlewati (diulang tiap hari kerja); penanda anti-ganda di `crf_peringatan_sla`. Peringatan Response Time semua peran dengan jenjang yang sama (`crfSendTahapAlerts()`, penanda di kolom `peringatan_*` pada `crf_sla_respon`; terlewati pertama dieskalasi ke Admin) dijalankan oleh skrip yang sama. Skrip lain: `hitung_tenggat_sla.php`, `ekspor_portabel.php` (manual).
 
 ## 7. Forum
 
-Ruang diskusi per CRF (`forum/`). Akses: CMO, Otomasi, Admin, Kadep, Demo (`forumRoles()`). Pemohon tidak punya akses Forum. Hanya CMO (dan demo) yang boleh mengajukan pembahasan (`forumRequestDiscussion`); hasil dicatat CMO atau Admin (`forumResultRoles()`). Saat SLA default belum tersedia, sistem membuka pembahasan sendiri. Selama pembahasan terbuka (`pembahasan_forum_terbuka = 1`), CMO belum bisa meneruskan CRF ke Kadep. Hasil Tetap atau Diubah memperbarui `level_urgensi_final`, `level`, dan SLA, lalu CRF langsung ke Kadep. Pembahasan yang melewati target diingatkan (`forumSendDueReminders`). Komentar sistem otomatis dicatat. Angka komentar belum dibaca: `forumUnreadCounts()` (`crf_forum_status_baca`).
+Ruang diskusi per CRF (`forum/`). Akses: CMO, Otomasi, Admin, Kadep, Demo (`forumRoles()`). Pemohon tidak punya akses Forum. Hanya CMO (dan demo) yang boleh mengajukan pembahasan (`forumRequestDiscussion`); hasil hanya dicatat CMO (`forumResultRoles()`; Admin tidak lagi). Saat SLA default belum tersedia, sistem membuka pembahasan sendiri. Selama pembahasan terbuka (`pembahasan_forum_terbuka = 1`), CMO belum bisa meneruskan CRF ke Kadep. Hasil Tetap atau Diubah memperbarui `level_urgensi_final`, `level`, dan SLA, lalu CRF langsung ke Kadep. Pembahasan yang melewati target diingatkan (`forumSendDueReminders`). Komentar sistem otomatis dicatat. Angka komentar belum dibaca: `forumUnreadCounts()` (`crf_forum_status_baca`).
 
 ## 8. Kategori dan PIC
 
-Lima kategori CRF (`crf_kategori`), masing-masing punya PIC CRF (handler, `crf_kategori_pic`) dan matriks SLA (resolution dan response). Dikelola Admin di `admin/master_data.php` dan `crf/handling.php`. PIC kategori menangani CRF kategorinya; `canHandleCrf()` membatasi handler pada kategori yang ditanganinya. PIC yang menekan Mulai kerjakan menjadi pemegang CRF (`pic_id`).
+Lima kategori CRF (`crf_kategori`), masing-masing punya PIC Otomasi (handler, `crf_kategori_pic`; sebelumnya disebut PIC CRF) dan matriks Resolution Time per urgensi (target Response ada di tabel global; kolom Response per kategori hanya cadangan). Dikelola Admin di `admin/master_data.php` dan `crf/handling.php`. PIC kategori menangani CRF kategorinya; `canHandleCrf()` membatasi handler pada kategori yang ditanganinya. PIC yang menekan Mulai kerjakan menjadi pemegang CRF (`pic_id`).
 
 ## 9. Notifikasi
 
@@ -179,7 +185,8 @@ Email: SMTP SIAP (`tbl_email_settings`). WA: antrean `tbl_wa_send`. Cron peringa
 
 ## 15. Status dan hal tertunda
 
-- Cron peringatan SLA belum dipasang di server.
+- Response Time per tahap (CMO, Kadep, PIC): kode dan migrasi 028 sudah ada di lokal; belum diunggah ke server dan migrasi 028 belum dijalankan di database `siap`. Target semua peran diatur Admin di `admin/master_data.php` (bagian bawah, disimpan `actions/sla_respon_target.php`); target PIC harus lebih kecil dari Resolution terkecil di semua kategori, dan Resolution kategori harus lebih besar dari target PIC (divalidasi dua arah); urutan Resolution per urgensi juga dijaga (Tinggi <= Normal <= Rendah). Panel Kepatuhan SLA di dashboard menampilkan satu angka Response Time gabungan semua peran (`getAdminCrfRespCombined()`, dihitung tiap kali CRF menunggu satu peran), sedangkan daftar "CRF yang Melewati SLA" dan kolom per CRF tetap memakai Response PIC. Istilah status seragam: Masih dalam target, Melewati target, Sesuai target, Terlambat.
+- Cron peringatan SLA belum dipasang di server (peringatan Response Time per tahap juga bergantung padanya).
 - WA belum aktif: migrasi 027 dan pengecekan pengirim WA SIAP (kode `CRF`) belum dikonfirmasi.
 - Email notifikasi sudah terbukti terkirim dari server (CRF baru ke CMO).
 - Badge angka antrean di menu SIAP: `actions/queue_counts.php` dan `assets/js/siap_badge_crf.js` sudah dibuat di lokal; tinggal diunggah, lalu satu baris `<script src="/crf/assets/js/siap_badge_crf.js"></script>` ditempel di `footer.php` SIAP (belum).

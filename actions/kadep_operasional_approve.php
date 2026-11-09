@@ -129,12 +129,12 @@ try {
             throw new RuntimeException('Tenggat SLA tidak dapat dihitung.');
         }
 
-        // Target respon PIC dibekukan dari matriks kategori x urgensi saat ini;
-        // kategori tanpa target respon dibiarkan kosong (tidak ada SLA respon).
-        $responSla = null;
-        if (!empty($approvalCrf['kategori_id'])) {
+        // Target respon PIC dibekukan saat ini: tabel target global (sama untuk semua kategori) lebih dulu;
+        // bila belum diatur, matriks lama per kategori sebagai cadangan; tanpa keduanya tidak ada SLA respon.
+        $responUrgency = $approvalCrf['level_urgensi_final'] ?: ($approvalCrf['level'] ?: 'Normal');
+        $responSla = crfRespTableReady($pdo) ? crfRespTarget($pdo, 'PIC_MULAI', $responUrgency) : null;
+        if ($responSla === null && !empty($approvalCrf['kategori_id'])) {
             $responCategory = findCrfCategory($pdo, (int) $approvalCrf['kategori_id']);
-            $responUrgency = $approvalCrf['level_urgensi_final'] ?: ($approvalCrf['level'] ?: 'Normal');
             $responSla = $responCategory ? (crfCategoryResponMatrix($responCategory)[$responUrgency] ?? null) : null;
         }
         $responDueAt = $responSla ? slaDueAt($slaStartedAt, $responSla['value'], $responSla['unit']) : null;
@@ -182,12 +182,12 @@ try {
             $pdo,
             $id,
             'Approval Kepala Departemen Operasional',
-            'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. SLA ' . slaLabel($approvalCrf['sla_nilai'], $approvalCrf['sla_satuan'])
-                . ' mulai dihitung, batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. CRF diserahkan ke PIC CRF untuk dieksekusi.'
+            'Kepala Departemen Operasional menyetujui permintaan CRF dari CMO. Resolution Time ' . slaLabel($approvalCrf['sla_nilai'], $approvalCrf['sla_satuan'])
+                . ' mulai dihitung, batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. CRF diserahkan ke PIC Otomasi untuk dikerjakan.'
                 . ($note !== '' ? ' Catatan: ' . $note : ''),
             $actor,
             'Menunggu Persetujuan',
-            'Disetujui · Eksekusi'
+            'Disetujui · Pengerjaan'
         );
 
         // PIC CRF menerima rincian SLA; Pemohon hanya diberi tahu CRF-nya disetujui.
@@ -199,7 +199,7 @@ try {
             $pdo,
             $picRecipients,
             'CRF disetujui: ' . $crfNumber,
-            'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional. SLA mulai dihitung dan batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. PIC CRF dapat mengeksekusi CRF.',
+            'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional. Resolution Time mulai dihitung dan batas ' . date('d-m-Y H:i', strtotime($slaDueAt)) . '. PIC Otomasi dapat mengerjakan CRF.',
             $crfLink,
             $id,
             (int) $user['id'],
@@ -209,7 +209,7 @@ try {
             $pdo,
             [(int) $crf['pengguna_id']],
             'CRF disetujui: ' . $crfNumber,
-            'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional dan diteruskan ke PIC CRF untuk dieksekusi.',
+            'CRF ' . $crfNumber . ' disetujui Kepala Departemen Operasional dan diteruskan ke PIC Otomasi untuk dikerjakan.',
             $crfLink,
             $id,
             (int) $user['id'],
@@ -222,7 +222,7 @@ try {
 
         $_SESSION['flash'] = [
             'type' => 'success',
-            'message' => 'CRF berhasil disetujui. SLA mulai dihitung dan CRF diserahkan ke PIC CRF.'
+            'message' => 'CRF berhasil disetujui. Resolution Time mulai dihitung dan CRF diserahkan ke PIC Otomasi.'
         ];
 
 

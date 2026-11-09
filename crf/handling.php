@@ -72,7 +72,7 @@ $crfListExtra = $role === 'otomasi' ? ['queue' => 'all'] : [];
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$pageTitle = 'Handling Kategori CRF';
+$pageTitle = 'Handling CRF';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -81,7 +81,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-portal-banner crf-banner-with-actions">
             <div>
                 <span class="crf-portal-eyebrow">PT PERSONA PRIMA UTAMA</span>
-                <h1>Handling Kategori CRF</h1>
+                <h1>Handling CRF</h1>
                 <p>Ringkasan penanganan CRF per kategori.</p>
             </div>
             <div class="crf-banner-actions">
@@ -112,7 +112,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <i class="bi bi-collection"></i>
                 <p>
                     <?= $role === 'otomasi'
-                        ? 'Anda belum terdaftar sebagai PIC CRF kategori CRF mana pun.'
+                        ? 'Anda belum terdaftar sebagai PIC Otomasi kategori CRF mana pun.'
                         : 'Belum ada kategori CRF.' ?>
                 </p>
             </div>
@@ -138,7 +138,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <li class="is-success"><span><i class="bi bi-check-circle"></i> Selesai</span><strong><?= (int) $card['selesai'] ?></strong></li>
                     </ul>
                     <div class="crf-category-note">
-                        <i class="bi bi-people"></i> <?= (int) $card['handler_count'] ?> PIC CRF
+                        <i class="bi bi-people"></i> <?= (int) $card['handler_count'] ?> PIC Otomasi
                         · <i class="bi bi-stopwatch"></i> SLA <?= h(slaLabel($card['sla_nilai'], $card['sla_satuan'])) ?>
                         <?php if ((int) $card['lewat_sla'] > 0): ?>
                             · <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> <?= (int) $card['lewat_sla'] ?> melebihi SLA</span>

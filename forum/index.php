@@ -403,13 +403,13 @@ require_once __DIR__ . '/../includes/header.php';
                         <div>
                             <dt>Tenggat</dt>
                             <dd>
-                                <?= !empty($selectedCrf['sla_tenggat']) ? h(date('d M Y H:i', strtotime($selectedCrf['sla_tenggat']))) : '-' ?>
+                                <?= !empty($selectedCrf['sla_tenggat']) ? h(date('d-m-Y H:i', strtotime($selectedCrf['sla_tenggat']))) : '-' ?>
                                 <span class="crf-forum-tone crf-forum-tone-<?= h($slaStatus['class']) ?>"><?= h($slaStatus['label']) ?></span>
                             </dd>
                         </div>
                         <?php if (!empty($selectedCrf['pic_nama'])): ?>
                             <div>
-                                <dt>PIC CRF</dt>
+                                <dt>PIC Otomasi</dt>
                                 <dd><?= h($selectedCrf['pic_nama']) ?></dd>
                             </div>
                         <?php endif; ?>
@@ -455,14 +455,14 @@ require_once __DIR__ . '/../includes/header.php';
                                                 <?= $isSystemDiscussion
                                                     ? 'Dibuka otomatis oleh sistem'
                                                     : 'Diajukan oleh ' . h($openDiscussion['dibuka_oleh_nama']) . ' (' . h(forumRoleName($openDiscussion['dibuka_oleh_peran'])) . ')' ?>
-                                                · <?= h(date('d M Y H:i', strtotime($openDiscussion['tgl_dibuat']))) ?>
+                                                · <?= h(date('d-m-Y H:i', strtotime($openDiscussion['tgl_dibuat']))) ?>
                                             </small>
                                         </div>
                                     </div>
                                     <div class="crf-forum-pembahasan-meta">
                                         <span class="crf-forum-tone crf-forum-tone-<?= $overdue ? 'danger' : 'warning' ?>">Menunggu hasil</span>
                                         <?php if (!empty($openDiscussion['tgl_tenggat'])): ?>
-                                            <small class="crf-forum-due <?= $overdue ? 'is-overdue' : '' ?>">Target hasil <?= h(date('d M Y H:i', strtotime($openDiscussion['tgl_tenggat']))) ?><?= $overdue ? ' · terlewat' : '' ?></small>
+                                            <small class="crf-forum-due <?= $overdue ? 'is-overdue' : '' ?>">Target hasil <?= h(date('d-m-Y H:i', strtotime($openDiscussion['tgl_tenggat']))) ?><?= $overdue ? ' · terlewat' : '' ?></small>
                                         <?php endif; ?>
                                     </div>
                                 </header>
@@ -577,7 +577,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         <span class="crf-forum-tone crf-forum-tone-<?= h($lastMeta['class']) ?>"><?= h($lastMeta['label']) ?></span>
                                         <?= h(forumValuesText($lastResult['urgensi_final'], $lastResult['sla_nilai_final'], $lastResult['sla_satuan_final'])) ?>
                                         · <?= h($lastResult['diputuskan_oleh_nama'] ?? '-') ?>
-                                        · <?= h(date('d M Y H:i', strtotime($lastResult['tgl_diputuskan'] ?? $lastResult['tgl_dibuat']))) ?>
+                                        · <?= h(date('d-m-Y H:i', strtotime($lastResult['tgl_diputuskan'] ?? $lastResult['tgl_dibuat']))) ?>
                                     </span>
                                 <?php else: ?>
                                     <i class="bi bi-info-circle" aria-hidden="true"></i>
@@ -606,7 +606,7 @@ require_once __DIR__ . '/../includes/header.php';
                                             <div class="crf-forum-history-top">
                                                 <span class="crf-forum-tone crf-forum-tone-<?= h($hMeta['class']) ?>"><?= h($hMeta['label']) ?></span>
                                                 <strong>Pembahasan Level Urgensi &amp; SLA</strong>
-                                                <time><?= h(date('d M Y H:i', strtotime($item['tgl_diputuskan'] ?? $item['tgl_dibuat']))) ?></time>
+                                                <time><?= h(date('d-m-Y H:i', strtotime($item['tgl_diputuskan'] ?? $item['tgl_dibuat']))) ?></time>
                                             </div>
                                             <div class="crf-forum-history-values">
                                                 <?php if ($item['status'] === 'selesai'): ?>
@@ -673,7 +673,7 @@ require_once __DIR__ . '/../includes/header.php';
                                             <div class="crf-forum-message-heading">
                                                 <strong><?= $isOwn ? 'Anda' : h($item['pengguna_nama']) ?></strong>
                                                 <span class="crf-forum-role crf-forum-role-<?= h($item['pengguna_peran']) ?>"><?= h(crfRoleLabel($item['pengguna_peran'])) ?></span>
-                                                <time datetime="<?= h(date('c', strtotime($item['tgl_dibuat']))) ?>" title="<?= h(date('d M Y H:i', strtotime($item['tgl_dibuat']))) ?>">
+                                                <time datetime="<?= h(date('c', strtotime($item['tgl_dibuat']))) ?>" title="<?= h(date('d-m-Y H:i', strtotime($item['tgl_dibuat']))) ?>">
                                                     <?= h(date('H:i', strtotime($item['tgl_dibuat']))) ?>
                                                 </time>
                                             </div>
@@ -716,7 +716,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <div class="crf-forum-form-footer">
                             <small>
                                 <span id="forum-comment-count">0</span>/5.000 · Ctrl+Enter untuk kirim ·
-                                Peserta diskusi dan PIC CRF akan mendapat notifikasi.
+                                Peserta diskusi dan PIC Otomasi akan mendapat notifikasi.
                             </small>
                             <button type="submit" class="btn btn-crf-primary"><i class="bi bi-send"></i> Kirim</button>
                         </div>

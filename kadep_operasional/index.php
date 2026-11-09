@@ -107,7 +107,7 @@ $waitingApproval = (int) $summaryStmt->fetchColumn();
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$pageTitle = 'Kepala Departemen Operasional';
+$pageTitle = 'Persetujuan Kepala Departemen Operasional';
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -130,7 +130,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div>
                 <span class="crf-portal-eyebrow">PORTAL CRF · PERSETUJUAN PERUBAHAN</span>
                 <h1>Persetujuan Kepala Departemen Operasional</h1>
-                <p>Daftar CRF yang lolos verifikasi CMO dan menunggu persetujuan. Setelah disetujui, SLA mulai dihitung dan CRF diserahkan ke PIC CRF.</p>
+                <p>Daftar CRF yang lolos verifikasi CMO dan menunggu persetujuan. Setelah disetujui, Resolution Time mulai dihitung dan CRF diserahkan ke PIC Otomasi.</p>
             </div>
         </div>
 

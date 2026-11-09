@@ -126,7 +126,7 @@ $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
 
-$pageTitle = 'CMO - Detail CRF';
+$pageTitle = 'Detail CRF - ' . ($crf['nomor_register'] ?? '');
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -336,7 +336,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <div class="crf-section-header">
                     <span class="crf-section-number"><i class="bi bi-clipboard2-check"></i></span>
-                    <h2>Tindakan Anda: uji hasil eksekusi · Putaran <?= $uatRound ?></h2>
+                    <h2>Tindakan Anda: uji hasil pengerjaan · Putaran <?= $uatRound ?></h2>
                 </div>
 
                 <div class="crf-section-body">
@@ -344,9 +344,9 @@ require_once __DIR__ . '/../includes/header.php';
                     <p class="text-muted">
                         Otomasi
                         <?php if (!empty($crf['pic_nama'])): ?>(<strong><?= h($crf['pic_nama']) ?></strong>)<?php endif; ?>
-                        sudah menyelesaikan eksekusi<?= !empty($crf['otomasi_selesai']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['otomasi_selesai']))) : '' ?>
-                        dan SLA berhenti. Lakukan pengujian bersama PIC CRF (koordinasi lewat <strong>Diskusi Forum</strong>);
-                        waktu UAT tidak dihitung dalam SLA.
+                        sudah menyelesaikan pengerjaan<?= !empty($crf['otomasi_selesai']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['otomasi_selesai']))) : '' ?>
+                        dan Resolution Time berhenti. Lakukan pengujian bersama PIC Otomasi (koordinasi lewat <strong>Diskusi Forum</strong>);
+                        waktu UAT tidak dihitung dalam Resolution Time.
                     </p>
 
                     <?php if ($uatHandoff && trim((string) $uatHandoff['deskripsi']) !== ''): ?>
