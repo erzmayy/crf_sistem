@@ -157,7 +157,8 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
     $typeTotal = array_sum($typeCounts);
     $types = [];
     foreach ($typeCounts as $typeKey => $count) {
-        if ($typeKey === 'Belum diisi' && $count === 0) {
+        // Problem sudah tidak ditawarkan di form baru: tampil hanya bila masih ada data lama.
+        if (in_array($typeKey, ['Belum diisi', 'Problem'], true) && $count === 0) {
             continue;
         }
         $types[] = [

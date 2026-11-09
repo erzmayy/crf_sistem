@@ -12,6 +12,8 @@ yang bertanda (jalankan).
 
 Penyeragaman istilah dan tampilan (hasil tinjauan konsistensi):
 
+- Dashboard: komposisi Tipe Pengajuan tidak lagi menampilkan "Problem" bila tidak ada data (Problem tidak ditawarkan di form baru); data lama tetap tampil: `includes/admin_crf_report.php`.
+
 - Label status: satu istilah "Perlu Revisi" (sebelumnya "Ditolak / Perlu Revisi"), keterangan tahap Pemohon "Perbaikan oleh Pemohon" (sebelumnya "Menunggu Pemeriksaan"), cadangan "Menunggu Tindakan" (sebelumnya "Submitted"), tahap Otomasi "Tindak Lanjut Otomasi": `includes/functions.php`, `actions/cmo_action.php`, `includes/partials/timeline.php`
 - Format tanggal seragam `dd-mm-yyyy HH:mm` (24 jam, tanpa bulan Inggris dan AM/PM): `includes/partials/timeline.php`, `forum/index.php`, `includes/forum.php`, `includes/header.php`, `notifications/index.php`. Tidak diubah: format panjang berbahasa Indonesia di email dan keterangan antrean (`includes/crf_queue_notice.php`, `includes/notifications.php`)
 - "SLA" untuk Resolution diganti "Resolution Time" pada judul peringatan ("Resolution time terlewati/mendesak", "Pengingat resolution time") dan kalimat mulai/berhenti/tidak dihitung: `includes/sla_alerts.php`, `actions/automation_action.php`, `actions/kadep_operasional_approve.php`, `cmo/detail.php`, `otomasi/detail.php`, `otomasi/index.php`, `kadep_operasional/index.php`, `kadep_operasional/detail.php`, `includes/partials/informasi_sla.php`, `includes/partials/timeline.php`. `crfStripSlaText()` kini juga menyaring "Resolution Time" dan "Response time" agar Pemohon tetap tidak melihatnya (efek samping: kalimat "Response time tercatat" ikut tersaring untuk Pemohon)
