@@ -8,6 +8,12 @@ yang bertanda (jalankan).
 
 ---
 
+## 2026-11-06
+
+- `includes/whatsapp.php` (templat pesan WA minimalis: judul tebal, nomor CRF di baris sendiri, satu kalimat inti, baris Pemohon dan Kategori·Urgensi untuk penerima selain pemohon termasuk PIC, tautan tanpa kata "Buka:", tanpa tanda tangan perusahaan; kalimat inti maks. 200 karakter)
+
+---
+
 ## 2026-11-05
 
 - `includes/forum.php` (`forumResultRoles()` jadi CMO saja: hanya CMO yang bisa mengubah Level Urgensi dan SLA lewat hasil Forum)

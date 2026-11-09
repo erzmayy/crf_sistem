@@ -90,21 +90,67 @@ function crfWaLink(string $url): string
     return $url === '' ? $origin : $origin . crfUrlFromPath($url);
 }
 
-/** Isi pesan WhatsApp (format tebal WhatsApp dengan tanda bintang). */
-function crfWaMessage(string $title, string $message, string $link): string
+/**
+ * Isi pesan WhatsApp (tebal dengan tanda bintang). Susunan minimalis:
+ *   *Judul*
+ *   Nomor CRF
+ *
+ *   Satu kalimat inti
+ *
+ *   Pemohon  : Nama (Unit)      <- hanya untuk penerima selain pemohon
+ *   Kategori : Aplikasi · Tinggi
+ *
+ *   tautan
+ *
+ * $ctx: pemohon, unit, kategori, urgensi (semua opsional). Nomor CRF diambil dari judul.
+ */
+function crfWaMessage(string $title, string $message, string $link, array $ctx = []): string
 {
+    $title = trim($title);
     $message = trim(strip_tags($message));
-    if (mb_strlen($message) > 500) {
-        $message = mb_substr($message, 0, 497) . '...';
+
+    // Nomor dipindah ke baris sendiri; di judul dibuang, di kalimat inti diganti "CRF ini".
+    $number = '';
+    if (preg_match('/PPU-[^\s,;:)]+/', $title . ' ' . $message, $m)) {
+        $number = rtrim($m[0], '.');
+        $title = trim(str_replace($number, '', $title));
+        $title = trim(preg_replace('/\s+/', ' ', $title), " :-");
+        $quoted = preg_quote($number, '/');
+        $message = preg_replace('/\bCRF\s+' . $quoted . '/u', 'CRF ini', $message);
+        $message = str_replace($number, 'CRF ini', $message);
+    }
+    $message = trim(preg_replace('/[ \t]+/', ' ', $message));
+    if (mb_strlen($message) > 200) {
+        $message = rtrim(mb_substr($message, 0, 197)) . '...';
     }
 
-    $lines = ['*' . trim($title) . '*', '', $message];
-    if ($link !== '') {
-        $lines[] = '';
-        $lines[] = 'Buka: ' . $link;
+    $lines = ['*' . $title . '*'];
+    if ($number !== '') {
+        $lines[] = $number;
     }
     $lines[] = '';
-    $lines[] = '*PT Persona Prima Utama*';
+    $lines[] = $message;
+
+    $pemohon = trim((string) ($ctx['pemohon'] ?? ''));
+    $unit = trim((string) ($ctx['unit'] ?? ''));
+    $kategori = trim((string) ($ctx['kategori'] ?? ''));
+    $urgensi = trim((string) ($ctx['urgensi'] ?? ''));
+    $meta = [];
+    if ($pemohon !== '') {
+        $meta[] = 'Pemohon  : ' . $pemohon . ($unit !== '' ? ' (' . $unit . ')' : '');
+    }
+    if ($kategori !== '') {
+        $meta[] = 'Kategori : ' . $kategori . ($urgensi !== '' ? ' · ' . $urgensi : '');
+    }
+    if ($meta) {
+        $lines[] = '';
+        array_push($lines, ...$meta);
+    }
+
+    if ($link !== '') {
+        $lines[] = '';
+        $lines[] = $link;
+    }
 
     return implode("\n", $lines);
 }
@@ -155,7 +201,8 @@ function dispatchPendingNotificationWhatsapp(PDO $pdo, int $limit = 50): void
         $userTable = crfUserTable();
         $rows = $pdo->query("
             SELECT n.id, n.pengguna_id, n.judul, n.pesan, n.url, n.pengajuan_id,
-                   cr.pengguna_id AS pemilik_id,
+                   cr.pengguna_id AS pemilik_id, cr.nama_pemohon, cr.dept_asal, cr.kategori_perubahan,
+                   COALESCE(cr.level_urgensi_final, cr.level) AS urgensi,
                    u.userid AS recipient_userid, u.nama AS recipient_name, u.no_wa AS recipient_wa
             FROM crf_notifikasi n
             LEFT JOIN {$userTable} u ON u.id = n.pengguna_id
@@ -182,11 +229,23 @@ function dispatchPendingNotificationWhatsapp(PDO $pdo, int $limit = 50): void
 
             $message = (string) ($row['pesan'] ?? '');
             // Pemohon tidak melihat informasi SLA (sama dengan notifikasi di aplikasi).
-            if (!empty($row['pemilik_id']) && (int) $row['pemilik_id'] === (int) $row['pengguna_id'] && function_exists('crfStripSlaText')) {
+            $isOwner = !empty($row['pemilik_id']) && (int) $row['pemilik_id'] === (int) $row['pengguna_id'];
+            if ($isOwner && function_exists('crfStripSlaText')) {
                 $message = crfStripSlaText($message);
             }
 
-            $text = crfWaMessage((string) $row['judul'], $message, crfWaLink((string) ($row['url'] ?? '')));
+            // Ringkasan pemohon dan kategori hanya untuk penerima selain pemohon sendiri.
+            $ctx = [];
+            if (!$isOwner && !empty($row['pengajuan_id'])) {
+                $ctx = [
+                    'pemohon'  => (string) ($row['nama_pemohon'] ?? ''),
+                    'unit'     => (string) ($row['dept_asal'] ?? ''),
+                    'kategori' => (string) ($row['kategori_perubahan'] ?? ''),
+                    'urgensi'  => (string) ($row['urgensi'] ?? ''),
+                ];
+            }
+
+            $text = crfWaMessage((string) $row['judul'], $message, crfWaLink((string) ($row['url'] ?? '')), $ctx);
             $ok = crfWaEnqueue($pdo, $phone, (string) ($row['recipient_name'] ?? ''), $userid, 'CRF', $text);
             $update->execute(['status' => $ok ? 'sent' : 'failed', 'id' => $row['id']]);
         }
