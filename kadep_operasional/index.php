@@ -188,7 +188,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <th>Isi Pengajuan</th>
                             <th>Urgensi</th>
                             <th>Status</th>
-                            <th>SLA</th>
+                            <th>Target Resolution</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -213,7 +213,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?php $rowWaiting = $waitingInfo[(int) $row['id']] ?? null; ?>
                                 <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
 
-                                <td data-label="SLA">
+                                <td data-label="Target Resolution">
                                     <?= $row['sla_nilai'] !== null && $row['sla_satuan']
                                         ? h(rtrim(rtrim(number_format((float) $row['sla_nilai'], 2, '.', ''), '0'), '.')) . ' ' . h($row['sla_satuan'])
                                         : '-' ?>

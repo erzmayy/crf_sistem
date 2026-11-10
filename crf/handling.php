@@ -2,7 +2,7 @@
 /**
  * crf/handling.php
  * Handling Kategori CRF: kartu per kategori.
- * Handler (PIC CRF) hanya melihat kategori yang ditanganinya; Admin, CMO,
+ * Handler (PIC Otomasi) hanya melihat kategori yang ditanganinya; Admin, CMO,
  * dan Kadep melihat semua kategori.
  * Kartu bersifat dinamis mengikuti master kategori.
  */
@@ -141,7 +141,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <i class="bi bi-people"></i> <?= (int) $card['handler_count'] ?> PIC Otomasi
                         · <i class="bi bi-stopwatch"></i> SLA <?= h(slaLabel($card['sla_nilai'], $card['sla_satuan'])) ?>
                         <?php if ((int) $card['lewat_sla'] > 0): ?>
-                            · <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> <?= (int) $card['lewat_sla'] ?> melebihi SLA</span>
+                            · <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> <?= (int) $card['lewat_sla'] ?> melewati target</span>
                         <?php endif; ?>
                     </div>
                     <a href="<?= h(crfUrl($crfListRoute, $crfListExtra + ['category_id' => (int) $card['id']])) ?>" class="btn btn-crf-outline w-100 mt-auto">

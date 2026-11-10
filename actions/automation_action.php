@@ -1,18 +1,18 @@
 <?php
 /**
  * actions/automation_action.php
- * PIC CRF memproses CRF yang sudah disetujui Kepala Departemen Operasional
+ * PIC Otomasi memproses CRF yang sudah disetujui Kepala Departemen Operasional
  * (SLA berjalan sejak persetujuan). Tahap OTOMASI punya tiga fase
  * (lihat crfOtomasiPhase()); aksi yang diterima mengikuti fase CRF:
  *
- *   eksekusi     -> execute      : eksekusi selesai, SLA berhenti, CRF dikirim ke UAT (CMO)
+ *   eksekusi     -> execute      : pengerjaan selesai, SLA berhenti, CRF dikirim ke UAT (CMO)
  *   perbaikan    -> resubmit_uat : perbaikan hasil UAT selesai, kirim ulang ke UAT
  *   implementasi -> complete     : setelah UAT lulus, catat tanggal dan hasil implementasi,
  *                                  lalu CRF diteruskan ke Pemohon untuk PIR
  *
- * Waktu eksekusi selesai (otomasi_selesai) hanya diisi sekali, sehingga
+ * Waktu pengerjaan selesai (otomasi_selesai) hanya diisi sekali, sehingga
  * UAT dan perbaikannya tidak dihitung dalam SLA.
- * PIC CRF tidak menentukan atau mengubah Level Urgensi & SLA.
+ * PIC Otomasi tidak menentukan atau mengubah Level Urgensi & SLA.
  */
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
@@ -77,7 +77,7 @@ try {
         $failRedirect('CRF tidak ditemukan pada daftar pengerjaan.', crfUrl('otomasi.index'));
     }
 
-    // Hanya PIC CRF kategori CRF ini.
+    // Hanya PIC Otomasi kategori CRF ini.
     if (!canHandleCrf($pdo, $crf)) {
         $failRedirect('CRF ini bukan kategori yang Anda tangani.', crfUrl('otomasi.index'));
     }
@@ -114,7 +114,7 @@ try {
                 )
             );
 
-        // PIR tidak diisi PIC CRF; Pemohon mengisinya setelah implementasi.
+        // PIR tidak diisi PIC Otomasi; Pemohon mengisinya setelah implementasi.
         if (!$isValidImplementationDate || $implementation === '') {
             $failRedirect(
                 'Tanggal Implementasi dan Implementasi / Hasil Perubahan wajib diisi dengan benar.',
@@ -128,7 +128,7 @@ try {
     $crfNumber = (string) ($crf['nomor_register'] ?: 'CRF #' . $id);
     $noteText = $note !== '' ? ' Catatan PIC: ' . $note : '';
 
-    // PIC CRF yang memproses tercatat sebagai pemegang CRF.
+    // PIC Otomasi yang memproses tercatat sebagai pemegang CRF.
     if (empty($crf['pic_id'])) {
         $pdo->prepare('
             UPDATE crf_pengajuan
@@ -140,7 +140,7 @@ try {
     }
 
     if ($action === 'execute') {
-        // Eksekusi selesai: SLA berhenti di sini dan tidak dihitung ulang.
+        // Pengerjaan selesai: SLA berhenti di sini dan tidak dihitung ulang.
         $stmt = $pdo->prepare("
             UPDATE crf_pengajuan
             SET otomasi_selesai = :now, tahap_alur = 'UAT', status = 'Dalam Proses'

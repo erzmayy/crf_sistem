@@ -132,7 +132,6 @@ require_once __DIR__ . '/../includes/header.php';
 
         <!-- INFORMASI PENGAJUAN -->
         <?php
-        $showStatusInGrid = true;
         require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
         ?>
 

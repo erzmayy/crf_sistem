@@ -49,7 +49,7 @@ try {
 
         case 'cancel':
             $crfId = forumCancelDiscussion($pdo, $discussionId, $user);
-            $message = 'Pembahasan dibatalkan. Level Urgensi dan SLA tetap memakai nilai sistem.';
+            $message = 'Pembahasan dibatalkan. Level Urgensi dan target Resolution Time tetap memakai nilai sistem.';
             break;
 
         default:

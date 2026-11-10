@@ -1,8 +1,8 @@
 <?php
 /**
  * Partial: Informasi SLA (hanya untuk peran internal).
- * Resolution Time (sampai eksekusi selesai). Waktu respon tiap peran ada di Riwayat (timeline.php).
- * Rincian waktu bisa dibuka.
+ * Resolution Time (sampai pengerjaan selesai). Waktu respon tiap peran ada di Riwayat (timeline.php).
+ * Satu tampilan: target, batas, selesai, durasi, bar, dan satu status (tanpa rincian berulang).
  * Atribut data-sla-* dipertahankan karena dipakai script.js untuk hitung mundur.
  *
  * Variabel yang HARUS sudah ada di scope pemanggil:
@@ -80,10 +80,7 @@ if ($slaNotStarted && ($crf['status'] ?? '') !== 'Cancel') {
                     : '' ?>
             >
                 <div class="crf-sla-panel-head" title="Dihitung sampai pengerjaan selesai">
-                    <div>
-                        <h3 class="crf-sla-panel-title">Resolution Time</h3>
-                        <p class="crf-resp-sub">Dari persetujuan Kepala Departemen Operasional sampai pengerjaan selesai.</p>
-                    </div>
+                    <p class="crf-resp-sub">Resolution Time: dari persetujuan Kepala Departemen Operasional sampai pengerjaan selesai. Waktu UAT dan perbaikan tidak dihitung ulang.</p>
                     <span class="badge text-bg-<?= h($slaStatus['class']) ?>" data-sla-status-label><?= h($slaStatus['label']) ?></span>
                 </div>
 
@@ -91,6 +88,9 @@ if ($slaNotStarted && ($crf['status'] ?? '') !== 'Cancel') {
                     <div><dt>Target</dt><dd><?= $slaValueDisplay !== null ? h($slaValueDisplay) . ' <small>jam kerja</small>' : '<span class="crf-sla-empty">Belum ditentukan</span>' ?></dd></div>
                     <div><dt>Batas</dt><dd><?= h($slaDate($crf['sla_tenggat'] ?? null)) ?></dd></div>
                     <div><dt>Selesai</dt><dd><?= !empty($crf['otomasi_selesai']) ? h($slaDate($crf['otomasi_selesai'])) : '<span class="crf-resp-pending">Belum</span>' ?></dd></div>
+                    <?php if (!empty($crf['otomasi_selesai']) && $slaStatus['elapsed'] !== null): ?>
+                        <div><dt>Durasi</dt><dd><?= h($slaStatus['elapsed']) ?></dd></div>
+                    <?php endif; ?>
                 </dl>
 
                 <?php if ($slaPercent !== null): ?>
@@ -108,7 +108,7 @@ if ($slaNotStarted && ($crf['status'] ?? '') !== 'Cancel') {
                         data-sla-alert-state="<?= h($slaStatus['alert'] ?? '') ?>"
                     >
                         <i class="bi bi-<?= $slaStatus['alert'] === 'overdue' ? 'exclamation-triangle-fill' : 'clock-fill' ?>" data-sla-alert-icon aria-hidden="true"></i>
-                        <span data-sla-alert-message><?= $slaStatus['alert'] === 'overdue' ? 'Peringatan: batas SLA telah terlewati.' : 'Perhatian: batas waktu SLA hampir terlewati.' ?></span>
+                        <span data-sla-alert-message><?= $slaStatus['alert'] === 'overdue' ? 'Peringatan: batas Resolution Time telah terlewati.' : 'Perhatian: batas waktu Resolution Time hampir terlewati.' ?></span>
                     </div>
                 <?php endif; ?>
             </div>
@@ -121,32 +121,7 @@ if ($slaNotStarted && ($crf['status'] ?? '') !== 'Cancel') {
             <?php endif; ?>
         <?php endif; /* $slaNotStarted */ ?>
 
-        <?php if (!$slaNotStarted): ?>
-            <details class="crf-sla-details">
-                <summary>Rincian waktu</summary>
-                <p class="crf-sla-legend">
-                    Semua perhitungan memakai jam kerja 08:00-17:00 (tanpa Sabtu, Minggu, dan hari libur).
-                    Resolution Time dihitung sampai pengerjaan selesai; waktu UAT dan perbaikan tidak dihitung ulang.
-                </p>
-                <dl class="crf-meta-row">
-                    <div><dt>Level urgensi</dt><dd><?= h($crf['level'] ?? 'Belum ditentukan') ?></dd></div>
-                    <div><dt>Mulai SLA</dt><dd><?= h($slaDate($crf['sla_mulai'] ?? null)) ?></dd></div>
-                    <div><dt>Batas SLA</dt><dd><?= h($slaDate($crf['sla_tenggat'] ?? null)) ?></dd></div>
-                    <div><dt>Waktu selesai</dt><dd><?= !empty($crf['otomasi_selesai']) ? h($slaDate($crf['otomasi_selesai'])) : 'Belum selesai' ?></dd></div>
-                    <div><dt>Durasi pengerjaan</dt><dd><?= $slaStatus['elapsed'] !== null ? h($slaStatus['elapsed']) : '-' ?></dd></div>
-                </dl>
-            </details>
-
-            <?php if (!empty($crf['sla_hasil'])): ?>
-                <?php $slaOnTime = $crf['sla_hasil'] === 'Sesuai SLA'; ?>
-                <div class="crf-sla-result <?= $slaOnTime ? 'is-success' : 'is-danger' ?>">
-                    <div><span class="crf-detail-label">Durasi SLA</span><strong><?= h(formatSlaDuration(((int) $crf['sla_menit_aktual']) * 60)) ?></strong></div>
-                    <div><span class="crf-detail-label">Target SLA</span><strong><?= h($slaValueDisplay ?? '-') ?></strong></div>
-                    <div><span class="crf-detail-label">Status</span><strong><?= $slaOnTime ? '✓ Sesuai SLA' : '⚠ Melebihi SLA' ?></strong></div>
-                </div>
-            <?php endif; ?>
-        <?php endif; ?>
     </div>
 </section>
 <?php
-unset($slaNotStarted, $slaNotStartedText, $slaPreviewParts, $previewUrgency, $previewCategory, $previewRespon, $slaValueDisplay, $slaStatus, $slaStandard, $slaAdjusted, $slaIsLive, $slaStartedEpoch, $slaDueEpoch, $slaDate, $slaOnTime, $slaPercent);
+unset($slaNotStarted, $slaNotStartedText, $slaPreviewParts, $previewUrgency, $previewCategory, $previewRespon, $slaValueDisplay, $slaStatus, $slaStandard, $slaAdjusted, $slaIsLive, $slaStartedEpoch, $slaDueEpoch, $slaDate, $slaPercent);

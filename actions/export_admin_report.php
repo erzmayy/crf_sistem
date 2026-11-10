@@ -131,7 +131,7 @@ if ($format === 'pdf') {
         }
 
         return '<h3>' . $heading . '</h3><table><thead><tr><th>' . $nameLabel . '</th><th>CRF</th>'
-            . '<th>Response Time</th><th>Resolution Time</th><th>CRF Melewati SLA</th></tr></thead><tbody>'
+            . '<th>Response Time</th><th>Resolution Time</th><th>CRF Melewati Target</th></tr></thead><tbody>'
             . $rows . '</tbody></table>';
     };
     $slaSection = '<h2>Kepatuhan SLA</h2><div class="muted">CRF yang disetujui Kepala Departemen Operasional pada periode ini: '
@@ -263,7 +263,7 @@ $slaSheetRows = [[
     'Dikelompokkan Menurut', 'Nama', 'CRF Disetujui',
     'Response Diukur', 'Response Tepat Waktu', 'Response %', 'Rata-rata Response',
     'Resolution Diukur', 'Resolution Tepat Waktu', 'Resolution %', 'Rata-rata Resolution',
-    'CRF Melewati SLA',
+    'CRF Melewati Target',
 ]];
 $slaSheetRows[] = [
     'Total', 'Semua kategori dan urgensi', $numberCell($slaReport['total']),

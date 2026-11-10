@@ -148,7 +148,7 @@ if (in_array($action, ['request_discussion', 'cancel_discussion'], true)) {
             forumCancelDiscussion($pdo, (int) $openDiscussion['id'], $user);
             $_SESSION['flash'] = [
                 'type' => 'success',
-                'message' => 'Pembahasan Forum dibatalkan. Level Urgensi dan SLA tetap memakai nilai sistem.',
+                'message' => 'Pembahasan Forum dibatalkan. Level Urgensi dan target Resolution Time tetap memakai nilai sistem.',
             ];
         }
         dispatchPendingNotificationEmails($pdo);
@@ -193,7 +193,7 @@ if ($action === 'to_approval') {
             dispatchPendingNotificationEmails($pdo);
             $_SESSION['flash'] = [
                 'type' => 'warning',
-                'message' => 'SLA CRF ini belum tersedia karena SLA standar kategori belum diatur. Pembahasan Forum dibuka otomatis; CMO akan menetapkan SLA sebelum CRF dapat diteruskan.',
+                'message' => 'Target Resolution Time CRF ini belum tersedia karena target standar kategori belum diatur. Pembahasan Forum dibuka otomatis; CMO akan menetapkan target Resolution Time sebelum CRF dapat diteruskan.',
             ];
             crfRedirect(crfUrl('cmo.detail', ['id' => $id]));
             exit;

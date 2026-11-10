@@ -3,7 +3,7 @@
  * Shared search and filter bar for CRF lists.
  *
  * Required variables: $listFilters, $listContextName, $listContextValue.
- * Optional: $listResetUrl.
+ * Optional: $listResetUrl, $listShowStageFilter (tampilkan pilihan Tahap alur, Dashboard Admin).
  */
 
 $listResetUrl = $listResetUrl ?? basename($_SERVER['PHP_SELF'] ?? '');
@@ -14,7 +14,8 @@ $filtersActive = ($listFilters['search'] ?? '') !== ''
     || ($listFilters['status'] ?? '') !== ''
     || ($listFilters['level'] ?? '') !== ''
     || (int) ($listFilters['category_id'] ?? 0) > 0
-    || ($listFilters['type'] ?? '') !== '';
+    || ($listFilters['type'] ?? '') !== ''
+    || (!empty($listShowStageFilter) && ($listFilters['display_status'] ?? '') !== '');
 $filterFormId = 'crf-list-filters-' . substr(md5($listResetUrl . '|' . ($listContextValue ?? '')), 0, 6);
 
 // Mode module: Reset tetap di halaman SIAP (mod & submod ikut), bukan ke index.php SIAP.
@@ -62,6 +63,24 @@ $listResetHref = crfLayoutIsModule()
             <?php endforeach; ?>
         </select>
     </label>
+
+    <?php if (!empty($listShowStageFilter)): ?>
+        <label class="crf-list-filter-field">
+            <span>Tahap</span>
+            <select name="display_status" class="form-select" aria-label="Filter tahap alur">
+                <option value="">Semua Tahap</option>
+                <?php foreach ([
+                    'menunggu' => 'Menunggu persetujuan (semua tahap)',
+                    'review' => 'Menunggu Verifikasi',
+                    'pembahasan' => 'Menunggu Pembahasan Forum',
+                    'approval' => 'Menunggu Persetujuan Kadep',
+                    'disetujui' => 'Sudah disetujui (berjalan)',
+                ] as $stageKey => $stageLabel): ?>
+                    <option value="<?= h($stageKey) ?>" <?= ($listFilters['display_status'] ?? '') === $stageKey ? 'selected' : '' ?>><?= h($stageLabel) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+    <?php endif; ?>
 
     <label class="crf-list-filter-field">
         <span>Level Urgensi</span>
@@ -114,4 +133,4 @@ $listResetHref = crfLayoutIsModule()
     </div>
 </form>
 <?php
-unset($listResetUrl, $listResetQuery, $listResetHref, $filtersActive, $filterFormId);
+unset($listResetUrl, $listResetQuery, $listResetHref, $filtersActive, $filterFormId, $listShowStageFilter);

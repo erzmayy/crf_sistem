@@ -1,7 +1,7 @@
 <?php
 /**
  * actions/automation_start.php
- * PIC CRF menekan "Mulai kerjakan" pada CRF yang sudah disetujui Kepala
+ * PIC Otomasi menekan "Mulai kerjakan" pada CRF yang sudah disetujui Kepala
  * Departemen Operasional. Waktu ini menjadi waktu respon (SLA respon) dan
  * PIC tersebut tercatat sebagai pemegang CRF. SLA penyelesaian tidak berubah.
  */

@@ -184,7 +184,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php if (!$approvalHasSla): ?>
                     <div class="alert alert-warning">
                         <i class="bi bi-exclamation-triangle"></i>
-                        SLA CRF ini belum tersedia sehingga belum dapat disetujui. Hubungi Admin.
+                        Target Resolution Time CRF ini belum tersedia sehingga belum dapat disetujui. Hubungi Admin.
                     </div>
                 <?php endif; ?>
 

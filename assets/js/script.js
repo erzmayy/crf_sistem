@@ -121,12 +121,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (remaining >= 0) {
         var approaching = remaining <= slaUrgentSeconds(slaGrid, dueAt);
-        statusBadge.textContent = 'Masih dalam SLA';
+        statusBadge.textContent = 'Masih dalam target';
         statusDetail.textContent = 'Sisa waktu ' + formatSlaDuration(remaining) + '.';
         statusBadge.className = 'badge text-bg-' + (approaching ? 'warning' : 'success');
         state = approaching ? 'approaching' : '';
       } else {
-        statusBadge.textContent = 'Melewati SLA';
+        statusBadge.textContent = 'Melewati target';
         statusDetail.textContent = 'Terlambat ' + formatSlaDuration(Math.abs(remaining)) + '.';
         statusBadge.className = 'badge text-bg-danger';
         state = 'overdue';
@@ -151,8 +151,8 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       if (alertMessage) {
         alertMessage.textContent = state === 'overdue'
-          ? 'Peringatan: batas SLA telah terlewati.'
-          : 'Perhatian: batas waktu SLA hampir terlewati.';
+          ? 'Peringatan: batas Resolution Time telah terlewati.'
+          : 'Perhatian: batas waktu Resolution Time hampir terlewati.';
       }
     });
 
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (remaining >= 0) {
         var approaching = remaining <= slaUrgentSeconds(slaCell, dueAt);
-        statusBadge.textContent = 'Masih dalam SLA';
+        statusBadge.textContent = 'Masih dalam target';
         statusBadge.className = 'badge text-bg-' + (approaching ? 'warning' : 'success');
         statusDetail.textContent = slaCell.hasAttribute('data-sla-short')
           ? 'sisa ' + formatSlaShort(remaining)
@@ -227,11 +227,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      statusBadge.textContent = 'SLA Terlewati';
+      statusBadge.textContent = 'Melewati target';
       statusBadge.className = 'badge text-bg-danger';
       statusDetail.textContent = slaCell.hasAttribute('data-sla-short')
         ? 'terlambat ' + formatSlaShort(Math.abs(remaining))
-        : 'Sudah melewati SLA selama ' + formatSlaDuration(Math.abs(remaining)) + '.';
+        : 'Sudah melewati target selama ' + formatSlaDuration(Math.abs(remaining)) + '.';
     });
   }
 

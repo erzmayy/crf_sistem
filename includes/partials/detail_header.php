@@ -10,7 +10,7 @@
  *   string $dhEyebrow     keterangan peran/halaman di atas judul
  *   bool   $dhShowForum   tampilkan tombol Diskusi Forum (bawaan true)
  *   bool   $dhShowExport  tampilkan tombol Ekspor PDF (bawaan true)
- *   bool   $dhShowSla     tampilkan lencana SLA (bawaan true; false untuk Pemohon)
+ *   bool   $dhShowSla     false untuk Pemohon (menyembunyikan istilah internal Forum di status)
  *   bool   $dhShowUrgency tampilkan lencana urgensi (bawaan true; false untuk Pemohon)
  *   string $dhNumber      nomor register yang ditampilkan (bawaan dari $crf)
  *   string $dhExtraHtml   tombol tambahan (sudah di-escape oleh pemanggil)
@@ -33,20 +33,12 @@ if (!$dhShowSla && ($dhStatus['key'] ?? '') === 'pembahasan') {
     $dhStatus = ['key' => 'review', 'label' => 'Menunggu Verifikasi', 'class' => 'badge-status-belum'];
 }
 $dhLevel = crfEffectiveUrgency($crf) ?: ($crf['level'] ?? null);
-$dhSubject = trim((string) ($crf['deskripsi_perubahan'] ?? ''));
-$dhSubject = $dhSubject !== '' ? mb_strimwidth(preg_replace('/\s+/u', ' ', $dhSubject), 0, 120, '…') : '';
-$dhSla = (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan']))
-    ? rtrim(rtrim(number_format((float) $crf['sla_nilai'], 2, '.', ''), '0'), '.') . ' ' . $crf['sla_satuan']
-    : null;
 ?>
 <header class="crf-dh">
     <div class="crf-dh-head">
         <div class="crf-dh-heading">
     <p class="crf-dh-eyebrow">Portal CRF · <?= h($dhEyebrow) ?></p>
     <h1 class="crf-dh-title"><?= h($dhNumber !== '' ? $dhNumber : 'CRF #' . (int) $crf['id']) ?></h1>
-    <?php if ($dhSubject !== ''): ?>
-        <p class="crf-dh-subject"><?= h($dhSubject) ?></p>
-    <?php endif; ?>
         </div>
         <div class="crf-dh-actions">
             <?php if ($dhShowForum) { require __DIR__ . '/forum_button.php'; } ?>
@@ -74,9 +66,6 @@ $dhSla = (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan']))
         <?php if ($dhCategory !== ''): ?>
             <span class="crf-badge crf-dh-badge-muted">Kategori <?= h($dhCategory) ?></span>
         <?php endif; ?>
-        <?php if ($dhShowSla && $dhSla !== null): ?>
-            <span class="crf-badge crf-dh-badge-muted">SLA <?= h($dhSla) ?></span>
-        <?php endif; ?>
     </div>
 </header>
 
@@ -87,4 +76,4 @@ $dhSla = (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan']))
 <?php endif; ?>
 <?php
 unset($dhEyebrow, $dhShowForum, $dhShowExport, $dhShowSla, $dhNumber,
-    $dhExtraHtml, $dhShowUrgency, $dhLevelHint, $dhStatus, $dhLevel, $dhSubject, $dhSla, $dhCategory);
+    $dhExtraHtml, $dhShowUrgency, $dhLevelHint, $dhStatus, $dhLevel, $dhCategory);

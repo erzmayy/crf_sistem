@@ -91,10 +91,10 @@ function forumParseSla($value, $unit): array
         || (float) $value < 0.01
         || (float) $value > 99999999.99
     ) {
-        throw new DomainException('Nilai SLA wajib diisi dengan angka yang benar.');
+        throw new DomainException('Target Resolution Time wajib diisi dengan angka yang benar.');
     }
     if (!is_string($unit) || !in_array($unit, FORUM_SLA_UNITS, true)) {
-        throw new DomainException('Satuan SLA wajib dipilih.');
+        throw new DomainException('Satuan target wajib dipilih.');
     }
 
     return [round((float) $value, 2), $unit];
@@ -277,7 +277,7 @@ function forumSetOpenFlag(PDO $pdo, int $crfId, bool $open): void
         ->execute(['flag' => $open ? 1 : 0, 'id' => $crfId]);
 }
 
-/** Penerima notifikasi: penentu hasil + PIC CRF kategori (sesama peserta Forum). */
+/** Penerima notifikasi: penentu hasil + PIC Otomasi kategori (sesama peserta Forum). */
 function forumDiscussionAudience(PDO $pdo, array $crf): array
 {
     $ids = forumResultUserIds($pdo);
@@ -356,7 +356,7 @@ function forumRequestDiscussion(PDO $pdo, int $crfId, array $user, string $reaso
         $crfNumber = $crf['nomor_register'] ?: 'CRF #' . $crfId;
         $current = forumValuesText($before['urgency'], $before['sla_nilai'], $before['sla_satuan']);
         $description = sprintf(
-            '%s (%s) mengajukan pembahasan Forum untuk Level Urgensi dan SLA (nilai sistem saat ini: %s). CRF menunggu hasil pembahasan, lalu langsung diteruskan ke Kepala Departemen Operasional. Alasan: %s',
+            '%s (%s) mengajukan pembahasan Forum untuk Level Urgensi dan target Resolution Time (nilai sistem saat ini: %s). CRF menunggu hasil pembahasan, lalu langsung diteruskan ke Kepala Departemen Operasional. Alasan: %s',
             $actor,
             forumRoleName($actorRole),
             $current,
@@ -368,7 +368,7 @@ function forumRequestDiscussion(PDO $pdo, int $crfId, array $user, string $reaso
             $pdo,
             forumDiscussionAudience($pdo, $crf),
             'Menunggu pembahasan Forum: ' . $crfNumber,
-            $actor . ' mengajukan pembahasan Level Urgensi dan SLA (saat ini ' . $current . '). Berikan pertimbangan di Forum. Target hasil '
+            $actor . ' mengajukan pembahasan Level Urgensi dan target Resolution Time (saat ini ' . $current . '). Berikan pertimbangan di Forum. Target hasil '
                 . date('d-m-Y H:i', strtotime($dueAt)) . '.',
             $crfId,
             (int) $user['id']
@@ -426,13 +426,13 @@ function forumRaiseSystemDiscussion(PDO $pdo, array $crf, array $actingUser, str
     forumSetOpenFlag($pdo, $crfId, true);
 
     $crfNumber = $crf['nomor_register'] ?: 'CRF #' . $crfId;
-    $text = 'Sistem membuka pembahasan Forum karena SLA default belum tersedia. ' . $reason;
+    $text = 'Sistem membuka pembahasan Forum karena target Resolution Time default belum tersedia. ' . $reason;
     logCrfActivity($pdo, $crfId, 'Pembahasan Forum Diajukan', $text, 'Sistem', null, 'Menunggu Pembahasan Forum');
     forumAddSystemComment($pdo, $crfId, $actingUser, $text);
     forumNotify(
         $pdo,
         forumDiscussionAudience($pdo, $crf),
-        'SLA perlu ditetapkan: ' . $crfNumber,
+        'Target Resolution Time perlu ditetapkan: ' . $crfNumber,
         $reason . ' CMO mencatat hasil pembahasan di Forum, lalu CRF langsung diteruskan ke Kepala Departemen Operasional. Target hasil '
             . date('d-m-Y H:i', strtotime($dueAt)) . '.',
         $crfId,
@@ -447,7 +447,7 @@ function forumRaiseSystemDiscussion(PDO $pdo, array $crf, array $actingUser, str
 /**
  * Catat hasil pembahasan dan terapkan ke data CRF. Menjalankan transaksi sendiri.
  *   hasil 'tetap'  : nilai sistem dipakai (data CRF tidak berubah).
- *   hasil 'diubah' : Level Urgensi dan SLA diganti nilai kesepakatan.
+ *   hasil 'diubah' : Level Urgensi dan target Resolution Time diganti nilai kesepakatan.
  * Mengembalikan ['crf_id' => int, 'message' => string].
  */
 function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $outcome, ?string $urgency, $value, $unit, string $note): array
@@ -482,7 +482,7 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
 
         if ($outcome === 'tetap') {
             if (!crfHasValidSla($crf) || !$before['urgency']) {
-                throw new DomainException('Nilai sistem belum lengkap (SLA kosong). Pilih "Diubah" dan isi Level Urgensi serta SLA.');
+                throw new DomainException('Nilai sistem belum lengkap (target kosong). Pilih "Diubah" dan isi Level Urgensi serta target Resolution Time.');
             }
             $final = $before;
         } else {
@@ -552,7 +552,7 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
 ");
         $description = $outcome === 'tetap'
             ? sprintf(
-                'Hasil pembahasan Forum: TETAP. Level Urgensi dan SLA tetap memakai nilai sistem (%s). Alasan: %s. Dicatat oleh %s (%s).',
+                'Hasil pembahasan Forum: TETAP. Level Urgensi dan target Resolution Time tetap memakai nilai sistem (%s). Alasan: %s. Dicatat oleh %s (%s).',
                 $afterText, $note, $actor, $roleLabel
             )
             : sprintf(
@@ -609,8 +609,8 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
         notifyUsers(
             $pdo,
             [(int) $crf['pengguna_id']],
-            'Level urgensi dan SLA ditetapkan: ' . $crfNumber,
-            'Pembahasan Forum untuk CRF ' . $crfNumber . ' selesai. Level urgensi dan SLA ditetapkan: ' . $afterText
+            'Level urgensi dan target Resolution Time ditetapkan: ' . $crfNumber,
+            'Pembahasan Forum untuk CRF ' . $crfNumber . ' selesai. Level urgensi dan target Resolution Time ditetapkan: ' . $afterText
                 . ($forwarded ? '. CRF diteruskan ke Kepala Departemen Operasional untuk persetujuan.' : '.'),
             'crf/open.php?id=' . $crfId,
             $crfId,
@@ -622,8 +622,8 @@ function forumRecordResult(PDO $pdo, int $discussionId, array $user, string $out
         return [
             'crf_id' => $crfId,
             'message' => ($outcome === 'tetap'
-                ? 'Hasil dicatat: Level Urgensi dan SLA tetap.'
-                : 'Hasil dicatat: Level Urgensi dan SLA diubah dan diterapkan ke CRF.')
+                ? 'Hasil dicatat: Level Urgensi dan target Resolution Time tetap.'
+                : 'Hasil dicatat: Level Urgensi dan target Resolution Time diubah dan diterapkan ke CRF.')
                 . ($forwarded ? ' CRF langsung diteruskan ke Kepala Departemen Operasional untuk persetujuan.' : ' CMO dapat meneruskan CRF.'),
         ];
     } catch (Throwable $e) {
@@ -657,7 +657,7 @@ function forumCancelDiscussion(PDO $pdo, int $discussionId, array $user): int
         $crfId = (int) $discussion['pengajuan_id'];
         $crf = forumLockCrf($pdo, $crfId);
         if ($discussion['sumber_pemicu'] === 'sistem' && $crf && !crfHasValidSla($crf)) {
-            throw new DomainException('Pembahasan ini tidak dapat dibatalkan karena SLA CRF belum tersedia. CMO perlu mencatat hasilnya (Diubah) dengan nilai SLA.');
+            throw new DomainException('Pembahasan ini tidak dapat dibatalkan karena target Resolution Time CRF belum tersedia. CMO perlu mencatat hasilnya (Diubah) dengan nilai target.');
         }
 
         $actor = crfActorName($user);
@@ -671,7 +671,7 @@ function forumCancelDiscussion(PDO $pdo, int $discussionId, array $user): int
         forumSetOpenFlag($pdo, $crfId, false);
 
         $text = 'Pembahasan Forum dibatalkan oleh ' . $actor . ' (' . forumRoleName(getCrfRole())
-            . '). Level Urgensi dan SLA tetap memakai nilai sistem.';
+            . '). Level Urgensi dan target Resolution Time tetap memakai nilai sistem.';
         logCrfActivity($pdo, $crfId, 'Pembahasan Forum Dibatalkan', $text, $actor, 'Menunggu Pembahasan Forum', 'Menunggu Verifikasi');
         forumAddSystemComment($pdo, $crfId, $user, $text);
 
@@ -822,7 +822,7 @@ function forumBotMessage(array $crf, DateTimeImmutable $now): string
             ? ' Target hasil pembahasan: ' . date('d-m-Y H:i', strtotime($crf['pembahasan_tenggat'])) . '.'
             : '';
 
-        return $open . 'CRF ini sedang dalam pembahasan Forum untuk menentukan Level Urgensi dan SLA. '
+        return $open . 'CRF ini sedang dalam pembahasan Forum untuk menentukan Level Urgensi dan target Resolution Time. '
             . 'Hasilnya akan dicatat oleh CMO.' . $due . ' Mohon ditunggu.';
     }
 
@@ -988,7 +988,7 @@ function forumApplyDefaultSla(PDO $pdo, int $crfId, array $actingUser): void
                 $pdo,
                 $crfId,
                 'SLA Otomatis',
-                'SLA default kategori untuk urgensi ' . $urgency . ': ' . slaLabel($standard['value'], $standard['unit']) . ' (hari kerja).',
+                'Target Resolution Time default kategori untuk urgensi ' . $urgency . ': ' . slaLabel($standard['value'], $standard['unit']) . ' (hari kerja).',
                 'Sistem'
             );
         }
@@ -999,7 +999,7 @@ function forumApplyDefaultSla(PDO $pdo, int $crfId, array $actingUser): void
             $pdo,
             $crf,
             $actingUser,
-            'SLA standar kategori belum diatur sehingga CRF belum memiliki SLA.'
+            'Target standar kategori belum diatur sehingga CRF belum memiliki target Resolution Time.'
         );
     }
 }

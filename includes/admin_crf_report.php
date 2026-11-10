@@ -320,7 +320,7 @@ function getAdminCrfRespCombined(PDO $pdo, string $dateFrom, string $dateTo, ?Da
  * Kadep Operasional pada periode laporan. Semua durasi dalam jam kerja.
  *
  * Persentase hanya dihitung dari CRF yang sudah punya hasil (sudah direspons /
- * eksekusi selesai). CRF tanpa target Response Time (CRF lama) tidak ikut
+ * pengerjaan selesai). CRF tanpa target Response Time (CRF lama) tidak ikut
  * dihitung pada Response Time. CRF yang masih berjalan tetapi sudah melewati
  * batas dihitung terpisah sebagai "berjalan melewati batas".
  *

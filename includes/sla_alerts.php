@@ -62,7 +62,7 @@ function crfSlaAlertStage(array $crf, ?DateTimeImmutable $now = null): ?array
     return null;
 }
 
-/** PIC CRF penerima: pemegang CRF, atau seluruh PIC kategori. */
+/** PIC Otomasi penerima: pemegang CRF, atau seluruh PIC kategori. */
 function crfSlaAlertRecipients(PDO $pdo, array $crf): array
 {
     if (!empty($crf['pic_id'])) {

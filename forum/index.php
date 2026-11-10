@@ -197,7 +197,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-page-header">
             <div>
                 <h1>Forum CRF</h1>
-                <p>Ruang diskusi lintas fungsi untuk cross-check data, prioritas, urgensi, SLA, persetujuan, dan implementasi.</p>
+                <p>Ruang diskusi lintas fungsi untuk cross-check data, prioritas, urgensi, target Resolution Time, persetujuan, dan implementasi.</p>
             </div>
         </div>
 
@@ -240,7 +240,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </form>
                 </div>
                 <nav class="crf-forum-filter" aria-label="Filter ruang">
-                    <a class="<?= $filter === 'discuss' ? 'active' : '' ?>" href="<?= h($forumUrl(['filter' => 'discuss', 'crf_id' => $crfId])) ?>" title="Ruang yang menunggu hasil pembahasan Level Urgensi dan SLA">
+                    <a class="<?= $filter === 'discuss' ? 'active' : '' ?>" href="<?= h($forumUrl(['filter' => 'discuss', 'crf_id' => $crfId])) ?>" title="Ruang yang menunggu hasil pembahasan Level Urgensi dan target Resolution Time">
                         Menunggu pembahasan
                         <?php if ($discussRoomCount > 0): ?>
                             <span class="crf-forum-filter-badge is-amber"><?= $discussRoomCount ?></span>
@@ -299,7 +299,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         <?php if ($roomHasOpen): ?>
                                             <span class="crf-forum-room-flag <?= $roomOverdue ? 'is-overdue' : '' ?>" title="<?= $roomOverdue ? 'Pembahasan melewati target hasil' : 'Menunggu pembahasan Forum' ?>"><i class="bi bi-flag-fill" aria-hidden="true"></i> Pembahasan</span>
                                         <?php elseif (!empty($room['has_result'])): ?>
-                                            <span class="crf-forum-room-agreed" title="Level/SLA sudah dibahas di Forum"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
+                                            <span class="crf-forum-room-agreed" title="Level urgensi dan target Resolution Time sudah dibahas di Forum"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
                                         <?php endif; ?>
                                         <?php if ((int) $room['comment_count'] > 0): ?>
                                             <span title="Jumlah komentar"><i class="bi bi-chat" aria-hidden="true"></i> <?= (int) $room['comment_count'] ?></span>
@@ -324,7 +324,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <h2>Pilih ruang CRF</h2>
                         <p>Pilih CRF di daftar untuk melihat riwayat pembahasan atau menambahkan tanggapan.</p>
                         <?php if ($discussRoomCount > 0): ?>
-                            <p class="crf-forum-empty-hint is-amber"><strong><?= $discussRoomCount ?></strong> ruang menunggu pembahasan Level Urgensi dan SLA.</p>
+                            <p class="crf-forum-empty-hint is-amber"><strong><?= $discussRoomCount ?></strong> ruang menunggu pembahasan Level Urgensi dan target Resolution Time.</p>
                         <?php endif; ?>
                         <?php if ($unreadRoomCount > 0): ?>
                             <p class="crf-forum-empty-hint"><strong><?= $unreadRoomCount ?></strong> ruang memiliki komentar yang belum Anda baca.</p>
@@ -395,7 +395,7 @@ require_once __DIR__ . '/../includes/header.php';
                             </dd>
                         </div>
                         <div>
-                            <dt>SLA</dt>
+                            <dt>Target Resolution</dt>
                             <dd title="Dihitung pada hari kerja">
                                 <?= h(slaLabel($selectedCrf['sla_nilai'], $selectedCrf['sla_satuan'])) ?>
                             </dd>
@@ -438,7 +438,7 @@ require_once __DIR__ . '/../includes/header.php';
                     $slaMissing = !crfHasValidSla($selectedCrf);
                     ?>
 
-                    <section class="crf-forum-pembahasan" id="forum-pembahasan" aria-label="Pembahasan Level Urgensi dan SLA">
+                    <section class="crf-forum-pembahasan" id="forum-pembahasan" aria-label="Pembahasan Level Urgensi dan target Resolution Time">
                         <?php if ($openDiscussion): ?>
                             <?php
                             $overdue = forumDiscussionIsOverdue($openDiscussion);
@@ -473,7 +473,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         <dd><span class="crf-badge <?= h(levelBadgeClass($finalUrgency)) ?>"><?= h($finalUrgency ?? 'Belum ada') ?></span></dd>
                                     </div>
                                     <div>
-                                        <dt>SLA (sistem)</dt>
+                                        <dt>Target Resolution (sistem)</dt>
                                         <dd><?= $slaMissing ? '<span class="text-danger">Belum tersedia</span>' : h(slaLabel($selectedCrf['sla_nilai'], $selectedCrf['sla_satuan'])) ?></dd>
                                     </div>
                                 </dl>
@@ -481,7 +481,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <p class="crf-forum-pembahasan-reason"><strong>Alasan pembahasan:</strong> <?= nl2br(h($openDiscussion['alasan'])) ?></p>
                                 <p class="crf-forum-pembahasan-hint">
                                     <i class="bi bi-info-circle" aria-hidden="true"></i>
-                                    Berikan pertimbangan lewat kolom komentar di bawah. Level Urgensi dan SLA tidak diubah dari kolom diskusi;
+                                    Berikan pertimbangan lewat kolom komentar di bawah. Level Urgensi dan target Resolution Time tidak diubah dari kolom diskusi;
                                     hanya <?= h($resultRoleLabel) ?> yang mencatat dan menerapkan hasil pembahasan.
                                     Setelah hasilnya dicatat, CRF langsung diteruskan ke Kepala Departemen Operasional untuk persetujuan.
                                 </p>
@@ -499,14 +499,14 @@ require_once __DIR__ . '/../includes/header.php';
                                                 <input type="radio" name="hasil" value="tetap" <?= $slaMissing ? 'disabled' : 'checked' ?> required>
                                                 <span>
                                                     <strong>Tetap</strong>
-                                                    <small>Level Urgensi dan SLA tetap memakai nilai sistem (<?= h($currentValuesText) ?>).</small>
+                                                    <small>Level Urgensi dan target Resolution Time tetap memakai nilai sistem (<?= h($currentValuesText) ?>).</small>
                                                 </span>
                                             </label>
                                             <label class="crf-forum-result-option">
                                                 <input type="radio" name="hasil" value="diubah" <?= $slaMissing ? 'checked' : '' ?> required>
                                                 <span>
                                                     <strong>Diubah</strong>
-                                                    <small>Terapkan Level Urgensi dan SLA hasil kesepakatan Forum.</small>
+                                                    <small>Terapkan Level Urgensi dan target Resolution Time hasil kesepakatan Forum.</small>
                                                 </span>
                                             </label>
                                         </div>
@@ -527,11 +527,11 @@ require_once __DIR__ . '/../includes/header.php';
                                                     </select>
                                                 </div>
                                                 <div>
-                                                    <label class="form-label" for="result-sla-value">Nilai SLA baru</label>
+                                                    <label class="form-label" for="result-sla-value">Target Resolution baru</label>
                                                     <input class="form-control" type="number" id="result-sla-value" name="sla_nilai" min="0.01" max="99999999.99" step="0.01" value="<?= h($fmtNum($selectedCrf['sla_nilai'])) ?>">
                                                 </div>
                                                 <div>
-                                                    <label class="form-label" for="result-sla-unit">Satuan SLA</label>
+                                                    <label class="form-label" for="result-sla-unit">Satuan target</label>
                                                     <select class="form-select" id="result-sla-unit" name="sla_satuan">
                                                         <?php foreach (FORUM_SLA_UNITS as $option): ?>
                                                             <option value="<?= h($option) ?>" <?= ($selectedCrf['sla_satuan'] ?: 'Hari') === $option ? 'selected' : '' ?>><?= h($option) ?></option>
@@ -542,7 +542,7 @@ require_once __DIR__ . '/../includes/header.php';
                                             <p class="crf-forum-standard-sla" data-standard-hint hidden>
                                                 <i class="bi bi-info-circle" aria-hidden="true"></i>
                                                 <span></span>
-                                                <button type="button" class="btn btn-link btn-sm p-0" data-use-standard>Pakai SLA standar</button>
+                                                <button type="button" class="btn btn-link btn-sm p-0" data-use-standard>Pakai target standar</button>
                                             </p>
                                         </div>
 
@@ -558,7 +558,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?php endif; ?>
 
                                 <?php if ($canCancelDiscussion): ?>
-                                    <form method="post" action="<?= h(crfActionUrl('forum_discussion.php')) ?>" class="crf-forum-pembahasan-cancel" data-confirm="Batalkan pembahasan ini? Level Urgensi dan SLA tetap memakai nilai sistem dan CMO dapat meneruskan CRF.">
+                                    <form method="post" action="<?= h(crfActionUrl('forum_discussion.php')) ?>" class="crf-forum-pembahasan-cancel" data-confirm="Batalkan pembahasan ini? Level Urgensi dan target Resolution Time tetap memakai nilai sistem dan CMO dapat meneruskan CRF.">
                                         <?= csrfField() ?>
                                         <input type="hidden" name="op" value="cancel">
                                         <input type="hidden" name="crf_id" value="<?= $crfId ?>">
@@ -582,7 +582,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?php else: ?>
                                     <i class="bi bi-info-circle" aria-hidden="true"></i>
                                     <span>
-                                        Belum ada pembahasan. Level Urgensi dan SLA memakai nilai sistem (<?= h($currentValuesText) ?>).
+                                        Belum ada pembahasan. Level Urgensi dan target Resolution Time memakai nilai sistem (<?= h($currentValuesText) ?>).
                                         <?php if ($selectedCrf['tahap_alur'] === 'CMO_FILTER'): ?>
                                             CMO dapat mengajukan pembahasan dari
                                             <?php if ($canOpenDiscussion): ?>
@@ -605,7 +605,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         <li>
                                             <div class="crf-forum-history-top">
                                                 <span class="crf-forum-tone crf-forum-tone-<?= h($hMeta['class']) ?>"><?= h($hMeta['label']) ?></span>
-                                                <strong>Pembahasan Level Urgensi &amp; SLA</strong>
+                                                <strong>Pembahasan Level Urgensi &amp; Target Resolution Time</strong>
                                                 <time><?= h(date('d-m-Y H:i', strtotime($item['tgl_diputuskan'] ?? $item['tgl_dibuat']))) ?></time>
                                             </div>
                                             <div class="crf-forum-history-values">
@@ -712,7 +712,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <a href="<?= h($forumUrl(['crf_id' => $crfId])) ?>#forum-form" id="forum-reply-cancel" aria-label="Batalkan tanggapan"><i class="bi bi-x-lg"></i></a>
                         </div>
                         <label for="forum-comment" class="visually-hidden">Tambahkan komentar atau tanggapan</label>
-                        <textarea class="form-control" id="forum-comment" name="komentar" rows="3" maxlength="5000" required placeholder="Tulis pembahasan terkait data CRF, prioritas, urgensi, SLA, persetujuan, atau implementasi..."></textarea>
+                        <textarea class="form-control" id="forum-comment" name="komentar" rows="3" maxlength="5000" required placeholder="Tulis pembahasan terkait data CRF, prioritas, urgensi, target Resolution Time, persetujuan, atau implementasi..."></textarea>
                         <div class="crf-forum-form-footer">
                             <small>
                                 <span id="forum-comment-count">0</span>/5.000 · Ctrl+Enter untuk kirim ·

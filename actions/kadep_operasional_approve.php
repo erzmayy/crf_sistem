@@ -115,18 +115,18 @@ try {
                 'type' => 'danger',
                 'message' => !empty($approvalCrf['pembahasan_forum_terbuka'])
                     ? 'CRF ini masih menunggu pembahasan Forum sehingga belum dapat disetujui.'
-                    : 'SLA CRF ini belum tersedia, sehingga belum dapat disetujui. Hubungi Admin.',
+                    : 'Target Resolution Time CRF ini belum tersedia, sehingga belum dapat disetujui. Hubungi Admin.',
             ];
             crfRedirect(crfUrl('kadep.detail', ['id' => $id]));
             exit;
         }
 
         // SLA mulai dihitung sejak Kepala Departemen Operasional menyetujui,
-        // lalu CRF diserahkan ke PIC CRF untuk dieksekusi.
+        // lalu CRF diserahkan ke PIC Otomasi untuk dieksekusi.
         $slaStartedAt = $now;
         $slaDueAt = slaDueAt($slaStartedAt, $approvalCrf['sla_nilai'], $approvalCrf['sla_satuan']);
         if ($slaDueAt === null) {
-            throw new RuntimeException('Tenggat SLA tidak dapat dihitung.');
+            throw new RuntimeException('Tenggat Resolution Time tidak dapat dihitung.');
         }
 
         // Target respon PIC dibekukan saat ini: tabel target global (sama untuk semua kategori) lebih dulu;
@@ -190,7 +190,7 @@ try {
             'Disetujui · Pengerjaan'
         );
 
-        // PIC CRF menerima rincian SLA; Pemohon hanya diberi tahu CRF-nya disetujui.
+        // PIC Otomasi menerima rincian SLA; Pemohon hanya diberi tahu CRF-nya disetujui.
         $picRecipients = array_values(array_diff(
             array_map('intval', $handlerRecipients ?: crfUserIdsForRole($pdo, 'otomasi')),
             [(int) $crf['pengguna_id']]

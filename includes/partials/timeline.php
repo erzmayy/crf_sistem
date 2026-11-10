@@ -11,9 +11,9 @@ $activityLabels = [
     'Pengajuan Diajukan' => 'Pengajuan CRF Dibuat',
     'Kirim Ulang' => 'Pengajuan CRF Dikirim Ulang',
     'Lolos Filter CMO' => 'Verifikasi CMO',
-    'Otomasi - SLA Ditentukan' => 'SLA Ditentukan',
-    'SLA Otomatis' => 'SLA Standar Kategori',
-    'SLA Disesuaikan Handler' => 'SLA Disesuaikan PIC Otomasi',
+    'Otomasi - SLA Ditentukan' => 'Target Resolution Time Ditentukan',
+    'SLA Otomatis' => 'Target Standar Kategori',
+    'SLA Disesuaikan Handler' => 'Target Disesuaikan PIC Otomasi',
     'Approval Kepala Departemen Operasional' => 'Persetujuan Kepala Departemen Operasional',
     'Diteruskan ke Kepala Departemen' => 'Diteruskan ke Kepala Departemen Operasional',
     // Istilah riwayat lama sebelum alur Forum diperbarui.
@@ -51,7 +51,7 @@ $legacyTerms = [
     'dihitung dalam SLA' => 'dihitung dalam Resolution Time',
     'Ditolak / Perlu Revisi' => 'Perlu Revisi',
     'Tindak Lanjut Divisi Otomasi' => 'Tindak Lanjut Otomasi',
-    // Riwayat lama yang masih menulis "PIC CRF".
+    // Riwayat lama yang masih menulis "PIC Otomasi".
     'PIC CRF' => 'PIC Otomasi',
     // Istilah eksekusi diganti pengerjaan (riwayat lama tetap tampil seragam).
     'dieksekusi' => 'dikerjakan',
@@ -93,7 +93,7 @@ if (!in_array($requestStatus, ['Solve', 'Cancel'], true)) {
         case 'CMO_FILTER':
             // Forum tidak terbuka bagi Pemohon; baginya CRF tetap "Verifikasi CMO".
             $pendingStep = (!empty($crf['pembahasan_forum_terbuka']) && empty($timelineHideSla))
-                ? ['title' => 'Menunggu Pembahasan Forum', 'deskripsi' => 'CMO mengajukan pembahasan Level Urgensi dan SLA. Setelah hasil dicatat CMO, CRF langsung diteruskan ke Kepala Departemen Operasional.']
+                ? ['title' => 'Menunggu Pembahasan Forum', 'deskripsi' => 'CMO mengajukan pembahasan Level Urgensi dan target Resolution Time. Setelah hasil dicatat CMO, CRF langsung diteruskan ke Kepala Departemen Operasional.']
                 : ['title' => 'Verifikasi CMO', 'deskripsi' => 'Menunggu verifikasi permohonan oleh CMO.'];
             break;
         case 'OTOMASI':

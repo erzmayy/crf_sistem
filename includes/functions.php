@@ -468,7 +468,7 @@ function formatSlaDuration(int $seconds): string
 
 /**
  * Ambang "mendesak": sisa waktu SLA (detik kerja) yang lebih kecil antara
- * 25% total SLA dan 1 jam. Dipakai badge SLA dan peringatan ke PIC CRF.
+ * 25% total SLA dan 1 jam. Dipakai badge SLA dan peringatan ke PIC Otomasi.
  */
 function crfSlaUrgentSeconds(int $totalSeconds): int
 {
@@ -606,7 +606,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
         if ($completedAt <= $dueAt) {
             $remaining = slaWorkingSecondsBetween($completedAt, $dueAt);
             return [
-                'label' => 'Selesai sebelum SLA',
+                'label' => 'Selesai sebelum target',
                 'detail' => 'Lebih cepat ' . formatSlaDuration($remaining) . '.',
                 'class' => 'success',
                 'alert' => null,
@@ -620,7 +620,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
         $overdue = slaWorkingSecondsBetween($dueAt, $completedAt);
         return [
             'label' => 'Terlambat',
-            'detail' => 'Melewati batas SLA ' . formatSlaDuration($overdue) . '.',
+            'detail' => 'Melewati batas target ' . formatSlaDuration($overdue) . '.',
             'class' => 'danger',
             'alert' => null,
             'elapsed' => formatSlaDuration($elapsed),
@@ -633,7 +633,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
     if ($completedAt !== null) {
         return [
             'label' => 'Selesai',
-            'detail' => 'Data waktu mulai atau batas SLA tidak tersedia.',
+            'detail' => 'Data waktu mulai atau batas target tidak tersedia.',
             'class' => 'secondary',
             'alert' => null,
             'elapsed' => $startedAt !== null
@@ -665,7 +665,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
     if ($now <= $dueAt) {
         $isApproaching = $remaining <= crfSlaUrgentSeconds(slaWorkingSecondsBetween($startedAt, $dueAt));
         return [
-            'label' => 'Masih dalam SLA',
+            'label' => 'Masih dalam target',
             'detail' => 'Sisa waktu ' . formatSlaDuration($remaining) . '.',
             'class' => $isApproaching ? 'warning' : 'success',
             'alert' => $isApproaching ? 'approaching' : null,
@@ -678,7 +678,7 @@ function getCrfSlaStatus(array $crf, ?DateTimeImmutable $now = null): array
 
     $overdue = abs($remaining);
     return [
-        'label' => 'Melewati SLA',
+        'label' => 'Melewati target',
         'detail' => 'Terlambat ' . formatSlaDuration($overdue) . '.',
         'class' => 'danger',
         'alert' => 'overdue',
@@ -740,7 +740,7 @@ function logCrfActivity(
 /**
  * Buang informasi SLA dari sebuah teks untuk tampilan Pemohon.
  * Pemohon hanya melihat Level Urgensi dan tahap CRF; SLA adalah urusan
- * internal (CMO, Kadep, PIC CRF, Admin). Data yang tersimpan tidak diubah.
+ * internal (CMO, Kadep, PIC Otomasi, Admin). Data yang tersimpan tidak diubah.
  */
 function crfStripSlaText(?string $text): string
 {
@@ -830,7 +830,11 @@ function crfDisplayStatusConditions(string $alias = 'cr'): array
         'review'     => ['label' => 'Menunggu Verifikasi', 'sql' => "{$a}status = 'Belum Ditindak Lanjuti' AND {$a}tahap_alur = 'CMO_FILTER' AND {$a}pembahasan_forum_terbuka = 0"],
         'pembahasan' => ['label' => 'Menunggu Pembahasan Forum', 'sql' => "{$a}tahap_alur = 'CMO_FILTER' AND {$a}pembahasan_forum_terbuka = 1 AND {$a}status NOT IN ('Draft','Solve','Cancel')"],
         'approval'   => ['label' => 'Menunggu Persetujuan', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}tahap_alur = 'kadep_operasional'"],
-        'disetujui'  => ['label' => 'Disetujui · Pengerjaan', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}tahap_alur IN ('OTOMASI','UAT','PEMOHON_PIR','CMO_FINAL') AND {$a}tgl_disetujui_kadep IS NOT NULL"],
+        // Gabungan tiga tahap sebelum disetujui Kepala Departemen Operasional (untuk kartu dan filter Dashboard Admin).
+        'menunggu'   => ['label' => 'Menunggu persetujuan', 'sql' => "({$a}status = 'Belum Ditindak Lanjuti' AND {$a}tahap_alur = 'CMO_FILTER' AND {$a}pembahasan_forum_terbuka = 0)"
+            . " OR ({$a}tahap_alur = 'CMO_FILTER' AND {$a}pembahasan_forum_terbuka = 1 AND {$a}status NOT IN ('Draft','Solve','Cancel'))"
+            . " OR ({$a}status = 'Dalam Proses' AND {$a}tahap_alur = 'kadep_operasional')"],
+        'disetujui'  => ['label' => 'Sudah disetujui', 'sql' => "{$a}status = 'Dalam Proses' AND {$a}tahap_alur IN ('OTOMASI','UAT','PEMOHON_PIR','CMO_FINAL') AND {$a}tgl_disetujui_kadep IS NOT NULL"],
         'revisi'     => ['label' => 'Perlu Revisi', 'sql' => "{$a}status = 'Perlu Revisi'"],
         'selesai'    => ['label' => 'Selesai', 'sql' => "{$a}status = 'Solve'"],
         'dibatalkan' => ['label' => 'Dibatalkan', 'sql' => "{$a}status = 'Cancel'"],
@@ -893,7 +897,7 @@ function crfPirReminderInfo(PDO $pdo, array $crf): array
 
     $lastAt = $row['last_at'] ?: null;
     $nextAt = $lastAt !== null ? date('Y-m-d H:i:s', strtotime($lastAt) + CRF_PIR_REMINDER_INTERVAL) : null;
-    // Penantian PIR dimulai saat Otomasi mengisi implementasi; data lama memakai waktu eksekusi selesai.
+    // Penantian PIR dimulai saat Otomasi mengisi implementasi; data lama memakai waktu pengerjaan selesai.
     $pirStartedAt = $crf['tgl_implementasi_diisi'] ?? $crf['otomasi_selesai'] ?? null;
     $waitingDays = !empty($pirStartedAt)
         ? (int) floor(slaWorkingSecondsBetween(new DateTimeImmutable($pirStartedAt), new DateTimeImmutable()) / CRF_SLA_WORK_SECONDS_PER_DAY)

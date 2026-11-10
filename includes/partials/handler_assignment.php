@@ -1,7 +1,7 @@
 <?php
 /**
  * Kartu penanganan CRF (informasi saja): kategori, target SLA kategori,
- * dan PIC CRF yang memegang CRF. PIC CRF ditetapkan saat menekan
+ * dan PIC Otomasi yang memegang CRF. PIC Otomasi ditetapkan saat menekan
  * "Mulai kerjakan" (atau saat menyelesaikan eksekusi bila tombol itu dilewati).
  *
  * Variabel: $crf, $pdo.

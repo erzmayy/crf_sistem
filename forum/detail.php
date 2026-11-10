@@ -85,7 +85,6 @@ if (!$isPartial) {
         <div class="tab-pane fade show active" id="forum-detail-summary" role="tabpanel">
             <?php require __DIR__ . '/../includes/partials/handler_assignment.php'; ?>
             <?php
-            $showStatusInGrid = true;
             require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
             ?>
         </div>

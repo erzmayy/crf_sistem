@@ -71,22 +71,13 @@ if ($filled($budgetText)) {
 if ($filled($crf['detail_kategori_perubahan'] ?? '')) {
     $metaItems['Detail kategori'] = (string) $crf['detail_kategori_perubahan'];
 }
-// Meter skor (hanya peran internal; baris CRF lama tidak punya skor).
+// Level urgensi sistem (hanya peran internal; baris CRF lama tidak punya skor).
 $scoreInfo = null;
 if ($showUrgencyScore) {
-    $cfgUrgensi = crfUrgencyConfig();
-    $hasilSkor = crfHitungUrgensi($impactKeys, null, (string) ($crf['jenis_pengajuan'] ?? ''));
-    $scoreMax = (float) ($cfgUrgensi['maks'] ?? 100);
     $scoreInfo = [
-        'skor' => (float) $crf['skor_urgensi'],
-        'maks' => $scoreMax,
         'level' => crfUrgensiSistem($crf),
         // Level yang berlaku sekarang (bisa sudah diubah CMO/Admin lewat Forum).
         'levelFinal' => crfEffectiveUrgency($crf),
-        'persen' => $scoreMax > 0 ? max(0, min(100, (float) $crf['skor_urgensi'] / $scoreMax * 100)) : 0,
-        'ambangNormal' => (float) ($cfgUrgensi['ambang']['Normal'] ?? 10),
-        'ambangTinggi' => (float) ($cfgUrgensi['ambang']['Tinggi'] ?? 35),
-        'dikunci' => !empty($hasilSkor['dikunci']),
     ];
 }
 // Level mengikuti butir dengan bobot tertinggi; tampilkan butir itu sebagai penentu level.
@@ -100,7 +91,6 @@ foreach ($impactKeys as $impactKey) {
     }
 }
 $impactCatatan = $showUrgencyScore ? crfDampakCatatan($impactKeys, (string) ($crf['jenis_pengajuan'] ?? '')) : [];
-$formatSkor = static fn(float $v): string => rtrim(rtrim(number_format($v, 1, ',', ''), '0'), ',');
 
 $renderFiles = static function (array $files, bool $showDate) use ($attachmentIcon, $attachmentSize): void {
     ?>
@@ -194,21 +184,15 @@ $renderFiles = static function (array $files, bool $showDate) use ($attachmentIc
 
                 <?php if ($scoreInfo !== null): ?>
                     <div class="crf-score" role="group" aria-label="Penentu level urgensi">
-                        <div class="crf-score-head">
-                            <span class="crf-score-title">Level urgensi (sistem)</span>
-                            <?php if ($scoreInfo['level'] !== null): ?>
-                                <span class="crf-badge <?= h(levelBadgeClass($scoreInfo['level'])) ?>"><?= h($scoreInfo['level']) ?></span>
-                            <?php endif; ?>
-                        </div>
                         <p class="crf-score-legend">
                             Penentu level: <strong><?= h($penentuLevel) ?></strong>
                         </p>
                         <?php if ($scoreInfo['levelFinal'] !== null && $scoreInfo['level'] !== null && $scoreInfo['levelFinal'] !== $scoreInfo['level']): ?>
                             <p class="crf-score-legend">
                                 <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
-                                Level urgensi diubah dari <strong><?= h($scoreInfo['level']) ?></strong>
-                                ke <span class="crf-badge <?= h(levelBadgeClass($scoreInfo['levelFinal'])) ?>"><?= h($scoreInfo['levelFinal']) ?></span>
-                                lewat keputusan Forum. Level di atas adalah hitungan sistem saat pengajuan.
+                                Hitungan sistem <strong><?= h($scoreInfo['level']) ?></strong>,
+                                diubah ke <span class="crf-badge <?= h(levelBadgeClass($scoreInfo['levelFinal'])) ?>"><?= h($scoreInfo['levelFinal']) ?></span>
+                                lewat keputusan Forum.
                             </p>
                         <?php endif; ?>
                     </div>
@@ -255,4 +239,4 @@ $renderFiles = static function (array $files, bool $showDate) use ($attachmentIc
     </div>
 </section>
 <?php
-unset($sectionTitle, $attachmentIcon, $attachmentSize, $filled, $impactLabels, $impactOptions, $impactKeys, $impactAnswers, $impactRow, $impactWeights, $impactKey, $scoreInfo, $cfgUrgensi, $hasilSkor, $scoreMax, $formatSkor, $impactCatatan, $catatanDampak, $showUrgencyScore, $impactText, $proseBlocks, $metaItems, $budgetText, $renderFiles, $label, $value);
+unset($sectionTitle, $attachmentIcon, $attachmentSize, $filled, $impactLabels, $impactOptions, $impactKeys, $impactAnswers, $impactRow, $impactWeights, $impactKey, $scoreInfo, $impactCatatan, $catatanDampak, $showUrgencyScore, $impactText, $proseBlocks, $metaItems, $budgetText, $renderFiles, $label, $value);

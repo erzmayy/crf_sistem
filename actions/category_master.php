@@ -4,7 +4,7 @@
  * ---------------------------------------------------------------
  * Kelola master Kategori CRF (Admin):
  *   op = save | toggle | delete | add_member | remove_member
- * Anggota kategori = PIC CRF (tabel crf_kategori_pic).
+ * Anggota kategori = PIC Otomasi (tabel crf_kategori_pic).
  * Hapus kategori = soft delete (tgl_dihapus), data CRF lama aman.
  * ---------------------------------------------------------------
  */
@@ -60,9 +60,9 @@ try {
             $slaValue = null;
             if ($slaValueRaw !== '') {
                 if (!is_numeric($slaValueRaw) || (float) $slaValueRaw <= 0) {
-                    $errors[] = 'Nilai SLA harus angka lebih dari 0.';
+                    $errors[] = 'Target Resolution Time harus angka lebih dari 0.';
                 } elseif (!in_array($slaUnit, ['Menit', 'Jam', 'Hari'], true)) {
-                    $errors[] = 'Satuan SLA tidak valid.';
+                    $errors[] = 'Satuan target tidak valid.';
                 } else {
                     $slaValue = (float) $slaValueRaw;
                 }
@@ -79,9 +79,9 @@ try {
                 $levelValue = null;
                 if ($levelValueRaw !== '') {
                     if (!is_numeric($levelValueRaw) || (float) $levelValueRaw <= 0) {
-                        $errors[] = 'Nilai SLA ' . $levelLabel . ' harus angka lebih dari 0.';
+                        $errors[] = 'Target Resolution Time ' . $levelLabel . ' harus angka lebih dari 0.';
                     } elseif (!in_array($levelUnit, ['Menit', 'Jam', 'Hari'], true)) {
-                        $errors[] = 'Satuan SLA ' . $levelLabel . ' tidak valid.';
+                        $errors[] = 'Satuan target ' . $levelLabel . ' tidak valid.';
                     } else {
                         $levelValue = (float) $levelValueRaw;
                     }

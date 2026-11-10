@@ -416,7 +416,7 @@ ob_start();
             <div class="chip-value"><span class="pill" style="background: <?= $levelBg ?>; color: <?= $levelFg ?>;"><?= $esc($levelDisplay) ?></span></div>
         </td>
         <td>
-            <div class="chip-label">SLA</div>
+            <div class="chip-label">Target Resolution</div>
             <div class="chip-value"><?= $esc($slaDisplay) ?></div>
         </td>
 <?php endif; ?>

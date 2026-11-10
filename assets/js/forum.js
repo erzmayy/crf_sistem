@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
       hint.querySelector('span').textContent =
-        'SLA standar kategori untuk urgensi ' + option.value + ': ' + value + ' ' + unit + ' (hari kerja).';
+        'Target standar kategori untuk urgensi ' + option.value + ': ' + value + ' ' + unit + ' (hari kerja).';
       useButton.hidden = valueInput.value === value && unitSelect.value === unit;
       hint.hidden = false;
     }

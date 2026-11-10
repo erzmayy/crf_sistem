@@ -1,7 +1,7 @@
 <?php
 /**
  * admin/master_data.php
- * Master data Kategori CRF: nama, target SLA per level urgensi, dan PIC CRF.
+ * Master data Kategori CRF: nama, target SLA per level urgensi, dan PIC Otomasi.
  * Hapus kategori = soft delete; data CRF lama tetap utuh.
  */
 require_once __DIR__ . '/../includes/auth.php';
@@ -36,7 +36,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div>
                 <span class="crf-portal-eyebrow">MASTER DATA · CRF</span>
                 <h1>Kategori CRF</h1>
-                <p>Kelola kategori CRF, SLA per level urgensi, dan PIC Otomasi.</p>
+                <p>Kelola kategori CRF, target Resolution Time per level urgensi, dan PIC Otomasi.</p>
             </div>
             <div class="crf-banner-actions">
                 <span class="crf-banner-pill"><i class="bi bi-bookmarks"></i> <?= count($crfCategoryRows) ?> Kategori CRF · <?= $totalHandler ?> PIC Otomasi</span>
@@ -100,7 +100,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     <?php endif; ?>
                                     <div class="text-muted small mt-1">
                                         <?php if (!empty($category['deskripsi'])): ?><?= h($category['deskripsi']) ?><br><?php endif; ?>
-                                        SLA<?php foreach ($slaMatrix as $slaLevel => $slaItem): ?>
+                                        Resolution<?php foreach ($slaMatrix as $slaLevel => $slaItem): ?>
                                             · <?= h($slaLevel) ?>: <?= $slaItem ? h(slaLabel($slaItem['value'], $slaItem['unit'])) : '-' ?>
                                         <?php endforeach; ?>
                                         · <?= (int) $category['usage_count'] ?> CRF
@@ -265,7 +265,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="crf-readonly-note">Dipakai untuk export laporan &amp; PDF CRF.</div>
                 </div>
                 <div class="mb-3">
-                    <label class="crf-field-label">Target Resolution Time (SLA) per Level Urgensi</label>
+                    <label class="crf-field-label">Target Resolution Time per Level Urgensi</label>
                     <div class="crf-readonly-note mb-2">
                         Terisi otomatis saat CRF lolos verifikasi CMO. Dihitung dengan hari kerja
                         (Sabtu, Minggu, dan libur tidak dihitung). Tinggi / Rendah kosong = ikut Normal.
@@ -282,10 +282,10 @@ require_once __DIR__ . '/../includes/header.php';
                                 <span class="crf-badge <?= h(levelBadgeClass($slaLevel)) ?>"><?= h($slaLevel) ?></span>
                             </div>
                             <div class="col-4">
-                                <input type="number" class="form-control" name="<?= h($slaValueField) ?>" min="0" step="0.5" aria-label="Nilai SLA <?= h($slaLevel) ?>">
+                                <input type="number" class="form-control" name="<?= h($slaValueField) ?>" min="0" step="0.5" aria-label="Nilai target <?= h($slaLevel) ?>">
                             </div>
                             <div class="col-5">
-                                <select class="form-select" name="<?= h($slaUnitField) ?>" aria-label="Satuan SLA <?= h($slaLevel) ?>">
+                                <select class="form-select" name="<?= h($slaUnitField) ?>" aria-label="Satuan target <?= h($slaLevel) ?>">
                                     <option value="Hari">Hari</option>
                                     <option value="Jam">Jam</option>
                                     <option value="Menit">Menit</option>

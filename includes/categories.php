@@ -2,7 +2,7 @@
 /**
  * includes/categories.php
  * ---------------------------------------------------------------
- * Master Kategori CRF (+ PIC CRF). Kategori bersifat dinamis
+ * Master Kategori CRF (+ PIC Otomasi). Kategori bersifat dinamis
  * (dikelola Admin), tidak hardcode.
  * ---------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ function crfCategoryName(array $crf, string $fallback = '-'): string
 }
 
 /**
- * ID user PIC CRF untuk satu kategori CRF.
+ * ID user PIC Otomasi untuk satu kategori CRF.
  *
  * @return int[]
  */
@@ -128,7 +128,7 @@ function isCrfCategoryHandler(PDO $pdo, int $userId): bool
 }
 
 /**
- * Daftar PIC CRF per kategori: [category_id => [ [pengguna_id, pengguna_nama, email, no_wa], ... ]].
+ * Daftar PIC Otomasi per kategori: [category_id => [ [pengguna_id, pengguna_nama, email, no_wa], ... ]].
  */
 function categoryMembers(PDO $pdo): array
 {
@@ -150,7 +150,7 @@ function categoryMembers(PDO $pdo): array
 }
 
 /**
- * Cari user SIAP untuk dipilih sebagai PIC CRF.
+ * Cari user SIAP untuk dipilih sebagai PIC Otomasi.
  */
 function searchCrfUsers(PDO $pdo, string $term, int $limit = 15): array
 {

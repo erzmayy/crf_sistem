@@ -6,9 +6,6 @@
  *
  * Variabel yang HARUS sudah ada di scope pemanggil:
  *   array $crf
- *
- * Variabel OPSIONAL (dipertahankan agar pemanggil lama tetap kompatibel):
- *   bool $showStatusInGrid  tidak dipakai lagi; status ada di header
  */
 
 $unit = static function (?string $dept, ?string $div): string {
@@ -69,4 +66,4 @@ $picNama = trim((string) ($crf['pic_nama'] ?? ''));
     </div>
 </section>
 <?php
-unset($showStatusInGrid, $unit, $unitAsal, $unitTujuan, $kontak, $picNama);
+unset($unit, $unitAsal, $unitTujuan, $kontak, $picNama);
