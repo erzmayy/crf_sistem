@@ -30,7 +30,7 @@ $listResetHref = crfLayoutIsModule()
     <i class="bi bi-funnel" aria-hidden="true"></i>
     <span>Filter dan pencarian<?= $filtersActive ? ' (aktif)' : '' ?></span>
 </button>
-<form id="<?= h($filterFormId) ?>" method="GET" class="crf-list-filters <?= !empty($listFilters['categories']) ? 'crf-list-filters-with-category' : '' ?> <?= !empty($listFilters['categories']) && isset($listFilters['type']) ? 'crf-list-filters-with-type' : '' ?> <?= $filtersActive ? '' : 'is-collapsed' ?>">
+<form id="<?= h($filterFormId) ?>" method="GET" class="crf-list-filters <?= !empty($listFilters['categories']) ? 'crf-list-filters-with-category' : '' ?> <?= !empty($listFilters['categories']) && isset($listFilters['type']) ? 'crf-list-filters-with-type' : '' ?> <?= !empty($listShowStageFilter) ? 'crf-list-filters-with-stage' : '' ?> <?= $filtersActive ? '' : 'is-collapsed' ?>">
     <?= crfRouteFields() ?>
     <?php if (!empty($listContextName)): ?>
         <input type="hidden" name="<?= h($listContextName) ?>" value="<?= h($listContextValue ?? '') ?>">
