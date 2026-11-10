@@ -1,9 +1,9 @@
 <?php
 /**
- * Daftar PIC CRF sebuah kategori + form tambah (pencarian user SIAP).
+ * Daftar PIC Otomasi sebuah kategori + form tambah (pencarian user SIAP).
  *
  * Variabel: $memberCategory (array), $memberList (array),
- *           $memberReturn (nama halaman admin), $memberLabel ('PIC CRF').
+ *           $memberReturn (nama halaman admin), $memberLabel ('PIC Otomasi').
  */
 ?>
 <div class="crf-member-grid">

@@ -47,7 +47,7 @@ try {
 
     if ($crf && isOwnHandledCrf($crf)) {
         $pdo->rollBack();
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Anda sedang memegang CRF ini sebagai PIC CRF. Pembatalan harus dilakukan Admin lain.'];
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Anda sedang memegang CRF ini sebagai PIC Otomasi. Pembatalan harus dilakukan Admin lain.'];
         crfRedirect($redirect);
         exit;
     }

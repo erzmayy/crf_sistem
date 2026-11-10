@@ -36,7 +36,7 @@ $stmt->execute(['id' => $id]);
 $crf = $stmt->fetch();
 
 if (!$crf || in_array($crf['status'], ['Draft', 'Cancel'], true) || empty($crf['otomasi_selesai'])) {
-    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Dokumen UAT hanya dapat diunggah setelah Otomasi menyelesaikan eksekusi.'];
+    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Dokumen UAT hanya dapat diunggah setelah Otomasi menyelesaikan pengerjaan.'];
     crfRedirect($back);
     exit;
 }

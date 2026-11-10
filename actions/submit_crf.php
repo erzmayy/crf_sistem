@@ -44,9 +44,12 @@ $changeDescription = trim($_POST['deskripsi_perubahan'] ?? '');
 $benefit            = trim($_POST['manfaat'] ?? '');
 $impact             = trim($_POST['dampak'] ?? '');
 $requestType        = trim($_POST['jenis_pengajuan'] ?? '');
-// Urgensi berbobot: pemohon mencentang semua pernyataan dampak yang berlaku.
-$dampakKeys     = crfDampakDipilih($_POST['dampak_dipilih'] ?? ($_POST['kategori_dampak'] ?? []));
-$urgensi        = crfHitungUrgensi($dampakKeys);
+// Urgensi berbobot: 4 pertanyaan dampak dipetakan ke pernyataan dampak (formulir lama: dicentang langsung).
+$dampakJawaban  = crfDampakJawabanDariPost($_POST);
+$dampakKeys     = $dampakJawaban !== null
+    ? crfDampakDariJawaban($dampakJawaban, $requestType)
+    : crfDampakDipilih($_POST['dampak_dipilih'] ?? ($_POST['kategori_dampak'] ?? []));
+$urgensi        = crfHitungUrgensi($dampakKeys, null, $requestType);
 $impactCategory = (string) (crfDampakUtama($dampakKeys) ?? '');
 $reason             = trim($_POST['alasan'] ?? '');
 
@@ -85,7 +88,7 @@ $allowedBudgetTypes = [
 ];
 
 $errors = [];
-$allowedRequestTypes = crfRequestTypeOptions();
+$allowedRequestTypes = crfRequestTypeAllowedForSave($pdo, $draftId, (int) $user['id']);
 $allowedImpactCategories = array_keys(crfImpactOptions());
 $level = $urgensi['level'];
 
@@ -104,16 +107,17 @@ if ($email === '') {
     $errors[] = 'Format email tidak valid.';
 }
 
-if (!in_array($requestType, $allowedRequestTypes, true)) {
+if ($requestType === 'Problem' && !in_array($requestType, $allowedRequestTypes, true)) {
+    $errors[] = 'Problem diproses lewat Helpdesk SIAP. Buat tiket Helpdesk, atau pilih Permohonan Perubahan/Tambahan bila ini permintaan perubahan.';
+} elseif (!in_array($requestType, $allowedRequestTypes, true)) {
     $errors[] = 'Tipe Pengajuan wajib dipilih.';
 }
 
-if (!in_array($impactCategory, $allowedImpactCategories, true)) {
-    $errors[] = 'Pilih minimal satu pernyataan dampak.';
-} elseif (crfDampakBertentangan($dampakKeys)) {
-    $errors[] = 'Beberapa pernyataan dampak saling bertentangan. Periksa kembali pilihan Anda.';
-} elseif (crfTipeBertentangan($requestType, $dampakKeys)) {
-    $errors[] = 'Tipe pengajuan dan pernyataan dampak tidak sesuai. Periksa kembali pilihan Anda.';
+$dampakError = crfDampakValidasi($dampakJawaban, $dampakKeys, $requestType);
+if ($dampakError !== null) {
+    $errors[] = $dampakError;
+} elseif (!in_array($impactCategory, $allowedImpactCategories, true)) {
+    $errors[] = 'Jawab keempat pertanyaan dampak.';
 }
 
 /* Change Request Description */
@@ -126,7 +130,7 @@ if ($benefit === '') {
 }
 
 if ($impact === '') {
-    $errors[] = 'Dampak Jika Tidak Dilakukan Perubahan wajib diisi.';
+    $errors[] = 'Penjelasan dampak wajib diisi.';
 }
 
 if ($reason === '') {

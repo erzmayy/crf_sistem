@@ -157,7 +157,8 @@ function getAdminCrfReport(PDO $pdo, string $dateFrom, string $dateTo): array
     $typeTotal = array_sum($typeCounts);
     $types = [];
     foreach ($typeCounts as $typeKey => $count) {
-        if ($typeKey === 'Belum diisi' && $count === 0) {
+        // Problem sudah tidak ditawarkan di form baru: tampil hanya bila masih ada data lama.
+        if (in_array($typeKey, ['Belum diisi', 'Problem'], true) && $count === 0) {
             continue;
         }
         $types[] = [
@@ -230,11 +231,96 @@ function adminSlaTone(?float $percent): string
 }
 
 /**
+ * Response Time gabungan semua peran selain Pemohon (CMO, Kadep, PIC) untuk CRF yang diajukan
+ * pada periode laporan. Satuan hitung adalah putaran respon (satu baris crf_sla_respon), jadi
+ * satu CRF bisa menyumbang beberapa putaran. Dibatalkan tidak dinilai; tanpa target hanya
+ * ikut rata-rata. Mengembalikan data MENTAH (belum ada persentase) untuk dirangkum pemanggil.
+ *
+ * @return array{summary:array,by_category:array,by_urgency:array}|null null bila tabel belum ada
+ */
+function getAdminCrfRespCombined(PDO $pdo, string $dateFrom, string $dateTo, ?DateTimeImmutable $now = null): ?array
+{
+    if (!crfRespTableReady($pdo)) {
+        return null;
+    }
+
+    $now = $now ?? new DateTimeImmutable('now');
+    $submittedDate = 'COALESCE(cr.tgl_pengajuan, DATE(cr.tgl_dibuat))';
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT r.tahap, r.mulai, r.tenggat, r.respon_at, r.hasil,
+                   cr.kategori_id, COALESCE(cr.level_urgensi_final, cr.level, 'Normal') AS urgensi
+            FROM crf_sla_respon r
+            JOIN crf_pengajuan cr ON cr.id = r.pengajuan_id
+            WHERE cr.status <> 'Draft'
+              AND {$submittedDate} >= :date_from
+              AND {$submittedDate} <= :date_to
+        ");
+        $stmt->execute(['date_from' => $dateFrom, 'date_to' => $dateTo]);
+        $rows = $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log('getAdminCrfRespCombined: ' . $e->getMessage());
+        return null;
+    }
+
+    $bucket = static fn(): array => [
+        'rounds' => 0, 'measured' => 0, 'met' => 0, 'late' => 0, 'open' => 0, 'open_late' => 0, 'none' => 0,
+        'seconds_sum' => 0, 'seconds_count' => 0,
+    ];
+    $summary = $bucket();
+    $byCategory = [];
+    $byUrgency = [];
+
+    foreach ($rows as $row) {
+        $categoryKey = (int) ($row['kategori_id'] ?? 0);
+        $urgencyKey = in_array($row['urgensi'], ['Tinggi', 'Normal', 'Rendah'], true) ? $row['urgensi'] : 'Normal';
+        $byCategory[$categoryKey] = $byCategory[$categoryKey] ?? $bucket();
+        $byUrgency[$urgencyKey] = $byUrgency[$urgencyKey] ?? $bucket();
+
+        $start = new DateTimeImmutable($row['mulai']);
+        $due = !empty($row['tenggat']) ? new DateTimeImmutable($row['tenggat']) : null;
+        $targets = [&$summary, &$byCategory[$categoryKey], &$byUrgency[$urgencyKey]];
+
+        if (!empty($row['respon_at'])) {
+            if (($row['hasil'] ?? '') === 'Dibatalkan') {
+                unset($targets);
+                continue;
+            }
+            $at = new DateTimeImmutable($row['respon_at']);
+            $seconds = slaWorkingSecondsBetween($start, $at);
+            foreach ($targets as &$b) {
+                $b['rounds']++;
+                $b['seconds_sum'] += $seconds;
+                $b['seconds_count']++;
+                if ($due === null) {
+                    $b['none']++;
+                } else {
+                    $b['measured']++;
+                    $b[$at <= $due ? 'met' : 'late']++;
+                }
+            }
+            unset($b);
+        } else {
+            $late = $due !== null && $now > $due;
+            foreach ($targets as &$b) {
+                $b['rounds']++;
+                $b[$late ? 'open_late' : 'open']++;
+            }
+            unset($b);
+        }
+        unset($targets);
+    }
+
+    return ['summary' => $summary, 'by_category' => $byCategory, 'by_urgency' => $byUrgency];
+}
+
+/**
  * Kepatuhan SLA (Response Time dan Resolution Time) CRF yang sudah disetujui
  * Kadep Operasional pada periode laporan. Semua durasi dalam jam kerja.
  *
  * Persentase hanya dihitung dari CRF yang sudah punya hasil (sudah direspons /
- * eksekusi selesai). CRF tanpa target Response Time (CRF lama) tidak ikut
+ * pengerjaan selesai). CRF tanpa target Response Time (CRF lama) tidak ikut
  * dihitung pada Response Time. CRF yang masih berjalan tetapi sudah melewati
  * batas dihitung terpisah sebagai "berjalan melewati batas".
  *
@@ -407,6 +493,24 @@ function getAdminCrfSlaCompliance(PDO $pdo, string $dateFrom, string $dateTo, ?D
         }
     }
 
+    // Response Time = gabungan semua peran (CMO, Kadep, PIC) per putaran respon; bila tabel belum ada
+    // (migrasi 028 belum dijalankan) tetap memakai Response PIC dari kolom lama.
+    $combined = getAdminCrfRespCombined($pdo, $dateFrom, $dateTo, $now);
+    if ($combined !== null) {
+        $response = $combined['summary'] + $newSummary();
+        $pick = static fn(array $b): array => [
+            'measured' => $b['measured'], 'met' => $b['met'],
+            'seconds_sum' => $b['seconds_sum'], 'seconds_count' => $b['seconds_count'],
+        ];
+        foreach ($byCategory as $categoryId => &$group) {
+            $group['response'] = $pick($combined['by_category'][$categoryId] ?? ['measured' => 0, 'met' => 0, 'seconds_sum' => 0, 'seconds_count' => 0]);
+        }
+        unset($group);
+        foreach ($byUrgency as $urgencyName => &$group) {
+            $group['response'] = $pick($combined['by_urgency'][$urgencyName] ?? ['measured' => 0, 'met' => 0, 'seconds_sum' => 0, 'seconds_count' => 0]);
+        }
+        unset($group);
+    }
     $finishGroup = static function (array $group) use ($finalize): array {
         foreach (['response', 'resolution'] as $key) {
             $g = $group[$key];
@@ -423,7 +527,7 @@ function getAdminCrfSlaCompliance(PDO $pdo, string $dateFrom, string $dateTo, ?D
 
     return [
         'total' => count($rows),
-        'response' => $finalize($response),
+        'response' => $finalize($response) + ['combined' => $combined !== null],
         'resolution' => $finalize($resolution),
         'by_category' => $categories,
         'by_urgency' => array_map($finishGroup, array_values($byUrgency)),

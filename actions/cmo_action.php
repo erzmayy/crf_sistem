@@ -106,7 +106,7 @@ if ($action === 'remind_pir') {
         notifyUsers(
             $pdo,
             [(int) $crf['pengguna_id']],
-            'Pengingat: isi PIR CRF ' . $crf['nomor_register'],
+            'Pengingat isi PIR CRF: ' . $crf['nomor_register'],
             'Implementasi CRF ' . $crf['nomor_register'] . ' sudah selesai'
                 . ($reminder['waiting_days'] ? ' sejak ' . $reminder['waiting_days'] . ' hari kerja lalu' : '')
                 . '. Mohon segera isi Post Implementation Review agar CRF dapat ditutup.' . $note,
@@ -138,7 +138,7 @@ if (in_array($action, ['request_discussion', 'cancel_discussion'], true)) {
             forumRequestDiscussion($pdo, $id, $user, $tanggapan);
             $_SESSION['flash'] = [
                 'type' => 'success',
-                'message' => 'Pembahasan Forum diajukan. Setelah CMO atau Admin mencatat hasil pembahasan, CRF langsung diteruskan ke Kepala Departemen Operasional.',
+                'message' => 'Pembahasan Forum diajukan. Setelah CMO mencatat hasil pembahasan, CRF langsung diteruskan ke Kepala Departemen Operasional.',
             ];
         } else {
             $openDiscussion = forumOpenDiscussion($pdo, $id);
@@ -148,7 +148,7 @@ if (in_array($action, ['request_discussion', 'cancel_discussion'], true)) {
             forumCancelDiscussion($pdo, (int) $openDiscussion['id'], $user);
             $_SESSION['flash'] = [
                 'type' => 'success',
-                'message' => 'Pembahasan Forum dibatalkan. Level Urgensi dan SLA tetap memakai nilai sistem.',
+                'message' => 'Pembahasan Forum dibatalkan. Level Urgensi dan target Resolution Time tetap memakai nilai sistem.',
             ];
         }
         dispatchPendingNotificationEmails($pdo);
@@ -167,7 +167,7 @@ if ($action === 'to_approval') {
     if (!empty($crf['pembahasan_forum_terbuka'])) {
         $_SESSION['flash'] = [
             'type' => 'warning',
-            'message' => 'CRF ini menunggu pembahasan Forum. Setelah hasil pembahasan dicatat (CMO atau Admin), CRF otomatis diteruskan ke Kepala Departemen.',
+            'message' => 'CRF ini menunggu pembahasan Forum. Setelah hasil pembahasan dicatat (CMO), CRF otomatis diteruskan ke Kepala Departemen Operasional.',
         ];
         crfRedirect(crfUrl('cmo.detail', ['id' => $id]));
         exit;
@@ -193,7 +193,7 @@ if ($action === 'to_approval') {
             dispatchPendingNotificationEmails($pdo);
             $_SESSION['flash'] = [
                 'type' => 'warning',
-                'message' => 'SLA CRF ini belum tersedia karena SLA standar kategori belum diatur. Pembahasan Forum dibuka otomatis; CMO atau Admin akan menetapkan SLA sebelum CRF dapat diteruskan.',
+                'message' => 'Target Resolution Time CRF ini belum tersedia karena target standar kategori belum diatur. Pembahasan Forum dibuka otomatis; CMO akan menetapkan target Resolution Time sebelum CRF dapat diteruskan.',
             ];
             crfRedirect(crfUrl('cmo.detail', ['id' => $id]));
             exit;
@@ -254,7 +254,7 @@ try {
     } elseif ($action === 'revision') {
         $stmt = $pdo->prepare("UPDATE crf_pengajuan SET status = 'Perlu Revisi', tahap_alur = 'PEMOHON', tanggapan_tindak_lanjut = :tanggapan WHERE id = :id AND tahap_alur = 'CMO_FILTER'");
         $stmt->execute(['tanggapan' => $tanggapan, 'id' => $id]);
-        logCrfActivity($pdo, $id, 'Perlu Revisi', $tanggapan, $actor, $oldDisplayStatus, 'Ditolak / Perlu Revisi');
+        logCrfActivity($pdo, $id, 'Perlu Revisi', $tanggapan, $actor, $oldDisplayStatus, 'Perlu Revisi');
         notifyUsers($pdo, [(int) $crf['pengguna_id']], 'CRF perlu revisi: ' . $crfNumber,
             'CMO mengembalikan CRF Anda untuk diperbaiki: ' . $tanggapan, $crfLink, $id, (int) $user['id'], true);
         $message = 'CRF dikembalikan ke Pemohon untuk revisi.';
@@ -298,7 +298,7 @@ try {
         notifyUsers(
             $pdo,
             $picIds,
-            $passed ? 'UAT lulus: isi implementasi ' . $crfNumber : 'UAT perlu perbaikan: ' . $crfNumber,
+            $passed ? 'UAT lulus, isi implementasi: ' . $crfNumber : 'UAT perlu perbaikan: ' . $crfNumber,
             $passed
                 ? 'UAT CRF ' . $crfNumber . ' lulus. Silakan isi Tanggal Implementasi dan Implementasi / Hasil Perubahan.' . $noteSuffix
                 : 'UAT CRF ' . $crfNumber . ' menemukan hal yang perlu diperbaiki: ' . $tanggapan,

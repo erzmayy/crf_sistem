@@ -90,8 +90,8 @@ if ($format === 'pdf') {
         }
 
         $monthlyDetails .= '<table><thead><tr><th>No. Register</th><th>Nama Pemohon</th>'
-            . '<th>Departemen</th><th>Kategori</th><th>Tipe</th><th>Status</th><th>Tanggal</th>'
-            . '<th>Isi Pengajuan</th><th>Response Time</th><th>Resolution Time</th></tr></thead><tbody>';
+            . '<th>Departemen</th><th>Kelompok Laporan</th><th>Tipe</th><th>Status</th><th>Tanggal</th>'
+            . '<th>Isi Pengajuan</th><th>Response Time (PIC)</th><th>Resolution Time</th></tr></thead><tbody>';
         foreach ($month['requests'] as $request) {
             $monthlyDetails .= '<tr><td>' . $escape($request['nomor_register'])
                 . '</td><td>' . $escape($request['nama_pemohon'])
@@ -110,7 +110,7 @@ if ($format === 'pdf') {
 
     // Ringkasan kepatuhan SLA (Response Time dan Resolution Time).
     $slaSummaryRows = '';
-    foreach (['response' => 'Response Time', 'resolution' => 'Resolution Time'] as $slaKey => $slaTitle) {
+    foreach (['response' => 'Response Time (semua peran)', 'resolution' => 'Resolution Time'] as $slaKey => $slaTitle) {
         $s = $slaReport[$slaKey];
         $slaSummaryRows .= '<tr><td>' . $slaTitle . '</td><td>' . $s['measured'] . '</td><td>' . $s['met']
             . '</td><td>' . $slaPercentText($s['percent']) . '</td><td>' . $escape($slaAverageText($s['average']))
@@ -131,10 +131,10 @@ if ($format === 'pdf') {
         }
 
         return '<h3>' . $heading . '</h3><table><thead><tr><th>' . $nameLabel . '</th><th>CRF</th>'
-            . '<th>Response Time</th><th>Resolution Time</th><th>CRF Melewati SLA</th></tr></thead><tbody>'
+            . '<th>Response Time</th><th>Resolution Time</th><th>CRF Melewati Target</th></tr></thead><tbody>'
             . $rows . '</tbody></table>';
     };
-    $slaSection = '<h2>Kepatuhan SLA</h2><div class="muted">CRF yang disetujui Kadep Operasional pada periode ini: '
+    $slaSection = '<h2>Kepatuhan SLA</h2><div class="muted">CRF yang disetujui Kepala Departemen Operasional pada periode ini: '
         . $slaReport['total'] . ' CRF. Persentase = tepat waktu dari CRF yang sudah punya hasil; durasi dalam jam kerja.</div>'
         . '<table><thead><tr><th>Jenis</th><th>CRF Diukur</th><th>Tepat Waktu</th><th>Persentase</th>'
         . '<th>Rata-rata</th><th>Berjalan, Terlewati</th></tr></thead><tbody>' . $slaSummaryRows . '</tbody></table>'
@@ -142,6 +142,7 @@ if ($format === 'pdf') {
         . $slaGroupTable('Per Level Urgensi', 'Level Urgensi', $slaReport['by_urgency'])
         . '<div class="muted">Tabel per kategori dan per level urgensi memotong CRF yang sama dengan cara berbeda, '
         . 'sehingga angkanya tidak dijumlahkan antartabel.</div>';
+
 
     $html = '<!doctype html><html lang="id"><head><meta charset="UTF-8">'
         . '<style>body{font-family:Arial,sans-serif;color:#263445;font-size:9px}'
@@ -210,12 +211,12 @@ $requestRows = [[
     'No. Register',
     'Nama Pemohon',
     'Departemen',
-    'Kategori',
+    'Kelompok Laporan',
     'Tipe Pengajuan',
     'Status',
     'Tanggal Pengajuan',
     'Isi Pengajuan',
-    'Response Time',
+    'Response Time (PIC)',
     'Resolution Time',
 ]];
 $sectionRows = [];
@@ -262,7 +263,7 @@ $slaSheetRows = [[
     'Dikelompokkan Menurut', 'Nama', 'CRF Disetujui',
     'Response Diukur', 'Response Tepat Waktu', 'Response %', 'Rata-rata Response',
     'Resolution Diukur', 'Resolution Tepat Waktu', 'Resolution %', 'Rata-rata Resolution',
-    'CRF Melewati SLA',
+    'CRF Melewati Target',
 ]];
 $slaSheetRows[] = [
     'Total', 'Semua kategori dan urgensi', $numberCell($slaReport['total']),
@@ -324,7 +325,7 @@ $sheets = [
     ],
     'Kepatuhan SLA' => [
         'title' => $reportTitle,
-        'subtitle' => 'Response Time dan Resolution Time CRF yang disetujui Kadep Operasional (jam kerja). Baris Kategori dan Level Urgensi memotong CRF yang sama, jangan dijumlahkan.',
+        'subtitle' => 'Response Time (semua peran) dan Resolution Time, dalam jam kerja. Baris Kategori dan Level Urgensi memotong CRF yang sama, jangan dijumlahkan.',
         'period' => $reportPeriod,
         'rows' => $slaSheetRows,
         'header_row' => 5,

@@ -118,7 +118,7 @@ $logStmt->execute(['id' => $id]);
 $timeline = $logStmt->fetchAll();
 
 
-$pageTitle = 'Otomasi - Detail CRF';
+$pageTitle = 'Detail CRF - ' . ($crf['nomor_register'] ?? '');
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -142,7 +142,6 @@ require_once __DIR__ . '/../includes/header.php';
 
         <!-- 1. INFORMASI PENGAJUAN -->
         <?php
-        $showStatusInGrid = true;
         require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
         ?>
 

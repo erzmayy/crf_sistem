@@ -135,7 +135,7 @@ foreach ($countStmt->fetchAll() as $row) {
 
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
-$pageTitle = 'CMO';
+$pageTitle = 'Verifikasi CMO';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 <div class="crf-page crf-portal-page">
@@ -143,7 +143,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="crf-portal-banner">
       <div>
         <span class="crf-portal-eyebrow">PORTAL CRF · VERIFIKASI CMO</span>
-        <h1>Verifikasi Permohonan Perubahan</h1>
+        <h1>Verifikasi CMO</h1>
         <p>Kelola CRF pada tahap filter, UAT, pemantauan PIR, dan finalisasi.</p>
       </div>
     </div>
@@ -157,7 +157,7 @@ require_once __DIR__ . '/../includes/header.php';
         <span><i class="bi bi-funnel-fill"></i> Menunggu Verifikasi</span>
         <strong><?= $counts['CMO_FILTER'] ?></strong>
       </a>
-      <a class="crf-stat-card text-decoration-none" href="<?= h(crfSelfUrl(['stage' => 'uat'])) ?>" title="Eksekusi selesai, menunggu pengujian UAT oleh CMO">
+      <a class="crf-stat-card text-decoration-none" href="<?= h(crfSelfUrl(['stage' => 'uat'])) ?>" title="Pengerjaan selesai, menunggu pengujian UAT oleh CMO">
         <span><i class="bi bi-clipboard2-check"></i> Menunggu UAT</span>
         <strong><?= $counts['UAT'] ?></strong>
       </a>

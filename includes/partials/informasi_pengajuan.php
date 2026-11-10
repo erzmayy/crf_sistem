@@ -6,9 +6,6 @@
  *
  * Variabel yang HARUS sudah ada di scope pemanggil:
  *   array $crf
- *
- * Variabel OPSIONAL (dipertahankan agar pemanggil lama tetap kompatibel):
- *   bool $showStatusInGrid  tidak dipakai lagi; status ada di header
  */
 
 $unit = static function (?string $dept, ?string $div): string {
@@ -62,11 +59,11 @@ $picNama = trim((string) ($crf['pic_nama'] ?? ''));
                 </dd>
             </div>
             <div>
-                <dt>PIC CRF</dt>
+                <dt>PIC Otomasi</dt>
                 <dd><?= $picNama !== '' ? h($picNama) : '<span class="text-muted">Belum ada</span>' ?></dd>
             </div>
         </dl>
     </div>
 </section>
 <?php
-unset($showStatusInGrid, $unit, $unitAsal, $unitTujuan, $kontak, $picNama);
+unset($unit, $unitAsal, $unitTujuan, $kontak, $picNama);

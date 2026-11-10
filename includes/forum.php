@@ -15,11 +15,11 @@ function requireForumAccess(): void
 /**
  * Peran yang mencatat hasil pembahasan Forum dan menerapkannya ke data CRF
  * (satu-satunya jalur yang mengubah Level Urgensi dan SLA setelah pengajuan).
- * Sesuai hasil rapat: CMO dan Admin. Ubah di sini untuk mengganti penentu.
+ * Hanya CMO. Ubah di sini untuk mengganti penentu.
  */
 function forumResultRoles(): array
 {
-    return ['admin', 'cmo'];
+    return ['cmo'];
 }
 
 /**
@@ -129,7 +129,7 @@ function markForumRead(PDO $pdo, int $crfId, int $userId, int $lastCommentId): v
 
 /**
  * Peran Forum boleh melihat detail (read-only) dan mengunduh lampiran
- * semua CRF yang sedang dibahas di Forum, termasuk PIC CRF di
+ * semua CRF yang sedang dibahas di Forum, termasuk PIC Otomasi di
  * luar kategorinya. Hak aksi tetap dijaga di halaman proses masing-masing.
  */
 function canViewForumCrf(PDO $pdo, int $crfId): bool
@@ -187,8 +187,8 @@ function forumProcessLink(PDO $pdo, array $crf): ?array
 }
 
 /**
- * Peserta ruang Forum: semua yang pernah berkomentar ditambah PIC CRF
- * (pemegang CRF, atau seluruh PIC CRF kategori bila belum ada pemegang).
+ * Peserta ruang Forum: semua yang pernah berkomentar ditambah PIC Otomasi
+ * (pemegang CRF, atau seluruh PIC Otomasi kategori bila belum ada pemegang).
  *
  * @return int[]
  */
@@ -262,7 +262,7 @@ function forumRelativeTime(?string $datetime): string
         return 'Kemarin';
     }
 
-    return date('d M', $time);
+    return date('d-m', $time);
 }
 
 /**
@@ -279,7 +279,7 @@ function forumDateLabel(string $datetime): string
         return 'Kemarin';
     }
 
-    return date('d M Y', strtotime($datetime));
+    return date('d-m-Y', strtotime($datetime));
 }
 
 function forumInitials(string $name): string

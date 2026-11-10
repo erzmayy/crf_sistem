@@ -2,7 +2,7 @@
 /**
  * database/maintenance/kirim_peringatan_sla.php
  * ---------------------------------------------------------------
- * Kirim peringatan SLA ke PIC CRF (pengingat 50%, mendesak, terlambat).
+ * Kirim peringatan Resolution Time dan Response Time (pengingat 50%, mendesak, terlambat) ke peran yang memegang CRF.
  * Jalankan berkala, disarankan tiap 5 menit, lewat Windows Task Scheduler
  * atau cron. Aman dijalankan berulang (anti kirim ganda lewat crf_peringatan_sla).
  *

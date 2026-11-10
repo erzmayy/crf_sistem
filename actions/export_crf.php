@@ -291,10 +291,10 @@ foreach ([
         $pemohonName],
     ['CMO',        'Verifikasi',     $cmoFilterAt,                         $lastActor($activityRows, ['Lolos Filter CMO', 'Diteruskan ke Kepala Departemen']),
         'Tim CMO'],
-    ['Kadep Ops.', 'Persetujuan',    $crf['tgl_disetujui_kadep'] ?? null,  $lastActor($activityRows, ['Approval Kepala Departemen Operasional']),
+    ['Kadep', 'Persetujuan',    $crf['tgl_disetujui_kadep'] ?? null,  $lastActor($activityRows, ['Approval Kepala Departemen Operasional']),
         'Kepala Departemen Operasional'],
-    ['PIC CRF',    'Eksekusi',       $crf['otomasi_selesai'] ?? null,      trim((string) ($crf['pic_nama'] ?? '')) ?: $lastActor($activityRows, ['Eksekusi Selesai']),
-        'PIC CRF'],
+    ['PIC Otomasi',    'Pengerjaan',       $crf['otomasi_selesai'] ?? null,      trim((string) ($crf['pic_nama'] ?? '')) ?: $lastActor($activityRows, ['Eksekusi Selesai']),
+        'PIC Otomasi'],
     ['CMO',        'UAT lulus',      $crf['tgl_uat_lulus'] ?? null,        $lastActor($activityRows, ['UAT Lulus']),
         'Tim CMO'],
     ['Pemohon',    'PIR',            $crf['tgl_pir'] ?? null,              $lastActor($activityRows, ['PIR Diisi Pemohon']) ?: $pemohonName,
@@ -416,7 +416,7 @@ ob_start();
             <div class="chip-value"><span class="pill" style="background: <?= $levelBg ?>; color: <?= $levelFg ?>;"><?= $esc($levelDisplay) ?></span></div>
         </td>
         <td>
-            <div class="chip-label">SLA</div>
+            <div class="chip-label">Target Resolution</div>
             <div class="chip-value"><?= $esc($slaDisplay) ?></div>
         </td>
 <?php endif; ?>
@@ -461,7 +461,14 @@ ob_start();
     <tr><td class="lbl">Tipe Pengajuan</td><td class="val"><?= pdfValue($crf['jenis_pengajuan'] ?? '') ?></td></tr>
     <tr><td class="lbl">Rincian Permohonan Perubahan</td><td class="val"><?= pdfValue($crf['deskripsi_perubahan']) ?></td></tr>
     <tr><td class="lbl">Benefit dari Perubahan yang Diharapkan</td><td class="val"><?= pdfValue($crf['manfaat']) ?></td></tr>
-    <tr><td class="lbl">Kategori Dampak</td><td class="val"><?= pdfValue(implode('; ', crfDampakLabels($crf)) ?: crfImpactLabel($crf['kategori_dampak'] ?? null)) ?></td></tr>
+    <?php
+    // CRF dari form 4 pertanyaan: tampil sebagai pertanyaan dan jawaban; CRF lama tetap daftar pernyataan.
+    $dampakJawabanPdf = crfDampakJawabanTampil(crfDampakKunci($crf), (string) ($crf['jenis_pengajuan'] ?? ''));
+    $dampakTeksPdf = $dampakJawabanPdf !== null
+        ? implode("\n", array_map(static fn(array $r): string => $r['judul'] . ' ' . $r['jawaban'], $dampakJawabanPdf))
+        : (implode('; ', crfDampakLabels($crf)) ?: crfImpactLabel($crf['kategori_dampak'] ?? null));
+    ?>
+    <tr><td class="lbl">Kategori Dampak</td><td class="val"><?= pdfValue($dampakTeksPdf) ?></td></tr>
     <tr><td class="lbl">Dampak Jika Tidak Dilakukan Perubahan</td><td class="val"><?= pdfValue($crf['dampak']) ?></td></tr>
     <tr><td class="lbl">Alasan Permohonan Perubahan</td><td class="val"><?= pdfValue($crf['alasan']) ?></td></tr>
     <tr><td class="lbl">Bukti dan Informasi Pendukung</td><td class="val"><?= $attachmentHtml ?></td></tr>

@@ -135,7 +135,7 @@ $responOverdueCount = (int) ($summary['respon_overdue'] ?? 0);
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$pageTitle = 'Otomasi';
+$pageTitle = 'Tindak Lanjut Otomasi';
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -167,8 +167,8 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-portal-banner">
             <div>
                 <span class="crf-portal-eyebrow">PORTAL CRF · TINDAK LANJUT OTOMASI</span>
-                <h1>Tindak Lanjut Permohonan Perubahan</h1>
-                <p>CRF yang sudah disetujui Kepala Departemen Operasional pada kategori yang Anda tangani. SLA mulai dihitung sejak persetujuan; isi hasil implementasi untuk menyelesaikan CRF.</p>
+                <h1>Tindak Lanjut Otomasi</h1>
+                <p>CRF yang sudah disetujui Kepala Departemen Operasional pada kategori yang Anda tangani. Resolution Time mulai dihitung sejak persetujuan; isi hasil implementasi untuk menyelesaikan CRF.</p>
             </div>
         </div>
 
@@ -183,12 +183,12 @@ require_once __DIR__ . '/../includes/header.php';
              ===================================================== -->
         <div class="crf-stat-grid crf-portal-summary mb-4">
             <div class="crf-stat-card">
-                <span><i class="bi bi-gear-wide-connected"></i> Menunggu Eksekusi</span>
+                <span><i class="bi bi-gear-wide-connected"></i> Menunggu Pengerjaan</span>
                 <strong><?= $inExecution ?></strong>
             </div>
 
             <div class="crf-stat-card">
-                <span><i class="bi bi-exclamation-triangle"></i> SLA Terlewati</span>
+                <span><i class="bi bi-exclamation-triangle"></i> Resolution terlewati</span>
                 <strong><?= $overdueCount ?></strong>
             </div>
 
@@ -201,7 +201,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-table-card crf-list-table-card">
 
             <div class="crf-table-heading">
-                <h2><?= $queue === 'history' ? 'Riwayat Tindak Lanjut' : 'Eksekusi CRF' ?></h2>
+                <h2><?= $queue === 'history' ? 'Riwayat Tindak Lanjut' : 'Pengerjaan CRF' ?></h2>
 
                 <!-- FILTER ANTREAN -->
                 <div class="btn-group">
@@ -245,9 +245,9 @@ require_once __DIR__ . '/../includes/header.php';
                             <th>Isi Pengajuan</th>
                             <th>Urgensi</th>
                             <th>Status</th>
-                            <th>SLA</th>
+                            <th>Target Resolution</th>
                             <?php if ($queue !== 'history'): ?>
-                                <th>Status SLA</th>
+                                <th>Status Resolution</th>
                             <?php endif; ?>
                             <th>Aksi</th>
                         </tr>
@@ -268,9 +268,9 @@ require_once __DIR__ . '/../includes/header.php';
                                 <td data-label="No"><?= $offset + $i + 1 ?></td>
 
                                 <?php $rowShowDepartment = false; $rowShowHandler = true; require __DIR__ . '/../includes/partials/crf_row_request.php'; ?>
-                                <?php require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
+                                <?php $rowHideResp = true; /* kolom Status Resolution di sebelahnya sudah menampilkan Response Time */ require __DIR__ . '/../includes/partials/crf_row_status.php'; ?>
 
-                                <td data-label="SLA">
+                                <td data-label="Target Resolution">
                                     <?= $row['sla_nilai'] !== null && $row['sla_satuan']
                                         ? h(rtrim(rtrim(number_format((float) $row['sla_nilai'], 2, '.', ''), '0'), '.')) . ' ' . h($row['sla_satuan'])
                                         : '-' ?>
@@ -293,7 +293,7 @@ require_once __DIR__ . '/../includes/header.php';
                                         ? 'data-sla-started-at="' . (int) strtotime((string) ($row['sla_mulai'] ?? '')) . '" data-sla-due-at="' . (int) strtotime($row['sla_tenggat']) . '"'
                                         : '';
                                     ?>
-                                    <td data-label="Status SLA">
+                                    <td data-label="Status Resolution">
                                         <div class="automation-sla-cell">
                                             <?php if ($rowResponLive): ?>
                                                 <div
@@ -320,9 +320,7 @@ require_once __DIR__ . '/../includes/header.php';
                                                 >
                                                     <span class="automation-sla-kicker">Resolution Time</span>
                                                     <span class="badge text-bg-<?= h($rowSlaStatus['class']) ?>" data-sla-status-label>
-                                                        <?= $rowSlaStatus['label'] === 'Melewati SLA'
-                                                            ? 'SLA Terlewati'
-                                                            : h($rowSlaStatus['label']) ?>
+                                                        <?= h($rowSlaStatus['label']) ?>
                                                     </span>
                                                     <small class="automation-sla-status-detail" data-sla-status-detail><?= $rowSlaShort !== '' ? h($rowSlaShort) : h($rowSlaStatus['detail']) ?></small>
                                                 </div>

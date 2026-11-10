@@ -3,7 +3,7 @@
    - Dialog konfirmasi untuk form ber-atribut data-confirm
    - Loading state tombol submit (data-loading-form / data-confirm)
    - Isi otomatis modal kategori (data-category-form)
-   - Pencarian user untuk PIC CRF (data-user-picker)
+   - Pencarian user untuk PIC Otomasi (data-user-picker)
    Semua aturan akses tetap divalidasi di server.
    ===================================================================== */
 

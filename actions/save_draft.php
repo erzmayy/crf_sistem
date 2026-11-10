@@ -48,9 +48,13 @@ $changeDescription = trim($_POST['deskripsi_perubahan'] ?? '');
 $benefit           = trim($_POST['manfaat'] ?? '');
 $impact            = trim($_POST['dampak'] ?? '');
 $requestType       = trim($_POST['jenis_pengajuan'] ?? '');
-// Urgensi berbobot: pemohon mencentang semua pernyataan dampak yang berlaku.
-$dampakKeys     = crfDampakDipilih($_POST['dampak_dipilih'] ?? ($_POST['kategori_dampak'] ?? []));
-$urgensi        = crfHitungUrgensi($dampakKeys);
+// Urgensi berbobot: 4 pertanyaan dampak dipetakan ke pernyataan dampak (formulir lama: dicentang langsung).
+// Draft boleh sebagian: pertanyaan yang belum dijawab dilewati.
+$dampakJawaban  = crfDampakJawabanDariPost($_POST);
+$dampakKeys     = $dampakJawaban !== null
+    ? crfDampakDariJawaban($dampakJawaban, $requestType)
+    : crfDampakDipilih($_POST['dampak_dipilih'] ?? ($_POST['kategori_dampak'] ?? []));
+$urgensi        = crfHitungUrgensi($dampakKeys, null, $requestType);
 $impactCategory = (string) (crfDampakUtama($dampakKeys) ?? '');
 $reason            = trim($_POST['alasan'] ?? '');
 
@@ -105,7 +109,7 @@ $allowedCategories = [
     'Security',
     'Lainnya'
 ];
-$allowedRequestTypes = crfRequestTypeOptions();
+$allowedRequestTypes = crfRequestTypeAllowedForSave($pdo, $id, (int) $user['id']);
 $allowedImpactCategories = array_keys(crfImpactOptions());
 
 if (

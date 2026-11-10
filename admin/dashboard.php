@@ -143,20 +143,6 @@ $requests = $stmt->fetchAll();
  * SUMMARY
  * ========================================================= */
 
-$summaryStmt = $pdo->query(
-    "SELECT
-        COUNT(*) AS total,
-        SUM(status = 'Belum Ditindak Lanjuti') AS pending,
-        SUM(status = 'Perlu Revisi') AS revision,
-        SUM(status = 'Dalam Proses') AS processing,
-        SUM(status = 'Solve') AS solved,
-        SUM(status = 'Cancel') AS cancelled
-     FROM crf_pengajuan
-     WHERE status <> 'Draft'"
-);
-
-$summary = $summaryStmt->fetch() ?: [];
-
 // Ringkasan per status tampilan alur CRF (termasuk Draft).
 $displayConditions = crfDisplayStatusConditions('cr');
 $displaySumSql = implode(",\n", array_map(
@@ -178,6 +164,14 @@ $displayIcons = [
 ];
 $report = getAdminCrfReport($pdo, $reportDateRange['from'], $reportDateRange['to']);
 $slaCompliance = getAdminCrfSlaCompliance($pdo, $reportDateRange['from'], $reportDateRange['to']);
+// Perlu perhatian = CRF yang masih berjalan dan sudah melewati target Response atau Resolution.
+$attentionCount = 0;
+foreach ($slaCompliance['violations'] as $attentionRow) {
+    if (($attentionRow['response']['state'] ?? '') === 'open_late' || ($attentionRow['resolution']['state'] ?? '') === 'open_late') {
+        $attentionCount++;
+    }
+}
+unset($attentionRow);
 
 // Sel persentase kepatuhan: pil berwarna + keterangan kecil (n/diukur, rata-rata).
 $slaPercentLabel = static fn(?float $percent): string => $percent === null ? '-' : number_format($percent, 0, ',', '.') . '%';
@@ -210,21 +204,6 @@ $reportExportQuery = http_build_query([
     'report_date_to' => $reportDateRange['to'],
 ]);
 $maxMonthlyCount = max(array_column($report['months'], 'count')) ?: 1;
-$donutStops = [];
-$donutOffset = 0;
-foreach ($report['statuses'] as $reportStatus) {
-    if ($reportStatus['percentage'] <= 0) {
-        continue;
-    }
-
-    $donutEnd = $donutOffset + ($reportStatus['percentage'] * 3.6);
-    $donutStops[] = $reportStatus['color'] . ' ' . $donutOffset . 'deg ' . $donutEnd . 'deg';
-    $donutOffset = $donutEnd;
-}
-$statusDonutStyle = $donutStops
-    ? 'background: conic-gradient(' . implode(', ', $donutStops) . ');'
-    : 'background: #e2e8f0;';
-
 $urgencyStops = [];
 $urgencyOffset = 0;
 foreach ($report['urgencies'] as $urgencyItem) {
@@ -244,7 +223,7 @@ $urgencyDonutStyle = $urgencyStops
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$pageTitle = 'Dashboard Admin';
+$pageTitle = 'Dashboard CRF';
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -259,83 +238,16 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-portal-banner">
             <div>
                 <h1>Dashboard CRF</h1>
-                <p>Ringkasan seluruh pengajuan Change Request.</p>
+                <p>Periode <?= h(date('d-m-Y', strtotime($report['date_from']))) ?> sampai <?= h(date('d-m-Y', strtotime($report['date_to']))) ?>.
+                    <?php if ($reportFilterActive): ?>Kartu, grafik, daftar, dan ekspor mengikuti periode ini.<?php else: ?>Kartu dan daftar menampilkan semua data; grafik dan ekspor memakai periode ini.<?php endif; ?></p>
             </div>
         </div>
 
+        <?php if ($reportRangeError !== ''): ?>
+            <div class="alert alert-warning py-2 mb-2" role="alert"><?= h($reportRangeError) ?></div>
+        <?php endif; ?>
 
-        <!-- =====================================================
-             SUMMARY
-             ===================================================== -->
-
-        <div class="crf-stat-grid crf-portal-summary dashboard-summary-grid">
-
-            <a class="crf-stat-card text-decoration-none <?= $listFilters['display_status'] === '' ? 'is-active' : '' ?>" href="<?= h(crfSelfUrl($reportCarry)) ?>#crf-table">
-                <span><i class="bi bi-inboxes-fill"></i> Total CRF</span>
-                <strong><?= (int) ($displaySummary['total'] ?? 0) ?></strong>
-            </a>
-
-            <?php foreach ($displayConditions as $displayKey => $displayCondition): ?>
-                <?php if (in_array($displayKey, ['draft', 'revisi', 'dibatalkan'], true)) { continue; } // Disembunyikan dari ringkasan; tetap bisa difilter di tabel. ?>
-                <a
-                    class="crf-stat-card crf-stat-tone-<?= h($displayKey) ?> text-decoration-none <?= $listFilters['display_status'] === $displayKey ? 'is-active' : '' ?>"
-                    href="<?= h(crfSelfUrl(['display_status' => $displayKey] + $reportCarry)) ?>#crf-table"
-                >
-                    <span><i class="bi <?= h($displayIcons[$displayKey] ?? 'bi-circle') ?>"></i> <?= h($displayCondition['label']) ?></span>
-                    <strong><?= (int) ($displaySummary[$displayKey] ?? 0) ?></strong>
-                </a>
-            <?php endforeach; ?>
-
-        </div>
-
-        <section class="admin-report" aria-labelledby="admin-report-title">
-            <div class="admin-report-heading">
-                <div>
-                    <h2 id="admin-report-title">Laporan &amp; Statistik Change Request</h2>
-                    <p>Analisis pengajuan CRF <?= h(date('d-m-Y', strtotime($report['date_from']))) ?> sampai <?= h(date('d-m-Y', strtotime($report['date_to']))) ?>.<?php if ($reportFilterActive): ?> Kartu ringkasan, grafik, daftar pengajuan, dan ekspor mengikuti periode ini.<?php endif; ?></p>
-                </div>
-                <div class="admin-report-exports">
-                    <?php /* Tombol ekspor mengirim isi kolom tanggal saat ini (form=adminReportFilter), bukan rentang saat halaman dimuat. */ ?>
-                    <button type="submit" form="adminReportFilter" formaction="<?= h(crfActionUrl('export_admin_report.php')) ?>" formmethod="get" name="format" value="pdf" class="btn btn-sm btn-outline-danger">
-                        <i class="bi bi-file-earmark-pdf"></i> Ekspor PDF
-                    </button>
-                    <button type="submit" form="adminReportFilter" formaction="<?= h(crfActionUrl('export_admin_report.php')) ?>" formmethod="get" name="format" value="xlsx" class="btn btn-sm btn-outline-success">
-                        <i class="bi bi-file-earmark-spreadsheet"></i> Ekspor Excel (.xlsx)
-                    </button>
-                </div>
-            </div>
-
-            <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                var form = document.getElementById('adminReportFilter');
-                var from = document.getElementById('reportDateFrom');
-                var to = document.getElementById('reportDateTo');
-                if (!form || !from || !to) { return; }
-
-                var initial = from.value + '|' + to.value;
-                var timer = null;
-                var isFullDate = function (value) { return /^(19|20)\d{2}-\d{2}-\d{2}$/.test(value); };
-
-                // Periode langsung diterapkan saat tanggal dipilih (tombol Terapkan tetap bisa dipakai).
-                function schedule(changed) {
-                    if (!isFullDate(from.value) || !isFullDate(to.value)) { return; }
-                    // Bila terbalik, tanggal lainnya ikut disamakan agar rentang selalu valid.
-                    if (from.value > to.value) {
-                        if (changed === from) { to.value = from.value; } else { from.value = to.value; }
-                    }
-                    if (from.value + '|' + to.value === initial) { return; }
-                    clearTimeout(timer);
-                    timer = setTimeout(function () { form.requestSubmit(); }, 600);
-                }
-
-                from.addEventListener('change', function () { schedule(from); });
-                to.addEventListener('change', function () { schedule(to); });
-            });
-            </script>
-            <?php if ($reportRangeError !== ''): ?>
-                <div class="alert alert-warning py-2 mb-2" role="alert"><?= h($reportRangeError) ?></div>
-            <?php endif; ?>
-
+        <div class="admin-dash-bar">
             <form id="adminReportFilter" class="admin-report-date-filter" method="get"><?= crfRouteFields() ?>
                 <?php foreach ([
                     'q' => $search,
@@ -363,6 +275,79 @@ require_once __DIR__ . '/../includes/header.php';
                 </button>
                 <a class="btn btn-sm btn-outline-secondary" href="<?= h(crfSelfUrl()) ?>">Reset</a>
             </form>
+            <div class="admin-report-exports">
+                <?php /* Tombol ekspor mengirim isi kolom tanggal saat ini (form=adminReportFilter), bukan rentang saat halaman dimuat. */ ?>
+                <button type="submit" form="adminReportFilter" formaction="<?= h(crfActionUrl('export_admin_report.php')) ?>" formmethod="get" name="format" value="pdf" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-file-earmark-pdf"></i> Ekspor PDF
+                </button>
+                <button type="submit" form="adminReportFilter" formaction="<?= h(crfActionUrl('export_admin_report.php')) ?>" formmethod="get" name="format" value="xlsx" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Ekspor Excel (.xlsx)
+                </button>
+            </div>
+        </div>
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.getElementById('adminReportFilter');
+            var from = document.getElementById('reportDateFrom');
+            var to = document.getElementById('reportDateTo');
+            if (!form || !from || !to) { return; }
+
+            var initial = from.value + '|' + to.value;
+            var timer = null;
+            var isFullDate = function (value) { return /^(19|20)\d{2}-\d{2}-\d{2}$/.test(value); };
+
+            // Periode langsung diterapkan saat tanggal dipilih (tombol Terapkan tetap bisa dipakai).
+            function schedule(changed) {
+                if (!isFullDate(from.value) || !isFullDate(to.value)) { return; }
+                // Bila terbalik, tanggal lainnya ikut disamakan agar rentang selalu valid.
+                if (from.value > to.value) {
+                    if (changed === from) { to.value = from.value; } else { from.value = to.value; }
+                }
+                if (from.value + '|' + to.value === initial) { return; }
+                clearTimeout(timer);
+                timer = setTimeout(function () { form.requestSubmit(); }, 600);
+            }
+
+            from.addEventListener('change', function () { schedule(from); });
+            to.addEventListener('change', function () { schedule(to); });
+        });
+        </script>
+
+
+        <!-- =====================================================
+             SUMMARY
+             ===================================================== -->
+
+        <div class="crf-stat-grid crf-portal-summary dashboard-summary-grid">
+
+            <a class="crf-stat-card text-decoration-none <?= ($listFilters['display_status'] === '' && $listFilters['status'] === '') ? 'is-active' : '' ?>" href="<?= h(crfSelfUrl($reportCarry)) ?>#crf-table">
+                <span><i class="bi bi-inboxes-fill"></i> Total CRF</span>
+                <strong><?= (int) ($displaySummary['total'] ?? 0) ?></strong>
+            </a>
+
+            <?php foreach ([
+                ['key' => 'menunggu', 'label' => 'Menunggu persetujuan', 'icon' => 'bi-hourglass-split', 'count' => (int) ($displaySummary['menunggu'] ?? 0), 'href' => ['display_status' => 'menunggu'], 'active' => $listFilters['display_status'] === 'menunggu', 'title' => 'Verifikasi CMO, pembahasan Forum, dan persetujuan Kepala Departemen Operasional'],
+                ['key' => 'disetujui', 'label' => 'Sudah disetujui', 'icon' => 'bi-gear-wide-connected', 'count' => (int) ($displaySummary['disetujui'] ?? 0), 'href' => ['display_status' => 'disetujui'], 'active' => $listFilters['display_status'] === 'disetujui', 'title' => 'Sudah disetujui dan belum selesai (pengerjaan, UAT, PIR, finalisasi)'],
+                ['key' => 'selesai', 'label' => 'Selesai', 'icon' => 'bi-check-circle-fill', 'count' => (int) ($displaySummary['selesai'] ?? 0), 'href' => ['status' => 'Solve'], 'active' => $listFilters['status'] === 'Solve', 'title' => ''],
+            ] as $summaryCard): ?>
+                <a
+                    class="crf-stat-card crf-stat-tone-<?= h($summaryCard['key']) ?> text-decoration-none <?= $summaryCard['active'] ? 'is-active' : '' ?>"
+                    href="<?= h(crfSelfUrl($summaryCard['href'] + $reportCarry)) ?>#crf-table"
+                    <?= $summaryCard['title'] !== '' ? 'title="' . h($summaryCard['title']) . '"' : '' ?>
+                >
+                    <span><i class="bi <?= h($summaryCard['icon']) ?>"></i> <?= h($summaryCard['label']) ?></span>
+                    <strong><?= $summaryCard['count'] ?></strong>
+                </a>
+            <?php endforeach; ?>
+
+            <a class="crf-stat-card crf-stat-tone-perhatian text-decoration-none <?= $attentionCount > 0 ? 'is-attention' : '' ?>" href="#adminSlaViolations" data-open-sla="1" title="CRF yang masih berjalan dan sudah melewati target Response atau Resolution">
+                <span><i class="bi bi-exclamation-triangle-fill"></i> Perlu perhatian</span>
+                <strong><?= (int) $attentionCount ?></strong>
+            </a>
+
+        </div>
+
+        <section class="admin-report" aria-label="Grafik laporan CRF">
 
             <div class="admin-report-grid">
                 <section class="admin-report-card" aria-labelledby="monthly-trend-title">
@@ -389,27 +374,6 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                 </section>
 
-                <section class="admin-report-card" aria-labelledby="status-distribution-title">
-                    <h3 id="status-distribution-title">Status Distribusi CRF</h3>
-                    <div class="admin-report-distribution">
-                        <div class="admin-report-donut" style="<?= h($statusDonutStyle) ?>" role="img" aria-label="Distribusi status dari <?= (int) $report['total'] ?> CRF">
-                            <div class="admin-report-donut-hole">
-                                <strong><?= (int) $report['total'] ?></strong>
-                                <span>Total CRF</span>
-                            </div>
-                        </div>
-                        <ul class="admin-report-legend">
-                            <?php foreach ($report['statuses'] as $reportStatus): ?>
-                                <li>
-                                    <span class="admin-report-legend-swatch" style="background: <?= h($reportStatus['color']) ?>;"></span>
-                                    <span><?= h($reportStatus['label']) ?></span>
-                                    <strong><?= (int) $reportStatus['count'] ?> (<?= number_format($reportStatus['percentage'], 1, ',', '.') ?>%)</strong>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                </section>
-
                 <section class="admin-report-card" aria-labelledby="urgency-percentage-title">
                     <h3 id="urgency-percentage-title">Persentase Tingkat Urgensi</h3>
                     <div class="admin-report-distribution">
@@ -431,7 +395,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                 </section>
 
-                <section class="admin-report-card admin-report-card--wide" aria-labelledby="type-composition-title">
+                <section class="admin-report-card" aria-labelledby="type-composition-title">
                     <h3 id="type-composition-title">Tipe Pengajuan</h3>
                     <ul class="admin-type-list">
                         <?php foreach ($report['types'] as $typeItem): ?>
@@ -458,57 +422,75 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="admin-report-heading">
                 <div>
                     <h2 id="admin-sla-title">Kepatuhan SLA</h2>
-                    <p>Response Time dan Resolution Time CRF yang disetujui Kadep Operasional pada periode ini, dalam jam kerja.</p>
+                    <p>Dalam jam kerja. Response Time = waktu menunggu sebelum ditanggapi (semua peran); Resolution Time = waktu sampai pengerjaan selesai.</p>
                 </div>
-                <div class="admin-sla-actions">
-                    <?php if ($slaCompliance['total'] > 0): ?>
-                        <?php /* Ringkasan singkat; hanya tampil saat bagian ini disembunyikan. */ ?>
-                        <span class="admin-sla-mini" aria-label="Ringkasan kepatuhan SLA">
-                            <span class="admin-sla-pill is-<?= h($slaCompliance['response']['tone']) ?>">Response <?= h($slaPercentLabel($slaCompliance['response']['percent'])) ?></span>
-                            <span class="admin-sla-pill is-<?= h($slaCompliance['resolution']['tone']) ?>">Resolution <?= h($slaPercentLabel($slaCompliance['resolution']['percent'])) ?></span>
-                        </span>
+                <?php if ($slaCompliance['total'] > 0): ?>
+                    <div class="admin-sla-actions">
                         <span class="admin-sla-count"><strong><?= (int) $slaCompliance['total'] ?></strong> CRF disetujui</span>
-                    <?php endif; ?>
-                    <button type="button" class="admin-sla-toggle" id="adminSlaToggle" aria-expanded="true" aria-controls="adminSlaBody">
-                        <i class="bi bi-chevron-up" aria-hidden="true"></i> <span>Sembunyikan</span>
-                    </button>
-                </div>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <div class="admin-sla-body" id="adminSlaBody">
             <?php if ($slaCompliance['total'] === 0): ?>
                 <div class="crf-empty-state">
                     <i class="bi bi-hourglass-split"></i>
-                    <p>Belum ada CRF yang disetujui Kadep Operasional pada periode ini, jadi belum ada data SLA.</p>
+                    <p>Belum ada CRF yang disetujui Kepala Departemen Operasional pada periode ini, jadi belum ada data kepatuhan.</p>
                 </div>
             <?php else: ?>
-                <div class="admin-sla-kpis">
-                    <?php foreach ([
-                        ['key' => 'response', 'title' => 'Response Time', 'hint' => 'Sampai PIC menekan Mulai kerjakan'],
-                        ['key' => 'resolution', 'title' => 'Resolution Time', 'hint' => 'Sampai eksekusi selesai'],
-                    ] as $kpi): ?>
-                        <?php $kpiData = $slaCompliance[$kpi['key']]; ?>
-                        <article class="admin-sla-kpi">
-                            <header>
-                                <h3><?= h($kpi['title']) ?></h3>
-                                <small><?= h($kpi['hint']) ?></small>
-                            </header>
-                            <div class="admin-sla-kpi-main">
-                                <strong class="is-<?= h($kpiData['tone']) ?>"><?= h($slaPercentLabel($kpiData['percent'])) ?></strong>
-                                <span><?= $kpiData['percent'] === null ? 'belum ada hasil' : 'tepat waktu' ?></span>
-                            </div>
-                            <div class="admin-sla-bar is-<?= h($kpiData['tone']) ?>" role="progressbar" aria-label="<?= h($kpi['title']) ?> tepat waktu" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= (int) round((float) $kpiData['percent']) ?>">
-                                <span style="width: <?= (int) round((float) $kpiData['percent']) ?>%"></span>
-                            </div>
-                            <dl class="admin-sla-kpi-meta">
-                                <div><dt>Sudah diukur</dt><dd><?= (int) $kpiData['measured'] ?> CRF</dd></div>
-                                <div><dt>Rata-rata</dt><dd><?= $kpiData['average'] !== null ? h(formatSlaDurationShort($kpiData['average'])) : '-' ?></dd></div>
-                                <div class="<?= $kpiData['open_late'] > 0 ? 'is-alert' : '' ?>"><dt>Berjalan, terlewati</dt><dd><?= (int) $kpiData['open_late'] ?></dd></div>
-                            </dl>
-                        </article>
-                    <?php endforeach; ?>
+                <?php
+                $kpiResponse = $slaCompliance['response'];
+                $kpiResolution = $slaCompliance['resolution'];
+                $kpiCombined = !empty($kpiResponse['combined']);
+                ?>
+                <div class="admin-sla-kpis admin-sla-kpis--v2">
+
+                    <!-- RESPONSE TIME: gabungan semua peran + rincian per peran -->
+                    <article class="admin-sla-kpi admin-sla-kpi--response">
+                        <header>
+                            <h3>Response Time<?= $kpiCombined ? ' (semua peran)' : '' ?></h3>
+                            <small><?= $kpiCombined ? 'CMO, Kepala Departemen Operasional, dan PIC Otomasi' : 'Sampai PIC menekan Mulai kerjakan' ?></small>
+                        </header>
+                        <div class="admin-sla-kpi-main">
+                            <strong class="is-<?= h($kpiResponse['tone']) ?>"><?= h($slaPercentLabel($kpiResponse['percent'])) ?></strong>
+                            <span><?= $kpiResponse['percent'] === null ? 'belum ada hasil' : 'tepat waktu' ?></span>
+                        </div>
+                        <div class="admin-sla-bar is-<?= h($kpiResponse['tone']) ?>" role="progressbar" aria-label="Response Time tepat waktu" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= (int) round((float) $kpiResponse['percent']) ?>">
+                            <span style="width: <?= (int) round((float) $kpiResponse['percent']) ?>%"></span>
+                        </div>
+                        <dl class="admin-sla-kpi-meta">
+                            <div><dt>Sudah diukur</dt><dd><?= (int) $kpiResponse['measured'] ?> <?= $kpiCombined ? 'kali' : 'CRF' ?></dd></div>
+                            <?php if (!$kpiCombined): ?>
+                                <div><dt>Rata-rata</dt><dd><?= $kpiResponse['average'] !== null ? h(formatSlaDurationShort($kpiResponse['average'])) : '-' ?></dd></div>
+                            <?php endif; ?>
+                            <div class="<?= $kpiResponse['open_late'] > 0 ? 'is-alert' : '' ?>"><dt>Berjalan, terlewati</dt><dd><?= (int) $kpiResponse['open_late'] ?></dd></div>
+                        </dl>
+
+</article>
+
+                    <!-- RESOLUTION TIME -->
+                    <article class="admin-sla-kpi admin-sla-kpi--resolution">
+                        <header>
+                            <h3>Resolution Time</h3>
+                            <small>Sampai pengerjaan selesai</small>
+                        </header>
+                        <div class="admin-sla-kpi-main">
+                            <strong class="is-<?= h($kpiResolution['tone']) ?>"><?= h($slaPercentLabel($kpiResolution['percent'])) ?></strong>
+                            <span><?= $kpiResolution['percent'] === null ? 'belum ada hasil' : 'tepat waktu' ?></span>
+                        </div>
+                        <div class="admin-sla-bar is-<?= h($kpiResolution['tone']) ?>" role="progressbar" aria-label="Resolution Time tepat waktu" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= (int) round((float) $kpiResolution['percent']) ?>">
+                            <span style="width: <?= (int) round((float) $kpiResolution['percent']) ?>%"></span>
+                        </div>
+                        <dl class="admin-sla-kpi-meta">
+                            <div><dt>Sudah diukur</dt><dd><?= (int) $kpiResolution['measured'] ?> CRF</dd></div>
+                            <div><dt>Rata-rata</dt><dd><?= $kpiResolution['average'] !== null ? h(formatSlaDurationShort($kpiResolution['average'])) : '-' ?></dd></div>
+                            <div class="<?= $kpiResolution['open_late'] > 0 ? 'is-alert' : '' ?>"><dt>Berjalan, terlewati</dt><dd><?= (int) $kpiResolution['open_late'] ?></dd></div>
+                        </dl>
+                    </article>
                 </div>
 
+                <details class="admin-sla-details" id="adminSlaDetails">
+                    <summary>Rincian per kategori, urgensi, dan CRF yang melewati target <span class="admin-sla-count"><?= count($slaCompliance['violations']) ?></span></summary>
                 <div class="admin-sla-tables">
                     <?php foreach ([
                         ['title' => 'Per Kategori', 'rows' => $slaCompliance['by_category']],
@@ -537,18 +519,18 @@ require_once __DIR__ . '/../includes/header.php';
                     <?php endforeach; ?>
                 </div>
 
-                <section class="admin-report-card admin-sla-violations">
+                <section class="admin-report-card admin-sla-violations" id="adminSlaViolations">
                     <h3>
-                        CRF yang Melewati SLA
+                        CRF yang Melewati Target
                         <span class="admin-sla-count"><?= count($slaCompliance['violations']) ?></span>
                     </h3>
                     <?php if (!$slaCompliance['violations']): ?>
-                        <p class="admin-sla-clear"><i class="bi bi-check-circle-fill"></i> Tidak ada CRF yang melewati SLA pada periode ini.</p>
+                        <p class="admin-sla-clear"><i class="bi bi-check-circle-fill"></i> Tidak ada CRF yang melewati target pada periode ini.</p>
                     <?php else: ?>
                         <div class="table-responsive">
                             <table class="admin-sla-table">
                                 <thead>
-                                    <tr><th>No. Register</th><th>Kategori</th><th>Urgensi</th><th>PIC</th><th>Response</th><th>Resolution</th></tr>
+                                    <tr><th>No. Register</th><th>Kategori</th><th>Urgensi</th><th>PIC</th><th>Mulai dikerjakan</th><th>Resolution</th></tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach (array_slice($slaCompliance['violations'], 0, 10) as $violation): ?>
@@ -571,39 +553,23 @@ require_once __DIR__ . '/../includes/header.php';
                 </section>
 
                 <p class="admin-sla-note">
-                    Persentase = CRF tepat waktu dari CRF yang sudah punya hasil (sudah direspons atau eksekusi selesai).
-                    Warna: hijau 90% ke atas, kuning 75-89%, merah di bawah 75%. CRF tanpa target Response Time
-                    (disetujui sebelum fitur ini) tidak dihitung pada Response Time.
+                    Persentase = tepat waktu dari yang sudah punya hasil. Response dihitung tiap kali CRF menunggu satu peran
+                    (satu CRF bisa dihitung beberapa kali, misalnya setelah revisi); Resolution dihitung satu kali per CRF.
+                    Warna: hijau 90% ke atas, kuning 75-89%, merah di bawah 75%. Putaran tanpa target (CRF lama yang
+                    disetujui sebelum fitur ini) tidak dihitung pada persentase.
                 </p>
+                </details>
             <?php endif; ?>
+
             </div>
         </section>
         <script>
         (function () {
-            var section = document.getElementById('adminSla');
-            var body = document.getElementById('adminSlaBody');
-            var button = document.getElementById('adminSlaToggle');
-            if (!section || !body || !button) { return; }
-
-            var storageKey = 'crfAdminSlaHidden';
-            function apply(hidden) {
-                body.hidden = hidden;
-                section.classList.toggle('is-collapsed', hidden);
-                button.setAttribute('aria-expanded', hidden ? 'false' : 'true');
-                button.querySelector('span').textContent = hidden ? 'Tampilkan' : 'Sembunyikan';
-                button.querySelector('i').className = 'bi ' + (hidden ? 'bi-chevron-down' : 'bi-chevron-up');
-            }
-
-            // Pilihan tampil/sembunyi diingat di browser ini (opsional; halaman tetap jalan tanpa penyimpanan).
-            var saved = false;
-            try { saved = window.localStorage.getItem(storageKey) === '1'; } catch (e) { saved = false; }
-            apply(saved);
-
-            button.addEventListener('click', function () {
-                var hidden = !body.hidden;
-                apply(hidden);
-                try { window.localStorage.setItem(storageKey, hidden ? '1' : '0'); } catch (e) { /* abaikan */ }
-            });
+            var details = document.getElementById('adminSlaDetails');
+            if (!details) { return; }
+            function openDetails() { details.open = true; }
+            document.querySelectorAll('[data-open-sla]').forEach(function (link) { link.addEventListener('click', openDetails); });
+            if (window.location.hash === '#adminSlaViolations') { openDetails(); }
         })();
         </script>
 
@@ -628,7 +594,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="crf-table-heading">
 
                 <h2>
-                    Daftar Pengajuan Change Request
+                    Daftar CRF
                 </h2>
                 <?php if ($reportFilterActive): ?>
                     <p class="mb-0 text-muted small">
@@ -643,8 +609,9 @@ require_once __DIR__ . '/../includes/header.php';
 
             <!-- FILTER -->
             <?php
-            $listContextName = $listFilters['display_status'] !== '' ? 'display_status' : '';
-            $listContextValue = $listFilters['display_status'];
+            $listContextName = '';
+            $listContextValue = '';
+            $listShowStageFilter = true;
             $listResetUrl = 'dashboard.php';
             $listCarryParams = $reportCarry;
             require __DIR__ . '/../includes/partials/crf_list_filters.php';

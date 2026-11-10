@@ -2,8 +2,8 @@
 /**
  * actions/forum_discussion.php
  * Aksi pembahasan Level Urgensi & SLA di Forum (logika di includes/forum_discussions.php).
- *   op=result : penentu (CMO atau Admin) mencatat hasil — Tetap atau Diubah — dan menerapkannya ke CRF.
- *   op=cancel : batalkan pembahasan yang masih terbuka (CMO atau Admin).
+ *   op=result : penentu (CMO) mencatat hasil — Tetap atau Diubah — dan menerapkannya ke CRF.
+ *   op=cancel : batalkan pembahasan yang masih terbuka (CMO).
  * Pembahasan diajukan CMO dari halaman verifikasi CMO (actions/cmo_action.php).
  * Level/SLA tidak dapat diubah dari form diskusi Forum.
  */
@@ -49,7 +49,7 @@ try {
 
         case 'cancel':
             $crfId = forumCancelDiscussion($pdo, $discussionId, $user);
-            $message = 'Pembahasan dibatalkan. Level Urgensi dan SLA tetap memakai nilai sistem.';
+            $message = 'Pembahasan dibatalkan. Level Urgensi dan target Resolution Time tetap memakai nilai sistem.';
             break;
 
         default:

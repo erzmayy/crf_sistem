@@ -122,7 +122,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="container">
 
         <?php
-        $dhEyebrow = 'Detail pengajuan';
+        $dhEyebrow = 'Detail CRF';
         $dhShowForum = false;
         $dhShowSla = false;
         $dhNumber = $requestNumberDisplay;

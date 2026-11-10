@@ -194,7 +194,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="crf-section-body">
           <p class="text-muted small mb-3">
             Admin hanya memantau alur. Batalkan hanya jika CRF tidak bisa dilanjutkan lewat alur normal
-            (duplikat, salah input, dll). Alasan dicatat di timeline dan dikirim ke Pemohon serta PIC CRF.
+            (duplikat, salah input, dll). Alasan dicatat di timeline dan dikirim ke Pemohon serta PIC Otomasi.
           </p>
           <details class="crf-danger-zone">
           <summary class="btn btn-outline-danger btn-sm"><i class="bi bi-x-octagon"></i> Batalkan CRF secara administratif</summary>

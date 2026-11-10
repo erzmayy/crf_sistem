@@ -38,7 +38,7 @@ $rowMeta = array_filter([
         <?php if ($rowShowHandler): ?>
             <div class="crf-row-handler <?= empty($row['pic_id']) ? 'is-empty' : '' ?>">
                 <i class="bi <?= empty($row['pic_id']) ? 'bi-person-dash' : 'bi-person-check' ?>"></i>
-                <?= empty($row['pic_id']) ? 'Belum ada PIC CRF' : 'PIC CRF: ' . h($row['pic_nama']) ?>
+                <?= empty($row['pic_id']) ? 'Belum ada PIC Otomasi' : 'PIC Otomasi: ' . h($row['pic_nama']) ?>
             </div>
         <?php endif; ?>
     </div>

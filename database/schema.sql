@@ -449,6 +449,51 @@ CREATE TABLE IF NOT EXISTS crf_peringatan_sla (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ------------------------------------------------------------------
+-- 6. Response Time per tahap (CMO, Kadep) dan targetnya (migrasi 028)
+-- ------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS crf_sla_respon (
+    id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pengajuan_id    INT UNSIGNED NOT NULL,
+    tahap           ENUM('CMO_VERIFIKASI','KADEP','PIC_MULAI','CMO_UAT','CMO_FINAL') NOT NULL,
+    putaran         SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+    urgensi         ENUM('Tinggi','Normal','Rendah') NULL,
+    target_nilai    DECIMAL(10,2) NULL,
+    target_satuan   ENUM('Menit','Jam','Hari') NULL,
+    mulai           DATETIME NOT NULL,
+    tenggat         DATETIME NULL,
+    respon_at       DATETIME NULL,
+    respon_oleh     INT UNSIGNED NULL,
+    respon_oleh_nama VARCHAR(150) NULL,
+    hasil           ENUM('Sesuai SLA','Melebihi SLA','Dibatalkan','Tanpa target') NULL,
+    peringatan_pengingat_at DATETIME NULL,   -- anti kirim ganda peringatan (50%, mendesak, terlambat)
+    peringatan_mendesak_at  DATETIME NULL,
+    peringatan_terlambat_at DATETIME NULL,
+    peringatan_terlambat_urutan SMALLINT UNSIGNED NOT NULL DEFAULT 0,   -- "terlambat" diulang tiap hari kerja
+    PRIMARY KEY (id),
+    KEY idx_sla_respon_pengajuan (pengajuan_id, tahap, putaran),
+    KEY idx_sla_respon_terbuka (respon_at, tenggat),
+    CONSTRAINT fk_sla_respon_crf FOREIGN KEY (pengajuan_id) REFERENCES crf_pengajuan (id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS crf_sla_respon_target (
+    tahap     ENUM('CMO_VERIFIKASI','KADEP','PIC_MULAI','CMO_UAT','CMO_FINAL') NOT NULL,
+    urgensi   ENUM('Tinggi','Normal','Rendah') NOT NULL,
+    nilai     DECIMAL(10,2) NOT NULL,
+    satuan    ENUM('Menit','Jam','Hari') NOT NULL,
+    PRIMARY KEY (tahap, urgensi)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Usulan awal (perlu persetujuan atasan): Tinggi 2 jam, Normal 1 hari, Rendah 2 hari kerja.
+-- Usulan awal (perlu persetujuan atasan). UAT dan finalisasi sengaja tanpa target: yang diukur di sana
+-- adalah keputusan akhir (lulus/perbaikan, ditutup), bukan sekadar mulai; lamanya tetap dicatat.
+-- Target PIC berlaku untuk semua kategori dan harus lebih kecil dari Resolution Time terkecil.
+INSERT IGNORE INTO crf_sla_respon_target (tahap, urgensi, nilai, satuan) VALUES
+    ('CMO_VERIFIKASI','Tinggi',30,'Menit'), ('CMO_VERIFIKASI','Normal',2,'Jam'), ('CMO_VERIFIKASI','Rendah',4,'Jam'),
+    ('KADEP','Tinggi',1,'Jam'),             ('KADEP','Normal',4,'Jam'),           ('KADEP','Rendah',1,'Hari'),
+    ('PIC_MULAI','Tinggi',1,'Jam'),         ('PIC_MULAI','Normal',2,'Jam'),       ('PIC_MULAI','Rendah',4,'Jam');
+
 DROP PROCEDURE crf_add_column;
 DROP PROCEDURE crf_add_index;
 DROP PROCEDURE crf_add_foreign_key;

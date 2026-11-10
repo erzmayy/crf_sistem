@@ -94,8 +94,13 @@ document.addEventListener('DOMContentLoaded', function () {
   var replyingText = document.getElementById('forum-replying-text');
   var replyCancel = document.getElementById('forum-reply-cancel');
 
-  (document.querySelector('.crf-module') || document).querySelectorAll('.crf-forum-reply-link[data-reply-id]').forEach(function (link) {
-    link.addEventListener('click', function (event) {
+  // Delegasi, supaya tautan Tanggapi pada komentar yang dimuat otomatis tetap berfungsi.
+  if (list) {
+    list.addEventListener('click', function (event) {
+      var link = event.target.closest('.crf-forum-reply-link[data-reply-id]');
+      if (!link) {
+        return;
+      }
       event.preventDefault();
       replyId.value = link.dataset.replyId;
       replyingName.textContent = link.dataset.replyName;
@@ -103,7 +108,75 @@ document.addEventListener('DOMContentLoaded', function () {
       replying.hidden = false;
       textarea.focus();
     });
-  });
+  }
+
+  /* 3b. Muat komentar baru otomatis (polling) tanpa refresh manual. */
+  if (list) {
+    var POLL_MS = 8000;
+    var polling = false;
+    var commentCount = function (root) {
+      return root.querySelectorAll('.crf-forum-message, .crf-forum-system').length;
+    };
+    var lastId = function (root) {
+      var items = root.querySelectorAll('.crf-forum-message, .crf-forum-system');
+      return items.length ? items[items.length - 1].id : '';
+    };
+
+    var refreshComments = function () {
+      if (polling || document.hidden || !navigator.onLine) {
+        return;
+      }
+      polling = true;
+      var url = location.href.split('#')[0];
+      fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch' } })
+        .then(function (response) {
+          return response.ok ? response.text() : null;
+        })
+        .then(function (html) {
+          if (!html) {
+            return;
+          }
+          var doc = new DOMParser().parseFromString(html, 'text/html');
+          var fresh = doc.getElementById('forum-message-list');
+          if (!fresh) {
+            return;
+          }
+
+          var changed = commentCount(fresh) !== commentCount(list) || lastId(fresh) !== lastId(list);
+          if (changed) {
+            var nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 120;
+            var previousTop = list.scrollTop;
+            var jumpEl = list.querySelector('.crf-forum-jump-wrap');
+            // Penanda "Komentar baru" dan penanda baca dari server tidak dipakai pada muat otomatis.
+            fresh.querySelectorAll('#forum-first-unread').forEach(function (marker) { marker.remove(); });
+            list.innerHTML = fresh.innerHTML;
+            if (jumpEl) {
+              list.appendChild(jumpEl);
+            }
+            list.scrollTop = nearBottom ? list.scrollHeight : previousTop;
+            list.dispatchEvent(new Event('scroll'));
+          }
+
+          // Perbarui daftar ruang (angka belum dibaca, komentar terakhir).
+          var freshRooms = doc.querySelector('.crf-forum-room-list');
+          var currentRooms = document.querySelector('.crf-forum-room-list');
+          if (freshRooms && currentRooms && freshRooms.innerHTML !== currentRooms.innerHTML) {
+            var roomScroll = currentRooms.scrollTop;
+            currentRooms.innerHTML = freshRooms.innerHTML;
+            currentRooms.scrollTop = roomScroll;
+          }
+        })
+        .catch(function () { /* abaikan; coba lagi pada putaran berikutnya */ })
+        .then(function () { polling = false; });
+    };
+
+    window.setInterval(refreshComments, POLL_MS);
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) {
+        refreshComments();
+      }
+    });
+  }
 
   if (replyCancel) {
     replyCancel.addEventListener('click', function (event) {
@@ -182,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
       hint.querySelector('span').textContent =
-        'SLA standar kategori untuk urgensi ' + option.value + ': ' + value + ' ' + unit + ' (hari kerja).';
+        'Target standar kategori untuk urgensi ' + option.value + ': ' + value + ' ' + unit + ' (hari kerja).';
       useButton.hidden = valueInput.value === value && unitSelect.value === unit;
       hint.hidden = false;
     }

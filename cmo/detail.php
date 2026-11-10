@@ -126,7 +126,7 @@ $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
 
-$pageTitle = 'CMO - Detail CRF';
+$pageTitle = 'Detail CRF - ' . ($crf['nomor_register'] ?? '');
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -146,7 +146,6 @@ require_once __DIR__ . '/../includes/header.php';
 
         <!-- 1. INFORMASI PENGAJUAN -->
         <?php
-        $showStatusInGrid = true;
         require __DIR__ . '/../includes/partials/informasi_pengajuan.php';
         ?>
 
@@ -173,7 +172,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <?php
                     $cmoDiscussion = forumOpenDiscussion($pdo, (int) $crf['id']);
                     $cmoSlaMissing = !crfHasValidSla($crf);
-                    // Pembahasan dari sistem (SLA kosong) wajib diselesaikan CMO atau Admin, tidak boleh dibatalkan.
+                    // Pembahasan dari sistem (SLA kosong) wajib diselesaikan CMO, tidak boleh dibatalkan.
                     $cmoCanCancelDiscussion = $cmoDiscussion && !($cmoDiscussion['sumber_pemicu'] === 'sistem' && $cmoSlaMissing);
                     ?>
                     <?php if ($cmoDiscussion): ?>
@@ -181,17 +180,17 @@ require_once __DIR__ . '/../includes/header.php';
                             <i class="bi bi-flag-fill"></i>
                             <strong>Menunggu Pembahasan Forum.</strong>
                             <?= $cmoDiscussion['sumber_pemicu'] === 'sistem'
-                                ? 'SLA default belum tersedia, sehingga CMO atau Admin perlu menetapkannya lewat pembahasan Forum.'
-                                : 'Anda mengajukan pembahasan Level Urgensi dan SLA.' ?>
-                            Setelah hasil pembahasan dicatat (CMO atau Admin), CRF langsung diteruskan ke Kepala Departemen Operasional
+                                ? 'Target Resolution Time default belum tersedia, sehingga CMO perlu menetapkannya lewat pembahasan Forum.'
+                                : 'Anda mengajukan pembahasan Level Urgensi dan target Resolution Time.' ?>
+                            Setelah hasil pembahasan dicatat (CMO), CRF langsung diteruskan ke Kepala Departemen Operasional
                             <?= !empty($cmoDiscussion['tgl_tenggat']) ? '(target ' . h(date('d-m-Y H:i', strtotime($cmoDiscussion['tgl_tenggat']))) . ')' : '' ?>.
                             <a href="<?= h(crfUrl('forum.index', ['crf_id' => (int) $crf['id']], 'forum-pembahasan')) ?>">Buka pembahasan di Forum</a>
                         </div>
                     <?php elseif ($cmoSlaMissing): ?>
                         <div class="alert alert-warning">
                             <i class="bi bi-exclamation-triangle"></i>
-                            SLA default belum tersedia karena SLA standar kategori belum diatur. Saat Anda menekan
-                            <strong>Teruskan</strong>, pembahasan Forum dibuka otomatis agar CMO atau Admin menetapkan SLA.
+                            Target Resolution Time default belum tersedia karena target standar kategori belum diatur. Saat Anda menekan
+                            <strong>Teruskan</strong>, pembahasan Forum dibuka otomatis agar CMO menetapkan target Resolution Time.
                         </div>
                     <?php endif; ?>
 
@@ -231,7 +230,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     name="action"
                                     value="request_discussion"
                                     class="btn btn-crf-outline"
-                                    title="Bahas di Forum apakah Level Urgensi dan SLA default tetap atau perlu diubah"
+                                    title="Bahas di Forum apakah Level Urgensi dan target Resolution Time default tetap atau perlu diubah"
                                 >
                                     <i class="bi bi-flag"></i>
                                     Bahas di Forum
@@ -318,7 +317,7 @@ require_once __DIR__ . '/../includes/header.php';
 
             <?php
             $uatDocCount = count(array_filter($attachments, static fn(array $file): bool => ($file['kategori'] ?? '') === 'uat'));
-            // Catatan serah terima terakhir dari PIC CRF (eksekusi selesai / dikirim ulang).
+            // Catatan serah terima terakhir dari PIC Otomasi (pengerjaan selesai / dikirim ulang).
             $uatHandoffStmt = $pdo->prepare("
                 SELECT aktivitas, deskripsi, pelaksana, tgl_dibuat
                 FROM crf_log_aktivitas
@@ -336,7 +335,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <div class="crf-section-header">
                     <span class="crf-section-number"><i class="bi bi-clipboard2-check"></i></span>
-                    <h2>Tindakan Anda: uji hasil eksekusi · Putaran <?= $uatRound ?></h2>
+                    <h2>Tindakan Anda: uji hasil pengerjaan · Putaran <?= $uatRound ?></h2>
                 </div>
 
                 <div class="crf-section-body">
@@ -344,9 +343,9 @@ require_once __DIR__ . '/../includes/header.php';
                     <p class="text-muted">
                         Otomasi
                         <?php if (!empty($crf['pic_nama'])): ?>(<strong><?= h($crf['pic_nama']) ?></strong>)<?php endif; ?>
-                        sudah menyelesaikan eksekusi<?= !empty($crf['otomasi_selesai']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['otomasi_selesai']))) : '' ?>
-                        dan SLA berhenti. Lakukan pengujian bersama PIC CRF (koordinasi lewat <strong>Diskusi Forum</strong>);
-                        waktu UAT tidak dihitung dalam SLA.
+                        sudah menyelesaikan pengerjaan<?= !empty($crf['otomasi_selesai']) ? ' pada ' . h(date('d-m-Y H:i', strtotime($crf['otomasi_selesai']))) : '' ?>
+                        dan Resolution Time berhenti. Lakukan pengujian bersama PIC Otomasi (koordinasi lewat <strong>Diskusi Forum</strong>);
+                        waktu UAT tidak dihitung dalam Resolution Time.
                     </p>
 
                     <?php if ($uatHandoff && trim((string) $uatHandoff['deskripsi']) !== ''): ?>

@@ -1,7 +1,7 @@
 # CRF Sistem
 
 Aplikasi **Change Request Form (CRF)** PT Persona Prima Utama (PPU): pengajuan,
-persetujuan, eksekusi, dan pelaporan permintaan perubahan, dilengkapi modul
+persetujuan, pengerjaan, dan pelaporan permintaan perubahan, dilengkapi modul
 Forum dan Notifikasi. Helpdesk ditangani modul Helpdesk SIAP (bukan bagian aplikasi ini).
 
 - Stack: PHP native (PDO) + MySQL, tanpa framework.
@@ -38,8 +38,8 @@ Forum dan Notifikasi. Helpdesk ditangani modul Helpdesk SIAP (bukan bagian aplik
 | Folder | Isi |
 |--------|-----|
 | `user/` | Pemohon: Form CRF, Pengajuan Saya, detail |
-| `cmo/`, `otomasi/`, `kadep_operasional/` | Antrean dan detail untuk CMO, PIC CRF (Otomasi), dan Kepala Departemen Operasional; setelah login langsung masuk ke antrean masing-masing |
-| `admin/` | Dashboard dan master Kategori CRF (+ PIC CRF) |
+| `cmo/`, `otomasi/`, `kadep_operasional/` | Antrean dan detail untuk CMO, PIC Otomasi (Otomasi), dan Kepala Departemen Operasional; setelah login langsung masuk ke antrean masing-masing |
+| `admin/` | Dashboard dan master Kategori CRF (+ PIC Otomasi) |
 | `forum/` | Diskusi per CRF dan penetapan urgensi final |
 | `notifications/` | Notifikasi in-app |
 | `crf/` | Pintu masuk tautan CRF (mengarahkan ke halaman sesuai peran) dan Handling Kategori CRF |
@@ -53,9 +53,9 @@ Forum dan Notifikasi. Helpdesk ditangani modul Helpdesk SIAP (bukan bagian aplik
 | Peran | Penentuan | Fungsi |
 |-------|-----------|--------|
 | Pemohon | Semua user lain | Mengajukan CRF, merevisi, mengisi PIR |
-| CMO | Departemen di `CRF_CMO_DEPTS` | Filter awal, finalisasi, urgensi final di Forum |
-| Otomasi / Handler | `CRF_OTOMASI_USERIDS` atau handler kategori | Menetapkan SLA, eksekusi, mengisi Implementasi |
-| Kepala Departemen Operasional | `CRF_KADEP_OPERASIONAL_USERIDS` | Persetujuan sebelum eksekusi |
+| CMO | Departemen di `CRF_CMO_DEPTS` | Verifikasi, UAT, finalisasi, hasil Forum (urgensi dan SLA final) |
+| PIC Otomasi (handler kategori) | `CRF_OTOMASI_USERIDS` atau handler kategori | Mulai kerjakan, pengerjaan, mengisi hasil Implementasi |
+| Kepala Departemen Operasional | `CRF_KADEP_OPERASIONAL_USERIDS` | Persetujuan sebelum pengerjaan |
 | Admin | `CRF_ADMIN_USERIDS` (hak tambahan) | Memantau, laporan, kelola kategori/handler, penugasan ulang, pembatalan administratif |
 | Demo | `CRF_DEMO_USERIDS` | Menjalankan semua peran untuk presentasi |
 
@@ -117,4 +117,4 @@ Jalankan tiap 5 menit di server (cron atau Task Scheduler):
 ```
 
 Skrip hanya dapat dijalankan dari terminal dan aman diulang. Membutuhkan `config/mail.php`
-agar peringatan sampai ke email PIC CRF.
+agar peringatan sampai ke email PIC Otomasi.

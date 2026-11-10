@@ -119,6 +119,27 @@ $old = array_merge(
 unset($_SESSION['old_crf']);
 
 /*
+ * Tipe Pengajuan dari Helpdesk SIAP: formulir Helpdesk (kategori "Aplikasi SIAP") mengalihkan
+ * pemohon ke sini dengan ?tipe=<Permohonan Tambahan|Permohonan Perubahan>. Tipe dipilih
+ * otomatis dan dikunci supaya sama dengan pilihan di Helpdesk. Hanya berlaku untuk form baru
+ * (bukan membuka Draft) dan hanya untuk nilai yang ada di crfRequestTypeOptionsBaru().
+ * Dibuka dari menu tanpa ?tipe= -> dropdown tetap bebas dipilih.
+ */
+$tipeDariHelpdesk = trim((string) ($_GET['tipe'] ?? ''));
+$tipeDikunci = '';
+if ($draftId === 0 && $tipeDariHelpdesk !== '' && in_array($tipeDariHelpdesk, crfRequestTypeOptionsBaru(), true)) {
+    $tipeDikunci = $tipeDariHelpdesk;
+    $old['jenis_pengajuan'] = $tipeDikunci;
+}
+
+// Form baru hanya menawarkan Perubahan/Tambahan (Problem diproses di Helpdesk SIAP). Tipe Problem
+// tetap tampil hanya bila CRF yang dibuka (Draft/Perlu Revisi lama) memang sudah bertipe Problem.
+$tipeOpsiForm = crfRequestTypeOptionsBaru();
+if (($old['jenis_pengajuan'] ?? '') === 'Problem') {
+    array_unshift($tipeOpsiForm, 'Problem');
+}
+
+/*
  * Status penyimpanan form (ditampilkan di samping tombol & dipakai untuk
  * konfirmasi browser saat meninggalkan halaman yang belum disimpan).
  */
@@ -147,7 +168,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="crf-page-header crf-page-banner">
       <span class="crf-page-eyebrow">PORTAL CRF · PENGAJUAN</span>
       <div>
-        <h1>Change Request Form (CRF)</h1>
+        <h1>Form CRF</h1>
         <p>Silakan lengkapi form di bawah sesuai tipe pengajuan Anda.</p>
       </div>
     </div>
@@ -336,15 +357,22 @@ require_once __DIR__ . '/../includes/header.php';
 
           <div class="mb-3" style="max-width: 360px;">
             <label for="jenis_pengajuan" class="crf-field-label">Tipe Pengajuan<span class="text-danger">*</span></label>
-            <select class="form-select" id="jenis_pengajuan" name="jenis_pengajuan" required>
+            <?php if ($tipeDikunci !== ''): ?>
+              <?php /* select disabled tidak ikut terkirim, jadi nilainya dikirim lewat input hidden */ ?>
+              <input type="hidden" name="jenis_pengajuan" value="<?= h($tipeDikunci) ?>">
+            <?php endif; ?>
+            <select class="form-select" id="jenis_pengajuan" <?= $tipeDikunci !== '' ? 'disabled' : 'name="jenis_pengajuan"' ?> required>
               <option value="">Pilih tipe pengajuan</option>
-              <?php foreach (crfRequestTypeOptions() as $requestType): ?>
+              <?php foreach ($tipeOpsiForm as $requestType): ?>
                 <option
                   value="<?= h($requestType) ?>"
                   <?= ($old['jenis_pengajuan'] ?? '') === $requestType ? 'selected' : '' ?>
                 ><?= h($requestType) ?></option>
               <?php endforeach; ?>
             </select>
+            <?php if ($tipeDikunci !== ''): ?>
+              <p class="crf-hint mb-0">Tipe pengajuan mengikuti pilihan Anda di Helpdesk.</p>
+            <?php endif; ?>
           </div>
 
           <div class="mb-3">
@@ -362,39 +390,72 @@ require_once __DIR__ . '/../includes/header.php';
           <div class="mb-3">
             <?php
             // Penilaian urgensi berbobot dilakukan di server (config/urgensi.php).
-            // Pemohon TIDAK diberi tahu bobot, kelompok, atau hasilnya, agar tidak
-            // selalu memilih dampak tertinggi. Urutan ditampilkan netral (abjad).
-            $dampakTerpilih = crfDampakDipilih($old['dampak_dipilih'] ?? ($old['kategori_dampak'] ?? null));
-            $dampakOpsi = crfImpactOptions();
-            uasort($dampakOpsi, static fn(string $a, string $b): int => strcasecmp($a, $b));
+            // Pemohon menjawab 4 pertanyaan sederhana; jawaban dipetakan ke pernyataan
+            // dampak (crfDampakDariJawaban). Pemohon TIDAK diberi tahu bobot atau hasil level.
+            $dampakPertanyaan = crfDampakQuestions();
+            $dampakTipe = trim((string) ($old['jenis_pengajuan'] ?? ''));
+            $dampakJawabanOld = [];
+            foreach (array_keys($dampakPertanyaan) as $dampakQ) {
+                $dampakJawabanOld[$dampakQ] = (string) ($old['dampak_' . $dampakQ] ?? '');
+            }
+            if (!array_filter($dampakJawabanOld)) {
+                $dampakJawabanOld = crfJawabanDariDampak(
+                    crfDampakDipilih($old['dampak_dipilih'] ?? ($old['kategori_dampak'] ?? null))
+                );
+            }
+            $dampakJawabanOld = crfDampakNormalisasi($dampakJawabanOld, $dampakTipe);
+            $dampakTersembunyi = crfDampakOpsiTersembunyi($dampakTipe);
+            $dampakJudulPerTipe = [];
+            foreach ($dampakPertanyaan as $dampakQ => $dampakDef) {
+                foreach (array_merge(crfRequestTypeOptions(), ['default']) as $dampakTipeKey) {
+                    $dampakJudulPerTipe[$dampakQ][$dampakTipeKey] = crfDampakJudul($dampakQ, $dampakTipeKey === 'default' ? '' : $dampakTipeKey);
+                }
+            }
+            $dampakTersembunyiPerTipe = [];
+            foreach (crfRequestTypeOptions() as $dampakTipeKey) {
+                $dampakTersembunyiPerTipe[$dampakTipeKey] = crfDampakOpsiTersembunyi($dampakTipeKey);
+            }
             ?>
-            <fieldset class="crf-impact-fieldset" id="dampak_dipilih_group" aria-describedby="dampak_dipilih_hint" data-bertentangan="<?= h(json_encode((object) (crfUrgencyConfig()['bertentangan'] ?? []), JSON_UNESCAPED_UNICODE)) ?>" data-tipe-tolak="<?= h(json_encode((object) array_map(static fn(array $a): array => $a['tolak'] ?? [], (array) (crfUrgencyConfig()['tipe_pengajuan'] ?? [])), JSON_UNESCAPED_UNICODE)) ?>">
+            <fieldset class="crf-impact-fieldset" id="dampak_dipilih_group" aria-describedby="dampak_dipilih_hint"
+                      data-judul="<?= h(json_encode($dampakJudulPerTipe, JSON_UNESCAPED_UNICODE)) ?>"
+                      data-tersembunyi="<?= h(json_encode((object) $dampakTersembunyiPerTipe, JSON_UNESCAPED_UNICODE)) ?>">
               <legend class="crf-field-label">Dampak Jika Tidak Dilakukan Perubahan<span class="text-danger">*</span></legend>
               <p class="crf-hint" id="dampak_dipilih_hint">
-                Centang <strong>semua</strong> pernyataan yang sesuai dengan kondisi sebenarnya.
+                Jawab pertanyaan berikut sesuai keadaan sebenarnya.
               </p>
+              <p class="crf-hint d-none" id="dampak_tipe_info" role="status"></p>
 
-              <div class="crf-impact-group">
-                <?php foreach ($dampakOpsi as $impactKey => $impactLabel): ?>
-                  <label class="crf-impact-option">
-                    <input
-                      type="checkbox"
-                      name="dampak_dipilih[]"
-                      value="<?= h($impactKey) ?>"
-                      <?= in_array($impactKey, $dampakTerpilih, true) ? 'checked' : '' ?>
-                    >
-                    <span><?= h($impactLabel) ?></span>
-                  </label>
-                <?php endforeach; ?>
-              </div>
+              <?php foreach ($dampakPertanyaan as $dampakQ => $dampakDef): ?>
+                <div class="crf-impact-question" data-dampak-q="<?= h($dampakQ) ?>" <?= crfDampakPertanyaanTampil($dampakQ, $dampakJawabanOld) ? '' : 'hidden' ?>>
+                  <p class="crf-impact-question-title"><span class="crf-impact-question-no" aria-hidden="true"></span><span data-dampak-judul><?= h(crfDampakJudul($dampakQ, $dampakTipe)) ?></span></p>
+                  <?php if (!empty($dampakDef['petunjuk'])): ?>
+                    <p class="crf-hint crf-impact-question-hint"><?= h($dampakDef['petunjuk']) ?></p>
+                  <?php endif; ?>
+                  <div class="crf-impact-group crf-impact-group-list">
+                    <?php foreach ($dampakDef['opsi'] as $dampakKode => $dampakOpsi): ?>
+                      <?php $dampakHidden = !crfDampakPertanyaanTampil($dampakQ, $dampakJawabanOld) || !crfDampakOpsiTampil($dampakQ, $dampakKode, $dampakJawabanOld, $dampakTipe); ?>
+                      <label class="crf-impact-option" data-dampak-opsi="<?= h($dampakKode) ?>"
+                             data-label="<?= h(json_encode($dampakOpsi['label'], JSON_UNESCAPED_UNICODE)) ?>" <?= $dampakHidden ? 'hidden' : '' ?>>
+                        <input
+                          type="radio"
+                          name="dampak_<?= h($dampakQ) ?>"
+                          value="<?= h($dampakKode) ?>"
+                          <?= ($dampakJawabanOld[$dampakQ] ?? '') === $dampakKode && !$dampakHidden ? 'checked' : '' ?>
+                        >
+                        <span data-dampak-label><?= h(crfDampakLabel($dampakQ, $dampakKode, $dampakTipe)) ?></span>
+                      </label>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+              <?php endforeach; ?>
             </fieldset>
-            <label for="dampak" class="form-label mt-3">Penjelasan Dampak yang Dipilih<span class="text-danger">*</span></label>
+            <label for="dampak" class="form-label mt-3">Jelaskan dampaknya dengan kata-kata Anda<span class="text-danger">*</span></label>
             <textarea
               class="form-control"
               id="dampak"
               name="dampak"
               rows="4"
-              placeholder="Jelaskan kondisi dan dampak yang dialami sesuai pilihan di atas..."
+              placeholder="Ceritakan apa yang terjadi bila CRF ini tidak dikerjakan..."
               required
             ><?= h($old['dampak'] ?? '') ?></textarea>
           </div>
@@ -488,7 +549,7 @@ require_once __DIR__ . '/../includes/header.php';
           <?php if (!$crfCategoryOptions): ?>
             <div class="text-danger small mb-3">Belum ada Kategori CRF aktif. Hubungi Admin.</div>
           <?php else: ?>
-            <div class="crf-readonly-note mb-3">Kategori menentukan PIC CRF yang akan memproses CRF Anda.</div>
+            <div class="crf-readonly-note mb-3">Kategori menentukan PIC Otomasi yang akan memproses CRF Anda.</div>
           <?php endif; ?>
 
           <div id="category-detail-wrap" class="d-none">
@@ -514,7 +575,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
         <div class="crf-section-body">
           <label for="saran_alternatif" class="crf-field-label">Saran Alternatif <small class="text-muted fw-normal">(opsional)</small></label>
-          <p class="crf-hint">Isi bila ada saran alternatif atas perubahan yang disampaikan.</p>
+          <p class="crf-hint">Isi bila Anda punya usulan solusi lain atas perubahan yang diajukan.</p>
           <textarea class="form-control" id="saran_alternatif" name="saran_alternatif"><?= h($old['saran_alternatif'] ?? '') ?></textarea>
         </div>
       </div>

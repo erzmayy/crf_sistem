@@ -13,7 +13,7 @@ if ($forumButtonCrfId > 0 && canViewForumCrf($pdo, $forumButtonCrfId)):
     $forumInfo = forumCrfSummary($pdo, $forumButtonCrfId, (int) ($_SESSION['user_id'] ?? 0));
     $forumTitle = $forumInfo['comments'] . ' komentar'
         . ($forumInfo['unread'] > 0 ? ', ' . $forumInfo['unread'] . ' belum dibaca' : '')
-        . ($forumInfo['open'] ? '. Pembahasan Level/SLA sedang terbuka' : '');
+        . ($forumInfo['open'] ? '. Pembahasan level urgensi dan target Resolution Time sedang terbuka' : '');
     ?>
     <a
         href="<?= h(crfUrl('forum.index', ['crf_id' => $forumButtonCrfId], $forumInfo['open'] ? 'forum-pembahasan' : '')) ?>"

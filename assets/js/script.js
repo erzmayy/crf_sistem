@@ -121,12 +121,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (remaining >= 0) {
         var approaching = remaining <= slaUrgentSeconds(slaGrid, dueAt);
-        statusBadge.textContent = 'Masih dalam SLA';
+        statusBadge.textContent = 'Masih dalam target';
         statusDetail.textContent = 'Sisa waktu ' + formatSlaDuration(remaining) + '.';
         statusBadge.className = 'badge text-bg-' + (approaching ? 'warning' : 'success');
         state = approaching ? 'approaching' : '';
       } else {
-        statusBadge.textContent = 'Melewati SLA';
+        statusBadge.textContent = 'Melewati target';
         statusDetail.textContent = 'Terlambat ' + formatSlaDuration(Math.abs(remaining)) + '.';
         statusBadge.className = 'badge text-bg-danger';
         state = 'overdue';
@@ -151,8 +151,8 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       if (alertMessage) {
         alertMessage.textContent = state === 'overdue'
-          ? 'Peringatan: batas SLA telah terlewati.'
-          : 'Perhatian: batas waktu SLA hampir terlewati.';
+          ? 'Peringatan: batas Resolution Time telah terlewati.'
+          : 'Perhatian: batas waktu Resolution Time hampir terlewati.';
       }
     });
 
@@ -173,14 +173,14 @@ document.addEventListener('DOMContentLoaded', function () {
       if (remaining >= 0) {
         var total = startedAt ? slaWorkingSecondsBetween(startedAt, dueAt) : 0;
         var approaching = remaining <= Math.min(3600, Math.floor(total * 0.25));
-        label.textContent = 'Menunggu respon';
+        label.textContent = 'Masih dalam target';
         detail.textContent = responBox.hasAttribute('data-sla-short')
           ? 'sisa ' + formatSlaShort(remaining)
           : 'Sisa response time ' + formatSlaDuration(remaining) + '.';
-        label.className = 'badge text-bg-' + (approaching ? 'warning' : 'primary');
+        label.className = 'badge text-bg-' + (approaching ? 'warning' : 'success');
         state = approaching ? 'approaching' : '';
       } else {
-        label.textContent = 'Response terlewati';
+        label.textContent = 'Melewati target';
         detail.textContent = responBox.hasAttribute('data-sla-short')
           ? 'terlambat ' + formatSlaShort(Math.abs(remaining))
           : 'Terlambat ' + formatSlaDuration(Math.abs(remaining)) + ' dari batas response time.';
@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       setSlaBar(responBox, startedAt, dueAt,
-        state === 'overdue' ? 'danger' : (state === 'approaching' ? 'warning' : 'primary'));
+        state === 'overdue' ? 'danger' : (state === 'approaching' ? 'warning' : 'success'));
 
       if (!alertBox) { return; }
       alertBox.classList.remove('alert-warning', 'alert-danger');
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       if (alertMessage) {
         alertMessage.textContent = state === 'overdue'
-          ? 'Batas response time terlewati. PIC CRF belum mulai mengerjakan.'
+          ? 'Batas response time terlewati. PIC Otomasi belum mulai mengerjakan.'
           : 'Batas response time hampir terlewati.';
       }
     });
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (remaining >= 0) {
         var approaching = remaining <= slaUrgentSeconds(slaCell, dueAt);
-        statusBadge.textContent = 'Masih dalam SLA';
+        statusBadge.textContent = 'Masih dalam target';
         statusBadge.className = 'badge text-bg-' + (approaching ? 'warning' : 'success');
         statusDetail.textContent = slaCell.hasAttribute('data-sla-short')
           ? 'sisa ' + formatSlaShort(remaining)
@@ -227,11 +227,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      statusBadge.textContent = 'SLA Terlewati';
+      statusBadge.textContent = 'Melewati target';
       statusBadge.className = 'badge text-bg-danger';
       statusDetail.textContent = slaCell.hasAttribute('data-sla-short')
         ? 'terlambat ' + formatSlaShort(Math.abs(remaining))
-        : 'Sudah melewati SLA selama ' + formatSlaDuration(Math.abs(remaining)) + '.';
+        : 'Sudah melewati target selama ' + formatSlaDuration(Math.abs(remaining)) + '.';
     });
   }
 
@@ -467,6 +467,115 @@ if (fileInput && fileList) {
     });
   }
 
+  /* -----------------------------------------------------------------
+   * Pertanyaan dampak (mengikuti tabel Keterangan Level Urgensi): alur pertanyaan serta
+   * judul, teks pilihan, dan pilihan yang tersedia menyesuaikan jawaban dan Tipe Pengajuan.
+   * (data-judul / data-tersembunyi / data-label dibuat user/form_crf.php dari crfDampakQuestions();
+   * aturan alur sama dengan crfDampakPertanyaanTampil / crfDampakOpsiTampil di PHP.)
+   * ----------------------------------------------------------------- */
+  var dampakGroup = document.getElementById('dampak_dipilih_group');
+  var dampakTipeField = document.getElementById('jenis_pengajuan');
+  var dampakTipeInfo = document.getElementById('dampak_tipe_info');
+  var dampakJudul = {};
+  var dampakTersembunyi = {};
+  if (dampakGroup) {
+    try { dampakJudul = JSON.parse(dampakGroup.getAttribute('data-judul') || '{}'); } catch (e) { dampakJudul = {}; }
+    try { dampakTersembunyi = JSON.parse(dampakGroup.getAttribute('data-tersembunyi') || '{}'); } catch (e) { dampakTersembunyi = {}; }
+  }
+
+  function dampakJawaban(q) {
+    var terpilih = dampakGroup
+      ? dampakGroup.querySelector('input[name="dampak_' + q + '"]:checked')
+      : null;
+    return terpilih ? terpilih.value : '';
+  }
+
+  // q2 hanya bila q1 = b (sebagian); q3 hanya bila q1 = a (berhenti total) atau q2 = a (terganggu berat).
+  function dampakPertanyaanTampil(q) {
+    var q1 = dampakJawaban('q1');
+    if (q === 'q2') {
+      return q1 !== 'a' && q1 !== 'c';
+    }
+    if (q === 'q3') {
+      return q1 === 'a' || (q1 === 'b' && dampakJawaban('q2') === 'a');
+    }
+    return true;
+  }
+
+  function dampakSemuaDijawab() {
+    if (!dampakGroup) {
+      return true;
+    }
+    return ['q1', 'q2', 'q3', 'q4'].every(function (q) {
+      return !dampakPertanyaanTampil(q) || dampakJawaban(q) !== '';
+    });
+  }
+
+  function terapkanDampakTipe() {
+    if (!dampakGroup) {
+      return;
+    }
+    var tipe = dampakTipeField ? dampakTipeField.value : '';
+    var sembunyi = (tipe && dampakTersembunyi[tipe]) || {};
+    var dikosongkan = false;
+
+    // Berurutan: tampilnya q2/q3 bergantung jawaban sebelumnya.
+    ['q1', 'q2', 'q3', 'q4'].forEach(function (q) {
+      var blok = dampakGroup.querySelector('[data-dampak-q="' + q + '"]');
+      if (!blok) {
+        return;
+      }
+      var tampil = dampakPertanyaanTampil(q);
+      blok.hidden = !tampil;
+
+      var judul = dampakJudul[q] || {};
+      var teksJudul = judul[tipe] || judul['default'];
+      var penandaJudul = blok.querySelector('[data-dampak-judul]');
+      if (penandaJudul && teksJudul) {
+        penandaJudul.textContent = teksJudul;
+      }
+
+      Array.prototype.forEach.call(blok.querySelectorAll('[data-dampak-opsi]'), function (opsi) {
+        var kode = opsi.getAttribute('data-dampak-opsi');
+        var tersembunyi = !tampil || (sembunyi[q] || []).indexOf(kode) !== -1;
+        var radio = opsi.querySelector('input');
+        opsi.hidden = tersembunyi;
+        if (tersembunyi && radio && radio.checked) {
+          radio.checked = false;
+          dikosongkan = true;
+        }
+
+        var label = {};
+        try { label = JSON.parse(opsi.getAttribute('data-label') || '{}'); } catch (e) { label = {}; }
+        var penandaLabel = opsi.querySelector('[data-dampak-label]');
+        var teksLabel = label[tipe] || label['default'];
+        if (penandaLabel && teksLabel) {
+          penandaLabel.textContent = teksLabel;
+        }
+      });
+    });
+
+    if (dampakTipeInfo) {
+      dampakTipeInfo.textContent = dikosongkan
+        ? 'Sebagian jawaban dampak dikosongkan karena tidak berlaku lagi. Silakan periksa kembali.'
+        : '';
+      dampakTipeInfo.classList.toggle('d-none', !dikosongkan);
+    }
+  }
+
+  if (dampakGroup) {
+    if (dampakTipeField) {
+      dampakTipeField.addEventListener('change', terapkanDampakTipe);
+    }
+    dampakGroup.addEventListener('change', function (event) {
+      // Jawaban pertanyaan 1 dan 2 menentukan pertanyaan dan pilihan berikutnya.
+      if (event.target && (event.target.name === 'dampak_q1' || event.target.name === 'dampak_q2')) {
+        terapkanDampakTipe();
+      }
+    });
+    terapkanDampakTipe();
+  }
+
   function isCrfFormComplete() {
     var requiredFieldIds = [
       'nama_pemohon',
@@ -491,7 +600,7 @@ if (fileInput && fileList) {
       isComplete = false;
     }
 
-    if (isComplete && !crfRoot.querySelector('input[name="dampak_dipilih[]"]:checked')) {
+    if (isComplete && !dampakSemuaDijawab()) {
       isComplete = false;
     }
 
@@ -572,29 +681,8 @@ if (fileInput && fileList) {
     }
 
     var impactGroup = document.getElementById('dampak_dipilih_group');
-    if (impactGroup && !impactGroup.querySelector('input[type="checkbox"]:checked')) {
-      addInlineError(impactGroup, 'Pilih minimal satu pernyataan dampak.', errors);
-    } else if (impactGroup) {
-      var konflik = {};
-      try { konflik = JSON.parse(impactGroup.getAttribute('data-bertentangan') || '{}'); } catch (e) { konflik = {}; }
-      var dicentang = Array.prototype.map.call(
-        impactGroup.querySelectorAll('input[type="checkbox"]:checked'),
-        function (box) { return box.value; }
-      );
-      var bentrok = dicentang.some(function (key) {
-        return (konflik[key] || []).some(function (lawan) { return dicentang.indexOf(lawan) !== -1; });
-      });
-      if (bentrok) {
-        addInlineError(impactGroup, 'Beberapa pernyataan dampak saling bertentangan. Periksa kembali pilihan Anda.', errors);
-      } else {
-        var tipeTolak = {};
-        try { tipeTolak = JSON.parse(impactGroup.getAttribute('data-tipe-tolak') || '{}'); } catch (e) { tipeTolak = {}; }
-        var tipeField = document.getElementById('jenis_pengajuan');
-        var daftarTolak = (tipeField && tipeTolak[tipeField.value]) || [];
-        if (dicentang.some(function (key) { return daftarTolak.indexOf(key) !== -1; })) {
-          addInlineError(impactGroup, 'Tipe pengajuan dan pernyataan dampak tidak sesuai. Periksa kembali pilihan Anda.', errors);
-        }
-      }
+    if (impactGroup && !dampakSemuaDijawab()) {
+      addInlineError(impactGroup, 'Jawab semua pertanyaan dampak.', errors);
     }
 
     var category = document.getElementById('kategori_perubahan');
