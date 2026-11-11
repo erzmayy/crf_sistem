@@ -554,13 +554,13 @@ require_once __DIR__ . '/../includes/header.php';
 
           <div id="category-detail-wrap" class="d-none">
             <label for="detail_kategori_perubahan" class="crf-field-label" id="category-detail-label">Detail Kategori<span class="text-danger">*</span></label>
-            <input
-                type="text"
+            <textarea
                 class="form-control"
                 id="detail_kategori_perubahan"
                 name="detail_kategori_perubahan"
-                value="<?= h($old['detail_kategori_perubahan'] ?? '') ?>"
-            >
+                rows="3"
+                maxlength="255"
+            ><?= h($old['detail_kategori_perubahan'] ?? '') ?></textarea>
           </div>
         </div>
       </div>
