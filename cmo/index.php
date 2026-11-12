@@ -144,7 +144,7 @@ require_once __DIR__ . '/../includes/header.php';
       <div>
         <span class="crf-portal-eyebrow">PORTAL CRF · VERIFIKASI CMO</span>
         <h1>Verifikasi CMO</h1>
-        <p>Kelola CRF pada tahap filter, UAT, pemantauan PIR, dan finalisasi.</p>
+        <p>Antrean CRF yang menunggu tindakan CMO: verifikasi, UAT, pemantauan PIR, dan finalisasi. Klik kartu untuk menyaring daftar.</p>
       </div>
     </div>
 
@@ -152,35 +152,42 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="alert alert-<?= h($flash['type']) ?> crf-alert"><?= h($flash['message']) ?></div>
     <?php endif; ?>
 
-    <div class="crf-stat-grid crf-portal-summary mb-4">
-      <a class="crf-stat-card text-decoration-none" href="<?= h(crfSelfUrl(['stage' => 'filter'])) ?>">
-        <span><i class="bi bi-funnel-fill"></i> Menunggu Verifikasi</span>
-        <strong><?= $counts['CMO_FILTER'] ?></strong>
-      </a>
-      <a class="crf-stat-card text-decoration-none" href="<?= h(crfSelfUrl(['stage' => 'uat'])) ?>" title="Pengerjaan selesai, menunggu pengujian UAT oleh CMO">
-        <span><i class="bi bi-clipboard2-check"></i> Menunggu UAT</span>
-        <strong><?= $counts['UAT'] ?></strong>
-      </a>
-      <a class="crf-stat-card text-decoration-none" href="<?= h(crfSelfUrl(['stage' => 'pir'])) ?>" title="Implementasi selesai, menunggu Post Implementation Review dari Pemohon">
-        <span><i class="bi bi-hourglass-split"></i> Menunggu PIR Pemohon</span>
-        <strong><?= $counts['PEMOHON_PIR'] ?></strong>
-      </a>
-      <a class="crf-stat-card text-decoration-none" href="<?= h(crfSelfUrl(['stage' => 'final'])) ?>">
-        <span><i class="bi bi-check2-square"></i> Menunggu Finalisasi</span>
-        <strong><?= $counts['CMO_FINAL'] ?></strong>
-      </a>
+    <?php
+    // Kartu = pemilih tahap antrean. Kartu yang sedang dipilih ditandai; klik lagi untuk menampilkan semua.
+    $stageCards = [
+        'filter' => ['label' => 'Menunggu Verifikasi', 'icon' => 'bi-funnel-fill', 'count' => $counts['CMO_FILTER'], 'title' => 'CRF yang menunggu verifikasi CMO'],
+        'uat' => ['label' => 'Menunggu UAT', 'icon' => 'bi-clipboard2-check', 'count' => $counts['UAT'], 'title' => 'Pengerjaan selesai, menunggu pengujian UAT oleh CMO'],
+        'pir' => ['label' => 'Menunggu PIR Pemohon', 'icon' => 'bi-hourglass-split', 'count' => $counts['PEMOHON_PIR'], 'title' => 'Implementasi selesai, menunggu Post Implementation Review dari Pemohon'],
+        'final' => ['label' => 'Menunggu Finalisasi', 'icon' => 'bi-check2-square', 'count' => $counts['CMO_FINAL'], 'title' => 'PIR sudah diisi, menunggu finalisasi CMO'],
+    ];
+    ?>
+    <div class="crf-stat-grid crf-portal-summary mb-4" role="group" aria-label="Saring antrean berdasarkan tahap">
+      <?php foreach ($stageCards as $stageKey => $stageCard): ?>
+        <?php $stageActive = $filter === $stageKey; ?>
+        <a class="crf-stat-card text-decoration-none <?= $stageActive ? 'is-active' : '' ?>"
+           href="<?= h(crfSelfUrl(['stage' => $stageActive ? 'all' : $stageKey])) ?>"
+           aria-pressed="<?= $stageActive ? 'true' : 'false' ?>"
+           title="<?= h($stageActive ? 'Klik lagi untuk menampilkan semua' : $stageCard['title'] . '. Klik untuk menyaring daftar.') ?>">
+          <span><i class="bi <?= h($stageCard['icon']) ?>"></i> <?= h($stageCard['label']) ?></span>
+          <strong><?= (int) $stageCard['count'] ?></strong>
+        </a>
+      <?php endforeach; ?>
     </div>
 
     <div class="crf-table-card crf-list-table-card">
       <div class="crf-table-heading">
-        <h2><?= $filter === 'history' ? 'Riwayat CRF CMO' : 'Daftar CRF CMO' ?></h2>
-        <div class="btn-group">
-          <a href="<?= h(crfSelfUrl(['stage' => 'all'])) ?>" class="btn btn-sm <?= $filter === 'all' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Semua</a>
-          <a href="<?= h(crfSelfUrl(['stage' => 'filter'])) ?>" class="btn btn-sm <?= $filter === 'filter' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Verifikasi</a>
-          <a href="<?= h(crfSelfUrl(['stage' => 'uat'])) ?>" class="btn btn-sm <?= $filter === 'uat' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">UAT</a>
-          <a href="<?= h(crfSelfUrl(['stage' => 'pir'])) ?>" class="btn btn-sm <?= $filter === 'pir' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Menunggu PIR</a>
-          <a href="<?= h(crfSelfUrl(['stage' => 'final'])) ?>" class="btn btn-sm <?= $filter === 'final' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Finalisasi</a>
-          <a href="<?= h(crfSelfUrl(['stage' => 'history'])) ?>" class="btn btn-sm <?= $filter === 'history' ? 'btn-crf-primary' : 'btn-crf-outline' ?>">Riwayat</a>
+        <div class="crf-heading-main">
+          <h2><?= $filter === 'history' ? 'Riwayat CRF CMO' : 'Daftar CRF CMO' ?></h2>
+          <?php if (isset($stageCards[$filter])): ?>
+            <span class="crf-filter-chip">
+              Menampilkan: <?= h($stageCards[$filter]['label']) ?>
+              <a href="<?= h(crfSelfUrl(['stage' => 'all'])) ?>">Tampilkan semua</a>
+            </span>
+          <?php endif; ?>
+        </div>
+        <div class="btn-group" role="group" aria-label="Antrean aktif atau riwayat">
+          <a href="<?= h(crfSelfUrl(['stage' => 'all'])) ?>" class="btn btn-sm <?= $filter !== 'history' ? 'btn-crf-primary' : 'btn-crf-outline' ?>" <?= $filter !== 'history' ? 'aria-current="true"' : '' ?>>Antrean aktif</a>
+          <a href="<?= h(crfSelfUrl(['stage' => 'history'])) ?>" class="btn btn-sm <?= $filter === 'history' ? 'btn-crf-primary' : 'btn-crf-outline' ?>" <?= $filter === 'history' ? 'aria-current="true"' : '' ?>>Riwayat</a>
         </div>
       </div>
 

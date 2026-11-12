@@ -12,6 +12,12 @@ yang bertanda (jalankan).
 
 Penyeragaman istilah dan tampilan (hasil tinjauan konsistensi):
 
+- Kartu ringkasan yang bisa diklik (aturan: kartu yang menghitung bagian dari daftar = filter): Pengajuan CRF Saya, enam kartu status menyaring daftar (label kartu kini sama dengan badge: Menunggu Tindakan, Sedang Diproses, dan seterusnya): `user/pengajuan_saya.php`; Tindak Lanjut Otomasi, kartu Menunggu Pengerjaan (semua), Resolution terlewati, dan Response Time Terlewati menyaring antrean aktif lewat parameter `terlewati` (kartu terpilih ditandai, keterangan "Menampilkan: ... Tampilkan semua", filter tetap terbawa saat mencari): `otomasi/index.php`; gaya kartu terpilih: `assets/css/style.css`. Kartu Kadep (satu kartu) tetap angka biasa.
+
+- Antrean seragam di semua peran: pilihan antrean menjadi "Antrean aktif / Riwayat" di CMO, Otomasi (sebelumnya Semua / Riwayat), dan Kadep (sebelumnya Antrean / Riwayat): `otomasi/index.php`, `kadep_operasional/index.php`; efek kartu terangkat saat disorot hanya untuk kartu yang bisa diklik (tautan), bukan kartu angka biasa: `assets/css/style.css`.
+
+- Verifikasi CMO: deretan enam tombol tahap (Semua, Verifikasi, UAT, Menunggu PIR, Finalisasi, Riwayat) dibuang karena terbaca seperti alur CRF dan menyaring hal yang sama dengan empat kartu. Kini kartu jadi satu-satunya pemilih tahap (kartu terpilih ditandai, klik lagi untuk menampilkan semua), judul daftar memuat keterangan "Menampilkan: ... Tampilkan semua", dan pilihan antrean menjadi dua tombol "Antrean aktif" dan "Riwayat"; subjudul halaman menjelaskan bahwa kartu adalah filter: `cmo/index.php`, `assets/css/style.css`.
+
 - Form CRF: kolom "Detail Kategori" menjadi kotak teks 3 baris (sebelumnya satu baris), batas 255 karakter sesuai kolom database: `user/form_crf.php`.
 
 - Filter Daftar CRF di Dashboard Admin: tombol Terapkan dan Reset kini satu baris dengan kolom filter (kelas baru `crf-list-filters-with-stage` memberi 7 kolom pada kartu selebar 901 px ke atas; di bawah itu tombol tetap sebaris dengan kolom pencarian): `includes/partials/crf_list_filters.php`, `assets/css/style.css`.

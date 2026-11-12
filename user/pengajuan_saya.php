@@ -248,38 +248,30 @@ require_once __DIR__ . '/../includes/header.php';
 
         <div class="mb-3">
 
-            <div class="crf-stat-grid crf-user-stat-grid">
-
-                <div class="crf-stat-card pengajuan-stat-card pengajuan-stat-total">
-                    <span><i class="bi bi-inboxes-fill"></i> Total Pengajuan</span>
-                    <strong><?= (int) ($summary['total'] ?? 0) ?></strong>
-                </div>
-
-                <div class="crf-stat-card pengajuan-stat-card pengajuan-stat-pending">
-                    <span><i class="bi bi-hourglass-split"></i> Belum Ditindak Lanjuti</span>
-                    <strong><?= (int) ($summary['pending'] ?? 0) ?></strong>
-                </div>
-
-                <div class="crf-stat-card pengajuan-stat-card pengajuan-stat-revision">
-                    <span><i class="bi bi-pencil-square"></i> Perlu Revisi</span>
-                    <strong><?= (int) ($summary['revision'] ?? 0) ?></strong>
-                </div>
-
-                <div class="crf-stat-card pengajuan-stat-card pengajuan-stat-processing">
-                    <span><i class="bi bi-arrow-repeat"></i> Dalam Proses</span>
-                    <strong><?= (int) ($summary['processing'] ?? 0) ?></strong>
-                </div>
-
-                <div class="crf-stat-card pengajuan-stat-card pengajuan-stat-solved">
-                    <span><i class="bi bi-check-circle-fill"></i> Selesai</span>
-                    <strong><?= (int) ($summary['solved'] ?? 0) ?></strong>
-                </div>
-
-                <div class="crf-stat-card pengajuan-stat-card pengajuan-stat-cancelled">
-                    <span><i class="bi bi-slash-circle-fill"></i> Dibatalkan</span>
-                    <strong><?= (int) ($summary['cancelled'] ?? 0) ?></strong>
-                </div>
-
+            <div class="crf-stat-grid crf-user-stat-grid" role="group" aria-label="Saring pengajuan berdasarkan status">
+                <?php
+                // Kartu = pemilih status. Kartu terpilih ditandai; klik lagi untuk menampilkan semua.
+                $summaryCards = [
+                    ['key' => 'total', 'class' => 'pengajuan-stat-total', 'icon' => 'bi-inboxes-fill', 'label' => 'Total Pengajuan', 'count' => (int) ($summary['total'] ?? 0), 'status' => ''],
+                    ['key' => 'pending', 'class' => 'pengajuan-stat-pending', 'icon' => 'bi-hourglass-split', 'label' => statusLabel('Belum Ditindak Lanjuti'), 'count' => (int) ($summary['pending'] ?? 0), 'status' => 'Belum Ditindak Lanjuti'],
+                    ['key' => 'revision', 'class' => 'pengajuan-stat-revision', 'icon' => 'bi-pencil-square', 'label' => statusLabel('Perlu Revisi'), 'count' => (int) ($summary['revision'] ?? 0), 'status' => 'Perlu Revisi'],
+                    ['key' => 'processing', 'class' => 'pengajuan-stat-processing', 'icon' => 'bi-arrow-repeat', 'label' => statusLabel('Dalam Proses'), 'count' => (int) ($summary['processing'] ?? 0), 'status' => 'Dalam Proses'],
+                    ['key' => 'solved', 'class' => 'pengajuan-stat-solved', 'icon' => 'bi-check-circle-fill', 'label' => statusLabel('Solve'), 'count' => (int) ($summary['solved'] ?? 0), 'status' => 'Solve'],
+                    ['key' => 'cancelled', 'class' => 'pengajuan-stat-cancelled', 'icon' => 'bi-slash-circle-fill', 'label' => statusLabel('Cancel'), 'count' => (int) ($summary['cancelled'] ?? 0), 'status' => 'Cancel'],
+                ];
+                ?>
+                <?php foreach ($summaryCards as $summaryCard): ?>
+                    <?php $cardActive = $statusFilter === $summaryCard['status']; ?>
+                    <a
+                        class="crf-stat-card pengajuan-stat-card <?= h($summaryCard['class']) ?> text-decoration-none <?= $cardActive ? 'is-active' : '' ?>"
+                        href="<?= h($cardActive || $summaryCard['status'] === '' ? crfSelfUrl() : crfSelfUrl(['status' => $summaryCard['status']])) ?>"
+                        aria-pressed="<?= $cardActive ? 'true' : 'false' ?>"
+                        title="<?= h($summaryCard['status'] === '' ? 'Tampilkan semua pengajuan' : ($cardActive ? 'Klik lagi untuk menampilkan semua' : 'Tampilkan hanya: ' . $summaryCard['label'])) ?>"
+                    >
+                        <span><i class="bi <?= h($summaryCard['icon']) ?>"></i> <?= h($summaryCard['label']) ?></span>
+                        <strong><?= $summaryCard['count'] ?></strong>
+                    </a>
+                <?php endforeach; ?>
             </div>
 
         </div>

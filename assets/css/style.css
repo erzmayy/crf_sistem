@@ -652,7 +652,7 @@ body.crf-module {
   padding: calc(1 * var(--crf-rem)) calc(1.15 * var(--crf-rem)); min-height: 80px;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
-.crf-stat-card:hover {
+a.crf-stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(16, 24, 40, 0.08);
 }
@@ -7160,3 +7160,17 @@ a.admin-type-item:hover { background: #f1f5f9; color: #1e293b; }
 @container crf-filter-card (min-width: 901px) {
   .crf-list-filters-with-stage { grid-template-columns: minmax(170px, 2fr) repeat(5, minmax(96px, 1fr)) auto; }
 }
+/* Antrean CMO: kartu tahap sebagai pemilih (aktif ditandai) dan keterangan filter yang sedang dipakai. */
+.crf-module .crf-portal-summary .crf-stat-card[aria-pressed="true"] { background: #eef6fb; border-color: #69acd2; }
+.crf-module .crf-portal-summary .crf-stat-card[aria-pressed="true"] > span { color: #1f4fbf; }
+.crf-module .crf-heading-main { display: flex; align-items: center; flex-wrap: wrap; gap: calc(0.5 * var(--crf-rem)); min-width: 0; }
+.crf-module .crf-heading-main h2 { margin: 0; }
+.crf-module .crf-filter-chip {
+  display: inline-flex; align-items: center; gap: calc(0.5 * var(--crf-rem));
+  padding: 3px calc(0.7 * var(--crf-rem)); border-radius: 999px; background: #e8f0fe; color: #1f4fbf;
+  font-size: calc(0.75 * var(--crf-rem)); font-weight: 600;
+}
+.crf-module .crf-filter-chip a { color: #1f4fbf; font-weight: 500; text-decoration: underline; }
+/* Kartu Pengajuan Saya sebagai pemilih status: kartu terpilih ditandai (sama dengan antrean CMO dan Otomasi). */
+.crf-module .crf-user-stat-grid .crf-stat-card[aria-pressed="true"] { background: #eef6fb; border-color: #69acd2; }
+.crf-module .crf-user-stat-grid .crf-stat-card[aria-pressed="true"] > span { color: #1f4fbf; }

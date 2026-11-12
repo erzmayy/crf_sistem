@@ -12,6 +12,12 @@ if (!in_array($queue, ['all', 'history'], true)) {
     $queue = 'all';
 }
 
+// Penyaring keterlambatan dari kartu (hanya antrean aktif): resolution = melewati target Resolution, response = belum diambil PIC dan melewati target Response.
+$overdueFilter = $_GET['terlewati'] ?? '';
+if ($queue !== 'all' || !in_array($overdueFilter, ['resolution', 'response'], true)) {
+    $overdueFilter = '';
+}
+
 // Handler hanya melihat CRF pada kategori yang ditanganinya (Admin: semua).
 $handlerScopeSql = crfHandlerScopeSql($pdo, 'cr');
 $where = ["cr.status <> 'Draft'", $handlerScopeSql];
@@ -35,6 +41,11 @@ if ($queue === 'history') {
     // Hanya CRF yang sudah disetujui Kepala Departemen Operasional.
     $where[] = "cr.tahap_alur = 'OTOMASI'";
     $where[] = 'cr.tgl_disetujui_kadep IS NOT NULL';
+    if ($overdueFilter === 'resolution') {
+        $where[] = '(cr.sla_tenggat IS NOT NULL AND cr.sla_tenggat < NOW())';
+    } elseif ($overdueFilter === 'response') {
+        $where[] = '(cr.pic_id IS NULL AND cr.sla_respon_at IS NULL AND cr.sla_respon_tenggat IS NOT NULL AND cr.sla_respon_tenggat < NOW())';
+    }
 }
 
 $listFilters = applyCrfRequestFilters($pdo, $where, $params, [
@@ -181,30 +192,42 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- =====================================================
              SUMMARY
              ===================================================== -->
-        <div class="crf-stat-grid crf-portal-summary mb-4">
-            <div class="crf-stat-card">
-                <span><i class="bi bi-gear-wide-connected"></i> Menunggu Pengerjaan</span>
-                <strong><?= $inExecution ?></strong>
-            </div>
-
-            <div class="crf-stat-card">
-                <span><i class="bi bi-exclamation-triangle"></i> Resolution terlewati</span>
-                <strong><?= $overdueCount ?></strong>
-            </div>
-
-            <div class="crf-stat-card">
-                <span><i class="bi bi-hourglass-split"></i> Response Time Terlewati</span>
-                <strong><?= $responOverdueCount ?></strong>
-            </div>
+        <div class="crf-stat-grid crf-portal-summary mb-4" role="group" aria-label="Saring antrean">
+            <?php
+            // Kartu = pemilih. Kartu terpilih ditandai; klik lagi untuk menampilkan semua.
+            $stageCards = [
+                ['key' => '', 'icon' => 'bi-gear-wide-connected', 'label' => 'Menunggu Pengerjaan', 'count' => $inExecution, 'title' => 'Semua CRF di antrean aktif'],
+                ['key' => 'resolution', 'icon' => 'bi-exclamation-triangle', 'label' => 'Resolution terlewati', 'count' => $overdueCount, 'title' => 'CRF yang sudah melewati target Resolution Time'],
+                ['key' => 'response', 'icon' => 'bi-hourglass-split', 'label' => 'Response Time Terlewati', 'count' => $responOverdueCount, 'title' => 'CRF yang belum diambil dan sudah melewati target Response Time'],
+            ];
+            ?>
+            <?php foreach ($stageCards as $stageCard): ?>
+                <?php $cardActive = $queue === 'all' && $overdueFilter === $stageCard['key']; ?>
+                <a class="crf-stat-card text-decoration-none <?= $cardActive && $stageCard['key'] !== '' ? 'is-active' : '' ?>"
+                   href="<?= h($stageCard['key'] === '' || $cardActive ? crfSelfUrl() : crfSelfUrl(['terlewati' => $stageCard['key']])) ?>"
+                   aria-pressed="<?= $cardActive && $stageCard['key'] !== '' ? 'true' : 'false' ?>"
+                   title="<?= h($stageCard['key'] !== '' && $cardActive ? 'Klik lagi untuk menampilkan semua' : $stageCard['title'] . ($stageCard['key'] !== '' ? '. Klik untuk menyaring daftar.' : '')) ?>">
+                    <span><i class="bi <?= h($stageCard['icon']) ?>"></i> <?= h($stageCard['label']) ?></span>
+                    <strong><?= (int) $stageCard['count'] ?></strong>
+                </a>
+            <?php endforeach; ?>
         </div>
 
         <div class="crf-table-card crf-list-table-card">
 
             <div class="crf-table-heading">
-                <h2><?= $queue === 'history' ? 'Riwayat Tindak Lanjut' : 'Pengerjaan CRF' ?></h2>
+                <div class="crf-heading-main">
+                    <h2><?= $queue === 'history' ? 'Riwayat Tindak Lanjut' : 'Pengerjaan CRF' ?></h2>
+                    <?php if ($overdueFilter !== ''): ?>
+                        <span class="crf-filter-chip">
+                            Menampilkan: <?= $overdueFilter === 'resolution' ? 'Resolution terlewati' : 'Response Time Terlewati' ?>
+                            <a href="<?= h(crfSelfUrl()) ?>">Tampilkan semua</a>
+                        </span>
+                    <?php endif; ?>
+                </div>
 
                 <!-- FILTER ANTREAN -->
-                <div class="btn-group">
+                <div class="btn-group" role="group" aria-label="Antrean aktif atau riwayat">
                     <a
                         href="<?= h(crfSelfUrl(array_filter([
                             'q' => $search,
@@ -212,7 +235,7 @@ require_once __DIR__ . '/../includes/header.php';
                         ], static fn($value) => $value !== ''))) ?>"
                         class="btn btn-sm <?= $queue === 'all' ? 'btn-crf-primary' : 'btn-crf-outline' ?>"
                     >
-                        Semua
+                        Antrean aktif
                     </a>
 
                     <a
@@ -232,8 +255,9 @@ require_once __DIR__ . '/../includes/header.php';
             $listContextName = 'queue';
             $listContextValue = $queue;
             $listResetUrl = 'index.php';
+            $listCarryParams = $overdueFilter !== '' ? ['terlewati' => $overdueFilter] : [];
             require __DIR__ . '/../includes/partials/crf_list_filters.php';
-            unset($listContextName, $listContextValue, $listResetUrl);
+            unset($listContextName, $listContextValue, $listResetUrl, $listCarryParams);
             ?>
 
             <div class="table-responsive crf-table-responsive-cards crf-portal-table-wrap">
