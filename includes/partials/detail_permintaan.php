@@ -46,9 +46,11 @@ $impactAnswers = crfDampakJawabanTampil($impactKeys, (string) ($crf['jenis_penga
 $showUrgencyScore = getCrfRole() !== 'pemohon'
     && isset($crf['skor_urgensi']) && $crf['skor_urgensi'] !== '' && $filled($crf['dampak_dipilih'] ?? '');
 $proseBlocks = [];
+// CRF baru: alasan dan manfaat ditulis dalam satu kotak (kolom alasan); CRF lama masih punya manfaat terpisah.
+$alasanLabel = $filled($crf['manfaat'] ?? '') ? 'Alasan permohonan' : 'Alasan dan manfaat';
 foreach ([
     'Rincian perubahan' => $crf['deskripsi_perubahan'] ?? '',
-    'Alasan permohonan' => $crf['alasan'] ?? '',
+    $alasanLabel => $crf['alasan'] ?? '',
     'Manfaat yang diharapkan' => $crf['manfaat'] ?? '',
 ] as $label => $value) {
     if ($filled($value)) {
@@ -239,4 +241,4 @@ $renderFiles = static function (array $files, bool $showDate) use ($attachmentIc
     </div>
 </section>
 <?php
-unset($sectionTitle, $attachmentIcon, $attachmentSize, $filled, $impactLabels, $impactOptions, $impactKeys, $impactAnswers, $impactRow, $impactWeights, $impactKey, $scoreInfo, $impactCatatan, $catatanDampak, $showUrgencyScore, $impactText, $proseBlocks, $metaItems, $budgetText, $renderFiles, $label, $value);
+unset($sectionTitle, $attachmentIcon, $attachmentSize, $filled, $impactLabels, $impactOptions, $impactKeys, $impactAnswers, $impactRow, $impactWeights, $impactKey, $scoreInfo, $impactCatatan, $catatanDampak, $showUrgencyScore, $impactText, $proseBlocks, $alasanLabel, $metaItems, $budgetText, $renderFiles, $label, $value);

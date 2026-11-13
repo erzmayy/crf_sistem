@@ -7174,3 +7174,7 @@ a.admin-type-item:hover { background: #f1f5f9; color: #1e293b; }
 /* Kartu Pengajuan Saya sebagai pemilih status: kartu terpilih ditandai (sama dengan antrean CMO dan Otomasi). */
 .crf-module .crf-user-stat-grid .crf-stat-card[aria-pressed="true"] { background: #eef6fb; border-color: #69acd2; }
 .crf-module .crf-user-stat-grid .crf-stat-card[aria-pressed="true"] > span { color: #1f4fbf; }
+/* Form CRF: bagian "Informasi Tambahan (opsional)", tiga blok dengan garis pemisah. */
+.crf-module .crf-extra-block + .crf-extra-block {
+  margin-top: calc(1.1 * var(--crf-rem)); padding-top: calc(1.1 * var(--crf-rem)); border-top: 1px solid var(--crf-gray-300);
+}

@@ -585,7 +585,6 @@ if (fileInput && fileList) {
       'divisi_asal',
       'jenis_pengajuan',
       'deskripsi_perubahan',
-      'manfaat',
       'dampak',
       'alasan'
     ];
@@ -664,9 +663,8 @@ if (fileInput && fileList) {
       ['divisi_asal', 'Divisi wajib diisi.'],
       ['jenis_pengajuan', 'Tipe pengajuan wajib dipilih.'],
       ['deskripsi_perubahan', 'Rincian permohonan perubahan wajib diisi.'],
-      ['manfaat', 'Benefit perubahan wajib diisi.'],
       ['dampak', 'Penjelasan dampak wajib diisi.'],
-      ['alasan', 'Alasan permohonan perubahan wajib diisi.']
+      ['alasan', 'Alasan dan manfaat perubahan wajib diisi.']
     ].forEach(function (item) {
       var field = document.getElementById(item[0]);
       if (field && field.value.trim() === '') {

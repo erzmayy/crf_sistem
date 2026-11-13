@@ -125,16 +125,12 @@ if ($changeDescription === '') {
     $errors[] = 'Rincian Permohonan Perubahan wajib diisi.';
 }
 
-if ($benefit === '') {
-    $errors[] = 'Benefit dari Perubahan wajib diisi.';
-}
-
 if ($impact === '') {
     $errors[] = 'Penjelasan dampak wajib diisi.';
 }
 
 if ($reason === '') {
-    $errors[] = 'Alasan Permohonan Perubahan wajib diisi.';
+    $errors[] = 'Alasan dan Manfaat Perubahan wajib diisi.';
 }
 
 /* Dari */
