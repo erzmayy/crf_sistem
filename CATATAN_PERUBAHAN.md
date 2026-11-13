@@ -12,6 +12,8 @@ yang bertanda (jalankan).
 
 Penyeragaman istilah dan tampilan (hasil tinjauan konsistensi):
 
+- Kategori CRF: teks kategori tidak lagi tertimpa panel PIC Otomasi saat baris dibuka. Kolom kiri (nama, deskripsi, tombol) kini boleh membungkus teks dan tombol, dan kolom PIC di kanan memakai `minmax(0, 1fr)` sehingga yang menyusut adalah panel PIC, bukan kolom nama: `assets/css/style.css`.
+
 - Form CRF: kotak Alasan dan Benefit digabung menjadi satu kotak "Alasan dan Manfaat Perubahan" (disimpan di kolom `alasan`; kolom `manfaat` tidak lagi dikirim untuk CRF baru dan tidak lagi wajib). Draft atau CRF Perlu Revisi lama yang masih punya manfaat terpisah digabung otomatis ke kotak itu ("Manfaat yang diharapkan: ..."); tampil ulang setelah galat validasi tidak menggandakan teks. Detail CRF memakai label "Alasan dan manfaat" bila manfaat kosong dan tetap menampilkan dua blok untuk CRF lama; cetak PDF menyembunyikan baris Benefit bila kosong dan melabeli alasan "Alasan dan Manfaat Perubahan": `user/form_crf.php`, `actions/submit_crf.php`, `assets/js/script.js`, `includes/partials/detail_permintaan.php`, `actions/export_crf.php`. Data lama tidak diubah.
 
 - Form CRF disederhanakan dari 6 menjadi 3 bagian tanpa mengubah isian, nama kolom, atau aturan wajib: Kategori dipindah ke bagian 2 (urutan Tipe, Kategori, Rincian, Alasan, Benefit, Dampak); Bukti pendukung, Biaya/Anggaran, dan Saran Alternatif digabung menjadi bagian 3 "Informasi Tambahan (opsional)" yang selalu tampil (tanpa fitur sembunyikan; tombol tampil/sembunyikan dan kodenya sudah dibuang); bagian 1 (Informasi Pengajuan) tidak diubah: `user/form_crf.php`, `assets/js/script.js`, `assets/css/style.css`.

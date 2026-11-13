@@ -4962,10 +4962,14 @@ a.crf-stat-card:hover {
 /* Master kategori + PIC / Handler */
 .crf-category-member-list { display: flex; flex-direction: column; gap: calc(0.85 * var(--crf-rem)); }
 .crf-category-member-row {
-  display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: calc(1 * var(--crf-rem)); padding: calc(1 * var(--crf-rem));
+  display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: calc(1 * var(--crf-rem)); padding: calc(1 * var(--crf-rem));
   border: 1px solid #e5ebf1; border-radius: 12px; background: #fff; scroll-margin-top: 90px;
 }
-.crf-category-member-head { display: flex; align-items: flex-start; gap: calc(0.65 * var(--crf-rem)); }
+.crf-category-member-head { display: flex; align-items: flex-start; gap: calc(0.65 * var(--crf-rem)); min-width: 0; }
+/* Teks dan tombol kategori boleh membungkus supaya tidak melebar ke kolom PIC di sebelahnya. */
+.crf-category-member-head > div { min-width: 0; flex: 1 1 auto; overflow-wrap: anywhere; }
+.crf-category-member-head > div > .d-flex { flex-wrap: wrap; }
+.crf-category-member-body { min-width: 0; }
 .crf-category-member-head h2 { margin: 0 0 calc(0.3 * var(--crf-rem)); color: #1e3048; font-size: calc(0.98 * var(--crf-rem)); font-weight: 700; }
 .crf-member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: calc(0.6 * var(--crf-rem)); }
 .crf-member-card {
