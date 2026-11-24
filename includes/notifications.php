@@ -123,6 +123,14 @@ function crfUserIdsForRole(PDO $pdo, string $role): array
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
+    // Hak menu SIAP (bila sakelar aktif dan tabel menu terbaca); selain itu daftar di config.
+    if (crfRoleFromMenuEnabled() && in_array($role, ['cmo', 'kadep_operasional', 'otomasi', 'admin'], true)) {
+        $fromMenu = crfUserIdsForRoleFromMenu($pdo, $role);
+        if ($fromMenu !== null) {
+            return $fromMenu;
+        }
+    }
+
     $userTable = crfUserTable();
 
     switch ($role) {

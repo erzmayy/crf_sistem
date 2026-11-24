@@ -57,6 +57,8 @@ Peran dihitung dari data user SIAP (`CRF_USER_SOURCE = 'siap_db'` membaca `siap.
 
 Urutan penentuan: demo, Otomasi, Kadep, CMO, Admin, Pemohon. Admin tidak boleh menugaskan ulang atau membatalkan CRF yang sedang ia pegang sebagai handler.
 
+Peran dari hak menu SIAP (sakelar `CRF_ROLE_FROM_MENU` di `config/siap.php`, bawaan di kode mati; `includes/siap_user_provider.php`): bila aktif, peran mengikuti Hak Akses User SIAP (tabel `siap.tbl_user_menu`, `hak_akses = '0'` = punya hak; kolom bertipe enum dengan arti terbalik: 0 muncul, 1 tidak muncul): menu 339 = Otomasi, 341 = Kadep, 338 (atau departemen CMO) = CMO, 344 = hak Admin; Pemohon tetap bawaan semua user. Satu menu kerja = peran itu; lebih dari satu menu kerja = Admin bila punya hak Admin, selain itu urutan Otomasi, Kadep, CMO. `CRF_ADMIN_USERIDS` tetap jadi admin cadangan, demo mode tidak berubah. Bila sakelar mati atau tabel menu tidak terbaca, dipakai daftar di config seperti sebelumnya. Penerima notifikasi per peran (`crfUserIdsForRole()`) dan hak Admin (`isAdmin()`) ikut aturan yang sama. `isLegacyOtomasiUser()` sengaja tetap memakai `CRF_OTOMASI_USERIDS` (pemegang CRF tanpa kategori). Sebelum menyalakan di server, jalankan `php tools/bandingkan_peran.php` (hanya terminal, baca-saja) dan tinjau baris yang berubah; di server baris `const CRF_ROLE_FROM_MENU = true;` ditambahkan sendiri ke `config/siap.php` server, jangan menimpa berkasnya dengan versi lokal.
+
 Dua lapis akses (jangan dicampur): CRF mengecek peran sendiri lewat `requireCrfRole([...])` di tiap halaman. Di SIAP, menu hanya tampil bila user punya hak menu (bagian 12). Memberi hak menu tidak memberi peran CRF.
 
 ## 4. Alur

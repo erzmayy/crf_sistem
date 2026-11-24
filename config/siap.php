@@ -41,6 +41,19 @@ const CRF_KADEP_OPERASIONAL_USERIDS = ['3736'];
 const CRF_CMO_DEPTS = ['CMO'];
 
 /*
+ * Peran dari hak menu SIAP (Hak Akses User) alih-alih daftar di atas.
+ * true  : Otomasi = menu 339, Kadep = 341, CMO = 338 (atau departemen CMO), hak Admin = 344.
+ *         Daftar di atas tetap dipakai bila tabel siap.tbl_user_menu tidak bisa dibaca;
+ *         CRF_ADMIN_USERIDS tetap berlaku sebagai admin cadangan.
+ * false : memakai daftar di atas (cara lama). Bila konstanta ini tidak ada, bawaannya false.
+ * Berkas ini berbeda antara lokal dan server: di server, tambahkan baris ini sendiri
+ * setelah laporan perbandingan (tools/bandingkan_peran.php) ditinjau.
+ */
+if (!defined('CRF_ROLE_FROM_MENU')) {
+    define('CRF_ROLE_FROM_MENU', true);
+}
+
+/*
  * Kode awal Nomor Register (PPU-<kode>.4.NNNN.MM.YY) diambil dari kpu_kode akun pemohon di SIAP.
  * Akun tanpa kpu_kode (mis. pusat) memakai kode cadangan berikut.
  */

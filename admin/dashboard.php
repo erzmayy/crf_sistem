@@ -163,15 +163,21 @@ $displayIcons = [
     'selesai' => 'bi-check-circle-fill', 'dibatalkan' => 'bi-slash-circle-fill',
 ];
 $report = getAdminCrfReport($pdo, $reportDateRange['from'], $reportDateRange['to']);
-$slaCompliance = getAdminCrfSlaCompliance($pdo, $reportDateRange['from'], $reportDateRange['to']);
-// Perlu perhatian = CRF yang masih berjalan dan sudah melewati target Response atau Resolution.
+// Panel Kepatuhan SLA dan kartu "Perlu perhatian" disembunyikan sementara.
+// Ubah ke true untuk menampilkannya lagi (perhitungan tetap utuh).
+$slaTampil = false;
+$slaCompliance = ['total' => 0, 'violations' => []];
 $attentionCount = 0;
-foreach ($slaCompliance['violations'] as $attentionRow) {
-    if (($attentionRow['response']['state'] ?? '') === 'open_late' || ($attentionRow['resolution']['state'] ?? '') === 'open_late') {
-        $attentionCount++;
+if ($slaTampil) {
+    $slaCompliance = getAdminCrfSlaCompliance($pdo, $reportDateRange['from'], $reportDateRange['to']);
+    // Perlu perhatian = CRF yang masih berjalan dan sudah melewati target Response atau Resolution.
+    foreach ($slaCompliance['violations'] as $attentionRow) {
+        if (($attentionRow['response']['state'] ?? '') === 'open_late' || ($attentionRow['resolution']['state'] ?? '') === 'open_late') {
+            $attentionCount++;
+        }
     }
+    unset($attentionRow);
 }
-unset($attentionRow);
 
 // Sel persentase kepatuhan: pil berwarna + keterangan kecil (n/diukur, rata-rata).
 $slaPercentLabel = static fn(?float $percent): string => $percent === null ? '-' : number_format($percent, 0, ',', '.') . '%';
@@ -340,10 +346,12 @@ require_once __DIR__ . '/../includes/header.php';
                 </a>
             <?php endforeach; ?>
 
+            <?php if ($slaTampil): ?>
             <a class="crf-stat-card crf-stat-tone-perhatian text-decoration-none <?= $attentionCount > 0 ? 'is-attention' : '' ?>" href="#adminSlaViolations" data-open-sla="1" title="CRF yang masih berjalan dan sudah melewati target Response atau Resolution">
                 <span><i class="bi bi-exclamation-triangle-fill"></i> Perlu perhatian</span>
                 <strong><?= (int) $attentionCount ?></strong>
             </a>
+            <?php endif; ?>
 
         </div>
 
@@ -418,6 +426,7 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- =====================================================
              KEPATUHAN SLA (Response Time & Resolution Time)
              ===================================================== -->
+        <?php if ($slaTampil): ?>
         <section class="admin-report admin-sla" id="adminSla" aria-labelledby="admin-sla-title">
             <div class="admin-report-heading">
                 <div>
@@ -572,6 +581,7 @@ require_once __DIR__ . '/../includes/header.php';
             if (window.location.hash === '#adminSlaViolations') { openDetails(); }
         })();
         </script>
+        <?php endif; /* $slaTampil */ ?>
 
         <?php if ($flash): ?>
 

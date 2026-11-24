@@ -201,8 +201,9 @@ function isAdmin(): bool
         return $cache = true;
     }
 
+    // Hak Admin tambahan: dari hak menu SIAP bila sakelar aktif (cadangan: daftar di config).
     return $cache = CRF_ROLE_SOURCE === 'resolver'
-        && crfUserIdIn(getCurrentUser(), CRF_ADMIN_USERIDS);
+        && crfUserHasAdminRight(getCurrentUser());
 }
 
 /**

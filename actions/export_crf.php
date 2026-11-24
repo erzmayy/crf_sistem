@@ -172,10 +172,6 @@ $workflowStageDisplay = !empty($crf['tahap_alur'])
     ? workflowStageLabel($crf['tahap_alur'])
     : '-';
 
-$slaDisplay = (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan']))
-    ? rtrim(rtrim(number_format((float) $crf['sla_nilai'], 2, '.', ''), '0'), '.') . ' ' . $crf['sla_satuan']
-    : '-';
-
 /* ---------------------------------------------------------------
  * Tanggal Solve / Cancel
  * --------------------------------------------------------------- */
@@ -415,10 +411,6 @@ ob_start();
             <div class="chip-label">Level Urgensi</div>
             <div class="chip-value"><span class="pill" style="background: <?= $levelBg ?>; color: <?= $levelFg ?>;"><?= $esc($levelDisplay) ?></span></div>
         </td>
-        <td>
-            <div class="chip-label">Target Resolution</div>
-            <div class="chip-value"><?= $esc($slaDisplay) ?></div>
-        </td>
 <?php endif; ?>
         <td>
             <div class="chip-label">Status</div>
@@ -460,7 +452,10 @@ ob_start();
 <table class="grid">
     <tr><td class="lbl">Tipe Pengajuan</td><td class="val"><?= pdfValue($crf['jenis_pengajuan'] ?? '') ?></td></tr>
     <tr><td class="lbl">Rincian Permohonan Perubahan</td><td class="val"><?= pdfValue($crf['deskripsi_perubahan']) ?></td></tr>
+    <?php $manfaatTerpisah = trim((string) ($crf['manfaat'] ?? '')) !== ''; ?>
+    <?php if ($manfaatTerpisah): ?>
     <tr><td class="lbl">Benefit dari Perubahan yang Diharapkan</td><td class="val"><?= pdfValue($crf['manfaat']) ?></td></tr>
+    <?php endif; ?>
     <?php
     // CRF dari form 4 pertanyaan: tampil sebagai pertanyaan dan jawaban; CRF lama tetap daftar pernyataan.
     $dampakJawabanPdf = crfDampakJawabanTampil(crfDampakKunci($crf), (string) ($crf['jenis_pengajuan'] ?? ''));
@@ -470,7 +465,7 @@ ob_start();
     ?>
     <tr><td class="lbl">Kategori Dampak</td><td class="val"><?= pdfValue($dampakTeksPdf) ?></td></tr>
     <tr><td class="lbl">Dampak Jika Tidak Dilakukan Perubahan</td><td class="val"><?= pdfValue($crf['dampak']) ?></td></tr>
-    <tr><td class="lbl">Alasan Permohonan Perubahan</td><td class="val"><?= pdfValue($crf['alasan']) ?></td></tr>
+    <tr><td class="lbl"><?= $manfaatTerpisah ? 'Alasan Permohonan Perubahan' : 'Alasan dan Manfaat Perubahan' ?></td><td class="val"><?= pdfValue($crf['alasan']) ?></td></tr>
     <tr><td class="lbl">Bukti dan Informasi Pendukung</td><td class="val"><?= $attachmentHtml ?></td></tr>
     <tr><td class="lbl">Biaya / Anggaran</td><td class="val"><?= pdfValue($budgetDisplay) ?></td></tr>
     <tr><td class="lbl">Kategori Perubahan</td><td class="val"><?= pdfValue($categoryDisplay) ?></td></tr>

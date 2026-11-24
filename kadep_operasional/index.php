@@ -154,12 +154,12 @@ require_once __DIR__ . '/../includes/header.php';
 
             <div class="crf-table-heading">
                 <h2><?= $view === 'history' ? 'Riwayat Persetujuan' : 'Menunggu Persetujuan' ?></h2>
-                <div class="btn-group">
+                <div class="btn-group" role="group" aria-label="Antrean aktif atau riwayat">
                     <a
                         href="<?= h(crfSelfUrl(['view' => 'queue'])) ?>"
                         class="btn btn-sm <?= $view === 'queue' ? 'btn-crf-primary' : 'btn-crf-outline' ?>"
                     >
-                        Antrean
+                        Antrean aktif
                     </a>
                     <a
                         href="<?= h(crfSelfUrl(['view' => 'history'])) ?>"

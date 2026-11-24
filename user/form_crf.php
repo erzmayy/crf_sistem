@@ -105,6 +105,7 @@ unset($_SESSION['flash']);
 
 // Data form: gunakan data Draft jika sedang membuka Draft,
 // atau gunakan data lama dari session jika ada error submit.
+$hadOldInput = !empty($_SESSION['old_crf']);
 $old = array_merge(
     $draftData ?? [],
     $_SESSION['old_crf'] ?? [],
@@ -376,18 +377,59 @@ require_once __DIR__ . '/../includes/header.php';
           </div>
 
           <div class="mb-3">
+          <label for="kategori_perubahan" class="crf-field-label">Kategori CRF<span class="text-danger">*</span></label>
+          <select class="form-select mb-1" id="kategori_perubahan" name="kategori_id" required style="max-width: 360px;">
+            <option value="" disabled <?= $selectedCategoryId === 0 ? 'selected' : '' ?>>
+              Pilih kategori...
+            </option>
+            <?php foreach ($crfCategoryOptions as $categoryOption): ?>
+              <option
+                value="<?= (int) $categoryOption['id'] ?>"
+                data-legacy="<?= h($categoryOption['kategori_perubahan_lama']) ?>"
+                <?= $selectedCategoryId === (int) $categoryOption['id'] ? 'selected' : '' ?>
+              ><?= h($categoryOption['nama']) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <?php if (!$crfCategoryOptions): ?>
+            <div class="text-danger small mb-3">Belum ada Kategori CRF aktif. Hubungi Admin.</div>
+          <?php else: ?>
+            <div class="crf-readonly-note mb-3">Kategori menentukan PIC Otomasi yang akan memproses CRF Anda.</div>
+          <?php endif; ?>
+
+          <div id="category-detail-wrap" class="d-none">
+            <label for="detail_kategori_perubahan" class="crf-field-label" id="category-detail-label">Detail Kategori<span class="text-danger">*</span></label>
+            <textarea
+                class="form-control"
+                id="detail_kategori_perubahan"
+                name="detail_kategori_perubahan"
+                rows="3"
+                maxlength="255"
+            ><?= h($old['detail_kategori_perubahan'] ?? '') ?></textarea>
+          </div>
+          </div>
+
+          <div class="mb-3">
             <label for="deskripsi_perubahan" class="crf-field-label">Rincian Permohonan Perubahan<span class="text-danger">*</span></label>
             <p class="crf-hint">Silakan tulis penjelasan yang lengkap, jelas, dan rinci mengenai permohonan perubahan yang disampaikan.</p>
             <textarea class="form-control" id="deskripsi_perubahan" name="deskripsi_perubahan" required><?= h($old['deskripsi_perubahan'] ?? '') ?></textarea>
           </div>
 
+          <?php
+          // Alasan dan manfaat digabung dalam satu kotak. Draft atau CRF lama yang masih punya isian Manfaat
+          // terpisah ikut digabung (bukan saat menampilkan ulang isian yang gagal divalidasi).
+          $alasanManfaat = trim((string) ($old['alasan'] ?? ''));
+          $manfaatLama = $hadOldInput ? '' : trim((string) ($old['manfaat'] ?? ''));
+          if ($manfaatLama !== '') {
+              $alasanManfaat .= ($alasanManfaat !== '' ? "\n\n" : '') . 'Manfaat yang diharapkan: ' . $manfaatLama;
+          }
+          ?>
           <div class="mb-3">
-            <label for="manfaat" class="crf-field-label">Benefit dari Perubahan yang Diharapkan<span class="text-danger">*</span></label>
-            <p class="crf-hint">Silakan tulis manfaat yang akan diperoleh setelah dilakukan perubahan.</p>
-            <textarea class="form-control" id="manfaat" name="manfaat" required><?= h($old['manfaat'] ?? '') ?></textarea>
+            <label for="alasan" class="crf-field-label">Alasan dan Manfaat Perubahan<span class="text-danger">*</span></label>
+            <p class="crf-hint">Jelaskan mengapa perubahan ini diperlukan dan apa manfaat yang diharapkan setelah perubahan dilakukan.</p>
+            <textarea class="form-control" id="alasan" name="alasan" required><?= h($alasanManfaat) ?></textarea>
           </div>
 
-          <div class="mb-3">
+          <div class="mb-0">
             <?php
             // Penilaian urgensi berbobot dilakukan di server (config/urgensi.php).
             // Pemohon menjawab 4 pertanyaan sederhana; jawaban dipetakan ke pernyataan
@@ -460,24 +502,23 @@ require_once __DIR__ . '/../includes/header.php';
             ><?= h($old['dampak'] ?? '') ?></textarea>
           </div>
 
-          <div class="mb-0">
-            <label for="alasan" class="crf-field-label">Alasan Permohonan Perubahan<span class="text-danger">*</span></label>
-            <p class="crf-hint">Silakan tulis alasan perubahan yang Saudara sampaikan.</p>
-            <textarea class="form-control" id="alasan" name="alasan" required><?= h($old['alasan'] ?? '') ?></textarea>
-          </div>
-
         </div>
       </div>
 
       <!-- ============================================================ -->
-      <!-- 3. BUKTI DAN INFORMASI PENDUKUNG                              -->
+      <!-- 3. INFORMASI TAMBAHAN (OPSIONAL): bukti, biaya, saran         -->
       <!-- ============================================================ -->
       <div class="crf-section">
         <div class="crf-section-header">
           <span class="crf-section-number">3</span>
-          <h2>Bukti dan Informasi Pendukung</h2>
+          <h2>Informasi Tambahan <small class="text-muted fw-normal">(opsional)</small></h2>
         </div>
         <div class="crf-section-body">
+                   <!-- <p class="crf-hint">Bukti pendukung, biaya, dan saran alternatif tidak wajib diisi. Isi bila diperlukan.</p> -->
+
+
+          <div class="crf-extra-block">
+            <div class="crf-field-label">Bukti dan Informasi Pendukung</div>
           <p class="crf-hint">Silakan sampaikan bukti berupa screenshot, printout, atau dokumen pendukung lain (opsional).</p>
             <input type="file" class="form-control" id="attachments" name="attachments[]" multiple
                  accept=".pdf,.jpg,.jpeg,.png" aria-label="Unggah bukti pendukung (PDF, JPG, PNG, maksimal 5 MB per file)">
@@ -485,18 +526,10 @@ require_once __DIR__ . '/../includes/header.php';
             Format yang didukung: PDF, JPG, JPEG, PNG. Maks. 5 MB per file.
           </div>
           <div id="file-list-preview" class="mt-2"></div>
-        </div>
-      </div>
+          </div>
 
-      <!-- ============================================================ -->
-      <!-- 4. BIAYA / ANGGARAN                                           -->
-      <!-- ============================================================ -->
-      <div class="crf-section">
-        <div class="crf-section-header">
-          <span class="crf-section-number">4</span>
-          <h2>Biaya / Anggaran <small class="text-muted fw-normal">(opsional)</small></h2>
-        </div>
-        <div class="crf-section-body">
+          <div class="crf-extra-block">
+            <div class="crf-field-label">Biaya / Anggaran</div>
           <?php $budgetChoice = $old['jenis_anggaran'] ?? ''; ?>
           <p class="crf-hint">Bagian ini opsional. Kosongkan bila perubahan ini tidak membutuhkan anggaran. Jika ada biaya, pilih sumber anggarannya lalu isi nominal.</p>
 
@@ -521,65 +554,15 @@ require_once __DIR__ . '/../includes/header.php';
             <input type="number" min="0" step="1000" class="form-control"
                    id="nilai_anggaran" name="nilai_anggaran" placeholder="0" value="<?= h($old['nilai_anggaran'] ?? '') ?>" <?= $budgetChoice === '' ? 'disabled' : '' ?>>
           </div>
-        </div>
-      </div>
-
-      <!-- ============================================================ -->
-      <!-- 5. KATEGORI PERUBAHAN                                         -->
-      <!-- ============================================================ -->
-      <div class="crf-section">
-        <div class="crf-section-header">
-          <span class="crf-section-number">5</span>
-          <h2>Kategori Perubahan</h2>
-        </div>
-        <div class="crf-section-body">
-          <label for="kategori_perubahan" class="crf-field-label">Kategori CRF<span class="text-danger">*</span></label>
-          <select class="form-select mb-1" id="kategori_perubahan" name="kategori_id" required style="max-width: 360px;">
-            <option value="" disabled <?= $selectedCategoryId === 0 ? 'selected' : '' ?>>
-              Pilih kategori...
-            </option>
-            <?php foreach ($crfCategoryOptions as $categoryOption): ?>
-              <option
-                value="<?= (int) $categoryOption['id'] ?>"
-                data-legacy="<?= h($categoryOption['kategori_perubahan_lama']) ?>"
-                <?= $selectedCategoryId === (int) $categoryOption['id'] ? 'selected' : '' ?>
-              ><?= h($categoryOption['nama']) ?></option>
-            <?php endforeach; ?>
-          </select>
-          <?php if (!$crfCategoryOptions): ?>
-            <div class="text-danger small mb-3">Belum ada Kategori CRF aktif. Hubungi Admin.</div>
-          <?php else: ?>
-            <div class="crf-readonly-note mb-3">Kategori menentukan PIC Otomasi yang akan memproses CRF Anda.</div>
-          <?php endif; ?>
-
-          <div id="category-detail-wrap" class="d-none">
-            <label for="detail_kategori_perubahan" class="crf-field-label" id="category-detail-label">Detail Kategori<span class="text-danger">*</span></label>
-            <input
-                type="text"
-                class="form-control"
-                id="detail_kategori_perubahan"
-                name="detail_kategori_perubahan"
-                value="<?= h($old['detail_kategori_perubahan'] ?? '') ?>"
-            >
           </div>
-        </div>
-      </div>
 
-      <!-- ============================================================ -->
-      <!-- 6. CHANGE REQUEST ACTION                                      -->
-      <!-- ============================================================ -->
-      <div class="crf-section">
-        <div class="crf-section-header">
-          <span class="crf-section-number">6</span>
-          <h2>Change Request Action</h2>
-        </div>
-        <div class="crf-section-body">
+          <div class="crf-extra-block">
           <label for="saran_alternatif" class="crf-field-label">Saran Alternatif <small class="text-muted fw-normal">(opsional)</small></label>
           <p class="crf-hint">Isi bila Anda punya usulan solusi lain atas perubahan yang diajukan.</p>
           <textarea class="form-control" id="saran_alternatif" name="saran_alternatif"><?= h($old['saran_alternatif'] ?? '') ?></textarea>
+          </div>
         </div>
       </div>
-
       <!-- ============================================================ -->
       <!-- TOMBOL FORM (sticky)                                          -->
       <!-- ============================================================ -->
