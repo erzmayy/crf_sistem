@@ -172,10 +172,6 @@ $workflowStageDisplay = !empty($crf['tahap_alur'])
     ? workflowStageLabel($crf['tahap_alur'])
     : '-';
 
-$slaDisplay = (!empty($crf['sla_nilai']) && !empty($crf['sla_satuan']))
-    ? rtrim(rtrim(number_format((float) $crf['sla_nilai'], 2, '.', ''), '0'), '.') . ' ' . $crf['sla_satuan']
-    : '-';
-
 /* ---------------------------------------------------------------
  * Tanggal Solve / Cancel
  * --------------------------------------------------------------- */
@@ -414,10 +410,6 @@ ob_start();
         <td>
             <div class="chip-label">Level Urgensi</div>
             <div class="chip-value"><span class="pill" style="background: <?= $levelBg ?>; color: <?= $levelFg ?>;"><?= $esc($levelDisplay) ?></span></div>
-        </td>
-        <td>
-            <div class="chip-label">Target Resolution</div>
-            <div class="chip-value"><?= $esc($slaDisplay) ?></div>
         </td>
 <?php endif; ?>
         <td>
