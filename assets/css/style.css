@@ -5828,7 +5828,7 @@ a.crf-stat-card:hover {
 
     /* Filter bar */
     .dashboard-summary-grid {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: calc(0.55 * var(--crf-rem));
         margin-bottom: calc(0.9 * var(--crf-rem));
     }
@@ -6115,7 +6115,7 @@ a.crf-stat-card:hover {
 
     @media (max-width: 900px) {
         .dashboard-summary-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .admin-report-grid {
@@ -7155,9 +7155,9 @@ a.admin-type-item:hover { background: #f1f5f9; color: #1e293b; }
 }
 .crf-module .admin-sla-details[open] > summary::before { transform: rotate(45deg); }
 .crf-module .admin-sla-details[open] > summary { margin-bottom: calc(0.6 * var(--crf-rem)); }
-/* Kartu ringkasan dashboard (5 kartu): 5 kolom, lalu 3 dan 2 kolom pada layar kecil. */
-.crf-module .dashboard-summary-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-@media (max-width: 700px) { .crf-module .dashboard-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* Kartu ringkasan dashboard (4 kartu): 4 kolom penuh, lalu 2 kolom pada layar kecil. */
+.crf-module .dashboard-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 700px) { .crf-module .dashboard-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 480px) { .crf-module .dashboard-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .crf-module .crf-stat-grid .crf-stat-tone-menunggu { border-left-color: #0891b2; }
 /* Filter daftar dengan pilihan Tahap (Dashboard Admin): 6 kolom isian + tombol tetap satu baris pada kartu lebar. */
@@ -7182,3 +7182,6 @@ a.admin-type-item:hover { background: #f1f5f9; color: #1e293b; }
 .crf-module .crf-extra-block + .crf-extra-block {
   margin-top: calc(1.1 * var(--crf-rem)); padding-top: calc(1.1 * var(--crf-rem)); border-top: 1px solid var(--crf-gray-300);
 }
+
+/* Panel detail CRF di Forum: ikon judul kartu = lingkaran biru, ikon putih. */
+.crf-module .crf-forum-detail .crf-section-number { background-color: var(--crf-blue-700); color: #fff; }
